@@ -4,7 +4,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
 /**
  * @version $Id$
  * @package eXtplorer
- * @copyright soeren 2007-2009
+ * @copyright soeren 2007-2012
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * 
@@ -33,9 +33,9 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  * This is the file, which prints the header row with the Logo
  */
 function show_header($dirlinks='') {
-	$url = str_replace( array('&dir=', '&action=', '&file_mode='), 
+	$url = htmlentities(str_replace( array('&dir=', '&action=', '&file_mode='), 
 						array('&a=','&b=','&c='), 
-						$_SERVER['REQUEST_URI'] );
+						$_SERVER['REQUEST_URI'] ), ENT_QUOTES );
 	
 	$url_appendix = strpos($url, '?') === false ? '?' : '&amp;';
 	
