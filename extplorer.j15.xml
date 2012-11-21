@@ -4,13 +4,13 @@
 <!-- Joomla! 1.5 Installer XML File
 $Id$ -->
     <name>eXtplorer</name>
-    <creationDate>02.07.2012</creationDate>
+    <creationDate>21.11.2012</creationDate>
     <author>soeren, QuiX Project</author>
     <copyright>Soeren Eberhardt-Biermann, QuiX Project</copyright>
     <license>GNU/GPL, alternative: MPL</license>
     <authorEmail>infp|at|extploter.net</authorEmail>
     <authorUrl>http://extplorer.net/</authorUrl>
-    <version>2.1.0</version>
+    <version>2.1.1</version>
     <description><![CDATA[
 	<div align="left"><img src="components/com_extplorer/images/eXtplorer_logo.png" alt="eXtplorer Logo" /></div>
 	<h2>Successfully installed eXtplorer&nbsp;</h2>
