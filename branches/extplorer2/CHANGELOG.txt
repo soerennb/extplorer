@@ -2,6 +2,13 @@
 Changelog for eXtplorer
 Version $Id$
 ****************************
+--- version 2.1.1 ---
+- hide the top and bottom bar in J! 3.0
+- fixed installer for J! 2.5
+
+--- version 2.1.1 ---
+- Joomla! 3.0 compatibility
+
 --- version 2.1.0 ---
 
 - fixed an XSS-vulnerability (impact: medium, users needs to be logged in)

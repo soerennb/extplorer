@@ -706,11 +706,19 @@ function ext_init(){
     
 	// Hide the Admin Menu under Joomla! 1.5
 	try{ 
-    		Ext.fly('header-box').hide();Ext.fly('border-top').hide();
+    	Ext.fly('header-box').hide();Ext.fly('border-top').hide();
 	} catch(e) {}
 	// Hide the Admin Menu under Joomla! 1.0
 	try{
 		Ext.fly('header').hide();Ext.select(".menubar").hide();
+	} catch(e) {}
+	// RT MissionControl Fix
+	try{ Ext.fly('mc-footer').hide(); Ext.fly('mc-header').hide();Ext.fly('mc-component').hide();Ext.fly('mc-frame').hide(); } catch(e) {}
+	// Hide Top and Bottom Bar in Joomla! 3.0
+	try{
+		nav = Ext.query('nav');	Ext.get(nav).hide();
+		header = Ext.query('header'); Ext.get(header).hide();
+		Ext.get('status').hide();
 	} catch(e) {}
 	
 	var viewport = new Ext.Viewport({
