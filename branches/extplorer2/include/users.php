@@ -68,7 +68,7 @@ function &ext_find_user($user,$pass) {
 	$cnt=count($GLOBALS["users"]);
 	for($i=0;$i<$cnt;++$i) {
 		if($user==$GLOBALS["users"][$i][0]) {
-			if($pass==NULL || ($pass==$GLOBALS["users"][$i][1] && $GLOBALS["users"][$i][7])) {
+			if($pass===NULL || ($pass==$GLOBALS["users"][$i][1] && $GLOBALS["users"][$i][7])) {
 				return $GLOBALS["users"][$i];
 			}
 		}
