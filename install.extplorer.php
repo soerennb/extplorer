@@ -9,9 +9,9 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
 * @author soeren
 * eXtplorer is Free Software
 */
-
-jimport( 'joomla.version' );
-
+if(function_exists ('jimport')){
+	jimport( 'joomla.version' );
+}
 if(!function_exists ('com_install')){
 	function com_install($mypath =''){
 		error_reporting( E_ALL ^ E_NOTICE );
