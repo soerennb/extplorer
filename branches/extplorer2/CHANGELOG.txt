@@ -3,6 +3,7 @@ Changelog for eXtplorer
 Version $Id$
 ****************************
 --- version 2.1.4 ---
+- fixed security issues found by Trustwave SpiderLabs, Vikas Singhal
 - update to the latest version of Archive_Tar
 - fixed version check link, now points to extplorer.net
 
