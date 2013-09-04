@@ -91,7 +91,7 @@ function get_abs_item($dir, $item) {		// get absolute file+path
 		if( get_is_dir($item)) $abs_item.='/';
 		return extPathName($abs_item); 
 	}
-	return extPathName( get_abs_dir($dir)."/".$item );
+	return extPathName( get_abs_dir($dir)."/".basename($item) );
 }
 /**
  * Returns the LS info array from an ftp directory listing

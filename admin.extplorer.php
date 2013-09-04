@@ -7,7 +7,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  * @version $Id$
  * 
  * @package eXtplorer
- * @copyright soeren 2007-2009
+ * @copyright soeren 2007-2013
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * @license
@@ -39,7 +39,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
 **/
 
 // The eXtplorer version number
-$GLOBALS['ext_version'] = '2.1.3';
+$GLOBALS['ext_version'] = '2.1.4';
 $GLOBALS['ext_home'] = 'http://extplorer.net';
 
 //------------------------------------------------------------------------------
