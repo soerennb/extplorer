@@ -81,7 +81,7 @@ class ext_Upload extends ext_Action {
 					$errors[$i]=ext_lang::err('uploadfile');
 					$err=true;	continue;
 				}
-				if(@file_exists($abs) && empty( $_REQUEST['overwrite_files'])) {
+				if (@$GLOBALS['ext_File']->file_exists($abs) && empty($_REQUEST['overwrite_files'])) {
 					$errors[$i]=ext_lang::err('itemdoesexist');
 					$err=true;	continue;
 				}

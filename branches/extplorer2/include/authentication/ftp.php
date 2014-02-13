@@ -67,6 +67,7 @@ class ext_ftp_authentication {
 				$_SESSION['credentials_ftp']['password'] = $ftp_pass;
 				$_SESSION['ftp_host'] = $ftp_host;
 				$_SESSION['file_mode'] = 'ftp';
+				$_SESSION['ftp_login'] = $ftp_login;
 
 				return true;
 			}
@@ -183,7 +184,8 @@ class ext_ftp_authentication {
 	function onLogout() {
 		unset($_SESSION['credentials_ftp']);
 		unset($_SESSION['ftp_host']);
+		unset($_SESSION['ftp_login']);
 		session_write_close();
-		extRedirect( ext_make_link(null, null, null, null, null, null, '&file_mode=extplorer') );
+		extRedirect( ext_make_link(null, null, null, null, null, null, '&file_mode=' . $GLOBALS['ext_conf']['authentication_method_default']) );
 	}
 }
