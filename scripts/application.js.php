@@ -3,7 +3,7 @@
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
  * @package eXtplorer
- * @copyright soeren 2007-2011
+ * @copyright soeren 2007-2013
  * @author The eXtplorer project (http://extplorer.net)
  * @license
  * @version $Id$
@@ -36,7 +36,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
 
 ?>
 <script type="text/javascript">
-
+var datastore;
 function ext_init(){
 	Ext.BLANK_IMAGE_URL = "<?php echo _EXT_URL ?>/scripts/extjs3/resources/images/default/s.gif";
     // create the Data Store
@@ -746,7 +746,21 @@ function ext_init(){
     	    loader: new Ext.tree.TreeLoader({
     	    	preloadChildren: true,
     	        dataUrl:'<?php echo basename( $GLOBALS['script_name']) ?>',
-    	        baseParams: {option:'com_extplorer', action:'getdircontents', dir: '',sendWhat: 'dirs'} // custom http params
+    	        baseParams: {option:'com_extplorer', action:'getdircontents', dir: '',sendWhat: 'dirs'}, // custom http params
+                listeners: {
+                    "beforeload": {
+                        fn: function(loader, node ) {
+                            if( node )
+                            if(  datastore.directory == node.id.replace( /_RRR_/g, '/' ) ) {
+
+                                var conn = datastore.proxy.getConnection();
+                                if( conn.isLoading() ) {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
     	    }),
     	    containerScroll: true,
     	    enableDD:true,
@@ -903,10 +917,9 @@ function ext_init(){
 	        				    									}
 	        				    								}
 	        			    });*/
-	        			    
-	        			    
-	        			    var tsm = Ext.getCmp("dirTree").getSelectionModel();
-	        			    tsm.on('selectionchange', handleNodeClick );
+
+                            var tsm = Ext.getCmp("dirTree").getSelectionModel();
+                            tsm.on('selectionchange', handleNodeClick );
 	        			    
 	        			    // create the editor for the directory tree
 	        			    var dirTreeEd = new Ext.tree.TreeEditor(Ext.getCmp("dirTree"), {

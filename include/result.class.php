@@ -36,17 +36,17 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  *
  */
 class ext_Result {
-	function init() {
+    static function init() {
 		ext_Result::empty_errors();
 		ext_Result::empty_messages();
 	}
-	function add_message($message, $type='general') {
+    static function add_message($message, $type='general') {
 		$_SESSION['ext_message'][$type][] = $message;
 	}
-	function empty_messages() {
+    static function empty_messages() {
 		$_SESSION['ext_message'] = array();
 	}
-	function count_messages() {
+    static function count_messages() {
 
 		if( empty($_SESSION['ext_message'])) {
 			return 0;
@@ -59,13 +59,13 @@ class ext_Result {
 		}
 		return $count;
 	}
-	function add_error($error, $type='general') {
+    static function add_error($error, $type='general') {
 		$_SESSION['ext_error'][$type][] = $error;
 	}
-	function empty_errors() {
+    static function empty_errors() {
 		$_SESSION['ext_error'] = array();
 	}
-	function count_errors() {
+    static function count_errors() {
 		if( empty($_SESSION['ext_error'])) {
 			return 0;
 		}
@@ -77,7 +77,7 @@ class ext_Result {
 		}
 		return $count;
 	}
-	function sendResult( $action, $success, $msg,$extra=array() ) {		// show error-message
+	static function sendResult( $action, $success, $msg,$extra=array() ) {		// show error-message
 		
 		if( ext_isXHR() ) {
 			
@@ -163,4 +163,3 @@ class ext_Result {
 	}
 }
 //------------------------------------------------------------------------------
-?>

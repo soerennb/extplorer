@@ -27,7 +27,7 @@ $GLOBALS['webdav_authentication_method'] = 'extplorer'; // use one of the  authe
 $GLOBALS['DB_HOST'] = 'localhost';
 $GLOBALS['DB_NAME'] = 'webdav';
 $GLOBALS['DB_USER'] = 'root';
-$GLOBALS['DB_PASSWORD'] = 'root';
+$GLOBALS['DB_PASSWORD'] = '';
 $GLOBALS['DB_TYPE'] = 'mysql'; // Name of the Database Server Type (see http://en.php.net/manual/en/pdo.drivers.php for more)
 
 //------------------------------------------------------------------------------
@@ -67,4 +67,3 @@ $GLOBALS['ext_conf']['symlink_allow_abovehome'] = FALSE;
 	go to http://www.php.net/pcre.pattern.syntax
 */
 //------------------------------------------------------------------------------
-?>

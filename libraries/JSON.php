@@ -61,37 +61,37 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
 /**
  * Marker constant for ext_Json::decode(), used to flag stack state
  */
-define('SERVICES_JSON_SLICE',   1);
+defined('SERVICES_JSON_SLICE') or define('SERVICES_JSON_SLICE',   1);
 
 /**
  * Marker constant for ext_Json::decode(), used to flag stack state
  */
-define('SERVICES_JSON_IN_STR',  2);
+defined('SERVICES_JSON_IN_STR') or define('SERVICES_JSON_IN_STR',  2);
 
 /**
  * Marker constant for ext_Json::decode(), used to flag stack state
  */
-define('SERVICES_JSON_IN_ARR',  3);
+defined('SERVICES_JSON_IN_ARR') or define('SERVICES_JSON_IN_ARR',  3);
 
 /**
  * Marker constant for ext_Json::decode(), used to flag stack state
  */
-define('SERVICES_JSON_IN_OBJ',  4);
+defined('SERVICES_JSON_IN_OBJ') or define('SERVICES_JSON_IN_OBJ',  4);
 
 /**
  * Marker constant for ext_Json::decode(), used to flag stack state
  */
-define('SERVICES_JSON_IN_CMT', 5);
+defined('SERVICES_JSON_IN_CMT') or define('SERVICES_JSON_IN_CMT', 5);
 
 /**
  * Behavior switch for ext_Json::decode()
  */
-define('SERVICES_JSON_LOOSE_TYPE', 16);
+defined('SERVICES_JSON_LOOSE_TYPE') or define('SERVICES_JSON_LOOSE_TYPE', 16);
 
 /**
  * Behavior switch for ext_Json::decode()
  */
-define('SERVICES_JSON_SUPPRESS_ERRORS', 32);
+defined('SERVICES_JSON_SUPPRESS_ERRORS') or define('SERVICES_JSON_SUPPRESS_ERRORS', 32);
 
 /**
  * Converts to and from JSON format.
