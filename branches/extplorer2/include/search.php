@@ -4,7 +4,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
 /**
  * @version $Id$
  * @package eXtplorer
- * @copyright soeren 2007-2011
+ * @copyright soeren 2007-2013
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  *
@@ -35,14 +35,19 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
 
 function find_item($dir,$pat,&$list,$recur, $content) {	// find items
 	$homedir = realpath($GLOBALS['home_dir']);
-	$handle = @$GLOBALS['ext_File']->opendir(get_abs_dir($dir));
+    $opendir = $dir;
+    if( !is_dir( $dir )) {
+        $opendir = get_abs_dir($dir);
+    }
+	$handle = @$GLOBALS['ext_File']->opendir( $opendir );
 
 	if($handle===false && $dir=="") {
 		$handle = @$GLOBALS['ext_File']->opendir($homedir . $GLOBALS['separator']);
 	}
 
 	if($handle===false) {
-		ext_Result::sendResult('search', false, $dir.": ".$GLOBALS["error_msg"]["opendir"]);
+
+		ext_Result::sendResult('search', false, $opendir .": ".$GLOBALS["error_msg"]["opendir"]);
 	}
 
 	while(($new_item=$GLOBALS['ext_File']->readdir($handle))!==false) {
@@ -51,20 +56,22 @@ function find_item($dir,$pat,&$list,$recur, $content) {	// find items
 		} else {
 			$abs_new_item = get_abs_item($dir, $new_item);
 		}
-		if(!$GLOBALS['ext_File']->file_exists($abs_new_item)) continue;
+
+		//if(!$GLOBALS['ext_File']->file_exists($abs_new_item)) continue;
 
 		if(!get_show_item($dir, $new_item)) continue;
 
 		$isDir = get_is_dir($abs_new_item);
 		// match?
-		if(@eregi($pat,$new_item)) {
+
+		if(@preg_match('@'.$pat.'@is',$new_item) > 0 ) {
 		    $list[]=array($dir,$new_item);
 		} else if (!$isDir) {
 		    if ($content && $GLOBALS['ext_File']->filesize($abs_new_item) < 524288) {
 
     		  $data = $GLOBALS['ext_File']->file_get_contents( $abs_new_item );
               //$data = fread($handle, 524288); // Only read first 512kb
-    		  if (@eregi($pat, $data)) {
+    		  if (preg_match('@'.$pat.'@is', $data) > 0 ) {
     		      $list[]=array($dir,$new_item);
     		  }
 		    }

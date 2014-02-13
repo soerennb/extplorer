@@ -60,7 +60,7 @@ class ext_Lang {
 	* @param boolean $make_javascript_safe
 	* @return string
 	*/
-	function msg( $msg, $make_javascript_safe=false ) {
+    static function msg( $msg, $make_javascript_safe=false ) {
 		$str = ext_Lang::_get('messages', $msg );
 		if( $make_javascript_safe ) {
 			return ext_Lang::escape_for_javascript( $str );
@@ -75,7 +75,7 @@ class ext_Lang {
 	* @param boolean $make_javascript_safe
 	* @return string
 	*/
-	function err( $err, $make_javascript_safe=false ) {
+    static function err( $err, $make_javascript_safe=false ) {
 		$str = ext_Lang::_get('error_msg', $err );
 		if( $make_javascript_safe ) {
 			return ext_Lang::escape_for_javascript( $str );
@@ -83,7 +83,7 @@ class ext_Lang {
 			return $str;
 		}
 	}
-	function mime( $mime, $make_javascript_safe=false ) {
+    static function mime( $mime, $make_javascript_safe=false ) {
 		$str = ext_Lang::_get('mimes', $mime );
 		if( $make_javascript_safe ) {
 			return ext_Lang::escape_for_javascript( $str );
@@ -99,17 +99,17 @@ class ext_Lang {
 	* @return string
 	* @access private
 	*/
-	function _get( $array_index, $message ) {
+    static function _get( $array_index, $message ) {
 		if( is_array( $message )) {
 			return @$GLOBALS[$array_index][key($message)][current($message)];
 		}
 		return isset($GLOBALS[$array_index][$message]) ? $GLOBALS[$array_index][$message] : $message;
 	}
 
-	function escape_for_javascript( $string ) {
+    static function escape_for_javascript( $string ) {
 		return str_replace(Array("\r", "\n" ), Array('\r', '\n' ) , addslashes($string));
 	}
-	function detect_lang() {
+	static function detect_lang() {
 		$default = 'english';
 		if( empty($_SERVER['HTTP_ACCEPT_LANGUAGE'])) return $default;
 

@@ -41,11 +41,11 @@ Ext.BLANK_IMAGE_URL = '<?php echo _EXT_URL ?>/scripts/extjs3/resources/images/de
 	* It updates the tree, the grid and the ContentPanel title
 	*/
     function chDir( directory, loadGridOnly ) {
-   		
+
     	if( datastore.directory.replace( /\//g, '' ) == directory.replace( /\//g, '' )
     		&& datastore.getTotalCount() > 0 && directory != '') {
     		// Prevent double loading
-    		return;
+    		return false;
     	}
     	datastore.directory = directory;
     	var conn = datastore.proxy.getConnection();
@@ -126,7 +126,7 @@ Ext.BLANK_IMAGE_URL = '<?php echo _EXT_URL ?>/scripts/extjs3/resources/images/de
 			
 		}
 	}
-    function handleNodeClick( sm, node ) {
+    function handleNodeClick( node ) {
     	if( node && node.id ) {
     		chDir( node.id.replace( /_RRR_/g, '/' ) );
     	}

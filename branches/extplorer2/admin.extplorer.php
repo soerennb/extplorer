@@ -39,12 +39,12 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
 **/
 
 // The eXtplorer version number
-$GLOBALS['ext_version'] = '2.1.4';
+$GLOBALS['ext_version'] = '2.1.5';
 $GLOBALS['ext_home'] = 'http://extplorer.net';
 
 //------------------------------------------------------------------------------
 if( defined( 'E_STRICT' ) ) { // Suppress Strict Standards Warnings
-	error_reporting(E_ALL);
+	error_reporting(E_ALL & ~E_STRICT & ~E_NOTICE);
 }
 //------------------------------------------------------------------------------
 umask(0002); // Added to make created files/dirs group writable

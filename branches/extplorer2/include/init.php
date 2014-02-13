@@ -242,7 +242,7 @@ if (!file_exists($GLOBALS["home_dir"])) {
 	} else {
 		$extra = NULL;
 	}
-	ext_Result::sendResult('', false, $GLOBALS["error_msg"]["home"]." (".$GLOBALS["home_dir"].")",$extra);
+	//ext_Result::sendResult('', false, $GLOBALS["error_msg"]["home"]." (".$GLOBALS["home_dir"].")",$extra);
   }
 }
 

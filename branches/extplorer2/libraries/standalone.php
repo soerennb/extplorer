@@ -79,7 +79,7 @@ class extMainFrame {
 		$this->_head['meta'] 	= array();
 		$this->_head['custom'] 	= array();
 
-		$now = date( 'Y-m-d H:i:s', time() );
+		$now = @date( 'Y-m-d H:i:s', time() );
 		$this->set( 'now', $now );
 	}
 
@@ -397,4 +397,3 @@ if( file_exists( $archive_name ) && !file_exists( $mypath .'/scripts/functions.j
 			</body></html>');
 	}
 }
-?>

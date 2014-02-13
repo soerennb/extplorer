@@ -66,7 +66,7 @@ function get_abs_dir($dir) {			// get absolute path
 		}
 		return $dir;
 	}
-	$abs_dir=$GLOBALS["home_dir"];
+	$abs_dir=file_exists($GLOBALS["home_dir"]) ? $GLOBALS["home_dir"] : $_SERVER["DOCUMENT_ROOT"];
 
 	if($dir!="" && !@stristr( $dir, $abs_dir )) $abs_dir.="/".$dir;
 	elseif(@stristr( $dir, $abs_dir )) $abs_dir = "/".$dir;
@@ -882,7 +882,7 @@ class extProfiler {
 * @package eXtplorer
 */
 class extHTML {
-	function loadExtJS() {
+    static function loadExtJS() {
 		$scripts[] = array('dir' => 'scripts/editarea/', 'file' => 'edit_area_full_with_plugins.js');
 		$scripts[] = array('dir' => 'scripts/extjs3/adapter/ext/', 'file' => 'ext-base.js');
 		$scripts[] = array('dir' => 'scripts/extjs3/', 'file' => 'ext-all.js');
@@ -933,15 +933,15 @@ class extHTML {
 			echo $scriptTag;
 		}
 	}
-	
-	function makeOption( $value, $text='', $value_name='value', $text_name='text' ) {
+
+    static function makeOption( $value, $text='', $value_name='value', $text_name='text' ) {
 		$obj = new stdClass;
 		$obj->$value_name = $value;
 		$obj->$text_name = trim( $text ) ? $text : $value;
 		return $obj;
 	}
 
-  function writableCell( $folder, $relative=1, $text='', $visible=1 ) {
+    static function writableCell( $folder, $relative=1, $text='', $visible=1 ) {
 	$writeable 		= '<b><font color="green">Writeable</font></b>';
 	$unwriteable 	= '<b><font color="red">Unwriteable</font></b>';
 
@@ -972,7 +972,7 @@ class extHTML {
 	* @param mixed The key that is selected
 	* @returns string HTML for the select list
 	*/
-	function selectList( &$arr, $tag_name, $tag_attribs, $key, $text, $selected=NULL ) {
+    static function selectList( &$arr, $tag_name, $tag_attribs, $key, $text, $selected=NULL ) {
 		// check if array
 		if ( is_array( $arr ) ) {
 			reset( $arr );
@@ -1017,7 +1017,7 @@ class extHTML {
 	* @param string The printf format to be applied to the number
 	* @returns string HTML for the select list
 	*/
-	function integerSelectList( $start, $end, $inc, $tag_name, $tag_attribs, $selected, $format="" ) {
+    static function integerSelectList( $start, $end, $inc, $tag_name, $tag_attribs, $selected, $format="" ) {
 		$start 	= intval( $start );
 		$end 	= intval( $end );
 		$inc 	= intval( $inc );
@@ -1038,7 +1038,7 @@ class extHTML {
 	* @param mixed The key that is selected
 	* @returns string HTML for the select list values
 	*/
-	function monthSelectList( $tag_name, $tag_attribs, $selected ) {
+    static function monthSelectList( $tag_name, $tag_attribs, $selected ) {
 		$arr = array(
 			extHTML::makeOption( '01', _JAN ),
 			extHTML::makeOption( '02', _FEB ),
@@ -1064,7 +1064,7 @@ class extHTML {
 	* @param mixed The key that is selected
 	* @returns string HTML for the select list values
 	*/
-	function yesnoSelectList( $tag_name, $tag_attribs, $selected, $yes=_CMN_YES, $no=_CMN_NO ) {
+    static function yesnoSelectList( $tag_name, $tag_attribs, $selected, $yes=_CMN_YES, $no=_CMN_NO ) {
 		$arr = array(
 		extHTML::makeOption( '0', $no ),
 		extHTML::makeOption( '1', $yes ),
@@ -1083,7 +1083,7 @@ class extHTML {
 	* @param string The name of the object variable for the option text
 	* @returns string HTML for the select list
 	*/
-	function radioList( &$arr, $tag_name, $tag_attribs, $selected=null, $key='value', $text='text' ) {
+    static function radioList( &$arr, $tag_name, $tag_attribs, $selected=null, $key='value', $text='text' ) {
 		reset( $arr );
 		$html = "";
 		for ($i=0, $n=count( $arr ); $i < $n; $i++ ) {
@@ -1119,7 +1119,7 @@ class extHTML {
 	* @param mixed The key that is selected
 	* @returns string HTML for the radio list
 	*/
-	function yesnoRadioList( $tag_name, $tag_attribs, $selected, $yes=_CMN_YES, $no=_CMN_NO ) {
+    static function yesnoRadioList( $tag_name, $tag_attribs, $selected, $yes=_CMN_YES, $no=_CMN_NO ) {
 		$arr = array(
 			extHTML::makeOption( '0', $no ),
 			extHTML::makeOption( '1', $yes )
@@ -1131,7 +1131,7 @@ class extHTML {
 	/**
 	* Cleans text of all formating and scripting code
 	*/
-	function cleanText ( &$text ) {
+    static function cleanText ( &$text ) {
 		$text = preg_replace( "'<script[^>]*>.*?</script>'si", '', $text );
 		$text = preg_replace( '/<a\s+.*?href="([^"]+)"[^>]*>([^<]+)<\/a>/is', '\2 (\1)', $text );
 		$text = preg_replace( '/<!--.+?-->/', '', $text );
