@@ -276,7 +276,7 @@ class ext_File {
 
 			$uploadedfile = str_replace("\\", '/', $uploadedfile);
 			$to = str_replace("\\", '/', $to);
-			$res = $GLOBALS['FTPCONNECTION']->put($uploadedfile, $to);
+			$res = $GLOBALS['FTPCONNECTION']->put($uploadedfile, $to, true);
 			return $res;
 		} else {
 			return move_uploaded_file($uploadedfile, $to);
@@ -294,7 +294,7 @@ class ext_File {
 
 			$file = str_replace("\\", '/', $file);
 			if ($file[0] != '/') $file = '/'. $file; 
-			$res = $GLOBALS['FTPCONNECTION']->get($file, $tmp_file);
+			$res = $GLOBALS['FTPCONNECTION']->get($file, $tmp_file, true);
 
 			if (PEAR::isError($res)) {
 				return false;
@@ -445,8 +445,10 @@ class ext_File {
 
 		// Note that if the directory is not owned by the same uid as this executing script, it will
 		// be unreadable and I think unwriteable in safemode regardless of directory permissions.
-		if (ini_get('safe_mode') == 1 && @$GLOBALS['ext_File']->geteuid() != $GLOBALS['ext_File']->fileowner($file)) {
-			return false;
+		if (!ext_isFTPMode()) {
+			if (ini_get('safe_mode') == 1 && @$GLOBALS['ext_File']->geteuid() != $GLOBALS['ext_File']->fileowner($file)) {
+				return false;
+			}
 		}
 
 		// if dir owner not same as effective uid of this process, then perms must be full 777.
