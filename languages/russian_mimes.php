@@ -7,7 +7,7 @@ $GLOBALS["mimes"]=array(
       "dir"      => "Директория",
       "exe"      => "Исполняемый файл",
       "file"      => "Файл",
-	"symlink"	=> "Symbolic Link",
+	"symlink"	=> "Символьная ссылка",
 
       // text
       "text"      => "Текстовый файл",
