@@ -1,6 +1,8 @@
 <?php
-
+// $Id: italian.php 195 2014-03-25 06:57:32Z selven $
 // Italiano Language Module for v2.3 (translated by the TTi joomla.it)
+// Additional translation by selven
+
 global $_VERSION;
 
 $GLOBALS["charset"] = "utf-8";
@@ -8,49 +10,50 @@ $GLOBALS["text_dir"] = "ltr"; // ('ltr' for left to right, 'rtl' for right to le
 $GLOBALS["date_fmt"] = "Y/m/d H:i";
 $GLOBALS["error_msg"] = array(
 	// error
-	"error"			=> "ERRORE(I)",
-	"back"			=> "Indietro",
+	"error"				=> "ERRORE(I)",
+	"message"			=> "Messaggio(i)",
+	"back"				=> "Indietro",
 
 	// root
-	"home"			=> "La cartella principale non esiste, controllare la configurazione.",
-	"abovehome"		=> "Questa cartella non pu&#242; essere fuori dalla cartella principale.",
+	"home"				=> "La cartella principale non esiste, controllare la configurazione.",
+	"abovehome"			=> "Questa cartella non pu&#242; essere fuori dalla cartella principale.",
 	"targetabovehome"	=> "La cartella di destinazione non pu&#242; risiedere fuori dalla cartella principale.",
 
 	// exist
-	"direxist"		=> "Questa cartella non esiste.",
+	"direxist"			=> "Questa cartella non esiste.",
 	//"filedoesexist"	=> "Questo file esiste gi&#224;.",
-	"fileexist"		=> "Questo file non esiste.",
+	"fileexist"			=> "Questo file non esiste.",
 	"itemdoesexist"		=> "Questo elemento esiste gi&#224;.",
-	"itemexist"		=> "Questo elemento non esiste.",
+	"itemexist"			=> "Questo elemento non esiste.",
 	"targetexist"		=> "La cartella di destinazione non esiste.",
 	"targetdoesexist"	=> "Elemento di destinazione esiste gi&#224;.",
 
 	// open
-	"opendir"		=> "Impossibile aprire la cartella.",
-	"readdir"		=> "Impossibile leggere nella cartella.",
+	"opendir"			=> "Impossibile aprire la cartella.",
+	"readdir"			=> "Impossibile leggere nella cartella.",
 
 	// access
-	"accessdir"		=> "Non sei autorizzato ad accedere a questa cartella.",
+	"accessdir"			=> "Non sei autorizzato ad accedere a questa cartella.",
 	"accessfile"		=> "Non sei autorizzato ad accedere a questo file.",
 	"accessitem"		=> "Non sei autorizzato ad accedere a questo elemento.",
 	"accessfunc"		=> "Non sei autorizzato ad utilizzare questa funzione.",
 	"accesstarget"		=> "Non sei autorizzato ad accedere alla cartella di destinazione.",
 
 	// actions
-	"permread"		=> "Richiesta permessi fallita.",
+	"permread"			=> "Richiesta permessi fallita.",
 	"permchange"		=> "Modifica permessi fallita.",
-	"openfile"		=> "Apertura del file fallita.",
-	"savefile"		=> "Salvataggio del file fallito.",
+	"openfile"			=> "Apertura del file fallita.",
+	"savefile"			=> "Salvataggio del file fallito.",
 	"createfile"		=> "Creazione del file fallita.",
-	"createdir"		=> "Creazione della cartella fallita.",
+	"createdir"			=> "Creazione della cartella fallita.",
 	"uploadfile"		=> "Caricamento del file fallito.",
-	"copyitem"		=> "Copia fallita.",
-	"moveitem"		=> "Spostamento fallito.",
-	"delitem"		=> "Rimozione fallita.",
-	"chpass"		=> "Modifica della password fallita.",
-	"deluser"		=> "Rimozione dell&#180;utente fallita.",
-	"adduser"		=> "Inserimento dell&#180;utente fallito.",
-	"saveuser"		=> "Salvataggio dell&#180;utente fallito.",
+	"copyitem"			=> "Copia fallita.",
+	"moveitem"			=> "Spostamento fallito.",
+	"delitem"			=> "Rimozione fallita.",
+	"chpass"			=> "Modifica della password fallita.",
+	"deluser"			=> "Rimozione dell&#180;utente fallita.",
+	"adduser"			=> "Inserimento dell&#180;utente fallito.",
+	"saveuser"			=> "Salvataggio dell&#180;utente fallito.",
 	"searchnothing"		=> "&#200; necessario impostare un criterio di ricerca.",
 
 	// misc
@@ -75,27 +78,29 @@ $GLOBALS["error_msg"] = array(
 	'archive_dir_notexists' => 'The Save-To Directory you have specified does not exist.',
 	'archive_dir_unwritable' => 'Please specify a writable directory to save the archive to.',
 	'archive_creation_failed' => 'Failed saving the Archive File'
+	
 );
 $GLOBALS["messages"] = array(
 	// links
-	"permlink"		=> "Modifica dei permessi",
-	"editlink"		=> "Modifica",
-	"downlink"		=> "Scarica",
-	"uplink"		=> "Precedente",
-	"homelink"		=> "Pagina Principale",
+	"permlink"			=> "Modifica dei permessi",
+	"editlink"			=> "Modifica",
+	"downlink"			=> "Scarica",
+	"uplink"			=> "Precedente",
+	"homelink"			=> "Pagina Principale",
 	"reloadlink"		=> "Ricarica",
-	"copylink"		=> "Copia",
-	"movelink"		=> "Sposta",
-	"dellink"		=> "Cancella",
-	"comprlink"		=> "Archivia",
-	"adminlink"		=> "Amministra",
+	"copylink"			=> "Copia",
+	"movelink"			=> "Sposta",
+	"dellink"			=> "Cancella",
+	"comprlink"			=> "Archivia",
+	"adminlink"			=> "Amministra",
 	"logoutlink"		=> "Esci",
 	"uploadlink"		=> "Carica",
 	"searchlink"		=> "Cerca",
-	"extractlink"	=> "Estrai archivio",
-	'chmodlink'		=> 'Modifica (chmod) Diritti (Cartella/File)', // new mic
+	'difflink'     		=> 'Differenze',
+	"extractlink"		=> "Estrai archivio",
+	'chmodlink'			=> 'Modifica (chmod) Diritti (Cartella/File)', // new mic
 	'mossysinfolink'	=> 'eXtplorer Informazioni di sistema (eXtplorer, Server, PHP, mySQL)', // new mic
-	'logolink'		=> 'Visita il sito web ufficiale eXtplorer (nuova finestra)', // new mic
+	'logolink'			=> 'Visita il sito web ufficiale eXtplorer (nuova finestra)', // new mic
 
 	// list
 	"nameheader"		=> "Nome",
@@ -112,6 +117,7 @@ $GLOBALS["messages"] = array(
 	"btnchange"		=> "Modifica",
 	"btnreset"		=> "Resetta",
 	"btnclose"		=> "Chiudi",
+	"btnreopen"		=> "Riapri",
 	"btncreate"		=> "Crea",
 	"btnsearch"		=> "Cerca",
 	"btnupload"		=> "Carica",
@@ -122,6 +128,7 @@ $GLOBALS["messages"] = array(
 	"btnadd"		=> "Aggiungi",
 	"btnedit"		=> "Modifica",
 	"btnremove"		=> "Rimuovi",
+	"btndiff"		=> "Differenze",
 
 	// user messages, new in eXtplorer 1.3.0
 	'renamelink'	=> 'Rinomina',
@@ -168,10 +175,10 @@ $GLOBALS["messages"] = array(
 	"misclang"		=> "Lingua",
 	"miscnoresult"		=> "Nessun risultato trovato.",
 	"miscsubdirs"		=> "Ricerca sotto cartella",
-	"miscpermnames"		=> array("Sola lettura","Modifica","Modifica password","Modifica e sostituzione password",
-					"Amministratore"),
+	"miscpermnames"		=> array("Sola lettura","Modifica","Modifica password","Modifica e sostituzione password","Amministratore"),
 	"miscyesno"		=> array("Si","No","S","N"),
 	"miscchmod"		=> array("Proprietario", "Gruppo", "Pubblico"),
+	'misccontent'		=> "Contenuti File",
 
 	// from here all new by mic
 	'miscowner'			=> 'Proprietario',
@@ -318,5 +325,6 @@ $GLOBALS["messages"] = array(
 	'search_processing' => 'Searching, please wait...',
 	'url_to_file' => 'URL of the File',
 	'file' => 'File'
+	
 );
 ?>
