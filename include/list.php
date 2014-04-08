@@ -4,7 +4,7 @@ if ( !defined('_JEXEC') && !defined('_VALID_MOS')) die('Restricted access');
 /**
  * @version $Id$
  * @package eXtplorer
- * @copyright soeren 2007-2010
+ * @copyright soeren 2007-2014
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * 
@@ -226,7 +226,7 @@ function send_dircontents($dir, $sendWhat = 'files') {	// print table of files
 				$file_info['gid'] = $user_info['gid'];
 			}
 		} else {
-			$abs_item = get_abs_item(utf8_decode($dir), $item);
+			$abs_item = get_abs_item(ext_TextEncoding::fromUTF8($dir), $item);
 			$file_info = @stat($abs_item);
 		}
 
@@ -236,12 +236,12 @@ function send_dircontents($dir, $sendWhat = 'files') {	// print table of files
 			if (ext_isFTPMode()) {
 				$items['items'][$i]['name'] = $item;
 			} else if (mb_detect_encoding($item) == 'ASCII') {
-				$items['items'][$i]['name'] = utf8_encode($item);
+				$items['items'][$i]['name'] = ext_TextEncoding::toUTF8($item);
 			} else {
-				$items['items'][$i]['name'] = utf8_encode($item);
+				$items['items'][$i]['name'] = ext_TextEncoding::toUTF8($item);
 			}
 		} else {
-			$items['items'][$i]['name'] = ext_isFTPMode() ? $item : utf8_encode($item);
+			$items['items'][$i]['name'] = ext_isFTPMode() ? $item : ext_TextEncoding::toUTF8($item);
 		}
 
 		$items['items'][$i]['is_file']		= get_is_file($abs_item);
@@ -300,7 +300,7 @@ function send_dircontents($dir, $sendWhat = 'files') {	// print table of files
 									'is_deletable' => $is_deletable,
 									'cls'		=> 'folder');
 				} else if (mb_detect_encoding($item) == 'ASCII') {
-					$dirlist[] = array('text' => htmlspecialchars(utf8_encode($item)),
+					$dirlist[] = array('text' => htmlspecialchars(ext_TextEncoding::toUTF8($item)),
 									'id'		=> utf8_encode($id),
 									'qtip'		=> $qtip,
 									'is_writable'  => $is_writable,
@@ -319,8 +319,8 @@ function send_dircontents($dir, $sendWhat = 'files') {	// print table of files
 									'cls'		=> 'folder');
 				}
 			} else {
-				$dirlist[] = array('text' => htmlspecialchars(ext_isFTPMode() ? $item : utf8_encode($item)),
-									'id'		=> ext_isFTPMode() ? $id : utf8_encode($id),
+				$dirlist[] = array('text' => htmlspecialchars(ext_isFTPMode() ? $item : ext_TextEncoding::toUTF8($item)),
+									'id'		=> ext_isFTPMode() ? $id : ext_TextEncoding::toUTF8($id),
 									'qtip'		=> $qtip,
 									'is_writable'  => $is_writable,
 									'is_chmodable' => $is_chmodable,
