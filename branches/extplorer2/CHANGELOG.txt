@@ -2,6 +2,11 @@
 Changelog for eXtplorer
 Version $Id$
 ****************************
+--- version 2.1.6 ---
+- added date range filtering to file search
+- simplified search function
+- fixed scrambled non-ASCII file names on UTF-8 systems
+
 --- version 2.1.5 ---
 - fixed doubled subdirectories in directory tree
 - fixed wrong Joomla path detection (security issue on some systems)
