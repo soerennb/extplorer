@@ -75,7 +75,23 @@ function make_list(&$_list1, &$_list2) {
 
 // make table of files in dir
 function get_dircontents($dir, &$dir_list, &$file_list, &$tot_file_size, &$num_items) {
+    $search = @$_POST['searchword'];
+    $pattern = '';
+    if( !empty( $search )) {
+        $pattern = preg_quote($search, '/');
 
+        // finalise the regular expression, matching the whole line
+        $pattern = "/^.*$pattern.*\$/m";
+        // search, and store all matching occurrences in $matches
+    }
+    if (!empty($_POST['mdate_start'])) {
+        $mdate_start = strtotime($_POST['mdate_start']);
+        if (empty($_POST['mdate_end'])) {
+            $mdate_end = time();
+        } else {
+            $mdate_end = strtotime($_POST['mdate_end']);
+        }
+    }
 	$homedir = realpath($GLOBALS['home_dir']);
 	$tot_file_size = $num_items = 0;
 	// Open directory
@@ -114,6 +130,15 @@ function get_dircontents($dir, &$dir_list, &$file_list, &$tot_file_size, &$num_i
 
 		if (!get_show_item($dir, $new_item)) continue;
 
+        if (!empty( $pattern ) && !preg_match_all($pattern, $new_item, $matches)) {
+            continue;
+        }
+        if ($mdate_start && $mdate_end) {
+            $filemtime = @$GLOBALS['ext_File']->filemtime($abs_new_item);
+            if ($filemtime < $mdate_start || $filemtime > $mdate_end) {
+                continue;
+            }
+        }
 		$new_file_size = @$GLOBALS['ext_File']->filesize($abs_new_item);
 		$tot_file_size += $new_file_size;
 		$num_items++;

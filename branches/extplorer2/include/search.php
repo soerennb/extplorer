@@ -219,39 +219,8 @@ function find_item($dir,$pat,&$files,$subdir, $content) {
     $files  = $newList;
 }
 
-//------------------------------------------------------------------------------
-function get_result_table($list) {			// print table of found items
-	if(!is_array($list)) return;
 
-	$cnt = count($list);
-	$response = '';
-	for($i=0;$i<$cnt;++$i) {
-		$dir = $list[$i][0];	$item = $list[$i][1];
-		$s_dir=$dir;	if(strlen($s_dir)>65) $s_dir=substr($s_dir,0,62)."...";
-		$s_item=$item;	if(strlen($s_item)>45) $s_item=substr($s_item,0,42)."...";
-		$link = "";	$target = "";
 
-		if(get_is_dir($dir,$item)) {
-			$img = "dir.png";
-			$link = ext_make_link("list",get_rel_item($dir, $item),NULL);
-		} else {
-			$img = get_mime_type( $item, "img");
-			//if(get_is_editable($dir,$item) || get_is_image($dir,$item)) {
-			$link = $GLOBALS["home_url"]."/".get_rel_item($dir, $item);
-			$target = "_blank";
-			//}
-		}
-
-		$response .= "<tr><td>" . "<img border=\"0\" width=\"22\" height=\"22\" ";
-		$response .= "align=\"absmiddle\" src=\""._EXT_URL."/images/" . $img . "\" alt=\"\" />&nbsp;";
-		/*if($link!="")*/
-		$response .= "<a href=\"".$link."\" target=\"".$target."\">";
-		//else echo "<a>";
-		$response .= $s_item."</a></td><td><a href=\"" . ext_make_link("list",$dir,null)."\"> /";
-		$response .= $s_dir."</a></td></tr>\n";
-	}
-	return $response;
-}
 function get_result_array($list) {			// print table of found items
 	if(!is_array($list)) return;
 
