@@ -310,23 +310,65 @@ function ext_init(){
                                 	name: "filterValue", 
                                 	id: "filterField",
                                 	enableKeyEvents: true,
+                                    emptyText: "<?php echo ext_Lang::msg('filter_grid', true ) ?>",
                                 	title: "<?php echo ext_Lang::msg('filter_grid', true ) ?>",
                             		listeners: { 
-                            			"keypress": { fn: 	function(textfield, e ) {
+                            			keypress: { fn: 	function(textfield, e ) {
 					                            		    	if( e.getKey() == Ext.EventObject.ENTER ) {
-					                            		    		filterDataStore();
+                                                                    datastore.baseParams.searchword = Ext.getCmp("filterField").getValue();
+                                                                    datastore.load({params: datastore.baseParams });
 					                            		    	}
 	                            							}
-                            						}
+                            						},
+                                        change: {
+                                            fn: function(field, newValue) {
+                                                datastore.baseParams.searchword = newValue;
+                                            }
+                                        }
                             		}
+                                }),
+
+                                new Ext.form.DateField({
+                                    tooltip: 'Start',
+                                    emptyText: "Start",
+                                    name: 'mdate_start',
+                                    id: 'mdate_start',
+                                    listeners: {
+                                        change: {
+                                            fn: function (field, newValue) {
+                                                datastore.baseParams.mdate_start = newValue;
+                                            }
+                                        }
+                                    },
+                                    width: 90,
+                                }),
+                                new Ext.form.DateField({
+                                    tooltip: 'End',
+                                    name: 'mdate_end',
+                                    id: 'mdate_end',
+                                    emptyText: "End",
+                                    listeners: {
+                                        change: {
+                                            fn: function (field, newValue) {
+                                                datastore.baseParams.mdate_end = newValue;
+                                            }
+                                        }
+                                    },
+                                    width: 90
                                 }),
                             	new Ext.Toolbar.Button( {
                             		text: '&nbsp;X&nbsp;',
-                            	handler: function() { 
-                                	datastore.clearFilter();
-                                	Ext.getCmp("filterField").setValue(""); 
-                                	}
-                            	})
+                                    handler: function() {
+                                        datastore.baseParams.searchword = "";
+                                        Ext.getCmp("filterField").setValue("");
+                                        Ext.getCmp("mdate_start").reset();
+                                        Ext.getCmp("mdate_end").reset();
+
+                                        datastore.baseParams.mdate_start = "";
+                                        datastore.baseParams.mdate_end = "";
+                                        loadDir();
+                                    }
+                                })
 
                             ]);
     function filterDataStore(btn,e) { 
