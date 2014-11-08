@@ -3,6 +3,8 @@ Changelog for eXtplorer
 Version $Id$
 ****************************
 --- version 2.1.6 ---
+- fixed https usage for ports other than 443
+- fixed XSS issue related to PHP_SELF
 - added date range filtering to file search
 - simplified search function
 - fixed scrambled non-ASCII file names on UTF-8 systems

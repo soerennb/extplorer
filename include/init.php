@@ -32,6 +32,14 @@ if (!defined('_JEXEC') && !defined('_VALID_MOS')) die('Restricted access');
  * 
  * This file initializes most of the variables and constants we need in eXtplorer
  */
+ if (isset ($_SERVER['ORIG_PATH_INFO']) && $_SERVER['ORIG_PATH_INFO'] != $_SERVER['PHP_SELF']) {
+    $_SERVER['PATH_INFO'] = $_SERVER['ORIG_PATH_INFO'];
+}
+
+// Security measure, to avoid XSS exploit.
+if (!empty ($_SERVER['PATH_INFO']) && strrpos ($_SERVER['PHP_SELF'], $_SERVER['PATH_INFO'])) {
+    $_SERVER['PHP_SELF'] = substr ($_SERVER['PHP_SELF'], 0, -(strlen ($_SERVER['PATH_INFO'])));
+}
 // Vars
 if (isset($_SERVER)) {
 	$GLOBALS['__GET']	= &$_GET;
@@ -60,13 +68,8 @@ if( !empty( $_GET['nofetchscript'])) {
 	}
 
 // the filename of the eXtplorer script: (you rarely need to change this)
-if ($_SERVER['SERVER_PORT'] == 443 ) {
-	$GLOBALS["script_name"] = "https://" . $GLOBALS['__SERVER']['HTTP_HOST'] . $GLOBALS['__SERVER']["PHP_SELF"];
-	$GLOBALS['home_url']	= "https://" . $GLOBALS['__SERVER']['HTTP_HOST'] . dirname($GLOBALS['__SERVER']["PHP_SELF"]);
-} else {
-	$GLOBALS["script_name"] = "http://"  . $GLOBALS['__SERVER']['HTTP_HOST'] . $GLOBALS['__SERVER']["PHP_SELF"];
-	$GLOBALS['home_url']	= "http://"  . $GLOBALS['__SERVER']['HTTP_HOST'] . dirname($GLOBALS['__SERVER']["PHP_SELF"]);
-}
+$GLOBALS["script_name"] = "//"  . $GLOBALS['__SERVER']['HTTP_HOST'] . $GLOBALS['__SERVER']["PHP_SELF"];
+$GLOBALS['home_url']	= "//"  . $GLOBALS['__SERVER']['HTTP_HOST'] . dirname($GLOBALS['__SERVER']["PHP_SELF"]);
 
 $GLOBALS['home_url'] = str_replace( '/administrator', '', $GLOBALS['home_url'] );
 $GLOBALS['home_dir'] = !empty( $_SERVER['DOCUMENT_ROOT'] ) ? $_SERVER['DOCUMENT_ROOT'] : '.';
