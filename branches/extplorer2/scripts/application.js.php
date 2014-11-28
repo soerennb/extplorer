@@ -3,7 +3,7 @@
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
  * @package eXtplorer
- * @copyright soeren 2007-2013
+ * @copyright soeren 2007-2014
  * @author The eXtplorer project (http://extplorer.net)
  * @license
  * @version $Id$
@@ -87,7 +87,7 @@ function ext_init(){
     // pluggable renders
     function renderFileName(value,p, record){
         var t = new Ext.Template("<img src=\"{0}\" alt=\"* \" align=\"absmiddle\" />&nbsp;<b>{1}</b>");
-        return t.apply([record.get('icon'), value] );
+        return t.apply([record.get('icon'), value.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {    return '&#'+i.charCodeAt(0)+';';})] );
     }
     function renderType(value){
         var t = new Ext.Template("<i>{0}</i>");

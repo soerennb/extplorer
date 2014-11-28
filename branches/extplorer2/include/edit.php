@@ -182,7 +182,7 @@ class ext_Edit extends ext_Action {
 	"labelWidth": "300",
 	"autoScroll": "true", 
 	"url":"<?php echo basename( $GLOBALS['script_name']) ?>",
-	"title": "<?php echo strlen($s_item) > 50 ? substr( $s_item, strlen($s_item)-30, 30 ) : $s_item; ?>",
+	"title": "<?php echo strlen($s_item) > 50 ? substr( htmlentities($s_item,ENT_QUOTES), strlen($s_item)-30, 30 ) : htmlentities($s_item,ENT_QUOTES); ?>",
 	"frame": "true",
 	"closable": "true",
 	"tbar": [{
@@ -254,7 +254,7 @@ class ext_Edit extends ext_Action {
 	}],	
 	"items": [{
 		"xtype": "displayfield",
-		"value": "<?php echo $GLOBALS["messages"]["actedit"].": $s_item" ?>"
+		"value": "<?php echo $GLOBALS["messages"]["actedit"].': '.htmlentities($s_item,ENT_QUOTES) ?>"
 		},
 		{
 		"xtype": "textarea",
@@ -283,7 +283,7 @@ class ext_Edit extends ext_Action {
 			"xtype": "textfield",
 			"fieldLabel": "<?php echo ext_Lang::msg('copyfile', true ) ?>",
 			"name": "fname",
-			"value": "<?php echo $item ?>",
+			"value": "<?php echo addslashes($item) ?>",
 			"clear": "true"
 			}
 <?php if ($langs == "japanese"){ ?>
