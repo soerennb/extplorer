@@ -23,7 +23,9 @@ $Id: extplorer.php 164 2010-05-03 15:06:51Z soeren $ -->
 	  <strong>By default restricted to Superadministrators!</strong>
 	]]></description>
 	<scriptfile>install.extplorer.php</scriptfile>
-
+<updateservers>
+    <server type="extension" priority="2" name="eXtplorer Updates">http://extplorer.net/extplorer_update.xml</server>
+ </updateservers>
     <files><!-- Frontend Files! -->
         <filename>configuration.ext.php</filename>
         <filename>extplorer.php</filename>
