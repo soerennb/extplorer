@@ -9,7 +9,7 @@
 * file[INDEX] (filename only)
 * where INDEX is the actual number of the file to be included, so you can include multiple scripts at a time
 * 
-* @version $Id$
+* @version $Id: fetchscript.php 246 2016-02-10 21:21:12Z soeren $
 * @package eXtplorer
 * @copyright Copyright (C) 2006-2007 Soeren Eberhardt. All rights reserved.
 * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see LICENSE.php
@@ -113,16 +113,22 @@ function doGzip() {
 * This is necessary, because this file is (usually) located somewhere else than the CSS file! That makes
 * relative URL references point to wrong directories - so we need to fix that!
 */
-function cssUrl( $ref, $subdir ) {
+function cssUrl( $refs  ) {
+
+	$ref = $refs[1];
+
+	$subdir = $GLOBALS['subdir'];
 	$ref = str_replace( "'", '', stripslashes( $ref ));
 	$ref = trim( str_replace( '"', '', $ref) );
 	// Absolute References don't need to be fixed
 	if( substr( $ref, 0, 4 ) == 'http' ) {
 		return 'url( "'. $ref.'" )';
 	}
+
 	chdir( dirname( __FILE__ ).'/'.$subdir );
 	$ref = str_replace( dirname( __FILE__ ), '', realpath( $ref ));
 	$ref = str_replace( "\\", '/', $ref );
+
 	return 'url( "'. substr( $ref, 1 ).'" )';
 
 }
@@ -223,8 +229,8 @@ for( $i = 0; $i < $countFiles; $i++ ) {
 			$mime_type = 'text/css'; 
 			header( 'Content-Type: '.$mime_type.';');
 			$css = implode( '', file( $file ));
-
-			$str_css =	preg_replace("/url\((.+?)\)/ie","cssUrl('\\1', '$subdir')", $css);
+			$GLOBALS['subdir'] = $subdir;
+			$str_css =	preg_replace_callback("/url\((.+?)\)/i", 'cssUrl', $css);
 			echo $str_css;
 
 			break;

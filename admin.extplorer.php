@@ -4,10 +4,10 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
 /**
  * MAIN FILE! (formerly known as index.php)
  * 
- * @version $Id$
+ * @version $Id: admin.extplorer.php 247 2016-02-23 10:06:18Z soeren $
  * 
  * @package eXtplorer
- * @copyright soeren 2007-2013
+ * @copyright soeren 2007-2016
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * @license
@@ -39,9 +39,9 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
 **/
 
 // The eXtplorer version number
-$GLOBALS['ext_version'] = '2.1.6';
+$GLOBALS['ext_version'] = '2.1.9';
 $GLOBALS['ext_home'] = 'http://extplorer.net';
-
+$dir = '';
 //------------------------------------------------------------------------------
 if( defined( 'E_STRICT' ) ) { // Suppress Strict Standards Warnings
 	error_reporting(E_ALL & ~E_STRICT & ~E_NOTICE);

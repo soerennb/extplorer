@@ -2,7 +2,7 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id$
+ * @version $Id: ssh2.php 201 2011-06-27 09:45:09Z soeren $
  * @package eXtplorer
  * @copyright soeren 2007-2011
  * @author The eXtplorer project (http://extplorer.net)

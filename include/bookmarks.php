@@ -2,7 +2,7 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id$
+ * @version $Id: bookmarks.php 245 2015-09-15 20:20:03Z soeren $
  * @package eXtplorer
  * @copyright soeren 2007-2011
  * @author The eXtplorer project (http://extplorer.net)
@@ -75,6 +75,10 @@ function strip_invalid_key_char($s, $replacement ="") {
 function ext_modify_bookmark( $task, $dir ) {
 	global $my, $user, $mainframe;
 	$alias = substr( extGetParam($_REQUEST,'alias'), 0, 150 );
+	// CSRF Security Check
+	if( !ext_checkToken($GLOBALS['__POST']["token"]) ) {
+		ext_Result::sendResult('tokencheck', false, 'Request failed: Security Token not valid.');
+	}
 	$bookmarks = read_bookmarks();
 		$bookmarkfile = _EXT_PATH.'/config/bookmarks_'.$GLOBALS['file_mode'].'_';
 	if( empty( $my->id )) {
@@ -176,6 +180,7 @@ function ext_list_bookmarks( $dir ) {
 						.'requestType: \'xmlhttprequest\', '
 						.'alias: text, '
 						.'dir: \''.$dir.'\', '
+						.'token: \''.ext_getToken().'\', '
 						.'option: \'com_extplorer\' '
 					.'} '
 				.'}); '
@@ -193,6 +198,7 @@ function ext_list_bookmarks( $dir ) {
 						.'action:\'modify_bookmark\', '
 						.'task: \'remove\', '
 						.'dir: \''.$dir.'\', '
+						.'token: \''.ext_getToken().'\', '
 						.'option: \'com_extplorer\' '
 					.'} '
 				.'}); '

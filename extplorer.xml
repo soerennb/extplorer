@@ -1,14 +1,14 @@
-<?xml version="1.0" encoding="utf-8"?>
-<extension type="component" version="3.0" method="upgrade">
-<!-- Joomla! 3.0 Installer XML File 
-$Id: extplorer.php 164 2010-05-03 15:06:51Z soeren $ -->
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<mosinstall type="component">
+<!-- Joomla! 1.0 Installer XML File 
+$Id: extplorer.xml 247 2016-02-23 10:06:18Z soeren $ -->
     <name>eXtplorer</name>
-    <creationDate>14.11.2014</creationDate>
+    <creationDate>23.02.2016</creationDate>
     <author>soeren, QuiX Project</author>
     <copyright>Soeren Eberhardt-Biermann, QuiX Project</copyright>
     <authorEmail>info|-at|-extplorer.net</authorEmail>
     <authorUrl>http://extplorer.net/</authorUrl>
-    <version>2.1.6</version>
+    <version>2.1.9</version>
     <description><![CDATA[
 	<div align="left"><img src="components/com_extplorer/images/eXtplorer_logo.png" alt="eXtplorer Logo" /></div>
 	<h2>Successfully installed eXtplorer&nbsp;</h2>
@@ -22,10 +22,6 @@ $Id: extplorer.php 164 2010-05-03 15:06:51Z soeren $ -->
 	  <li>Changing file permissions (chmod)</li></ul><br/>and much more.<br/><br/>
 	  <strong>By default restricted to Superadministrators!</strong>
 	]]></description>
-	<scriptfile>install.extplorer.php</scriptfile>
-<updateservers>
-    <server type="extension" priority="2" name="eXtplorer Updates">http://extplorer.net/extplorer_update.xml</server>
- </updateservers>
     <files><!-- Frontend Files! -->
         <filename>configuration.ext.php</filename>
         <filename>extplorer.php</filename>
@@ -46,7 +42,7 @@ $Id: extplorer.php 164 2010-05-03 15:06:51Z soeren $ -->
 						  UNIQUE KEY token (token),
 						  KEY path (path),
 						  KEY expires (expires)
-						) ENGINE=MyISAM
+						) TYPE=MyISAM
 			</query>
 			<query>CREATE TABLE IF NOT EXISTS `#__extwebdav_properties` (
 						  path varchar(255) NOT NULL default '',
@@ -55,7 +51,7 @@ $Id: extplorer.php 164 2010-05-03 15:06:51Z soeren $ -->
 						  value text,
 						  PRIMARY KEY ( `ns` ( 100 ) , `path` ( 100 ) , `name` ( 50 ) ),
 						  KEY path (path)
-						) ENGINE=MyISAM
+						) TYPE=MyISAM
 			</query>
 
 	</queries>
@@ -66,10 +62,10 @@ $Id: extplorer.php 164 2010-05-03 15:06:51Z soeren $ -->
 				<query>DROP TABLE IF EXISTS `#__extwebdav_properties`</query>
 			</queries>    	
     </uninstall>
-    
+    <installfile>install.extplorer.php</installfile>
     <administration>
         <menu>eXtplorer</menu>
-        <files>		
+        <files><!-- Backend Files! -->
 				<filename>scripts.tar.gz</filename>
 				<filename>CHANGELOG.txt</filename>
 				<filename>README.txt</filename>
@@ -80,7 +76,6 @@ $Id: extplorer.php 164 2010-05-03 15:06:51Z soeren $ -->
 				<filename>config/conf.php</filename>
 				<filename>config/index.html</filename>
 				<filename>config/mimes.php</filename>
-				<filename>extplorer.j30.php</filename>
 				<filename>eXtplorer.ico</filename>
 				<filename>fetchscript.php</filename>
 				<filename>ftp_tmp/index.html</filename>
@@ -219,7 +214,7 @@ $Id: extplorer.php 164 2010-05-03 15:06:51Z soeren $ -->
 				<filename>include/users.php</filename>
 				<filename>include/view.php</filename>
 				<filename>index.php</filename>
-				
+				<filename>install.extplorer.php</filename>
 				<filename>languages/arabic.php</filename>
 				<filename>languages/arabic_mimes.php</filename>
 				<filename>languages/brazilian_portuguese.php</filename>
@@ -469,7 +464,7 @@ $Id: extplorer.php 164 2010-05-03 15:06:51Z soeren $ -->
 				<filename>uploadhandler.php</filename>
 				<filename>webdav.php</filename>
 				<filename>webdav_authenticate.php</filename>
-				<filename>webdav_table.sql.php</filename>
+<filename>webdav_table.sql.php</filename>
 		</files>
     </administration>
-</extension>
+</mosinstall>

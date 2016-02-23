@@ -3,9 +3,9 @@
 if( ! defined( '_JEXEC' ) && ! defined( '_VALID_MOS' ) )
 	die( 'Restricted access' ) ;
 /**
- * @version $Id$
+ * @version $Id: extract.php 242 2015-08-19 06:29:26Z soeren $
  * @package eXtplorer
- * @copyright soeren 2007-2010
+ * @copyright soeren 2007-2015
  * @author The eXtplorer project (http://extplorer.net)
  * 
  * @license
@@ -43,7 +43,10 @@ class ext_Extract extends ext_Action {
 		if( ! ext_isArchive( $item ) ) {
 			ext_Result::sendResult( 'archive', false, $item.': '.ext_Lang::err( 'extract_noarchive' ) ) ;
 		} else {
-
+            // CSRF Security Check
+            if( !ext_checkToken($GLOBALS['__POST']["token"]) ) {
+                ext_Result::sendResult('tokencheck', false, 'Request failed: Security Token not valid.');
+            }
 			$archive_name = realpath( get_abs_item( $dir, $item ) ) ;
 
 			if( empty( $dir ) ) {

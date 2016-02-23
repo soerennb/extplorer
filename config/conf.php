@@ -1,5 +1,5 @@
 <?php
-/** @version $Id$ */
+/** @version $Id: conf.php 232 2014-02-13 20:08:10Z soeren $ */
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 

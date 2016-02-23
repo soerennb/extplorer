@@ -2,9 +2,9 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id$
+ * @version $Id: mkitem.php 245 2015-09-15 20:20:03Z soeren $
  * @package eXtplorer
- * @copyright soeren 2007-2011
+ * @copyright soeren 2007-2015
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * 
@@ -41,6 +41,10 @@ class ext_Mkitem extends ext_Action {
 		if(($GLOBALS["permissions"]&01)!=01) ext_Result::sendResult( 'mkitem', false, $GLOBALS["error_msg"]["accessfunc"]);
 
 		if( extGetParam($_POST,'confirm') == 'true') {
+            // CSRF Security Check
+            if( !ext_checkToken($GLOBALS['__POST']["token"]) ) {
+                ext_Result::sendResult('tokencheck', false, 'Request failed: Security Token not valid.');
+            }
 			$mkname=$GLOBALS['__POST']["mkname"];
 			$mktype=$GLOBALS['__POST']["mktype"];
 			$symlink_target = $GLOBALS['__POST']['symlink_target'];
@@ -146,7 +150,9 @@ class ext_Mkitem extends ext_Action {
 					params: {option: "com_extplorer", 
 							action: "mkitem", 
 							dir: datastore.directory, 
-							confirm: "true"}
+							confirm: "true",
+							token: "<?php echo ext_getToken() ?>"
+					}
 				})
 			}
 		},{

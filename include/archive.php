@@ -2,13 +2,13 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id$
+ * @version $Id: archive.php 243 2015-08-31 18:33:58Z soeren $
  * @package eXtplorer
- * @copyright soeren 2007-2011
+ * @copyright soeren 2007-2015
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * @license
- * @version $Id$
+ * @version $Id: archive.php 243 2015-08-31 18:33:58Z soeren $
  * The contents of this file are subject to the Mozilla Public License
  * Version 1.1 (the "License"); you may not use this file except in
  * compliance with the License. You may obtain a copy of the License at
@@ -46,7 +46,11 @@ class ext_Archive extends ext_Action {
 		if(!$GLOBALS["zip"] && !$GLOBALS["tgz"]) {
 			ext_Result::sendResult('archive', false, $GLOBALS["error_msg"]["miscnofunc"]);
 		}
-		
+
+        // CSRF Security Check
+        if( !ext_checkToken($GLOBALS['__POST']["token"]) ) {
+            ext_Result::sendResult('tokencheck', false, 'Request failed: Security Token not valid.');
+        }
 		$allowed_types = array( 'zip', 'tgz', 'tbz', 'tar' );
 
 		// If we have something to archive, let's do it now
@@ -153,6 +157,7 @@ class ext_Archive extends ext_Action {
 				'totalitems' => $cnt_filelist,
 				'success' => true,
 				'action' => 'archive',
+					'token' => ext_getToken(),
 				'message' => sprintf( ext_Lang::msg('processed_x_files'), $startfrom + $files_per_step, $cnt_filelist )
 				);
 			}
@@ -163,6 +168,7 @@ class ext_Archive extends ext_Action {
 				}
 				$response = Array( 'action' => 'archive',
 				'success' => true,
+				'token' => ext_getToken(),
 				'message' => ext_Lang::msg('archive_created'),
 				'newlocation' => ext_make_link( 'download', $dir, basename($archive_name) )
 				);

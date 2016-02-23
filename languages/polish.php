@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: polish.php 195 2011-05-31 06:57:32Z sloarch07 $
 // Polish Language Module for v2.3 (translated by l0co@wp.pl)
 // Additional translation and corrections 2010-07-24 by marcin@nevada.pl
 

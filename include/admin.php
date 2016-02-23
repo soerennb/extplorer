@@ -2,13 +2,13 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id$
+ * @version $Id: admin.php 242 2015-08-19 06:29:26Z soeren $
  * @package eXtplorer
- * @copyright soeren 2007-2011
+ * @copyright soeren 2007-2015
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * @license
- * @version $Id$
+ * @version $Id: admin.php 242 2015-08-19 06:29:26Z soeren $
  * The contents of this file are subject to the Mozilla Public License
  * Version 1.1 (the "License"); you may not use this file except in
  * compliance with the License. You may obtain a copy of the License at
@@ -124,7 +124,8 @@ function admin($admin, $dir) {
 							"params": {
 								option: "com_extplorer", 
 								"action": "admin",
-								"action2": "chpwd"
+								"action2": "chpwd",
+								"token": "<?php echo ext_getToken() ?>"
 							}
 						})
 						}
@@ -174,7 +175,8 @@ function admin($admin, $dir) {
 				"text": "<?php echo ext_Lang::msg( 'btnadd', true ) ?>", 
 				"handler": function() {
 							Ext.Ajax.request( { url: "<?php echo basename($GLOBALS['script_name']) ?>",
-								"params": { "option": "com_extplorer","action": "admin","action2": "adduser" },	
+								"params": { "option": "com_extplorer","action": "admin","action2": "adduser",
+								"token": "<?php echo ext_getToken() ?>" },	
 								"callback": function(oElement, bSuccess, oResponse) {
 											if( !bSuccess ) {
 												Ext.Msg.alert( "Ajax communication failure!");
@@ -208,7 +210,8 @@ function admin($admin, $dir) {
 								return;
 							}
 							Ext.Ajax.request( { url: "<?php echo basename($GLOBALS['script_name']) ?>",
-								"params": { option: "com_extplorer","action": "admin","action2": "edituser","nuser":theUser },	
+								"params": { option: "com_extplorer","action": "admin","action2": "edituser","nuser":theUser,
+								"token": "<?php echo ext_getToken() ?>" },	
 								"callback": function(oElement, bSuccess, oResponse) {
 											if( !bSuccess ) {
 												Ext.Msg.alert( "Ajax communication failure!");
@@ -260,7 +263,8 @@ function admin($admin, $dir) {
 										"option": "com_extplorer", 
 										"action": "admin",
 										"action2": "rmuser",
-										"user": theUser
+										"user": theUser,
+										"token": "<?php echo ext_getToken() ?>"
 									}
 								});
 							});
@@ -278,7 +282,9 @@ function admin($admin, $dir) {
 }
 //------------------------------------------------------------------------------
 function changepwd($dir) {			// Change Password
-	
+	if( !ext_checkToken($GLOBALS['__POST']["token"]) ) {
+		ext_Result::sendResult('tokencheck', false, 'Request failed: Security Token not valid.');
+	}
 	if($GLOBALS['__POST']["newpwd1"]!=$GLOBALS['__POST']["newpwd2"]) {
 		ext_Result::sendResult('changepwd', false, $GLOBALS["error_msg"]["miscnopassmatch"]);
 	}
@@ -310,7 +316,8 @@ function changepwd($dir) {			// Change Password
 }
 //------------------------------------------------------------------------------
 function adduser($dir) {			// Add User
-	if(isset($GLOBALS['__POST']["confirm"]) && $GLOBALS['__POST']["confirm"]=="true") {
+	if(isset($GLOBALS['__POST']["confirm"]) && $GLOBALS['__POST']["confirm"]=="true" && ext_checkToken($GLOBALS['__POST']["token"]) ) {
+	
 		$user=stripslashes($GLOBALS['__POST']["nuser"]);
 		if($user=="" || $GLOBALS['__POST']["home_dir"]=="") {
 			ext_Result::sendResult('adduser', false, $GLOBALS["error_msg"]["miscfieldmissed"]);
@@ -342,6 +349,9 @@ function adduser($dir) {			// Add User
 function edituser($dir) {			// Edit User
 	$user=stripslashes($GLOBALS['__POST']["nuser"]);
 	$data=ext_find_user($user,NULL);
+	if( !ext_checkToken($GLOBALS['__POST']["token"]) ) {
+		ext_Result::sendResult('tokencheck', false, 'CSRF Token Check failed.');
+	}
 	if($data==NULL) {
 		ext_Result::sendResult('edituser', false, $user.": ".$GLOBALS["error_msg"]["miscnofinduser"]);
 	}
@@ -539,7 +549,8 @@ function show_userform( $data = null ) {
 								user: "<?php echo @$data[0] ?>",
 								"action": 'admin', 
 								"action2": "<?php echo @$data[0] ? 'edituser' : 'adduser' ?>",
-								"confirm": "true"
+								"confirm": "true",
+								"token": "<?php echo ext_getToken() ?>"
 						}
 					})
 				}
@@ -553,6 +564,9 @@ function show_userform( $data = null ) {
 //------------------------------------------------------------------------------
 function removeuser($dir) {			// Remove User
 	$user=stripslashes($GLOBALS['__POST']["user"]);
+	if( !ext_checkToken($GLOBALS['__POST']["token"]) ) {
+		ext_Result::sendResult('tokencheck', false, 'CSRF Token Check failed.');
+	}
 	if($user==$GLOBALS['__SESSION']['credentials_extplorer']['username']) {
 		ext_Result::sendResult('removeuser', false, $GLOBALS["error_msg"]["miscselfremove"]);
 	}

@@ -1,6 +1,6 @@
 <?php
 /**
- * @version $Id$
+ * @version $Id: index.php 232 2014-02-13 20:08:10Z soeren $
  * @package eXtplorer
  * @copyright soeren 2007-2010
  * @author The eXtplorer project (http://joomlacode.org/gf/project/eXtplorer/)

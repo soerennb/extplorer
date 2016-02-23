@@ -2,7 +2,7 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id$
+ * @version $Id: functions.php 246 2016-02-10 21:21:12Z soeren $
  * @package eXtplorer
  * @copyright soeren 2007-2011
  * @author The eXtplorer project (http://extplorer.net)
@@ -255,7 +255,7 @@ function get_is_image( $abs_item ) {		// is this file an image?
 	if( isset($abs_item['name'])) {
 		$abs_item = $abs_item['name'];
 	}
-	return @eregi($GLOBALS["images_ext"], $abs_item);
+	return in_array(pathinfo($abs_item,PATHINFO_EXTENSION ), $GLOBALS["images_ext"]);
 }
 //-----------------------------------------------------------------------------
 function get_is_editable( $abs_item ) {		// is this file editable?
@@ -264,7 +264,10 @@ function get_is_editable( $abs_item ) {		// is this file editable?
 	if( is_array( $abs_item ) ) {
 		$abs_item = $abs_item['name'];
 	}
-	if(preg_match('/'.$GLOBALS["editable_ext"].'/i',$abs_item)) return true;
+
+	if(in_array(".".strtolower(pathinfo($abs_item,PATHINFO_EXTENSION )), $GLOBALS["editable_ext"])) {
+		return true;
+	}
 
 	return strpos( basename($abs_item), "." ) ? false : true;
 
@@ -286,7 +289,8 @@ function get_mime_type( $abs_item, $query) {	// get file's mimetype
 				// mime_type
 	foreach($GLOBALS["used_mime_types"] as $mime) {
 		list($desc,$img,$ext)	= $mime;
-		if(@eregi($ext,basename($abs_item) )) {
+
+		if(stristr(basename($abs_item), $ext )) {
 			$mime_type	= $desc;
 			$image		= $img;
 			if($query=="img") return $image;
@@ -296,7 +300,7 @@ function get_mime_type( $abs_item, $query) {	// get file's mimetype
 
 	if((function_exists("is_executable") &&
 		@is_executable( $abs_item )) ||
-		@eregi($GLOBALS["super_mimes"]["exe"][2],$abs_item))
+		@stristr($abs_item,$GLOBALS["super_mimes"]["exe"][2]))
 	{						// executable
 		$mime_type	= $GLOBALS["super_mimes"]["exe"][0];
 		$image		= $GLOBALS["super_mimes"]["exe"][1];
@@ -305,10 +309,12 @@ function get_mime_type( $abs_item, $query) {	// get file's mimetype
 		$image		= $GLOBALS["super_mimes"]["file"][1];
 	}
 
-	if($query=="img") 
-	return $image;
-	else 
-	return $mime_type . $extra;
+	if($query=="img") {
+		return $image;
+	}
+	else {
+		return $mime_type . $extra;
+	}
 }
 //------------------------------------------------------------------------------
 function get_show_item($dir, $item) {		// show this file?
@@ -563,7 +569,7 @@ function down_home($abs_dir) {			// dir deeper than home?
 	$real_dir = @realpath($abs_dir);
 
 	if($real_home===false || $real_dir===false) {
-		if(@eregi("\\.\\.",$abs_dir)) return false;
+		if(@stristr($abs_dir,"\\.\\.")) return false;
 	} else if(strcmp($real_home,@substr($real_dir,0,strlen($real_home)))) {
 		return false;
 	}
@@ -857,7 +863,7 @@ class extProfiler {
 	* Constructor
 	* @param string A prefix for mark messages
 	*/
-	function extProfiler( $prefix='' ) {
+	function __construct( $prefix='' ) {
 		$this->start = $this->getmicrotime();
 		$this->prefix = $prefix;
 	}
@@ -1178,7 +1184,8 @@ function extGetParam( &$arr, $name, $def=null, $mask=0 ) {
 				if (is_null( $noHtmlFilter )) {
 					$noHtmlFilter = new InputFilter( /* $tags, $attr, $tag_method, $attr_method, $xss_auto */ );
 				}
-				$return = $noHtmlFilter->process( $return );
+
+				$return = $noHtmlFilter->sanitize( array($return) )[0];
 
 				if (empty($return) && is_numeric($def)) {
 				// if value is defined and default value is numeric set variable type to integer
@@ -1432,6 +1439,12 @@ function logout() {
  * @param string $id
  * @return string
  */
-function get_session_id( $id=null ) {
+function generate_session_id( $id=null ) {
 	return extMakePassword( 32 );
+}
+function ext_getToken() {
+    return md5(session_id());
+}
+function ext_checkToken($token) {
+    return md5(session_id()) == $token;
 }

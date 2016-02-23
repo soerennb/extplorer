@@ -27,7 +27,7 @@ class extArchive {
 	 * @param	string	Directory to unpack into
 	 * @return	boolean	True for success
 	 */
-	function extract( $archivename, $extractdir ) {
+	static function extract( $archivename, $extractdir ) {
 		require_once( dirname(__FILE__). '/file.php' ) ;
 		require_once( dirname(__FILE__). '/folder.php' ) ;
 

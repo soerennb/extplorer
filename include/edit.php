@@ -2,9 +2,9 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id$
+ * @version $Id: edit.php 242 2015-08-19 06:29:26Z soeren $
  * @package eXtplorer
- * @copyright soeren 2007-2009
+ * @copyright soeren 2007-2015
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * 
@@ -70,6 +70,10 @@ class ext_Edit extends ext_Action {
 			ext_Result::sendResult('edit', false, $item.": ".ext_Lang::err('accessfile' ));
 		}
 
+        // CSRF Security Check
+        if( !ext_checkToken($GLOBALS['__POST']["token"]) ) {
+            ext_Result::sendResult('tokencheck', false, 'Request failed: Security Token not valid.');
+        }
 		if(isset($GLOBALS['__POST']["dosave"]) && $GLOBALS['__POST']["dosave"]=="yes") {
 			// Save / Save As
 			$item=basename(stripslashes($GLOBALS['__POST']["fname"]));
@@ -208,7 +212,8 @@ class ext_Edit extends ext_Action {
 						code: editAreaLoader.getValue("ext_codefield<?php echo $id_hash ?>"),
 						dir: '<?php echo stripslashes($dir) ?>', 
 						item: '<?php echo stripslashes($item) ?>', 
-						dosave: 'yes'
+						dosave: 'yes',
+                        token: "<?php echo ext_getToken() ?>"
 				}
 			});
 		},
@@ -237,7 +242,8 @@ class ext_Edit extends ext_Action {
 					action: 'edit', 
 					dir: '<?php echo stripslashes($dir) ?>', 
 					item: '<?php echo stripslashes($item) ?>', 
-					doreopen: 'yes'
+					doreopen: 'yes',
+                    token: "<?php echo ext_getToken() ?>"
 				}
 			});
 		},	

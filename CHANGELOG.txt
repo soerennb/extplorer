@@ -1,7 +1,13 @@
 ****************************
 Changelog for eXtplorer
-Version $Id$
+Version $Id: CHANGELOG.txt 246 2016-02-10 21:21:12Z soeren $
 ****************************
+--- version 2.1.9 ---
+- fixed PHP 7 compatibility issues
+
+--- version 2.1.8 ---
+- added security functions for protection against CSRF attacks
+- fixed "directories with the name '0' are not loading"
 
 --- version 2.1.7 ---
 - fixed SWFUpload against XSS vulnerabilities

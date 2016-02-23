@@ -2,9 +2,9 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id$
+ * @version $Id: chmod.php 243 2015-08-31 18:33:58Z soeren $
  * @package eXtplorer
- * @copyright soeren 2007-2009
+ * @copyright soeren 2007-2015
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * 
@@ -42,6 +42,10 @@ class ext_Chmod extends ext_Action {
 
 		if(($GLOBALS["permissions"]&01)!=01) ext_Result::sendResult( 'chmod', false, $GLOBALS["error_msg"]["accessfunc"]);
 
+        // CSRF Security Check
+        if( !ext_checkToken($GLOBALS['__POST']["token"]) ) {
+            ext_Result::sendResult('tokencheck', false, 'Request failed: Security Token not valid.');
+        }
 		if( !empty($GLOBALS['__POST']["selitems"])) {
 			$cnt=count($GLOBALS['__POST']["selitems"]);
 
@@ -210,7 +214,8 @@ class ext_Chmod extends ext_Action {
 					"action": "chmod", 
 					"dir": "<?php echo stripslashes($GLOBALS['__POST']["dir"]) ?>", 
 					"selitems[]": ['<?php echo implode("','", $GLOBALS['__POST']["selitems"]) ?>'], 
-					confirm: 'true'
+					confirm: 'true',
+					token: "<?php echo ext_getToken() ?>"
 				}
 			});
 		}

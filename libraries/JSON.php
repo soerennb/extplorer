@@ -2,7 +2,7 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id$
+ * @version $Id: JSON.php 242 2015-08-19 06:29:26Z soeren $
  * @package eXtplorer
  *
  *
@@ -825,7 +825,7 @@ class ext_Json
     function isError($data, $code = null)
     {
         if (class_exists('pear')) {
-            return PEAR::isError($data, $code);
+            return @PEAR::isError($data, $code);
         } elseif (is_object($data) && (get_class($data) == 'services_json_error' ||
                                  is_subclass_of($data, 'services_json_error'))) {
             return true;

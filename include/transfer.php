@@ -2,9 +2,9 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id$
+ * @version $Id: transfer.php 242 2015-08-19 06:29:26Z soeren $
  * @package eXtplorer
- * @copyright soeren 2007-2009
+ * @copyright soeren 2007-2015
  * @author The eXtplorer project (http://extplorer.net)
  * @license
  * The contents of this file are subject to the Mozilla Public License
@@ -51,7 +51,10 @@ class ext_Transfer extends ext_Action {
 		//DEBUG ext_Result::sendResult('transfer', false, $dir );
 		// Execute
 		if(isset($GLOBALS['__POST']["confirm"]) && $GLOBALS['__POST']["confirm"]=="true") {
-
+            // CSRF Security Check
+            if( !ext_checkToken($GLOBALS['__POST']["token"]) ) {
+                ext_Result::sendResult('tokencheck', false, 'Request failed: Security Token not valid.');
+            }
 			$cnt=count($GLOBALS['__POST']['userfile']);
 			$err=false;
 			foreach($this->_downloadMethods as $method ) {

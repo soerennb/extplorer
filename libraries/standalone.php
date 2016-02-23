@@ -1,8 +1,8 @@
 <?php
 /**
-* @version $Id$
+* @version $Id: standalone.php 246 2016-02-10 21:21:12Z soeren $
 * @package eXtplorer
-* @copyright Copyright (C) 2007 Open Source Matters. All rights reserved.
+* @copyright Copyright (C) 2012-2016 Soeren Eberhardt-Biermann. All rights reserved.
 * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see LICENSE.php
 * Joomla! is free software. This version may have been modified pursuant
 * to the GNU General Public License, and as distributed it includes or
@@ -23,7 +23,6 @@ if (version_compare( phpversion(), '5.0' ) < 0) {
 	require_once( dirname( __FILE__ ) . '/compat.php50x.php' );
 }
 require_once( dirname( __FILE__ ) .'/../include/users.php' );
-@set_magic_quotes_runtime( 0 );
 
 // platform neurtral url handling
 if ( isset( $_SERVER['REQUEST_URI'] ) ) {
@@ -230,7 +229,7 @@ class extMainFrame {
 
 			// filter input
 			$iFilter = new InputFilter();
-			$this->_userstate[$var_name] = $iFilter->process( $this->_userstate[$var_name] );
+			$this->_userstate[$var_name] = $iFilter->sanitize( array($this->_userstate[$var_name]) )[0];
 
 			return $this->_userstate[$var_name];
 		} else {

@@ -1,5 +1,5 @@
 <?php
-/** @version $Id$ */
+/** @version $Id: .htusers.php 135 2009-01-27 21:57:15Z ryu_ms $ */
 /** ensure this file is being included by a parent file */
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 

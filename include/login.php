@@ -2,7 +2,7 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id$
+ * @version $Id: login.php 242 2015-08-19 06:29:26Z soeren $
  * @package eXtplorer
  * @copyright soeren 2007-2009
  * @author The eXtplorer project (http://extplorer.net)
@@ -113,7 +113,7 @@ function login() {
 		exit();
 	}
 	session_write_close();
-	session_id( get_session_id() );
+	session_id( generate_session_id() );
 	session_start();
 	// Ask for Login
 	$GLOBALS['mainframe']->setPageTitle( ext_Lang::msg('actlogin') );

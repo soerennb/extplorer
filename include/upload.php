@@ -2,9 +2,9 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id$
+ * @version $Id: upload.php 242 2015-08-19 06:29:26Z soeren $
  * @package eXtplorer
- * @copyright soeren 2007-2009
+ * @copyright soeren 2007-2015
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * @license
@@ -44,7 +44,10 @@ class ext_Upload extends ext_Action {
 
 		// Execute
 		if(isset($GLOBALS['__POST']["confirm"]) && $GLOBALS['__POST']["confirm"]=="true") {
-				
+            // CSRF Security Check
+            if( !ext_checkToken($GLOBALS['__POST']["token"]) ) {
+                ext_Result::sendResult('tokencheck', false, 'Request failed: Security Token not valid.');
+            }
 			if( isset($GLOBALS['__FILES']['Filedata'])) {
 				// Re-Map the flash-uploaded file with the name "Filedata" to the "userfile" array
 				$GLOBALS['__FILES']['userfile'] = array(
@@ -243,7 +246,8 @@ class ext_Upload extends ext_Action {
 						"action": "upload", 
 						"dir": datastore.directory,
 						"requestType": "xmlhttprequest",
-						"confirm": "true"
+						"confirm": "true",
+                        "token": "<?php echo ext_getToken() ?>"
 					}
 				});
 			}
@@ -304,7 +308,8 @@ class ext_Upload extends ext_Action {
 						"option": "com_extplorer", 
 						"action": "transfer", 
 						"dir": datastore.directory,
-						"confirm": 'true'
+						"confirm": 'true',
+                        "token": "<?php echo ext_getToken() ?>"
 					}
 				});
 			}

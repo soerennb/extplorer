@@ -38,7 +38,7 @@ class Text_Diff_ThreeWay extends Text_Diff {
      * @param array $final1  The first version to compare to.
      * @param array $final2  The second version to compare to.
      */
-    function Text_Diff_ThreeWay($orig, $final1, $final2)
+    function __construct($orig, $final1, $final2)
     {
         if (extension_loaded('xdiff')) {
             $engine = new Text_Diff_Engine_xdiff();

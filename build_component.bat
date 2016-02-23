@@ -10,7 +10,7 @@ rem YOU MUST HAVE INSTALLED THE 4.x VERSION OF 7zip
 rem Please update the program path here accordingly
 
 
-set PATH="c:\Projekte\extplorer\svn-extplorer2\"
+set PATH="e:\Projekte\extplorer\svn-extplorer2\"
 
 cd %PATH%
 

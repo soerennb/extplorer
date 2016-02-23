@@ -29,7 +29,7 @@ class extFile
 	 * @return string The file extension
 	 * @since 1.5
 	 */
-	function getExt($file) {
+	static function getExt($file) {
 		$dot = strrpos($file, '.') + 1;
 		return substr($file, $dot);
 	}
@@ -41,7 +41,7 @@ class extFile
 	 * @return string The file name without the extension
 	 * @since 1.5
 	 */
-	function stripExt($file) {
+	static function stripExt($file) {
 		return preg_replace('#\.[^.]*$#', '', $file);
 	}
 
@@ -52,7 +52,7 @@ class extFile
 	 * @return string The sanitised string
 	 * @since 1.5
 	 */
-	function makeSafe($file) {
+	static function makeSafe($file) {
 		$regex = array('#(\.){2,}#', '#[^A-Za-z0-9\.\_\- ]#', '#^\.#');
 		return preg_replace($regex, '', $file);
 	}
@@ -69,7 +69,7 @@ class extFile
 	 * @return mixed Returns file contents or boolean False if failed
 	 * @since 1.5
 	 */
-	function read($filename, $incpath = false, $amount = 0, $chunksize = 8192, $offset = 0)
+	static function read($filename, $incpath = false, $amount = 0, $chunksize = 8192, $offset = 0)
 	{
 		// Initialize variables
 		$data = null;
@@ -110,7 +110,7 @@ class extFile
 	 * @return boolean True if path is a file
 	 * @since 1.5
 	 */
-	function exists($file)
+	static function exists($file)
 	{
 		return is_file(extPath::clean($file));
 	}
@@ -122,7 +122,7 @@ class extFile
 	 * @return string filename
 	 * @since 1.5
 	 */
-	function getName($file) {
+	static function getName($file) {
 		$slash = strrpos($file, DS);
 		if ($slash !== false) {
 			return substr($file, $slash + 1);

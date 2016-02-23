@@ -1,5 +1,5 @@
 ﻿<?php
-// $Id$
+// $Id: english.php 195 2011-05-31 06:57:32Z sloarch07 $
 // English Language Module for v2.3 (translated by the QuiX project)
 // Additional translation by sloarch, mic, Paulino Michelazzo
 

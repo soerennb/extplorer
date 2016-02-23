@@ -2,7 +2,7 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
-* @version $Id$
+* @version $Id: install.extplorer.php 245 2015-09-15 20:20:03Z soeren $
 * @package eXtplorer
 * @copyright (C) 2005-2008 Soeren
 * @license GNU / GPL
@@ -32,7 +32,7 @@ if(!function_exists ('com_install')){
 		$extract_dir = $mypath.'/';
 		
 		$result = extArchive::extract( $archive_name, $extract_dir );
-		if( !PEAR::isError( $result )) {
+		if( !@PEAR::isError( $result )) {
 			unlink( $archive_name );
 		} else {
 			echo '<pre style="color:white; font-weight:bold; background-color:red;">Error!
@@ -64,7 +64,8 @@ if(!class_exists ( 'com_extplorerInstallerScript' )){
 			public function install( $adapter){
 				$adminpath = JPATH_SITE.'/administrator/components/com_extplorer';
 				com_install($adminpath);
-				if(JVersion::isCompatible('3.0')) rename($adminpath.'/extplorer.j30.php', $adminpath.'/extplorer.php');
+				$version = new JVersion;
+				if($version->isCompatible('3.0')) rename($adminpath.'/extplorer.j30.php', $adminpath.'/extplorer.php');
 				return true;
 			}
 			/**

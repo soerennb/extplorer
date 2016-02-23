@@ -3,10 +3,10 @@
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
  * @package eXtplorer
- * @copyright soeren 2007-2014
+ * @copyright soeren 2007-2015
  * @author The eXtplorer project (http://extplorer.net)
  * @license
- * @version $Id$
+ * @version $Id: application.js.php 244 2015-09-11 10:03:20Z soeren $
  * The contents of this file are subject to the Mozilla Public License
  * Version 1.1 (the "License"); you may not use this file except in
  * compliance with the License. You may obtain a copy of the License at
@@ -87,7 +87,7 @@ function ext_init(){
     // pluggable renders
     function renderFileName(value,p, record){
         var t = new Ext.Template("<img src=\"{0}\" alt=\"* \" align=\"absmiddle\" />&nbsp;<b>{1}</b>");
-        return t.apply([record.get('icon'), value.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {    return '&#'+i.charCodeAt(0)+';';})] );
+		return t.apply([record.get('icon'), value.toString().replace(/[\u00A0-\u9999<>\&]/gim, function(i) {    return '&#'+i.charCodeAt(0)+';';})] );
     }
     function renderType(value){
         var t = new Ext.Template("<i>{0}</i>");
