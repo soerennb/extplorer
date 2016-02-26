@@ -2,7 +2,7 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id: mkitem.php 245 2015-09-15 20:20:03Z soeren $
+ * @version $Id: mkitem.php 248 2016-02-26 18:29:50Z soeren $
  * @package eXtplorer
  * @copyright soeren 2007-2015
  * @author The eXtplorer project (http://extplorer.net)
@@ -37,7 +37,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  */
 class ext_Mkitem extends ext_Action {
 
-	function execAction($dir) {		// make new directory or file
+	function execAction($dir, $item="") {		// make new directory or file
 		if(($GLOBALS["permissions"]&01)!=01) ext_Result::sendResult( 'mkitem', false, $GLOBALS["error_msg"]["accessfunc"]);
 
 		if( extGetParam($_POST,'confirm') == 'true') {

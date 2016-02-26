@@ -2,9 +2,9 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id: upload.php 242 2015-08-19 06:29:26Z soeren $
+ * @version $Id: upload.php 248 2016-02-26 18:29:50Z soeren $
  * @package eXtplorer
- * @copyright soeren 2007-2015
+ * @copyright soeren 2007-2016
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * @license
@@ -36,7 +36,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  */
 class ext_Upload extends ext_Action {
 
-	function execAction($dir) {
+	function execAction($dir, $item="") {
 
 		if(($GLOBALS["permissions"]&01)!=01) {
 			ext_Result::sendResult('upload', false, ext_Lang::err('accessfunc'));
@@ -170,7 +170,8 @@ class ext_Upload extends ext_Action {
 				"action": "upload", 
 				"dir": datastore.directory, 
 				"requestType": "xmlhttprequest",
-				"confirm": "true"
+				"confirm": "true",
+				"token": "<?php echo ext_getToken() ?>"
 			},
 			
 <?php

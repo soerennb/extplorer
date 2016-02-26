@@ -65,7 +65,7 @@ class extArchive {
 		return $result;
 	}
 	
-	function &getAdapter( $type ) {
+	static function &getAdapter( $type ) {
 		static $adapters ;
 		
 		if( ! isset( $adapters ) ) {
@@ -100,7 +100,7 @@ class extArchive {
 	 * @param	boolean	Automatically append the extension for the archive
 	 * @param	boolean	Remove for source files
 	 */
-	function create( $archive, $files, $compress = 'tar', $addPath = '', $removePath = '', $autoExt = false ) {
+	static function create( $archive, $files, $compress = 'tar', $addPath = '', $removePath = '', $autoExt = false ) {
 		$compress = strtolower( $compress );
 		if( $compress == 'tgz' || $compress == 'tbz' || $compress == 'tar') {
 			

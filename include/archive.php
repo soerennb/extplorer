@@ -2,13 +2,13 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id: archive.php 243 2015-08-31 18:33:58Z soeren $
+ * @version $Id: archive.php 248 2016-02-26 18:29:50Z soeren $
  * @package eXtplorer
  * @copyright soeren 2007-2015
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * @license
- * @version $Id: archive.php 243 2015-08-31 18:33:58Z soeren $
+ * @version $Id: archive.php 248 2016-02-26 18:29:50Z soeren $
  * The contents of this file are subject to the Mozilla Public License
  * Version 1.1 (the "License"); you may not use this file except in
  * compliance with the License. You may obtain a copy of the License at
@@ -38,7 +38,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  */
 class ext_Archive extends ext_Action {
 
-	function execAction( $dir ) {
+	function execAction( $dir, $item="" ) {
 
 		if(($GLOBALS["permissions"]&01)!=01) {
 			ext_Result::sendResult('archive', false, $GLOBALS["error_msg"]["accessfunc"]);

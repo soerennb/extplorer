@@ -2,9 +2,9 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id: view.php 211 2012-02-02 13:46:39Z soeren $
+ * @version $Id: view.php 248 2016-02-26 18:29:50Z soeren $
  * @package eXtplorer
- * @copyright soeren 2007-2011
+ * @copyright soeren 2007-2016
  * @author The eXtplorer project (http://extplorer.net)
  * 
  * @license
@@ -40,11 +40,11 @@ class ext_View extends ext_Action {
 	function execAction($dir, $item) {		// show file contents
 		global $action;
 		$item = basename($item);
-		if( @eregi($GLOBALS["images_ext"], $item)) {
+		if(in_array(".".strtolower(pathinfo($item,PATHINFO_EXTENSION )), $GLOBALS["images_ext"])) {
 			$html =  '<img src="'.ext_make_link( 'get_image', $dir, rawurlencode($item)).'" alt="'.$GLOBALS["messages"]["actview"].": ".$item.'" /><br /><br />';
 		}
 
-		elseif( @eregi($GLOBALS["editable_ext"], $item)) {
+		elseif(in_array(".".strtolower(pathinfo($item,PATHINFO_EXTENSION )), $GLOBALS["editable_ext"])) {
 
 			$geshiFile = _EXT_PATH . '/libraries/geshi/geshi.php';
 
@@ -123,11 +123,13 @@ class ext_View extends ext_Action {
 }
 		<?php
 	}
-	function sendImage( $dir, $item ) {
+	static function sendImage( $dir, $item ) {
 		$item = basename($item);
 		$abs_item = get_abs_item( $dir, $item );
 		if( $GLOBALS['ext_File']->file_exists( $abs_item )) {
-  			if(!@eregi($GLOBALS["images_ext"], $item)) return;
+			if(!in_array(".".strtolower(pathinfo($item,PATHINFO_EXTENSION )), $GLOBALS["images_ext"])) {
+				return;
+			}
   			while( @ob_end_clean() );
   
   			$pathinfo = pathinfo( $item );

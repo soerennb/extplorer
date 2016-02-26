@@ -2,9 +2,9 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id: delete.php 242 2015-08-19 06:29:26Z soeren $
+ * @version $Id: delete.php 248 2016-02-26 18:29:50Z soeren $
  * @package eXtplorer
- * @copyright soeren 2007-2015
+ * @copyright soeren 2007-2016
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * 
@@ -40,7 +40,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  */
 class ext_Delete extends ext_Action {
 
-	function execAction($dir) {
+	function execAction($dir, $item="") {
 		// delete files/dirs
 		if(($GLOBALS["permissions"]&01)!=01) 
 		ext_Result::sendResult('delete', false, $GLOBALS["error_msg"]["accessfunc"]);

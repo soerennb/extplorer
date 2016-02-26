@@ -2,7 +2,7 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id: functions.php 246 2016-02-10 21:21:12Z soeren $
+ * @version $Id: functions.php 248 2016-02-26 18:29:50Z soeren $
  * @package eXtplorer
  * @copyright soeren 2007-2011
  * @author The eXtplorer project (http://extplorer.net)
@@ -324,7 +324,7 @@ function get_show_item($dir, $item) {		// show this file?
 	if($item == "." || $item == ".." ||
 		(substr($item,0,1)=="." && $GLOBALS["show_hidden"]==false)) return false;
 
-	if($GLOBALS["no_access"]!="" && @eregi($GLOBALS["no_access"],$item)) return false;
+	if($GLOBALS["no_access"]!="" && @preg_match($GLOBALS["no_access"],$item)) return false;
 
 	if($GLOBALS["show_hidden"]==false) {
 		$dirs=explode("/",$dir);
@@ -547,15 +547,19 @@ function get_max_upload_limit() {
 }
 
 function calc_php_setting_bytes( $value ) {
-	if(@eregi("G$",$value)) {
+	switch(strtoupper(substr($value,-1))) {
+		case 'G':
 		$value = substr($value,0,-1);
 		$value = round($value*1073741824);
-	} elseif(@eregi("M$",$value)) {
+		break;
+	case 'M':
 		$value = substr($value,0,-1);
 		$value = round($value*1048576);
-	} elseif(@eregi("K$",$value)) {
+		break;
+	case 'K':
 		$value = substr($value,0,-1);
 		$value = round($value*1024);
+		break;
 	}
 
 	return $value;

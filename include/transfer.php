@@ -2,7 +2,7 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id: transfer.php 242 2015-08-19 06:29:26Z soeren $
+ * @version $Id: transfer.php 248 2016-02-26 18:29:50Z soeren $
  * @package eXtplorer
  * @copyright soeren 2007-2015
  * @author The eXtplorer project (http://extplorer.net)
@@ -37,7 +37,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
 class ext_Transfer extends ext_Action {
 	var $_downloadMethods;
 
-	function execAction( $dir ) {
+	function execAction( $dir, $item="" ) {
 
 		if(($GLOBALS["permissions"]&01)!=01) {
 			ext_Result::sendResult('upload', false, $GLOBALS["error_msg"]["accessfunc"]);
@@ -360,7 +360,7 @@ class CurlDownloader extends DownloadMethod {
 	}
 }
 function isPhpFunctionSupported($functionName) {
-	if (in_array($functionName, split(',\s*', ini_get('disable_functions'))) || !function_exists($functionName)) {
+	if (in_array($functionName, explode(',\s*', ini_get('disable_functions'))) || !function_exists($functionName)) {
 		return false;
 	} else {
 		return true;
