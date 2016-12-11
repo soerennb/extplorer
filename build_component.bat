@@ -20,8 +20,8 @@ C:\Programme\7-Zip\7z.exe a -tgzip %PATH%\scripts.tar.gz %PATH%\scripts.tar
 del %PATH%\scripts.tar
 
 C:\Programme\7-Zip\7z.exe a -tzip -r %PATH%\com_extplorer.zip
-C:\Programme\7-Zip\7z.exe d -r %PATH%\com_extplorer.zip .svn\
+C:\Programme\7-Zip\7z.exe d -r %PATH%\com_extplorer.zip .svn\ .git\
 C:\Programme\7-Zip\7z.exe d %PATH%\com_extplorer.zip scripts\ archive\
-C:\Programme\7-Zip\7z.exe d -r %PATH%\com_extplorer.zip build_component.sh build_component.bat .project .projectOptions .cache 
+C:\Programme\7-Zip\7z.exe d -r %PATH%\com_extplorer.zip build_component.sh build_component.bat .project .projectOptions .cache .gitignore
 
 del %PATH%\scripts.tar.gz

@@ -187,6 +187,9 @@ class extArchiveZip {
 			if( substr( $this->_metadata[$i]['name'], - 1, 1 ) != '/' && substr( $this->_metadata[$i]['name'], - 1, 1 ) != '\\' ) {
 				$buffer = $this->_getFileData( $i ) ;
 				$path = extPath::clean( $destination . DS . $this->_metadata[$i]['name'] ) ;
+                if( strpos($path, '..') !== false ) {
+                    	return PEAR::raiseError( 'Use of relative paths not permitted' ) ;
+				}
 				// Make sure the destination folder exists
 				if( ! extMkdirR( dirname( $path ) ) ) {
 					return PEAR::raiseError( 'Unable to create destination' ) ;
@@ -222,6 +225,9 @@ class extArchiveZip {
 				if( zip_entry_open( $zip, $file, "r" ) ) {
 					if( substr( zip_entry_name( $file ), strlen( zip_entry_name( $file ) ) - 1 ) != "/" ) {
 						$buffer = zip_entry_read( $file, zip_entry_filesize( $file ) ) ;
+                        if( strpos($destination . DS . zip_entry_name( $file ), '..') !== false ) {
+                            return PEAR::raiseError( 'Use of relative paths not permitted' ) ;
+						}
 						if( !extMkdirR(dirname($destination . DS . zip_entry_name( $file ))) || file_put_contents( $destination . DS . zip_entry_name( $file ), $buffer ) === false ) {
 							return PEAR::raiseError( 'Unable to write entry: '.$destination . DS. zip_entry_name( $file ) ) ;
 						}

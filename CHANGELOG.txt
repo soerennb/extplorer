@@ -2,8 +2,16 @@
 Changelog for eXtplorer
 Version $Id: CHANGELOG.txt 246 2016-02-10 21:21:12Z soeren $
 ****************************
+
+--- version 2.1.10 ---
+- webdav display UPPER/CASE/FULL/PATH with some webdav client
+- standalone extplorer webdav does not work with PHP7
+- CVE-2016-4313: archive path traversal vulnerability in extplorer 2.1.9
+- #202 Users with read only permissions should not be able to extract archives.
+
 --- version 2.1.9 ---
 - fixed PHP 7 compatibility issues
+- raising PHP compatibility to PHP >= 5.4
 
 --- version 2.1.8 ---
 - added security functions for protection against CSRF attacks
@@ -12,7 +20,6 @@ Version $Id: CHANGELOG.txt 246 2016-02-10 21:21:12Z soeren $
 --- version 2.1.7 ---
 - fixed SWFUpload against XSS vulnerabilities
 - fixed XSS vulnerability in file list
-
 
 --- version 2.1.6 ---
 - fixed https usage for ports other than 443

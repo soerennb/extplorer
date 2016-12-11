@@ -96,6 +96,12 @@ class HTTP_WebDAV_Server_Filesystem extends HTTP_WebDAV_Server
     var $db_passwd = "";
 
     /**
+     * MySQLI link 
+     */
+    var $db_link = NULL;
+
+
+    /**
      * Serve a webdav request
      *
      * @access public
@@ -119,8 +125,8 @@ class HTTP_WebDAV_Server_Filesystem extends HTTP_WebDAV_Server
         }
                 
         // establish connection to property/locking db
-        mysql_connect($this->db_host, $this->db_user, $this->db_passwd) or die(mysql_error());
-        mysql_select_db($this->db_name) or die(mysql_error());
+        $this->db_link = mysqli_connect($this->db_host, $this->db_user, $this->db_passwd) or die(mysqli_error($this->db_link));
+        mysqli_select_db($this->db_link, $this->db_name) or die(mysqli_error($this->db_link));
         // TODO throw on connection problems
 
         // let the base class do all the work
@@ -236,11 +242,11 @@ class HTTP_WebDAV_Server_Filesystem extends HTTP_WebDAV_Server
         $query = "SELECT ns, name, value 
                         FROM {$this->db_prefix}properties 
                        WHERE path = '$path'";
-        $res = mysql_query($query);
-        while ($row = mysql_fetch_assoc($res)) {
+        $res = mysqli_query($this->db_link, $query);
+        while ($row = mysqli_fetch_assoc($res)) {
             $info["props"][] = $this->mkprop($row["ns"], $row["name"], $row["value"]);
         }
-        mysql_free_result($res);
+        mysqli_free_result($res);
 
         return $info;
     }
@@ -557,14 +563,14 @@ class HTTP_WebDAV_Server_Filesystem extends HTTP_WebDAV_Server
         if (is_dir($path)) {
             $query = "DELETE FROM {$this->db_prefix}properties 
                            WHERE path LIKE '".$this->_slashify($options["path"])."%'";
-            mysql_query($query);
+            mysqli_query($this->db_link,$query);
             System::rm(array("-rf", $path));
         } else {
             unlink($path);
         }
         $query = "DELETE FROM {$this->db_prefix}properties 
                        WHERE path = '$options[path]'";
-        mysql_query($query);
+        mysqli_query($this->db_link,$query);
 
         return "204 No Content";
     }
@@ -666,13 +672,13 @@ class HTTP_WebDAV_Server_Filesystem extends HTTP_WebDAV_Server
                 $query = "UPDATE {$this->db_prefix}properties 
                                  SET path = REPLACE(path, '".$options["path"]."', '".$destpath."') 
                                WHERE path LIKE '".$this->_slashify($options["path"])."%'";
-                mysql_query($query);
+                mysqli_query($this->db_link,$query);
             }
 
             $query = "UPDATE {$this->db_prefix}properties 
                              SET path = '".$destpath."'
                            WHERE path = '".$options["path"]."'";
-            mysql_query($query);
+            mysqli_query($this->db_link,$query);
         } else {
             if (is_dir($source)) {
                 $files = System::find($source);
@@ -752,7 +758,7 @@ class HTTP_WebDAV_Server_Filesystem extends HTTP_WebDAV_Server
                                           AND name = '$prop[name]' 
                                           AND ns = '$prop[ns]'";
                 }       
-                mysql_query($query);
+                mysqli_query($this->db_link,$query);
             }
         }
                         
@@ -783,16 +789,16 @@ class HTTP_WebDAV_Server_Filesystem extends HTTP_WebDAV_Server
             $where = "WHERE path = '$options[path]' AND token = '$options[update]'";
 
             $query = "SELECT owner, exclusivelock FROM {$this->db_prefix}locks $where";
-            $res   = mysql_query($query);
-            $row   = mysql_fetch_assoc($res);
-            mysql_free_result($res);
+            $res   = mysqli_query($this->db_link,$query);
+            $row   = mysqli_fetch_assoc($res);
+            mysqli_free_result($res);
 
             if (is_array($row)) {
                 $query = "UPDATE {$this->db_prefix}locks 
                                  SET expires = '$options[timeout]' 
                                    , modified = ".time()."
                               $where";
-                mysql_query($query);
+                mysqli_query($this->db_link,$query);
 
                 $options['owner'] = $row['owner'];
                 $options['scope'] = $row["exclusivelock"] ? "exclusive" : "shared";
@@ -813,9 +819,9 @@ class HTTP_WebDAV_Server_Filesystem extends HTTP_WebDAV_Server
                           , expires = '$options[timeout]'
                           , exclusivelock  = " .($options['scope'] === "exclusive" ? "1" : "0")
             ;
-        mysql_query($query);
+        mysqli_query($this->db_link,$query);
 
-        return mysql_affected_rows() ? "200 OK" : "409 Conflict";
+        return mysqli_affected_rows() ? "200 OK" : "409 Conflict";
     }
 
     /**
@@ -829,9 +835,9 @@ class HTTP_WebDAV_Server_Filesystem extends HTTP_WebDAV_Server
         $query = "DELETE FROM {$this->db_prefix}locks
                       WHERE path = '$options[path]'
                         AND token = '$options[token]'";
-        mysql_query($query);
+        mysqli_query($this->db_link,$query);
 
-        return mysql_affected_rows() ? "204 No Content" : "409 Conflict";
+        return mysqli_affected_rows() ? "204 No Content" : "409 Conflict";
     }
 
     /**
@@ -848,11 +854,11 @@ class HTTP_WebDAV_Server_Filesystem extends HTTP_WebDAV_Server
                   FROM {$this->db_prefix}locks
                  WHERE path = '$path'
                ";
-        $res = mysql_query($query);
+        $res = mysqli_query($this->db_link,$query);
 
         if ($res) {
-            $row = mysql_fetch_array($res);
-            mysql_free_result($res);
+            $row = mysqli_fetch_array($res);
+            mysqli_free_result($res);
 
             if ($row) {
                 $result = array( "type"    => "write",

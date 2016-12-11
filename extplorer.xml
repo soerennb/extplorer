@@ -3,7 +3,7 @@
 <!-- Joomla! 1.0 Installer XML File 
 $Id: extplorer.xml 247 2016-02-23 10:06:18Z soeren $ -->
     <name>eXtplorer</name>
-    <creationDate>23.02.2016</creationDate>
+    <creationDate>15.03.2016</creationDate>
     <author>soeren, QuiX Project</author>
     <copyright>Soeren Eberhardt-Biermann, QuiX Project</copyright>
     <authorEmail>info|-at|-extplorer.net</authorEmail>
