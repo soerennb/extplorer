@@ -1,13 +1,15 @@
 ****************************
 Changelog for eXtplorer
-Version $Id: CHANGELOG.txt 246 2016-02-10 21:21:12Z soeren $
+Version $Id: CHANGELOG.txt 249 2016-12-11 16:11:03Z soeren $
 ****************************
 
 --- version 2.1.10 ---
+- fixed vulnerability discovered by ADLab of Venustech (command injection, but requires admin access)
 - webdav display UPPER/CASE/FULL/PATH with some webdav client
 - standalone extplorer webdav does not work with PHP7
 - CVE-2016-4313: archive path traversal vulnerability in extplorer 2.1.9
 - #202 Users with read only permissions should not be able to extract archives.
+- added indonesian language files
 
 --- version 2.1.9 ---
 - fixed PHP 7 compatibility issues

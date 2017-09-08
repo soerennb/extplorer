@@ -2,7 +2,7 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id: transfer.php 248 2016-02-26 18:29:50Z soeren $
+ * @version $Id: transfer.php 242 2015-08-19 06:29:26Z soeren $
  * @package eXtplorer
  * @copyright soeren 2007-2015
  * @author The eXtplorer project (http://extplorer.net)
@@ -65,8 +65,21 @@ class ext_Transfer extends ext_Action {
 			}
 			// upload files & check for errors
 			for($i=0;$i<$cnt;$i++) {
+			    if( empty($GLOBALS['__POST']['userfile'][$i])) continue;
 				$errors[$i]=NULL;
 
+                $data = array(
+                    'url' => $GLOBALS['__POST']['userfile'][$i]
+                );
+
+                $validated = InputFilter::is_valid($data, array(
+                    'url' => 'required|valid_url'
+                ));
+
+                if($validated !== true) {
+                    $errors[$i]=$GLOBALS['__POST']['userfile'][$i].' is not a valid URL!';
+                    $err=true;	continue;
+                }
 				$items[$i] = stripslashes(basename($GLOBALS['__POST']['userfile'][$i]));
 
 				$abs = get_abs_item($dir,$items[$i]);
@@ -76,7 +89,6 @@ class ext_Transfer extends ext_Action {
 					$errors[$i]=$GLOBALS["error_msg"]["itemdoesexist"];
 					$err=true;	continue;
 				}
-
 				// Upload
 				$ok = $downloader->download($GLOBALS['__POST']['userfile'][$i], $abs);
 				if($ok===true ) {
@@ -127,6 +139,7 @@ class WgetDownloader extends DownloadMethod {
 		$status = 0;
 		$output = array();
 		$wget = getBinaryPath('wget');
+		$url = escapeshellcmd( $url );
 		exec("$wget -O$outputFile $url ", $output, $status);
 		if ($status) {
 			$msg = 'exec returned an error status ';

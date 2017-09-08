@@ -1189,7 +1189,8 @@ function extGetParam( &$arr, $name, $def=null, $mask=0 ) {
 					$noHtmlFilter = new InputFilter( /* $tags, $attr, $tag_method, $attr_method, $xss_auto */ );
 				}
 
-				$return = $noHtmlFilter->sanitize( array($return) )[0];
+                $return = $noHtmlFilter->sanitize( array($return) );
+                $return = $return[0];
 
 				if (empty($return) && is_numeric($def)) {
 				// if value is defined and default value is numeric set variable type to integer

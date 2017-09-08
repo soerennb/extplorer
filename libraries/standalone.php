@@ -1,6 +1,6 @@
 <?php
 /**
-* @version $Id: standalone.php 246 2016-02-10 21:21:12Z soeren $
+* @version $Id: standalone.php 242 2015-08-19 06:29:26Z soeren $
 * @package eXtplorer
 * @copyright Copyright (C) 2012-2016 Soeren Eberhardt-Biermann. All rights reserved.
 * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see LICENSE.php
@@ -229,7 +229,8 @@ class extMainFrame {
 
 			// filter input
 			$iFilter = new InputFilter();
-			$this->_userstate[$var_name] = $iFilter->sanitize( array($this->_userstate[$var_name]) )[0];
+			$temp = $iFilter->sanitize( array($this->_userstate[$var_name]) );
+            $this->_userstate[$var_name] = $temp[0];
 
 			return $this->_userstate[$var_name];
 		} else {
