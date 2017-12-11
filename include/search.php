@@ -228,9 +228,9 @@ function get_result_array($list) {			// print table of found items
 	$array = array();
 	for($i=0;$i<$cnt;++$i) {
 		$dir = $list[$i][0];	$item = $list[$i][1];
-		$s_dir=str_replace($GLOBALS['home_dir'], '', $dir );	
+		$s_dir=str_ireplace($GLOBALS['home_dir'], '', $dir );
 		if(strlen($s_dir)>65) $s_dir=substr($s_dir,0,62)."...";
-		$s_item=$item;	if(strlen($s_item)>45) $s_item=substr($s_item,0,42)."...";
+		$s_item=str_ireplace($GLOBALS['home_dir'], '', $item );	if(strlen($s_item)>45) $s_item=substr($s_item,0,42)."...";
 		$link = "";	$target = "";
 		
 		
@@ -246,7 +246,7 @@ function get_result_array($list) {			// print table of found items
 		}
 		$array[$i]['last_mtime'] = ext_isFTPMode() ? $GLOBALS['ext_File']->filemtime($GLOBALS['home_dir'].'/'.$dir.'/'.$item) : filemtime($dir.'/'.$item);
 		$array[$i]['file_id'] = md5($s_dir.$s_item);
-		$array[$i]['dir'] = str_replace($GLOBALS['home_dir'], '', $dir );
+		$array[$i]['dir'] = str_ireplace($GLOBALS['home_dir'], '', $dir );
 		$array[$i]['s_dir'] = empty($s_dir) ? '' : $s_dir;
 		$array[$i]['file'] = $s_item;
 		$array[$i]['link'] = $link;

@@ -4,13 +4,13 @@
 <!-- Joomla! 1.5 Installer XML File
 $Id: extplorer.j15.xml 249 2016-12-11 16:11:03Z soeren $ -->
     <name>eXtplorer</name>
-    <creationDate>22.06.2017</creationDate>
+    <creationDate>12.12.2017</creationDate>
     <author>soeren, QuiX Project</author>
     <copyright>Soeren Eberhardt-Biermann, QuiX Project</copyright>
     <license>GNU/GPL, alternative: MPL</license>
     <authorEmail>info|at|extplorer.net</authorEmail>
     <authorUrl>http://extplorer.net/</authorUrl>
-    <version>2.1.10</version>
+    <version>2.1.11</version>
     <description><![CDATA[
 	<div align="left"><img src="components/com_extplorer/images/eXtplorer_logo.png" alt="eXtplorer Logo" /></div>
 	<h2>Successfully installed eXtplorer&nbsp;</h2>
@@ -36,27 +36,27 @@ $Id: extplorer.j15.xml 249 2016-12-11 16:11:03Z soeren $ -->
     <install>
     	<queries>
 			<query>CREATE TABLE IF NOT EXISTS `#__extwebdav_locks` (
-						  token varchar(255) NOT NULL default '',
-						  path varchar(200) NOT NULL default '',
-						  expires int(11) NOT NULL default '0',
-						  owner varchar(200) default NULL,
-						  recursive int(11) default '0',
-						  writelock int(11) default '0',
-						  exclusivelock int(11) NOT NULL default 0,
-						  PRIMARY KEY  (token),
-						  UNIQUE KEY token (token),
-						  KEY path (path),
-						  KEY expires (expires)
-						) ENGINE=MyISAM;
+				`token` varchar(255) NOT NULL default '',
+				`path` varchar(200) NOT NULL default '',
+				`expires` int(11) NOT NULL default '0',
+				`owner` varchar(200) default NULL,
+				`recursive` int(11) default '0',
+				`writelock` int(11) default '0',
+				`exclusivelock` int(11) NOT NULL default 0,
+				PRIMARY KEY  (`token`),
+				UNIQUE KEY token (`token`),
+				KEY `path` (`path`),
+				KEY `expires` (`expires`)
+				) ENGINE=MyISAM
 			</query>
 			<query>CREATE TABLE IF NOT EXISTS `#__extwebdav_properties` (
-						  path varchar(255) NOT NULL default '',
-						  name varchar(120) NOT NULL default '',
-						  ns varchar(120) NOT NULL default 'DAV:',
-						  value text,
-						  PRIMARY KEY ( `ns` ( 100 ) , `path` ( 100 ) , `name` ( 50 ) ),
-						  KEY path (path)
-						) ENGINE=MyISAM;
+				`path` varchar(255) NOT NULL default '',
+				`name` varchar(120) NOT NULL default '',
+				`ns` varchar(120) NOT NULL default 'DAV:',
+				`value` text,
+				PRIMARY KEY ( `ns` ( 100 ) , `path` ( 100 ) , `name` ( 50 ) ),
+				KEY `path` (`path`)
+				) ENGINE=MyISAM
 			</query>
 
 	</queries>

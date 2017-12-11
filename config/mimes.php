@@ -8,7 +8,7 @@ $GLOBALS["editable_ext"]=
 	array(".asm", ".rc", ".hh", ".hxx", ".odl", ".idl", ".rc2", ".dlg", ".less"
 	,".php", ".php3", ".php4", ".php5", ".phtml", ".inc", ".sql", ".csv"
 	,".vb", ".vbs", ".bas", ".frm", ".cls", ".ctl", ".rb", ".htm", ".html", ".shtml", ".dhtml", ".xml"
-	,".js", ".css", ".cgi", ".cpp", ".c", ".cc", ".cxx", ".hpp", ".h", ".lua"
+	,".js", ".css", ".scss", ".cgi", ".cpp", ".c", ".cc", ".cxx", ".hpp", ".h", ".lua"
 	,".pas", ".p", ".pl", ".java", ".py", ".sh", ".bat", ".tcl", ".tk"
 	,".txt", ".ini", ".conf", ".properties", ".htaccess", ".htpasswd");
 
@@ -58,6 +58,7 @@ $GLOBALS["used_mime_types"]=array(
 	"xml"	=> array(extGetParam( $GLOBALS["mimes"], 'xml', 'XML' ),   "extension/xml.png",   ".xml"),
 	"js"	=> array(extGetParam( $GLOBALS["mimes"], 'js', 'JS' ),    "extension/js.png",    ".js"),
 	"css"	=> array(extGetParam( $GLOBALS["mimes"], 'css', 'CSS' ),   "extension/css.png",   ".css"),
+	"scss"	=> array(extGetParam( $GLOBALS["mimes"], 'css', 'CSS' ),   "extension/css.png",   ".scss"),
 	
 	// images
 	"gif"	=> array(extGetParam( $GLOBALS["mimes"], 'gif', 'GIF' ),   "extension/gif.png",   ".gif"),

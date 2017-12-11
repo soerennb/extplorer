@@ -296,7 +296,7 @@ function send_dircontents($dir, $sendWhat = 'files') {	// print table of files
 		$items['items'][$i]['perms'] = $perms. ' (' . parse_file_perms($perms) . ')';
 
 		if (extension_loaded("posix")) {
-			if ($file_info["uid"]) {
+			if (isset($file_info["uid"])) {
 				$user_info = posix_getpwuid($file_info["uid"]);
 				//$group_info = posix_getgrgid($file_info["gid"]);
 				$items['items'][$i]['owner'] = $user_info["name"]. " (".$file_info["uid"].")";
