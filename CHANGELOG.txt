@@ -3,6 +3,8 @@ Changelog for eXtplorer
 Version $Id: CHANGELOG.txt 249 2016-12-11 16:11:03Z soeren $
 ****************************
 --- version 2.1.11 ---
+- fixed "text.js not found" message on server when editing text files
+- fixed PHP 7.2 incompatibility in Tar.php
 - PHP 5.3 compatibility fixes
 
 --- version 2.1.10 ---

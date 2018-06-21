@@ -36,6 +36,7 @@ class ext_TextEncoding
 			// In any case, "C" is ASCII-7 bit so it's safe to use the extra bit as if it was UTF-8 
 			$encoding = "UTF-8";
 		}
+        if ($encoding == 'UTF8') $encoding = "UTF-8";
 		if (!strlen($encoding)) $encoding = "UTF-8";
 		return $encoding;
 	}

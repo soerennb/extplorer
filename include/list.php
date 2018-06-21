@@ -240,7 +240,7 @@ function send_dircontents($dir, $sendWhat = 'files') {	// print table of files
 		$list = $output_array;
 	}
 
-	while(list($item,$info) = each($list)) {
+	foreach($list as $item => $info) {
 		// link to dir / file
 		if (is_array($info)) {
 

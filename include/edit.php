@@ -122,7 +122,7 @@ class ext_Edit extends ext_Action {
 		$s_extension = str_replace('.', '', $s_info['extension'] );
 		switch (strtolower($s_extension)) {
 			case 'txt':
-				$cp_lang = 'text'; break;
+				$cp_lang = 'basic'; break;
 			case 'cs':
 				$cp_lang = 'csharp'; break;
 			case 'css':

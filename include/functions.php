@@ -672,7 +672,7 @@ function ext_selectList($name, $value, $arr, $size=1, $multiple="", $extra="") {
 	if( !empty( $arr ) ) {
 		$html = "<select class=\"inputbox\" name=\"$name\" id=\"$name\" size=\"$size\" $multiple $extra>\n";
 
-		while (list($key, $val) = each($arr)) {
+		foreach($arr as $key => $value) {
 			$selected = "";
 			if( is_array( $value )) {
 				if( in_array( $key, $value )) {
