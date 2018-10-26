@@ -667,28 +667,28 @@ function ext_isIE() {
  * @param string $extra More attributes when needed
  * @return string HTML drop-down list
  */
-function ext_selectList($name, $value, $arr, $size=1, $multiple="", $extra="") {
+function ext_selectList($name, $selectedkey, $arr, $size=1, $multiple="", $extra="") {
 	$html = '';
 	if( !empty( $arr ) ) {
 		$html = "<select class=\"inputbox\" name=\"$name\" id=\"$name\" size=\"$size\" $multiple $extra>\n";
 
 		foreach($arr as $key => $value) {
 			$selected = "";
-			if( is_array( $value )) {
-				if( in_array( $key, $value )) {
+			if( is_array( $selectedkey )) {
+			    if( in_array( $key, $selectedkey )) {
 					$selected = "selected=\"selected\"";
 				}
 			}
 			else {
-				if(strtolower($value) == strtolower($key) ) {
+			    if(strtolower($selectedkey) == strtolower($key) ) {
 					$selected = "selected=\"selected\"";
 				}
 			}
-			if( $val == '-') {
+			if( $value == '-') {
 				//$selected .= ' disabled="disabled"';
-				$val = '- - - - -';
+			    $value = '- - - - -';
 			}
-			$html .= "<option value=\"$key\" $selected>$val";
+			$html .= "<option value=\"$key\" $selected>$value";
 			$html .= "</option>\n";
 		}
 
