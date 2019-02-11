@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS `#__extwebdav_locks` (
 				`writelock` int(11) default '0',
 				`exclusivelock` int(11) NOT NULL default 0,
 						  PRIMARY KEY  (`token`),
-						  UNIQUE KEY token (`token`),
 						  KEY `path` (`path`),
 						  KEY `expires` (`expires`)
 						) ENGINE=MyISAM;
