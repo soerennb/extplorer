@@ -126,7 +126,7 @@ class ext_Result {
 
 				foreach ( $_SESSION['ext_message'] as $msgtype ) {
 					foreach ( $msgtype as $message ) {
-						$messagetxt .= $message .'<br/>';
+					    $messagetxt .= htmlspecialchars($message, ENT_QUOTES ) .'<br/>';
 					}
 					$messagetxt .= '<br /><hr /><br />';
 				}
@@ -143,7 +143,7 @@ class ext_Result {
 
 				foreach ( $_SESSION['ext_error'] as $errortype ) {
 					foreach ( $errortype as $error ) {
-						$messagetxt .= $error .'<br/>';
+					    $messagetxt .=  htmlspecialchars($error, ENT_QUOTES ) .'<br/>';
 					}
 					$messagetxt .= '<br /><hr /><br />';
 				}

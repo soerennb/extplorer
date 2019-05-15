@@ -99,7 +99,7 @@ class ext_Archive extends ext_Action {
 			if( $startfrom == 0 ) {
 				for($i=0;$i<$cnt;$i++) {
 
-					$selitem=stripslashes($GLOBALS['__POST']["selitems"][$i]);
+					$selitem=basename(stripslashes($GLOBALS['__POST']["selitems"][$i]));
 					if( $selitem == 'ext_root') { 
 						$selitem = '';
 					}
@@ -193,7 +193,7 @@ class ext_Archive extends ext_Action {
 			"xtype": "textfield",
 			"fieldLabel": "<?php echo ext_Lang::msg('archive_name', true ) ?>",
 			"name": "name",
-			"value": "<?php echo $GLOBALS['item'] . '.'. $default_archive_type ?>",
+			"value": "<?php echo htmlspecialchars($GLOBALS['item'], ENT_QUOTES) . '.'. $default_archive_type ?>",
 			"width": "200"
 		},
 		{

@@ -248,7 +248,7 @@ function get_result_array($list) {			// print table of found items
 		$array[$i]['file_id'] = md5($s_dir.$s_item);
 		$array[$i]['dir'] = str_ireplace($GLOBALS['home_dir'], '', $dir );
 		$array[$i]['s_dir'] = empty($s_dir) ? '' : $s_dir;
-		$array[$i]['file'] = $s_item;
+		$array[$i]['file'] = htmlentities($s_item, ENT_QUOTES );
 		$array[$i]['link'] = $link;
 		$array[$i]['icon'] = _EXT_URL."/images/$img";
 	}

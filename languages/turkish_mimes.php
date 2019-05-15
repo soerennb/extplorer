@@ -1,13 +1,13 @@
-﻿<?php
+<?php
 
-// Turkish Language for QuiX (Translated by Sinan Ata 'From Turkey'(cumla.blogspot.com))
+// Turkish Language for 2.1.12 (Translated by Mehmet Taş)
 
 $GLOBALS["mimes"]=array(
 	// dir, exe, file
 	"dir"	=> "Klasör",
 	"exe"	=> "Açılabilir Dosya",
 	"file"	=> "Dosya",
-	"symlink"	=> "Symbolic Link",
+	"symlink"=> "Simgesel Bağlantı",
 
 	// text
 	"text"	=> "Metin Dosyası",

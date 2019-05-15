@@ -236,6 +236,7 @@ if (ext_isFTPMode() && $dir != '') {
 	$GLOBALS['FTPCONNECTION']->cd( $dir );
 }
 
+//echo "Down home: ".down_home( "/etc/passwd" );exit;
 $abs_dir=get_abs_dir($GLOBALS["dir"]);
 
 if (!file_exists($GLOBALS["home_dir"])) {
@@ -257,7 +258,7 @@ if (!$GLOBALS['ext_conf']['symlink_allow_abovehome']) {
 }
 
 if (!get_is_dir(utf8_decode($abs_dir)) && !get_is_dir($abs_dir.$GLOBALS["separator"])) {
-	ext_Result::sendResult('', false, '"'.$abs_dir.'" - '.$GLOBALS["error_msg"]["direxist"]);
+	ext_Result::sendResult('', false, '"'.htmlspecialchars($abs_dir,ENT_QUOTES).'" - '.$GLOBALS["error_msg"]["direxist"]);
 	$dir = '';
 }
 

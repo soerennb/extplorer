@@ -82,7 +82,7 @@ class ext_Chmod extends ext_Action {
 				} else {
 					$mode = bindec($bin);
 				}
-				$item = $GLOBALS['__POST']["selitems"][$i];
+				$item = html_entity_decode($GLOBALS['__POST']["selitems"][$i], ENT_QUOTES);
 				if( ext_isFTPMode() ) {
 					$abs_item = get_item_info( $dir,$item);
 				} else {
@@ -151,7 +151,7 @@ class ext_Chmod extends ext_Action {
 		"labelWidth": 125,
 		"url":"<?php echo basename( $GLOBALS['script_name']) ?>",
 		"dialogtitle": "<?php echo ext_Lang::msg('actperms') ?>",
-		"title" : "<?php echo $text  ?>",
+		"title" : "<?php echo htmlspecialchars($text,ENT_QUOTES)  ?>",
 		"frame": true,
 		"items": [{
 			"layout": "column",
@@ -212,8 +212,8 @@ class ext_Chmod extends ext_Action {
 				params: {
 					"option": "com_extplorer", 
 					"action": "chmod", 
-					"dir": "<?php echo stripslashes($GLOBALS['__POST']["dir"]) ?>", 
-					"selitems[]": ['<?php echo implode("','", $GLOBALS['__POST']["selitems"]) ?>'], 
+					"dir": "<?php echo stripslashes(htmlentities($GLOBALS['__POST']["dir"],ENT_QUOTES)) ?>", 
+					"selitems[]": ['<?php echo htmlentities(implode("','", $GLOBALS['__POST']["selitems"]),ENT_QUOTES) ?>'], 
 					confirm: 'true',
 					token: "<?php echo ext_getToken() ?>"
 				}

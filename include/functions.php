@@ -571,10 +571,13 @@ function down_home($abs_dir) {			// dir deeper than home?
 	}
 	$real_home = @realpath($GLOBALS["home_dir"]);
 	$real_dir = @realpath($abs_dir);
+	if( $real_dir == '' ) $real_dir = dirname( $abs_dir );
+	if( $real_home == '' ) $real_home = $_SERVER['DOCUMENT_ROOT'];
+	//echo 'NOW: $real_home = '.$real_home;
+	//echo ', $real_dir = '.$real_dir;
 
-	if($real_home===false || $real_dir===false) {
-		if(@stristr($abs_dir,"\\.\\.")) return false;
-	} else if(strcmp($real_home,@substr($real_dir,0,strlen($real_home)))) {
+	if(@stristr($abs_dir,"\\.\\.")) return false;
+	if(strcmp($real_home,@substr($real_dir,0,strlen($real_home)))) {
 		return false;
 	}
 	return true;

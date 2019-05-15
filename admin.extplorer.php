@@ -162,6 +162,10 @@ if( class_exists(strtolower($classname)) && is_callable(array($classname,'execac
 				$requestedDir = $dir;
 			}
 			
+			if (!down_home(get_abs_dir($requestedDir))) {
+			    ext_Result::sendResult('', false, $requestedDir.": ".$GLOBALS["error_msg"]["abovehome"]);
+			    $requestedDir = '';
+			}
 			send_dircontents( $requestedDir, extGetParam($_REQUEST,'sendWhat','files') );
 			break;
 	case 'get_dir_selects':

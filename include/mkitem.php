@@ -68,6 +68,9 @@ class ext_Mkitem extends ext_Action {
 				if( empty( $symlink_target )) {
 					ext_Result::sendResult( 'mkitem', false, 'Please provide a valid <strong>target</strong> for the symbolic link.');
 				}
+				if (!down_home(dirname($symlink_target))) {
+				    ext_Result::sendResult('', false, $symlink_target.": ".$GLOBALS["error_msg"]["abovehome"]);
+				}
 				if( !file_exists($symlink_target) || !is_readable($symlink_target)) {
 					ext_Result::sendResult( 'mkitem', false, 'The file you wanted to make a symbolic link to does not exist or is not accessible by PHP.');
 				}

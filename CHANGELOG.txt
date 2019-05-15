@@ -2,6 +2,15 @@
 Changelog for eXtplorer
 Version $Id: CHANGELOG.txt 249 2016-12-11 16:11:03Z soeren $
 ****************************
+
+--- version 2.1.13 ---
+- fixed various security issues reported by Mario Korth:
+  * potential XSS 
+  * Arbitrary file read
+  * Path traversal in listing directory contents
+  * Path traversal in archive feature
+- added new turkish translations 
+
 --- version 2.1.12 ---
 - fixed wrong version display
 - fixed empty language selector
