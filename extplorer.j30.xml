@@ -3,12 +3,12 @@
 <!-- Joomla! 3.0 Installer XML File 
 $Id: extplorer.j30.xml 249 2016-12-11 16:11:03Z soeren $ -->
     <name>eXtplorer</name>
-    <creationDate>11.02.2019</creationDate>
+    <creationDate>15.05.2019</creationDate>
     <author>soeren, QuiX Project</author>
     <copyright>Soeren Eberhardt-Biermann, QuiX Project</copyright>
     <authorEmail>info|-at|-extplorer.net</authorEmail>
     <authorUrl>http://extplorer.net/</authorUrl>
-    <version>2.1.12</version>
+    <version>2.1.13</version>
     <description><![CDATA[
 	<div align="left"><img src="components/com_extplorer/images/eXtplorer_logo.png" alt="eXtplorer Logo" /></div>
 	<h2>Successfully installed eXtplorer&nbsp;</h2>
@@ -29,17 +29,7 @@ $Id: extplorer.j30.xml 249 2016-12-11 16:11:03Z soeren $ -->
         <filename>extplorer.init.php</filename>
         <filename>extplorer.list.php</filename>
     </files>
-   	<install>
-		<sql>
-			<file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
-		</sql>
-	</install>
 
-    <uninstall>
-		<sql>
-			<file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
-		</sql>
-    </uninstall>
 
 	<updateservers>
 		<server type="extension" priority="2" name="eXtplorer Updates">http://extplorer.net/extplorer_update.xml</server>
