@@ -11,17 +11,18 @@ rem Please update the program path here accordingly
 
 
 set PATH="e:\Projekte\extplorer\svn-extplorer2\"
+set ZIPPATH="C:\Programme\7-Zip"
 
 cd %PATH%
 
-C:\Programme\7-Zip\7z.exe a -ttar -r %PATH%\scripts.tar scripts
-C:\Programme\7-Zip\7z.exe d -r %PATH%\scripts.tar .svn\
-C:\Programme\7-Zip\7z.exe a -tgzip %PATH%\scripts.tar.gz %PATH%\scripts.tar
+%ZIPPATH%\7z.exe a -ttar -r %PATH%\scripts.tar scripts
+%ZIPPATH%\7z.exe d -r %PATH%\scripts.tar .svn\
+%ZIPPATH%\7z.exe a -tgzip %PATH%\scripts.tar.gz %PATH%\scripts.tar
 del %PATH%\scripts.tar
 
-C:\Programme\7-Zip\7z.exe a -tzip -r %PATH%\com_extplorer.zip
-C:\Programme\7-Zip\7z.exe d -r %PATH%\com_extplorer.zip .svn\ .git\
-C:\Programme\7-Zip\7z.exe d %PATH%\com_extplorer.zip scripts\ archive\
-C:\Programme\7-Zip\7z.exe d -r %PATH%\com_extplorer.zip build_component.sh build_component.bat .project .projectOptions .cache .gitignore
+%ZIPPATH%\7z.exe a -tzip -r %PATH%\com_extplorer.zip
+%ZIPPATH%\7z.exe d -r %PATH%\com_extplorer.zip .svn\ .git\
+%ZIPPATH%\7z.exe d %PATH%\com_extplorer.zip scripts\ archive\
+%ZIPPATH%\7z.exe d -r %PATH%\com_extplorer.zip build_component.sh build_component.bat .project .projectOptions .cache .gitignore
 
 del %PATH%\scripts.tar.gz
