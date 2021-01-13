@@ -1178,9 +1178,9 @@ class Net_FTP extends PEAR
         // going through (user, group, world)
         for ($i = 0; $i < strlen($permissions); $i++) {
             // Read permission is set but execute not yet
-            if ((int)$permissions{$i} & 4 and !((int)$permissions{$i} & 1)) {
+            if ((int)$permissions[$i] & 4 and !((int)$permissions[$i] & 1)) {
                 // Adding execute flag
-                $permissions{$i} = (int)$permissions{$i} + 1;
+                $permissions[$i] = (int)$permissions[$i] + 1;
             }
         }
 

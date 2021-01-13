@@ -45,6 +45,10 @@ class ext_ssh2_authentication {
 		if( $ssh2_user != '' || $ssh2_pass != '' ) {
 
 			$ssh2_host = empty($_SESSION['ssh2_host']) ? extGetParam( $_POST, 'ssh2_host', 'localhost:22' ) : $_SESSION['ssh2_host'];
+			
+			if( !in_array($ssh2_host, $GLOBALS['ext_conf']['remote_hosts_allowed'])) {
+			    ext_Result::sendResult('ftp_authentication', false, 'This hostname is not allowed to connect to.' );
+			}
 			$url = @parse_url( 'ssh2.sftp://' . $ssh2_host);
 			if( empty( $url )) {
 				ext_Result::sendResult('ssh2_authentication', false, 'Unable to parse the specified Host Name. Please use a hostname in this format: hostname:22' );

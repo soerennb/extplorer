@@ -375,7 +375,7 @@ function send_dircontents($dir, $sendWhat = 'files') {	// print table of files
 }
 class ext_List extends ext_Action {
 
-	function execAction($dir, $item='') {			// list directory contents
+	static function execAction($dir, $item='') {			// list directory contents
 		global $dir_up, $mosConfig_live_site, $_VERSION;
 
 		$allow = ($GLOBALS["permissions"]&01) == 01;

@@ -3,6 +3,10 @@ Changelog for eXtplorer
 Version $Id: CHANGELOG.txt 249 2016-12-11 16:11:03Z soeren $
 ****************************
 
+--- version 2.1.14 ---
+- fixed various security issues reported by Sander Bos:
+
+
 --- version 2.1.13 ---
 - fixed various security issues reported by Mario Korth:
   * potential XSS 

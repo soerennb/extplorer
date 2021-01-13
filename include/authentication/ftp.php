@@ -47,6 +47,9 @@ class ext_ftp_authentication {
 			if( empty( $url )) {
 				ext_Result::sendResult('ftp_authentication', false, 'Unable to parse the specified Host Name. Please use a hostname in this format: hostname:21' );
 			}
+			if( !in_array($ftp_host, $GLOBALS['ext_conf']['remote_hosts_allowed'])) {
+			    ext_Result::sendResult('ftp_authentication', false, 'This hostname is not allowed to connect to.' );
+			}
 			$port = empty($url['port']) ? 21 : $url['port'];
 			
 			$GLOBALS['FTPCONNECTION'] = new Net_FTP( $url['host'], $port, 20 );

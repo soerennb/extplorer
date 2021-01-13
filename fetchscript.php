@@ -181,8 +181,7 @@ if( !is_array( $files ) && !empty( $files )) {
 	$files = array( $files );
 }
 if( empty( $files ) || sizeof($files) != sizeof( $subdirs )) {
-	header("HTTP/1.0 400 Bad Request");
-  	echo 'Bad request';
+    header("HTTP/1.0 404 Not Found");
   	exit;
 }
 $countFiles = sizeof($files);
@@ -197,9 +196,8 @@ for( $i = 0; $i < $countFiles; $i++ ) {
 	$file = $dir . '/' . basename( $file );
 
 	if( !file_exists( $file ) || (!stristr( $dir, $base_dir ) && !stristr( $dir, "/usr/share/javascript") && !stristr( $dir, "/usr/share/yui")) ) {
-		if( $countFiles == 1 ) {
-			header("HTTP/1.0 404 Not Found");
-			echo 'Not Found';
+	    if( $countFiles == 1 ) {
+	        header("HTTP/1.0 404 Not Found");
 			exit;
 		}
 		continue;
@@ -222,7 +220,6 @@ for( $i = 0; $i < $countFiles; $i++ ) {
 	if( !file_exists( $file ) || (!stristr( $dir, $base_dir ) && !stristr( $dir, "/usr/share/javascript") && !stristr( $dir, "/usr/share/yui")) || !is_readable( $file )) {
 		continue;
 	}
-	$processed_files++;
 	$fileinfo = pathinfo( $file );
 	switch ( $fileinfo['extension']) {
 		case 'css': 
@@ -232,6 +229,7 @@ for( $i = 0; $i < $countFiles; $i++ ) {
 			$GLOBALS['subdir'] = $subdir;
 			$str_css =	preg_replace_callback("/url\((.+?)\)/i", 'cssUrl', $css);
 			echo $str_css;
+			$processed_files++;
 
 			break;
 
@@ -240,6 +238,7 @@ for( $i = 0; $i < $countFiles; $i++ ) {
 			header( 'Content-Type: '.$mime_type.';');
 
 			readfile( $file );
+			$processed_files++;
 
 			break;
 
@@ -249,16 +248,8 @@ for( $i = 0; $i < $countFiles; $i++ ) {
 	}
 }
 if( $processed_files == 0 ) {
-	if( !file_exists( $file ) ) {
-		header("HTTP/1.0 404 Not Found");
-		echo 'Not Found';
-		exit;
-	}
-	if( !is_readable( $file ) ) {
-		header("HTTP/1.0 500 Internal Server Error");
-		echo "Could not read ".basename($file)." - bad permissions?";
-		exit;
-	}
+	header("HTTP/1.0 404 Not Found");
+	exit;
 }
 // Tell the user agent to cache this script/stylesheet for an hour
 $age = 3600;
