@@ -38,7 +38,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  */
 class ext_Archive extends ext_Action {
 
-	function execAction( $dir, $item="" ) {
+	static function execAction( $dir, $item="" ) {
 
 		if(($GLOBALS["permissions"]&01)!=01) {
 			ext_Result::sendResult('archive', false, $GLOBALS["error_msg"]["accessfunc"]);

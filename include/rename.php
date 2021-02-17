@@ -37,7 +37,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  */
 class ext_Rename extends ext_Action {
 
-	function execAction($dir, $item) {		// rename directory or file
+	static function execAction($dir, $item) {		// rename directory or file
 
 		if(($GLOBALS["permissions"]&01)!=01) {
 			ext_Result::sendResult('rename', false, $GLOBALS["error_msg"]["accessfunc"]);

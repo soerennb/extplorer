@@ -37,7 +37,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  */
 class ext_Mkitem extends ext_Action {
 
-	function execAction($dir, $item="") {		// make new directory or file
+	static function execAction($dir, $item="") {		// make new directory or file
 		if(($GLOBALS["permissions"]&01)!=01) ext_Result::sendResult( 'mkitem', false, $GLOBALS["error_msg"]["accessfunc"]);
 
 		if( extGetParam($_POST,'confirm') == 'true') {

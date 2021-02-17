@@ -38,7 +38,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  *
  */
 class ext_Diff extends ext_Action {
-	var	$lang_tbl = Array(
+	static	$lang_tbl = Array(
 		'czech' => 'cs',
 		'german' => 'de',
 		'danish' => 'dk',
@@ -57,7 +57,7 @@ class ext_Diff extends ext_Action {
 		'slovenian' => 'sk'
 	);
 
-	function execAction($dir, $item) {
+	static function execAction($dir, $item) {
 
 		if(($GLOBALS["permissions"]&01)!=01) {
 			ext_Result::sendResult('diff', false, ext_Lang::err('accessfunc' ));
@@ -101,7 +101,7 @@ class ext_Diff extends ext_Action {
 			
 			//$content = nl2br(str_replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;", htmlentities($content)));
 			//$content2 = nl2br(str_replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;", htmlentities($content2)));
-			$diff = $this->inline_diff($content, $content2);
+			$diff = self::inline_diff($content, $content2);
 			if( empty( $diff )) {
 				ext_Result::sendResult('diff', true, 'Both Files are identical');
 			}
@@ -170,7 +170,7 @@ class ext_Diff extends ext_Action {
 	 * @param string $text2
 	 * @return string
 	 */
-	function inline_diff($text1, $text2)
+	static function inline_diff($text1, $text2)
 	{
 	    $hlines1 = explode("\n", $text1);
         $hlines2 = explode("\n", $text2);

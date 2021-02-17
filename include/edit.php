@@ -36,7 +36,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  * File-Edit Functions
  */
 class ext_Edit extends ext_Action {
-	var	$lang_tbl = Array(
+	static	$lang_tbl = Array(
 		'czech' => 'cs',
 		'german' => 'de',
 		'danish' => 'dk',
@@ -55,7 +55,7 @@ class ext_Edit extends ext_Action {
 		'slovenian' => 'sk'
 	);
 
-	function execAction($dir, $item) {		// edit file
+	static function execAction($dir, $item) {		// edit file
 		global $mainframe, $mosConfig_live_site;
 
 		if(($GLOBALS["permissions"]&01)!=01) {
@@ -86,7 +86,7 @@ class ext_Edit extends ext_Action {
 				ext_Result::sendResult('edit', false, $item.": ".ext_Lang::err('itemdoesexist' ));
 			}
 
-			$this->savefile($fname2);
+			self::savefile($fname2);
 			$fname=$fname2;
 
 			ext_Result::sendResult('edit', true, ext_Lang::msg('savefile').': '.$item );
@@ -154,9 +154,7 @@ class ext_Edit extends ext_Action {
 				$cp_lang = '';
 		}
 	$content = $GLOBALS['ext_File']->file_get_contents( $fname );
-	if( get_magic_quotes_runtime()) {
-		$content = stripslashes( $content );
-	}
+
 	$cw = 250;
 	$langs = $GLOBALS["language"];
 	if ($langs == "japanese"){
@@ -277,8 +275,8 @@ class ext_Edit extends ext_Action {
 			"start_highlight": true,
 			"display": "later",
 			"toolbar": "search, go_to_line, |, undo, redo, |, select_font,|, change_smooth_selection, highlight, reset_highlight, |, help" 
-			<?php if (array_key_exists($langs, $this->lang_tbl)){?>
-				,"language": "<?php echo $this->lang_tbl[$langs] ?>"
+			<?php if (array_key_exists($langs, self::$lang_tbl)){?>
+				,"language": "<?php echo self::$lang_tbl[$langs] ?>"
 				<?php 
 				} ?>
 		})
@@ -322,13 +320,10 @@ class ext_Edit extends ext_Action {
 <?php
 
 	}
-	function savefile($file_name) {			// save edited file
-		if( get_magic_quotes_gpc() ) {
-			$code = stripslashes($GLOBALS['__POST']["code"]);
-		}
-		else {
-			$code = $GLOBALS['__POST']["code"];
-		}
+	static function savefile($file_name) {			// save edited file
+		
+		$code = $GLOBALS['__POST']["code"];
+		
 		$langs = $GLOBALS["language"];
 		if ($langs == "japanese"){
 			$_encoding = $GLOBALS['__POST']["file_encoding"];

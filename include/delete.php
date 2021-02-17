@@ -40,7 +40,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  */
 class ext_Delete extends ext_Action {
 
-	function execAction($dir, $item="") {
+	static function execAction($dir, $item="") {
 		// delete files/dirs
 		if(($GLOBALS["permissions"]&01)!=01) 
 		ext_Result::sendResult('delete', false, $GLOBALS["error_msg"]["accessfunc"]);

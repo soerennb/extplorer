@@ -35,19 +35,19 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  */
 
 class ext_Transfer extends ext_Action {
-	var $_downloadMethods;
-
-	function execAction( $dir, $item="" ) {
-
-		if(($GLOBALS["permissions"]&01)!=01) {
-			ext_Result::sendResult('upload', false, $GLOBALS["error_msg"]["accessfunc"]);
-		}
-		$this->_downloadMethods = array(
+	static $_downloadMethods = array(
 			new CurlDownloader(),
 			new WgetDownloader(),
 			new FopenDownloader(),
 			new FsockopenDownloader()
 		);
+
+	static function execAction( $dir, $item="" ) {
+
+		if(($GLOBALS["permissions"]&01)!=01) {
+			ext_Result::sendResult('upload', false, $GLOBALS["error_msg"]["accessfunc"]);
+		}
+		
 		//DEBUG ext_Result::sendResult('transfer', false, $dir );
 		// Execute
 		if(isset($GLOBALS['__POST']["confirm"]) && $GLOBALS['__POST']["confirm"]=="true") {
@@ -57,7 +57,7 @@ class ext_Transfer extends ext_Action {
             }
 			$cnt=count($GLOBALS['__POST']['userfile']);
 			$err=false;
-			foreach($this->_downloadMethods as $method ) {
+			foreach(self::$_downloadMethods as $method ) {
 				if( $method->isSupported()) {
 					$downloader =& $method;
 					break;
