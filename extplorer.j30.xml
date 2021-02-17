@@ -3,12 +3,12 @@
 <!-- Joomla! 3.0 Installer XML File 
 $Id: extplorer.j30.xml 249 2016-12-11 16:11:03Z soeren $ -->
     <name>eXtplorer</name>
-    <creationDate>15.05.2019</creationDate>
+    <creationDate>21.01.2021</creationDate>
     <author>soeren, QuiX Project</author>
     <copyright>Soeren Eberhardt-Biermann, QuiX Project</copyright>
     <authorEmail>info|-at|-extplorer.net</authorEmail>
     <authorUrl>http://extplorer.net/</authorUrl>
-    <version>2.1.13</version>
+    <version>2.1.14</version>
     <description><![CDATA[
 	<div align="left"><img src="components/com_extplorer/images/eXtplorer_logo.png" alt="eXtplorer Logo" /></div>
 	<h2>Successfully installed eXtplorer&nbsp;</h2>

@@ -41,7 +41,7 @@ class ext_Action {
 	* @param string $dir
 	* @param string $item
 	*/
-	function execAction( $dir, $item ) {
+	static function execAction( $dir, $item ) {
 		// to be overridden by the child class
 	}
 
