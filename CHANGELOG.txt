@@ -1,7 +1,9 @@
 ****************************
 Changelog for eXtplorer
-Version $Id: CHANGELOG.txt 249 2016-12-11 16:11:03Z soeren $
 ****************************
+--- version 2.1.15 ---
+- fixed a critical security issue reported by shimmeris
+- PHP 8 compatibility
 
 --- version 2.1.14 ---
 - fixed various security issues reported by Sander Bos:

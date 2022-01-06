@@ -84,6 +84,8 @@ function get_dircontents($dir, &$dir_list, &$file_list, &$tot_file_size, &$num_i
         $pattern = "/^.*$pattern.*\$/m";
         // search, and store all matching occurrences in $matches
     }
+	$mdate_start = 0;
+	
     if (!empty($_POST['mdate_start'])) {
         $mdate_start = strtotime($_POST['mdate_start']);
         if (empty($_POST['mdate_end'])) {

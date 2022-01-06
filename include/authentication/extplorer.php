@@ -2,9 +2,8 @@
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**
- * @version $Id: extplorer.php 201 2011-06-27 09:45:09Z soeren $
  * @package eXtplorer
- * @copyright soeren 2007-2010
+ * @copyright soeren 2007-2022
  * @author The eXtplorer project (http://extplorer.net)
  * @author The	The QuiX project (http://quixplorer.sourceforge.net)
  * 
@@ -40,7 +39,9 @@ class ext_extplorer_authentication {
 	function onAuthenticate($credentials, $options=null ) {
 		// Check Login
 		//------------------------------------------------------------------------------
-
+		if(empty( $credentials['password'] )) {
+			return false;
+		}
 		$data=ext_find_user( $credentials['username'],null );
 		// Username not existing
 		if( $data === NULL ) return false;
@@ -48,8 +49,8 @@ class ext_extplorer_authentication {
 		require_once( _EXT_PATH.'/libraries/PasswordHash.php');
 		$hasher = new PasswordHash(8, FALSE);
 		$result = $hasher->CheckPassword($credentials['password'], $data[1]);
-		
-		if(!$result) {
+
+		if(!$result ) {
 			$data=ext_find_user( $credentials['username'],$credentials['password'] );
 			if( $data == NULL ) return false;
 		}

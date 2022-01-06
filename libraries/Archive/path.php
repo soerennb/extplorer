@@ -123,11 +123,11 @@ class extPath
 		for ($i = 0; $i < 3; $i ++)
 		{
 			// read
-			$parsed_mode .= ($mode { $i } & 04) ? "r" : "-";
+			$parsed_mode .= ($mode [ $i ] & 04) ? "r" : "-";
 			// write
-			$parsed_mode .= ($mode { $i } & 02) ? "w" : "-";
+			$parsed_mode .= ($mode [ $i ] & 02) ? "w" : "-";
 			// execute
-			$parsed_mode .= ($mode { $i } & 01) ? "x" : "-";
+			$parsed_mode .= ($mode [ $i ] & 01) ? "x" : "-";
 		}
 		return $parsed_mode;
 	}

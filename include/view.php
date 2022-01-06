@@ -37,7 +37,7 @@ if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' 
  */
 class ext_View extends ext_Action {
 
-	function execAction($dir, $item) {		// show file contents
+	static function execAction($dir, $item) {		// show file contents
 		global $action;
 		$item = basename($item);
 		if(in_array(".".strtolower(pathinfo($item,PATHINFO_EXTENSION )), $GLOBALS["images_ext"])) {

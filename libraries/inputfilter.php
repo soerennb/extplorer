@@ -307,10 +307,7 @@ class InputFilter
                     $value = null;
                 }
                 if (is_string($value)) {
-                    if ($magic_quotes === true) {
-                        $value = stripslashes($value);
-                    }
-
+                    
                     if (strpos($value, "\r") !== false) {
                         $value = trim($value);
                     }

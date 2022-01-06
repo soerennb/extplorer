@@ -42,12 +42,12 @@ define( '_VALID_MOS', 1 );
 define( '_VALID_EXT', 1 );
 
 require_once( dirname(__FILE__).'/libraries/standalone.php');
-ob_start();
+if(!ob_start("ob_gzhandler")) ob_start();
 include( dirname(__FILE__).'/admin.extplorer.php' );
 $mainbody = ob_get_contents();
 ob_end_clean();
 
-extInitGzip();
+if(!ob_start("ob_gzhandler")) ob_start();
 header( 'Expires: Mon, 26 Jul 1997 05:00:00 GMT' );
 header( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s' ) . ' GMT' );
 header( 'Cache-Control: no-store, no-cache, must-revalidate' );
@@ -69,6 +69,6 @@ echo '<?xml version="1.0" encoding="'. $GLOBALS["charset"].'">';
 	</body>
 </html>
 <?php
-extDoGzip();
+ob_end_flush();
 
 ?>
