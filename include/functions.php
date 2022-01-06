@@ -896,18 +896,18 @@ class extProfiler {
 */
 class extHTML {
     static function loadExtJS() {
-		$scripts[] = array('dir' => 'scripts/editarea/', 'file' => 'edit_area_full_with_plugins.js');
-		$scripts[] = array('dir' => 'scripts/extjs3/adapter/ext/', 'file' => 'ext-base.js');
-		$scripts[] = array('dir' => 'scripts/extjs3/', 'file' => 'ext-all.js');
-		$scripts[] = array('dir' => 'scripts/extjs3-ext/ux.ondemandload/', 'file' => 'scriptloader.js');
-		$scripts[] = array('dir' => 'scripts/extjs3-ext/ux.editareaadapater/', 'file' => 'ext-editarea-adapter.js');
-		$scripts[] = array('dir' => 'scripts/extjs3-ext/ux.statusbar/', 'file' => 'ext-statusbar.js');
-		$scripts[] = array('dir' => 'scripts/extjs3-ext/ux.fileuploadfield/', 'file' => 'ext-fileUploadField.js');
-		$scripts[] = array('dir' => 'scripts/extjs3-ext/ux.locationbar/', 'file' => 'Ext.ux.LocationBar.js');
+		$scripts[] = array('dir' => _EXT_URL .'/scripts/editarea/', 'file' => 'edit_area_full_with_plugins.js');
+		$scripts[] = array('dir' => _EXT_URL .'/scripts/extjs3/adapter/ext/', 'file' => 'ext-base.js');
+		$scripts[] = array('dir' => _EXT_URL .'/scripts/extjs3/', 'file' => 'ext-all.js');
+		$scripts[] = array('dir' => _EXT_URL .'/scripts/extjs3-ext/ux.ondemandload/', 'file' => 'scriptloader.js');
+		$scripts[] = array('dir' => _EXT_URL .'/scripts/extjs3-ext/ux.editareaadapater/', 'file' => 'ext-editarea-adapter.js');
+		$scripts[] = array('dir' => _EXT_URL .'/scripts/extjs3-ext/ux.statusbar/', 'file' => 'ext-statusbar.js');
+		$scripts[] = array('dir' => _EXT_URL .'/scripts/extjs3-ext/ux.fileuploadfield/', 'file' => 'ext-fileUploadField.js');
+		$scripts[] = array('dir' => _EXT_URL .'/scripts/extjs3-ext/ux.locationbar/', 'file' => 'Ext.ux.LocationBar.js');
 		
-		$styles[] = array('dir' => 'scripts/extjs3/resources/css/', 'file' => 'ext-all.css');
-		$styles[] = array('dir' => 'scripts/extjs3-ext/ux.locationbar/', 'file' => 'LocationBar.css');
-		$styles[] = array('dir' => 'scripts/extjs3-ext/ux.fileuploadfield/', 'file' => 'fileuploadfield.css');
+		$styles[] = array('dir' => _EXT_URL .'/scripts/extjs3/resources/css/', 'file' => 'ext-all.css');
+		$styles[] = array('dir' => _EXT_URL .'/scripts/extjs3-ext/ux.locationbar/', 'file' => 'LocationBar.css');
+		$styles[] = array('dir' => _EXT_URL .'/scripts/extjs3-ext/ux.fileuploadfield/', 'file' => 'fileuploadfield.css');
 		$scriptTag = '';
 		if( !empty($_GET['nofetchscript']) || !empty( $_COOKIE['nofetchscript'])) {
 			foreach( $scripts as $script ) {
