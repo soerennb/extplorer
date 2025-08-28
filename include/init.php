@@ -102,7 +102,7 @@ require_once(_EXT_PATH . "/config/conf.php");
 
 $GLOBALS["separator"] = ext_getSeparator();
 
-$action 			= stripslashes(extGetParam( $_REQUEST, "action" ));
+$action 			= (extGetParam( $_REQUEST, "action" ) != null ? stripslashes(extGetParam( $_REQUEST, "action" )) : null);
 $default_lang		= !empty( $GLOBALS['mosConfig_lang'] ) ? $GLOBALS['mosConfig_lang'] : ext_Lang::detect_lang();
 if( !@is_object( $mainframe )) {
 	$mainframe = JFactory::getApplication('administrator');
@@ -257,7 +257,7 @@ if (!$GLOBALS['ext_conf']['symlink_allow_abovehome']) {
 	}
 }
 
-if (!get_is_dir(utf8_decode($abs_dir)) && !get_is_dir($abs_dir.$GLOBALS["separator"])) {
+if (!get_is_dir(mb_convert_encoding($abs_dir, 'ISO-8859-1', 'UTF-8')) && !get_is_dir($abs_dir.$GLOBALS["separator"])) {
 	ext_Result::sendResult('', false, '"'.htmlspecialchars($abs_dir,ENT_QUOTES).'" - '.$GLOBALS["error_msg"]["direxist"]);
 	$dir = '';
 }

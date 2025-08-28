@@ -1,4 +1,5 @@
 <?php
+header( 'Content-Type: text/html; charset=' . $GLOBALS["charset"] );
 // ensure this file is being included by a parent file
 if( !defined( '_JEXEC' ) && !defined( '_VALID_MOS' ) ) die( 'Restricted access' );
 /**

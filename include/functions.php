@@ -717,8 +717,8 @@ function ext_docLocation( $url ) {
 	return ext_scriptTag('', 'document.location=\''. $url .'\';' );
 }
 function ext_isXHR() {
-	return strtolower(extGetParam($_SERVER,'HTTP_X_REQUESTED_WITH')) == 'xmlhttprequest'
-		|| strtolower(extGetParam($_POST,'requestType')) == 'xmlhttprequest';
+	return @strtolower(extGetParam($_SERVER,'HTTP_X_REQUESTED_WITH')) == 'xmlhttprequest'
+		|| @strtolower(extGetParam($_POST,'requestType')) == 'xmlhttprequest';
 }
 function ext_exit() {
 	global $mainframe;

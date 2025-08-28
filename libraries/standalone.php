@@ -54,7 +54,7 @@ class extMainFrame {
 	/** @var array An array of page meta information */
 	var $_head						= null;
 	var $_userstate					= null;
-
+	var $now;
 	/**
 	* Class constructor
 	* @param database A database connection object
@@ -79,7 +79,7 @@ class extMainFrame {
 		$this->_head['custom'] 	= array();
 
 		$now = @date( 'Y-m-d H:i:s', time() );
-		$this->set( 'now', $now );
+		$this->now = $now;
 	}
 
 	/**
