@@ -116,6 +116,7 @@ defined('SERVICES_JSON_SUPPRESS_ERRORS') or define('SERVICES_JSON_SUPPRESS_ERROR
  */
 class ext_Json
 {
+	var $use;
    /**
     * constructs a new JSON instance
     *

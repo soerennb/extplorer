@@ -320,7 +320,7 @@ class InputFilter
                         }
                     }
 
-                    $value = filter_var($value, FILTER_SANITIZE_STRING);
+                    $value = htmlspecialchars($value);
                 }
 
                 $return[$field] = $value;

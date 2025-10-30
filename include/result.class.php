@@ -103,9 +103,12 @@ class ext_Result {
 			$classname = class_exists('ext_Json') ? 'ext_Json' : 'Services_JSON';
 			$json = new $classname();
 			$jresult = $json->encode($result);
-			if(strtolower(extGetParam($_POST,'requestType')) == 'xmlhttprequest') {
-				header("Content-type: text/html");
+			if(extGetParam($_POST,'requestType') != null) {
+				if(strtolower(extGetParam($_POST,'requestType')) == 'xmlhttprequest') {
+					header("Content-type: text/html");
+				}
 			}
+			
 			print $jresult;
 			ext_exit();
 		}
