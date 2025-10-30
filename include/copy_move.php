@@ -143,7 +143,7 @@ function ext_copy_move_items($dir) {		// copy/move file/dir
 		for($i=0;$i<$cnt;++$i) {
 			if($error[$i]==NULL) continue;
 
-			$err_msg .= $items[$i]." : ".$error[$i]."\n";
+			$err_msg .= htmlspecialchars($items[$i], ENT_QUOTES, 'UTF-8')." : ".$error[$i]."\n";
 		}
 		ext_Result::sendResult( $action, false, $err_msg);
 	}
@@ -166,7 +166,7 @@ function ext_copy_move_dialog($dir='') {
 		"xtype": "textfield",
         "fieldLabel": "Destination",
         "name": "new_dir",
-        "value": "<?php echo $dir ?>/",
+        "value": "<?php echo htmlspecialchars($dir, ENT_QUOTES, 'UTF-8') ?>/",
         "width":175,
         "allowBlank":false
     }],

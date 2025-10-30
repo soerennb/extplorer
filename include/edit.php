@@ -185,7 +185,7 @@ class ext_Edit extends ext_Action {
 	"labelWidth": "300",
 	"autoScroll": "true", 
 	"url":"<?php echo basename( $GLOBALS['script_name']) ?>",
-	"title": "<?php echo strlen($s_item) > 50 ? substr( htmlentities($s_item,ENT_QUOTES), strlen($s_item)-30, 30 ) : htmlentities($s_item,ENT_QUOTES); ?>",
+	"title": "<?php echo strlen($s_item) > 50 ? substr( htmlspecialchars($s_item,ENT_QUOTES,'UTF-8'), strlen($s_item)-30, 30 ) : htmlspecialchars($s_item,ENT_QUOTES,'UTF-8'); ?>",
 	"frame": "true",
 	"closable": "true",
 	"tbar": [{
@@ -209,8 +209,8 @@ class ext_Edit extends ext_Action {
 				params: {option: 'com_extplorer', 
 						action: 'edit', 
 						code: editAreaLoader.getValue("ext_codefield<?php echo $id_hash ?>"),
-						dir: '<?php echo stripslashes($dir) ?>', 
-						item: '<?php echo stripslashes($item) ?>', 
+						dir: '<?php echo htmlspecialchars($dir, ENT_QUOTES, 'UTF-8') ?>',
+						item: '<?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8') ?>',
 						dosave: 'yes',
                         token: "<?php echo ext_getToken() ?>"
 				}
@@ -239,8 +239,8 @@ class ext_Edit extends ext_Action {
 				params: {
 					option: 'com_extplorer', 
 					action: 'edit', 
-					dir: '<?php echo stripslashes($dir) ?>', 
-					item: '<?php echo stripslashes($item) ?>', 
+					dir: '<?php echo htmlspecialchars($dir, ENT_QUOTES, 'UTF-8') ?>',
+					item: '<?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8') ?>',
 					doreopen: 'yes',
                     token: "<?php echo ext_getToken() ?>"
 				}
@@ -288,7 +288,7 @@ class ext_Edit extends ext_Action {
 			"xtype": "textfield",
 			"fieldLabel": "<?php echo ext_Lang::msg('copyfile', true ) ?>",
 			"name": "fname",
-			"value": "<?php echo addslashes($item) ?>",
+			"value": "<?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8') ?>",
 			"clear": "true"
 			}
 <?php if ($langs == "japanese"){ ?>

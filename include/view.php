@@ -42,7 +42,7 @@ class ext_View extends ext_Action {
 		global $action;
 		$item = basename($item);
 		if(in_array(".".strtolower(pathinfo($item,PATHINFO_EXTENSION )), $GLOBALS["images_ext"])) {
-			$html =  '<img src="'.ext_make_link( 'get_image', $dir, rawurlencode($item)).'" alt="'.$GLOBALS["messages"]["actview"].": ".$item.'" /><br /><br />';
+			$html =  '<img src="'.ext_make_link( 'get_image', $dir, rawurlencode($item)).'" alt="'.$GLOBALS["messages"]["actview"].": ".htmlspecialchars($item, ENT_QUOTES, 'UTF-8').'" /><br /><br />';
 		}
 
 		elseif(in_array(".".strtolower(pathinfo($item,PATHINFO_EXTENSION )), $GLOBALS["editable_ext"])) {
@@ -116,10 +116,10 @@ class ext_View extends ext_Action {
 		?>
 		{
 
-	"dialogtitle": "<?php echo $GLOBALS['messages']['actview'].": ".$item ?>",
+	"dialogtitle": "<?php echo $GLOBALS['messages']['actview'].": ".htmlspecialchars($item, ENT_QUOTES, 'UTF-8') ?>",
 	"height": 500,
 	"autoScroll": true,
-	"html": "<?php echo $html	?>"
+	"html": "<?php echo htmlspecialchars($html, ENT_QUOTES, 'UTF-8') ?>"
 
 }
 		<?php

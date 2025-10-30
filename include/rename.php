@@ -101,7 +101,7 @@ class ext_Rename extends ext_Action {
 		"fieldLabel": "<?php echo ext_Lang::msg( 'newname', true ) ?>",
 		"name": "newitemname",
 		"id": "newitemname",
-		"value": "<?php echo str_replace("'", "\'", stripslashes($item) ) ?>",
+		"value": "<?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8') ?>",
 		"width":175,
 		"allowBlank":false
 		}
@@ -144,8 +144,8 @@ class ext_Rename extends ext_Action {
 				params: {
 					option: 'com_extplorer', 
 					action: 'rename', 
-					dir: '<?php echo stripslashes($dir) ?>', 
-					item: '<?php echo stripslashes($item) ?>', 
+					dir: '<?php echo htmlspecialchars($dir, ENT_QUOTES, 'UTF-8') ?>',
+					item: '<?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8') ?>',
 					confirm: 'true',
 					token: "<?php echo ext_getToken() ?>"
 				}
