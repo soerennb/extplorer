@@ -2519,7 +2519,7 @@ class Net_FTP extends PEAR
     {
         foreach ($dir_list as $entry) {
             foreach ($this->_ls_match as $match) {
-                if (preg_match($match['pattern'], $entry)) {
+                if (@preg_match($match['pattern'], $entry)) {
                     return $match;
                 }
             }

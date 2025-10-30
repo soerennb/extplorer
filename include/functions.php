@@ -104,7 +104,7 @@ function get_item_info( $dir, $item ) {
 	$ls = getCachedFTPListing( $dir );
 	if( empty($ls)) return false;
 	foreach( $ls as $entry ) {
-		if( $entry['name'] == $item ) {
+		if( !empty($entry['name']) && $entry['name'] == $item ) {
 			return $entry;
 		}
 	}
@@ -717,8 +717,8 @@ function ext_docLocation( $url ) {
 	return ext_scriptTag('', 'document.location=\''. $url .'\';' );
 }
 function ext_isXHR() {
-	return @strtolower(extGetParam($_SERVER,'HTTP_X_REQUESTED_WITH')) == 'xmlhttprequest'
-		|| @strtolower(extGetParam($_POST,'requestType')) == 'xmlhttprequest';
+	return strtolower(extGetParam($_SERVER,'HTTP_X_REQUESTED_WITH', '')) == 'xmlhttprequest'
+		|| strtolower(extGetParam($_POST,'requestType', '')) == 'xmlhttprequest';
 }
 function ext_exit() {
 	global $mainframe;
