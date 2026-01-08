@@ -1,0 +1,47 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Create deployable archive
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: zip, json, gd, ftp
+
+      - name: Install dependencies
+        run: |
+          php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+          php composer-setup.php
+          php composer.phar install --no-dev --optimize-autoloader
+
+      - name: Create Archive
+        run: |
+          mkdir -p release/writable/cache/thumbs
+          mkdir -p release/writable/logs
+          mkdir -p release/writable/session
+          mkdir -p release/writable/uploads
+          mkdir -p release/writable/file_manager_root
+          echo "[]" > release/writable/users.json
+          cp -r app release/
+          cp -r public release/
+          cp -r vendor release/
+          cp LICENSE README.md release/
+          cd release && zip -r ../extplorer3-release.zip .
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: extplorer3-release.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
