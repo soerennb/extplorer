@@ -8,9 +8,10 @@ interface IFileSystem
      * List files and directories in the given path.
      *
      * @param string $path Relative path
+     * @param bool $showHidden Whether to include hidden files
      * @return array List of files/folders with metadata
      */
-    public function listDirectory(string $path): array;
+    public function listDirectory(string $path, bool $showHidden = true): array;
 
     /**
      * Read file content.
@@ -85,7 +86,27 @@ interface IFileSystem
      *
      * @param string $path Relative path
      * @param int $mode Octal mode (e.g. 0755)
+     * @param bool $recursive Whether to apply to subdirectories
      * @return bool True on success
      */
-    public function chmod(string $path, int $mode): bool;
+    public function chmod(string $path, int $mode, bool $recursive = false): bool;
+
+    /**
+     * Change file owner/group.
+     *
+     * @param string $path Relative path
+     * @param string|int $user User name or ID
+     * @param string|int $group Group name or ID
+     * @param bool $recursive Whether to apply to subdirectories
+     * @return bool True on success
+     */
+    public function chown(string $path, $user, $group, bool $recursive = false): bool;
+
+    /**
+     * Calculate total size of a directory recursively.
+     *
+     * @param string $path Relative path
+     * @return int Size in bytes
+     */
+    public function getDirectorySize(string $path): int;
 }

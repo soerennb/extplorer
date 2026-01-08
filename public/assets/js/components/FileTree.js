@@ -33,9 +33,9 @@ const FileTree = {
         async loadChildren() {
             this.isLoading = true;
             try {
-                const items = await Api.get('ls', { path: this.path });
+                const res = await Api.get('ls', { path: this.path });
                 // Filter only directories
-                this.children = items.filter(item => item.type === 'dir');
+                this.children = res.items.filter(item => item.type === 'dir');
                 // Sort by name
                 this.children.sort((a, b) => a.name.localeCompare(b.name));
             } catch (e) {

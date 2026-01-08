@@ -21,18 +21,35 @@
         <form action="<?= site_url('login/auth') ?>" method="post">
             <?= csrf_field() ?>
             <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" name="username" class="form-control" required autofocus>
+                <label class="form-label">Connection Mode</label>
+                <select name="mode" class="form-select" onchange="toggleRemoteFields(this.value)">
+                    <option value="local">Local Filesystem</option>
+                    <option value="ftp">FTP Server</option>
+                    <option value="sftp">SFTP (SSH)</option>
+                </select>
             </div>
+            
+            <div id="remote_fields" style="display:none;">
+                <div class="mb-3">
+                    <label id="host_label" class="form-label">Host</label>
+                    <input type="text" name="remote_host" class="form-control" placeholder="example.com">
+                </div>
+                <div class="mb-3">
+                    <label id="port_label" class="form-label">Port</label>
+                    <input type="number" name="remote_port" id="remote_port" class="form-control" value="21">
+                </div>
+            </div>
+
             <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-control" required>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Login</button>
-            <div class="text-center mt-3 text-muted small">
-                Default: admin / admin
-            </div>
-        </form>
-    </div>
+//...
+    <script>
+        function toggleRemoteFields(val) {
+            const fields = document.getElementById('remote_fields');
+            const port = document.getElementById('remote_port');
+            fields.style.display = (val === 'ftp' || val === 'sftp') ? 'block' : 'none';
+            if (val === 'ftp') port.value = 21;
+            if (val === 'sftp') port.value = 22;
+        }
+    </script>
 </body>
 </html>

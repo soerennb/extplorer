@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use CodeIgniter\API\ResponseTrait;
 use App\Models\UserModel;
+use App\Services\LogService;
 
 class UserAdminController extends BaseController
 {
@@ -18,10 +19,88 @@ class UserAdminController extends BaseController
 
     private function checkAdmin()
     {
-        if (session('role') !== 'admin') {
+        if (!can('admin_users')) {
             return $this->failForbidden('Access denied');
         }
         return true;
+    }
+
+    // --- Roles ---
+
+    public function getRoles()
+    {
+        if (($check = $this->checkAdmin()) !== true) return $check;
+        return $this->respond($this->userModel->getRoles());
+    }
+
+    public function saveRole()
+    {
+        if (($check = $this->checkAdmin()) !== true) return $check;
+        $json = $this->request->getJSON();
+        $name = $json->name ?? '';
+        $permissions = $json->permissions ?? [];
+
+        if (!$name) return $this->fail('Role name required');
+
+        $roles = $this->userModel->getRoles();
+        $roles[$name] = $permissions;
+        $this->userModel->saveRoles($roles);
+        LogService::log('Save Role', $name);
+        return $this->respond(['status' => 'success']);
+    }
+
+    public function deleteRole($name = null)
+    {
+        if (($check = $this->checkAdmin()) !== true) return $check;
+        if (!$name) return $this->fail('Role name required');
+
+        $roles = $this->userModel->getRoles();
+        if (isset($roles[$name])) {
+            unset($roles[$name]);
+            $this->userModel->saveRoles($roles);
+            LogService::log('Delete Role', $name);
+            return $this->respond(['status' => 'success']);
+        }
+        return $this->failNotFound('Role not found');
+    }
+
+    // --- Groups ---
+
+    public function getGroups()
+    {
+        if (($check = $this->checkAdmin()) !== true) return $check;
+        return $this->respond($this->userModel->getGroups());
+    }
+
+    public function saveGroup()
+    {
+        if (($check = $this->checkAdmin()) !== true) return $check;
+        $json = $this->request->getJSON();
+        $name = $json->name ?? '';
+        $roles = $json->roles ?? [];
+
+        if (!$name) return $this->fail('Group name required');
+
+        $groups = $this->userModel->getGroups();
+        $groups[$name] = $roles;
+        $this->userModel->saveGroups($groups);
+        LogService::log('Save Group', $name);
+        return $this->respond(['status' => 'success']);
+    }
+
+    public function deleteGroup($name = null)
+    {
+        if (($check = $this->checkAdmin()) !== true) return $check;
+        if (!$name) return $this->fail('Group name required');
+
+        $groups = $this->userModel->getGroups();
+        if (isset($groups[$name])) {
+            unset($groups[$name]);
+            $this->userModel->saveGroups($groups);
+            LogService::log('Delete Group', $name);
+            return $this->respond(['status' => 'success']);
+        }
+        return $this->failNotFound('Group not found');
     }
 
     public function index()
@@ -51,6 +130,7 @@ class UserAdminController extends BaseController
         }
 
         if ($this->userModel->addUser($username, $password, $role, $homeDir)) {
+            LogService::log('Create User', $username);
             return $this->respondCreated(['status' => 'success']);
         } else {
             return $this->fail('User already exists');
@@ -65,6 +145,7 @@ class UserAdminController extends BaseController
         $data = json_decode(json_encode($this->request->getJSON()), true);
 
         if ($this->userModel->updateUser($username, $data)) {
+            LogService::log('Update User', $username);
             return $this->respond(['status' => 'success']);
         } else {
             return $this->failNotFound('User not found');
@@ -82,6 +163,7 @@ class UserAdminController extends BaseController
         }
 
         if ($this->userModel->deleteUser($username)) {
+            LogService::log('Delete User', $username);
             return $this->respond(['status' => 'success']);
         } else {
             return $this->failNotFound('User not found');
@@ -103,5 +185,11 @@ class UserAdminController extends BaseController
             'disk_free' => disk_free_space(WRITEPATH),
             'disk_total' => disk_total_space(WRITEPATH),
         ]);
+    }
+
+    public function getLogs()
+    {
+        if (($check = $this->checkAdmin()) !== true) return $check;
+        return $this->respond(LogService::getLogs());
     }
 }

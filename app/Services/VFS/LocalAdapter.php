@@ -5,6 +5,7 @@ namespace App\Services\VFS;
 use CodeIgniter\Files\File;
 use Exception;
 use ZipArchive;
+use PharData;
 
 class LocalAdapter implements IFileSystem
 {
@@ -37,7 +38,7 @@ class LocalAdapter implements IFileSystem
         return str_starts_with($fullPath, $this->rootPath);
     }
 
-    public function listDirectory(string $path): array
+    public function listDirectory(string $path, bool $showHidden = true): array
     {
         $fullPath = $this->resolvePath($path);
         if (!is_dir($fullPath)) {
@@ -49,6 +50,10 @@ class LocalAdapter implements IFileSystem
 
         foreach ($items as $item) {
             if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            if (!$showHidden && str_starts_with($item, '.')) {
                 continue;
             }
 
@@ -158,25 +163,41 @@ class LocalAdapter implements IFileSystem
 
     public function archive(array $sources, string $destination): bool
     {
-        $zip = new ZipArchive();
         $fullDest = $this->resolvePath($destination);
-
-        if ($zip->open($fullDest, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-            throw new Exception("Cannot create zip file: $destination");
+        $ext = strtolower(pathinfo($fullDest, PATHINFO_EXTENSION));
+        
+        if (str_ends_with(strtolower($fullDest), '.tar.gz')) {
+            $ext = 'tar.gz';
         }
 
-        foreach ($sources as $source) {
-            $fullSource = $this->resolvePath($source);
-            $baseName = basename($fullSource);
-
-            if (is_dir($fullSource)) {
-                $this->addDirToZip($zip, $fullSource, $baseName);
-            } else {
-                $zip->addFile($fullSource, $baseName);
+        if ($ext === 'zip') {
+            $zip = new ZipArchive();
+            if ($zip->open($fullDest, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+                throw new Exception("Cannot create zip file: $destination");
             }
+            foreach ($sources as $source) {
+                $fullSource = $this->resolvePath($source);
+                $baseName = basename($fullSource);
+                if (is_dir($fullSource)) $this->addDirToZip($zip, $fullSource, $baseName);
+                else $zip->addFile($fullSource, $baseName);
+            }
+            return $zip->close();
+        } else if ($ext === 'tar' || $ext === 'tar.gz') {
+            if (file_exists($fullDest)) unlink($fullDest);
+            $archiveName = $ext === 'tar.gz' ? str_replace('.tar.gz', '.tar', $fullDest) : $fullDest;
+            $phar = new PharData($archiveName);
+            foreach ($sources as $source) {
+                $fullSource = $this->resolvePath($source);
+                if (is_dir($fullSource)) $phar->buildFromDirectory($fullSource);
+                else $phar->addFile($fullSource, basename($fullSource));
+            }
+            if ($ext === 'tar.gz') {
+                $phar->compress(\Phar::GZ);
+                unlink($archiveName);
+            }
+            return true;
         }
-
-        return $zip->close();
+        throw new Exception("Unsupported archive format: $ext");
     }
 
     private function addDirToZip(ZipArchive $zip, string $dir, string $localPath) 
@@ -197,17 +218,27 @@ class LocalAdapter implements IFileSystem
 
     public function extract(string $archive, string $destination): bool
     {
-        $zip = new ZipArchive();
         $fullArchive = $this->resolvePath($archive);
         $fullDest = $this->resolvePath($destination);
+        $ext = strtolower(pathinfo($fullArchive, PATHINFO_EXTENSION));
 
-        if ($zip->open($fullArchive) === true) {
-            $zip->extractTo($fullDest);
-            $zip->close();
-            return true;
-        } else {
-            throw new Exception("Failed to open archive: $archive");
+        if (str_ends_with(strtolower($fullArchive), '.tar.gz')) {
+            $ext = 'tar.gz';
         }
+
+        if ($ext === 'zip') {
+            $zip = new ZipArchive();
+            if ($zip->open($fullArchive) === true) {
+                $zip->extractTo($fullDest);
+                $zip->close();
+                return true;
+            }
+        } else if ($ext === 'tar' || $ext === 'tar.gz') {
+            $phar = new PharData($fullArchive);
+            return $phar->extractTo($fullDest, null, true);
+        }
+
+        throw new Exception("Failed to open or unsupported archive: $archive");
     }
 
     public function getMetadata(string $path): ?array
@@ -219,18 +250,95 @@ class LocalAdapter implements IFileSystem
         return $this->getMetadataInternal($fullPath, $path);
     }
 
-    public function chmod(string $path, int $mode): bool
+    public function chmod(string $path, int $mode, bool $recursive = false): bool
     {
         $fullPath = $this->resolvePath($path);
         if (!file_exists($fullPath)) {
             throw new Exception("File not found: $path");
         }
+        
+        if ($recursive && is_dir($fullPath)) {
+            $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($fullPath, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
+            foreach ($iterator as $item) {
+                chmod($item->getPathname(), $mode);
+            }
+        }
+        
         return chmod($fullPath, $mode);
+    }
+
+    public function chown(string $path, $user, $group, bool $recursive = false): bool
+    {
+        $fullPath = $this->resolvePath($path);
+        if (!file_exists($fullPath)) {
+            throw new Exception("File not found: $path");
+        }
+
+        $apply = function($p) use ($user, $group) {
+            $res = true;
+            if ($user) $res = $res && chown($p, $user);
+            if ($group) $res = $res && chgrp($p, $group);
+            return $res;
+        };
+
+        if ($recursive && is_dir($fullPath)) {
+            $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($fullPath, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
+            foreach ($iterator as $item) {
+                $apply($item->getPathname());
+            }
+        }
+
+        return $apply($fullPath);
+    }
+
+    public function search(string $query): array
+    {
+        $results = [];
+        $dir = new \RecursiveDirectoryIterator($this->rootPath, \RecursiveDirectoryIterator::SKIP_DOTS);
+        $iterator = new \RecursiveIteratorIterator($dir, \RecursiveIteratorIterator::SELF_FIRST);
+
+        foreach ($iterator as $file) {
+            if (stripos($file->getFilename(), $query) !== false) {
+                // Calculate relative path
+                $fullPath = $file->getPathname();
+                // Ensure it's within root (redundant given Iterator start, but good practice)
+                if (str_starts_with($fullPath, $this->rootPath)) {
+                    $relativePath = substr($fullPath, strlen($this->rootPath) + 1);
+                    // Fix windows slashes
+                    $relativePath = str_replace('\\', '/', $relativePath);
+                    
+                    $results[] = $this->getMetadataInternal($fullPath, $relativePath);
+                }
+            }
+        }
+        return $results;
+    }
+
+    public function getDirectorySize(string $path): int
+    {
+        $fullPath = $this->resolvePath($path);
+        if (!is_dir($fullPath)) return 0;
+
+        $size = 0;
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($fullPath)) as $file) {
+            $size += $file->getSize();
+        }
+        return $size;
     }
 
     private function getMetadataInternal(string $fullPath, string $relativePath): array
     {
         $isDir = is_dir($fullPath);
+        $owner = 'unknown';
+        $group = 'unknown';
+
+        if (function_exists('posix_getpwuid')) {
+            $ownerData = posix_getpwuid(fileowner($fullPath));
+            $owner = $ownerData['name'] ?? $ownerData['uid'];
+            $groupData = posix_getgrgid(filegroup($fullPath));
+            $group = $groupData['name'] ?? $groupData['gid'];
+        }
+
         return [
             'name' => basename($fullPath),
             'path' => $relativePath,
@@ -238,7 +346,10 @@ class LocalAdapter implements IFileSystem
             'size' => $isDir ? 0 : filesize($fullPath),
             'mtime' => filemtime($fullPath),
             'perms' => substr(sprintf('%o', fileperms($fullPath)), -4),
+            'owner' => $owner,
+            'group' => $group,
             'extension' => $isDir ? null : pathinfo($fullPath, PATHINFO_EXTENSION),
+            'mime' => $isDir ? 'directory' : mime_content_type($fullPath),
         ];
     }
 }

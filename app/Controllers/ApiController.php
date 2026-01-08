@@ -4,46 +4,79 @@ namespace App\Controllers;
 
 use CodeIgniter\API\ResponseTrait;
 use App\Services\VFS\LocalAdapter;
+use App\Services\LogService;
 use Exception;
 
 class ApiController extends BaseController
 {
     use ResponseTrait;
 
-    private LocalAdapter $fs;
+    private \App\Services\VFS\IFileSystem $fs;
 
     public function __construct()
     {
-        // Ensure root exists
-        $baseRoot = WRITEPATH . 'file_manager_root';
-        if (!is_dir($baseRoot)) {
-            mkdir($baseRoot, 0777, true);
+        $conn = session('connection') ?? ['mode' => 'local'];
+
+        if ($conn['mode'] === 'ftp') {
+            $this->fs = new \App\Services\VFS\FtpAdapter(
+                $conn['host'],
+                $conn['user'],
+                $conn['pass'],
+                $conn['port']
+            );
+        } else if ($conn['mode'] === 'sftp') {
+            $this->fs = new \App\Services\VFS\Ssh2Adapter(
+                $conn['host'],
+                $conn['user'],
+                $conn['pass'],
+                $conn['port']
+            );
+        } else {
+            // Ensure root exists
+            $baseRoot = WRITEPATH . 'file_manager_root';
+            if (!is_dir($baseRoot)) {
+                mkdir($baseRoot, 0777, true);
+            }
+
+            $userHome = session('home_dir') ?: '/';
+            
+            // Sanitize userHome to prevent traversal
+            $userHome = str_replace('..', '', $userHome);
+            $userHome = trim($userHome, '/\\');
+
+            $root = $baseRoot;
+            if ($userHome) {
+                $root .= DIRECTORY_SEPARATOR . $userHome;
+            }
+
+            if (!is_dir($root)) {
+                mkdir($root, 0777, true);
+            }
+
+            $this->fs = new LocalAdapter($root);
         }
-
-        $userHome = session('home_dir') ?: '/';
-        
-        // Sanitize userHome to prevent traversal
-        $userHome = str_replace('..', '', $userHome);
-        $userHome = trim($userHome, '/\\');
-
-        $root = $baseRoot;
-        if ($userHome) {
-            $root .= DIRECTORY_SEPARATOR . $userHome;
-        }
-
-        if (!is_dir($root)) {
-            mkdir($root, 0777, true);
-        }
-
-        $this->fs = new LocalAdapter($root);
     }
 
     public function ls()
     {
+        if (!can('read')) return $this->failForbidden();
         $path = $this->request->getGet('path') ?? '';
+        $showHidden = $this->request->getGet('showHidden') === 'true';
+        $limit = (int) ($this->request->getGet('limit') ?? 0);
+        $offset = (int) ($this->request->getGet('offset') ?? 0);
+
         try {
-            $data = $this->fs->listDirectory($path);
-            return $this->respond($data);
+            $data = $this->fs->listDirectory($path, $showHidden);
+            $total = count($data);
+
+            if ($limit > 0) {
+                $data = array_slice($data, $offset, $limit);
+            }
+
+            return $this->respond([
+                'items' => $data,
+                'total' => $total
+            ]);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
         }
@@ -51,6 +84,7 @@ class ApiController extends BaseController
 
     public function content()
     {
+        if (!can('read')) return $this->failForbidden();
         $path = $this->request->getGet('path');
         if (!$path) return $this->fail('Path required');
         try {
@@ -63,6 +97,7 @@ class ApiController extends BaseController
 
     public function save()
     {
+        if (!can('write')) return $this->failForbidden();
         $json = $this->request->getJSON();
         $path = $json->path ?? null;
         $content = $json->content ?? null;
@@ -71,6 +106,7 @@ class ApiController extends BaseController
 
         try {
             $this->fs->writeFile($path, $content ?? '');
+            LogService::log('Save File', $path);
             return $this->respond(['status' => 'success']);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
@@ -79,6 +115,7 @@ class ApiController extends BaseController
 
     public function rm()
     {
+        if (!can('delete')) return $this->failForbidden();
         $json = $this->request->getJSON();
         $path = $json->path ?? null;
 
@@ -86,6 +123,7 @@ class ApiController extends BaseController
 
         try {
             $this->fs->delete($path);
+            LogService::log('Delete', $path);
             return $this->respond(['status' => 'success']);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
@@ -94,6 +132,7 @@ class ApiController extends BaseController
 
     public function mkdir()
     {
+        if (!can('write')) return $this->failForbidden();
         $json = $this->request->getJSON();
         $path = $json->path ?? null;
 
@@ -101,6 +140,7 @@ class ApiController extends BaseController
 
         try {
             $this->fs->createDirectory($path);
+            LogService::log('Create Directory', $path);
             return $this->respond(['status' => 'success']);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
@@ -109,6 +149,7 @@ class ApiController extends BaseController
 
     public function mv()
     {
+        if (!can('write')) return $this->failForbidden();
         $json = $this->request->getJSON();
         $from = $json->from ?? null;
         $to = $json->to ?? null;
@@ -117,6 +158,7 @@ class ApiController extends BaseController
 
         try {
             $this->fs->move($from, $to);
+            LogService::log('Move', $from, 'To: ' . $to);
             return $this->respond(['status' => 'success']);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
@@ -125,6 +167,7 @@ class ApiController extends BaseController
 
     public function cp()
     {
+        if (!can('write')) return $this->failForbidden();
         $json = $this->request->getJSON();
         $from = $json->from ?? null;
         $to = $json->to ?? null;
@@ -133,6 +176,7 @@ class ApiController extends BaseController
 
         try {
             $this->fs->copy($from, $to);
+            LogService::log('Copy', $from, 'To: ' . $to);
             return $this->respond(['status' => 'success']);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
@@ -141,6 +185,7 @@ class ApiController extends BaseController
 
     public function upload()
     {
+        if (!can('upload')) return $this->failForbidden();
         $path = $this->request->getPost('path') ?? '';
         $file = $this->request->getFile('file');
 
@@ -156,15 +201,55 @@ class ApiController extends BaseController
             }
             
             $file->move($targetDir, $file->getClientName());
-            
+            LogService::log('Upload', $path, 'File: ' . $file->getClientName());
             return $this->respond(['status' => 'success']);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
         }
     }
 
+    public function uploadChunk()
+    {
+        if (!can('upload')) return $this->failForbidden();
+        
+        $file = $this->request->getFile('file');
+        $filename = $this->request->getPost('filename');
+        $chunkIndex = (int)$this->request->getPost('chunkIndex');
+        $totalChunks = (int)$this->request->getPost('totalChunks');
+        $targetPath = $this->request->getPost('path') ?? '';
+
+        if (!$file || !$file->isValid()) return $this->fail('Invalid chunk');
+
+        $tempDir = WRITEPATH . 'uploads/chunks/' . md5(session_id() . $filename);
+        if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);
+
+        $file->move($tempDir, $chunkIndex . '.part');
+
+        if ($chunkIndex === $totalChunks - 1) {
+            // Last chunk, assemble
+            try {
+                $finalPath = $this->fs->resolvePath($targetPath) . DIRECTORY_SEPARATOR . $filename;
+                $out = fopen($finalPath, 'wb');
+                for ($i = 0; $i < $totalChunks; $i++) {
+                    $chunkPath = $tempDir . DIRECTORY_SEPARATOR . $i . '.part';
+                    fwrite($out, file_get_contents($chunkPath));
+                    unlink($chunkPath);
+                }
+                fclose($out);
+                rmdir($tempDir);
+                LogService::log('Upload (Chunked)', $targetPath, 'File: ' . $filename);
+                return $this->respond(['status' => 'assembled']);
+            } catch (Exception $e) {
+                return $this->fail($e->getMessage());
+            }
+        }
+
+        return $this->respond(['status' => 'chunk_saved', 'index' => $chunkIndex]);
+    }
+
     public function download()
     {
+        if (!can('read')) return $this->failForbidden();
         $path = $this->request->getGet('path');
         $inline = $this->request->getGet('inline');
         
@@ -223,6 +308,7 @@ class ApiController extends BaseController
 
     public function thumb()
     {
+        if (!can('read')) return $this->failForbidden();
         $path = $this->request->getGet('path');
         if (!$path) return $this->fail('Path required');
 
@@ -260,8 +346,40 @@ class ApiController extends BaseController
         }
     }
 
+    public function search()
+    {
+        if (!can('read')) return $this->failForbidden();
+        $query = $this->request->getGet('q');
+        if (!$query) return $this->fail('Query required');
+
+        try {
+            $results = $this->fs->search($query);
+            return $this->respond([
+                'items' => $results,
+                'total' => count($results)
+            ]);
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    public function dirsize()
+    {
+        if (!can('read')) return $this->failForbidden();
+        $path = $this->request->getGet('path');
+        if (!$path) return $this->fail('Path required');
+
+        try {
+            $size = $this->fs->getDirectorySize($path);
+            return $this->respond(['size' => $size]);
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
     public function archive()
     {
+        if (!can('archive')) return $this->failForbidden();
         $json = $this->request->getJSON();
         $paths = $json->paths ?? [];
         $name = $json->name ?? 'archive.zip';
@@ -277,8 +395,8 @@ class ApiController extends BaseController
             // Let's assume `paths` are full relative paths (e.g. "folder/file.txt")
             
             $destination = ($cwd ? $cwd . '/' : '') . $name;
-            
             $this->fs->archive($paths, $destination);
+            LogService::log('Archive', $destination, 'Sources: ' . count($paths));
             return $this->respond(['status' => 'success']);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
@@ -287,6 +405,7 @@ class ApiController extends BaseController
 
     public function extract()
     {
+        if (!can('extract')) return $this->failForbidden();
         $json = $this->request->getJSON();
         $path = $json->path ?? null;
         $cwd = $json->cwd ?? '';
@@ -296,25 +415,71 @@ class ApiController extends BaseController
         try {
             // Extract to current folder
             $this->fs->extract($path, $cwd ?: '/');
+            LogService::log('Extract', $path, 'To: ' . ($cwd ?: '/'));
             return $this->respond(['status' => 'success']);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
         }
     }
 
-    public function chmod()
-    {
-        $json = $this->request->getJSON();
-        $path = $json->path ?? null;
-        $mode = $json->mode ?? null; // Expecting octal string e.g., "755" or integer
+        public function chmod()
 
-        if (!$path || !$mode) return $this->fail('Path and Mode required');
+        {
+
+            if (!can('chmod')) return $this->failForbidden();
+
+            $json = $this->request->getJSON();
+
+            $paths = $json->paths ?? [$json->path ?? null];
+
+            $mode = $json->mode ?? null;
+
+            $recursive = (bool)($json->recursive ?? false);
+
+    
+
+            if (empty(array_filter($paths)) || !$mode) return $this->fail('Paths and Mode required');
+
+    
+
+            try {
+
+                $octalMode = intval(strval($mode), 8);
+
+                foreach ($paths as $path) {
+
+                    if ($path) $this->fs->chmod($path, $octalMode, $recursive);
+
+                }
+
+                LogService::log('Chmod' . ($recursive ? ' (Recursive)' : ''), implode(', ', $paths), 'Mode: ' . $mode);
+
+                return $this->respond(['status' => 'success']);
+
+            } catch (Exception $e) {
+
+                return $this->fail($e->getMessage());
+
+            }
+
+        }
+
+    public function chown()
+    {
+        if (!can('admin_users')) return $this->failForbidden();
+        $json = $this->request->getJSON();
+        $paths = $json->paths ?? [$json->path ?? null];
+        $user = $json->user ?? null;
+        $group = $json->group ?? null;
+        $recursive = (bool)($json->recursive ?? false);
+
+        if (empty(array_filter($paths))) return $this->fail('Paths required');
 
         try {
-            // Convert mode to octal integer if it's a string
-            $octalMode = intval(strval($mode), 8);
-            
-            $this->fs->chmod($path, $octalMode);
+            foreach ($paths as $path) {
+                if ($path) $this->fs->chown($path, $user, $group, $recursive);
+            }
+            LogService::log('Chown' . ($recursive ? ' (Recursive)' : ''), implode(', ', $paths), 'User: ' . $user . ', Group: ' . $group);
             return $this->respond(['status' => 'success']);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
