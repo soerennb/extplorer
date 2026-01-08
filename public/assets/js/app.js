@@ -85,6 +85,12 @@ const app = createApp({
         const reload = () => store.loadPath(store.cwd);
         const goUp = () => { if (store.cwd) { const p = store.cwd.split('/'); p.pop(); store.loadPath(p.join('/')); } };
         
+        const closeOffcanvas = () => {
+            const el = document.getElementById('sidebarOffcanvas');
+            const instance = bootstrap.Offcanvas.getInstance(el);
+            if (instance) instance.hide();
+        };
+
         const handleItemClick = (e, file) => {
             if (e.ctrlKey || e.metaKey) {
                 store.toggleSelection(file);
@@ -97,8 +103,10 @@ const app = createApp({
         const changePage = (d) => { const n = store.pagination.page + d; if (n > 0 && n <= Math.ceil(store.pagination.total / store.pagination.pageSize)) store.loadPath(store.cwd, n); };
 
         const open = async (file) => {
-            if (file.type === 'dir') store.loadPath(file.path);
-            else {
+            if (file.type === 'dir') {
+                store.loadPath(file.path);
+                closeOffcanvas();
+            } else {
                 const ext = file.extension?.toLowerCase();
                 const textExts = ['php','js','css','html','json','xml','txt','md','sql','gitignore','env'];
                 if (textExts.includes(ext)) {
@@ -121,6 +129,7 @@ const app = createApp({
                     imageViewer.index = imageViewer.list.findIndex(f => f.name === file.name);
                     updateImageViewer();
                     imageModal.show();
+                    closeOffcanvas();
                 } else Swal.fire('Info', 'Preview not supported for this file type.', 'info');
             }
         };
@@ -371,8 +380,43 @@ const app = createApp({
             }
         };
 
-        const setSort = (k) => { if (store.sortBy === k) store.sortDesc = !store.sortDesc; else { store.sortBy = k; store.sortDesc = false; } };
-        const showContextMenu = (e, f) => { contextMenu.visible = true; contextMenu.x = e.clientX; contextMenu.y = e.clientY; contextMenu.file = f; store.selectedItems = [f]; };
+                const setSort = (k) => { if (store.sortBy === k) store.sortDesc = !store.sortDesc; else { store.sortBy = key; store.sortDesc = false; } };
+
+                
+
+                // Touch Support
+
+                let touchTimer = null;
+
+                const handleTouchStart = (e, file) => {
+
+                    touchTimer = setTimeout(() => {
+
+                        const touch = e.touches[0];
+
+                        showContextMenu({ clientX: touch.clientX, clientY: touch.clientY }, file);
+
+                        touchTimer = null;
+
+                    }, 600); // 600ms for long press
+
+                };
+
+                const handleTouchEnd = () => {
+
+                    if (touchTimer) {
+
+                        clearTimeout(touchTimer);
+
+                        touchTimer = null;
+
+                    }
+
+                };
+
+        
+
+                const showContextMenu = (e, f) => { contextMenu.visible = true; contextMenu.x = e.clientX; contextMenu.y = e.clientY; contextMenu.file = f; store.selectedItems = [f]; };
         const hideContextMenu = () => contextMenu.visible = false;
         const cmAction = (a) => {
             hideContextMenu(); const f = contextMenu.file; if (!f) return;
@@ -415,7 +459,7 @@ const app = createApp({
 
         return {
             store, i18n, t: (k, p) => i18n.t(k, p),
-            goUp, reload, handleItemClick, changePage, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles,
+            goUp, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles,
             isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin,
             contextMenu, showContextMenu, hideContextMenu, cmAction,
             imageViewer, nextImage, prevImage, showWebDav, copyWebDavUrl, webDavUrl,

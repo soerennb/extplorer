@@ -9,6 +9,7 @@ const store = Vue.reactive({
     recentFiles: JSON.parse(localStorage.getItem('extplorer_recent_files') || '[]'),
     showHidden: localStorage.getItem('extplorer_show_hidden') === 'true',
     viewMode: localStorage.getItem('extplorer_view_mode') || 'grid',
+    isMobile: window.innerWidth < 992,
     isLoading: false,
     error: null,
     pagination: {
@@ -18,8 +19,12 @@ const store = Vue.reactive({
     },
 
     toggleViewMode(mode) {
-        this.viewMode = mode;
-        localStorage.setItem('extplorer_view_mode', mode);
+        if (!mode) {
+            this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
+        } else {
+            this.viewMode = mode;
+        }
+        localStorage.setItem('extplorer_view_mode', this.viewMode);
     },
 
     toggleHidden() {
@@ -91,7 +96,7 @@ const store = Vue.reactive({
             const res = await Api.get('search', { q: query });
             this.files = res.items;
             this.pagination.total = res.total;
-            this.pagination.page = 1; // Search results usually a single page for now
+            this.pagination.page = 1;
         } catch (e) {
             this.error = e.message;
         } finally {
@@ -114,10 +119,10 @@ const store = Vue.reactive({
 
     clearSelection() {
         this.selectedItems = [];
-    },
-
-    toggleViewMode() {
-        this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
-        localStorage.setItem('extplorer_view_mode', this.viewMode);
     }
+});
+
+// Global resize listener
+window.addEventListener('resize', () => {
+    store.isMobile = window.innerWidth < 992;
 });

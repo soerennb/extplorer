@@ -11,13 +11,19 @@
     <style>
         body, html { height: 100%; overflow: hidden; }
         #app { display: flex; flex-direction: column; height: 100%; }
-        .main-container { flex: 1; display: flex; overflow: hidden; }
+        .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
         
+        /* Sidebar */
         .sidebar { 
             width: 250px; 
             border-right: 1px solid var(--bs-border-color); 
             overflow-y: auto; 
             background-color: var(--bs-body-bg); 
+            flex-shrink: 0;
+        }
+        
+        @media (max-width: 991.98px) {
+            .sidebar { width: auto; border-right: none; }
         }
         
         .content-area { flex: 1; overflow-y: auto; padding: 1rem; background-color: var(--bs-body-bg); }
@@ -36,34 +42,53 @@
         .file-item.drag-over { background-color: var(--bs-info-bg-subtle) !important; border: 1px dashed var(--bs-info) !important; }
         
         /* Grid View */
+        .grid-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            align-content: start;
+        }
         .grid-view .file-item { 
-            width: 120px; 
-            padding: 15px; 
-            margin: 5px; 
+            width: auto; 
+            padding: 10px; 
+            margin: 0;
             text-align: center; 
-            display: inline-flex;
+            display: flex;
             flex-direction: column;
             align-items: center;
         }
-        .grid-view .file-icon { font-size: 3rem; line-height: 1; margin-bottom: 5px; }
+        @media (min-width: 768px) {
+            .grid-view { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; }
+            .grid-view .file-item { padding: 15px; }
+        }
+
+        .grid-view .file-icon { font-size: 2.5rem; line-height: 1; margin-bottom: 5px; }
+        @media (min-width: 768px) { .grid-view .file-icon { font-size: 3rem; } }
+
         .grid-view .file-name { 
             width: 100%; 
             white-space: nowrap; 
             overflow: hidden; 
             text-overflow: ellipsis; 
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
+        @media (min-width: 768px) { .grid-view .file-name { font-size: 0.9rem; } }
 
         /* List View */
         .list-view .file-item {
             display: flex;
             align-items: center;
-            padding: 2px 15px;
+            padding: 8px 15px; /* Increased for touch */
             border-bottom: 1px solid var(--bs-border-color);
             width: 100%;
             white-space: nowrap;
             overflow: hidden;
+            min-height: 44px; /* Touch target minimum */
         }
+        @media (min-width: 768px) {
+            .list-view .file-item { padding: 2px 15px; min-height: 32px; }
+        }
+
         .list-view .file-icon { 
             font-size: 1.2rem; 
             margin-right: 8px; 
@@ -79,7 +104,19 @@
             overflow: hidden;
             line-height: 1.2;
         }
-        .list-view .file-meta { font-size: 0.8rem; color: var(--bs-secondary-color); margin-left: 15px; width: 100px; text-align: right;}
+        
+        .list-view .file-meta-col {
+            display: none; /* Hide on mobile */
+            font-size: 0.8rem; 
+            color: var(--bs-secondary-color); 
+            margin-left: 15px; 
+            text-align: right;
+        }
+        @media (min-width: 768px) {
+            .list-view .file-meta-col { display: block; }
+        }
+        .list-view .size-col { width: 80px; }
+        .list-view .date-col { width: 150px; }
         
         .rotate-90 { transform: rotate(90deg); }
         
@@ -96,6 +133,11 @@
         <!-- Navbar -->
         <nav class="navbar navbar-expand-lg navbar-dark">
             <div class="container-fluid">
+                <!-- Mobile Sidebar Toggle -->
+                <button class="btn btn-outline-light btn-sm d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas">
+                    <i class="ri-menu-line"></i>
+                </button>
+
                 <a class="navbar-brand d-flex align-items-center" href="#">
                     <img src="<?= base_url('logo-dark.svg') ?>" alt="Logo" class="navbar-logo">
                 </a>
@@ -170,56 +212,69 @@
         <user-admin ref="userAdmin"></user-admin>
 
         <!-- Toolbar -->
-        <div class="bg-body-tertiary border-bottom p-2 d-flex gap-2 align-items-center">
-            <button class="btn btn-primary btn-sm" @click="createFolder">
-                <i class="ri-folder-add-line"></i> {{ t('new_folder') }}
+        <div class="bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap">
+            <button class="btn btn-primary btn-sm" @click="createFolder" :title="t('new_folder')">
+                <i class="ri-folder-add-line"></i> <span class="d-none d-md-inline">{{ t('new_folder') }}</span>
             </button>
-            <button class="btn btn-outline-secondary btn-sm" @click="uploadFile">
-                <i class="ri-upload-cloud-2-line"></i> {{ t('upload') }}
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" @click="downloadSelected" :disabled="store.selectedItems.length !== 1">
-                <i class="ri-download-line"></i> {{ t('download') }}
-            </button>
-            <button class="btn btn-sm" :class="store.showHidden ? 'btn-secondary' : 'btn-outline-secondary'" @click="store.toggleHidden()">
-                <i class="ri-eye-off-line"></i> {{ t('show_hidden') }}
+            <button class="btn btn-outline-secondary btn-sm" @click="uploadFile" :title="t('upload')">
+                <i class="ri-upload-cloud-2-line"></i> <span class="d-none d-md-inline">{{ t('upload') }}</span>
             </button>
             
-            <div class="vr mx-2"></div>
+            <div class="vr mx-1"></div>
 
-            <button class="btn btn-outline-secondary btn-sm" @click="copySelected" :disabled="store.selectedItems.length === 0">
-                <i class="ri-file-copy-line"></i> {{ t('copy') }}
+            <button class="btn btn-outline-secondary btn-sm" @click="copySelected" :disabled="store.selectedItems.length === 0" :title="t('copy')">
+                <i class="ri-file-copy-line"></i> <span class="d-none d-xl-inline">{{ t('copy') }}</span>
             </button>
-            <button class="btn btn-outline-secondary btn-sm" @click="cutSelected" :disabled="store.selectedItems.length === 0">
-                <i class="ri-scissors-cut-line"></i> {{ t('cut') }}
+            <button class="btn btn-outline-secondary btn-sm" @click="cutSelected" :disabled="store.selectedItems.length === 0" :title="t('cut')">
+                <i class="ri-scissors-cut-line"></i> <span class="d-none d-xl-inline">{{ t('cut') }}</span>
             </button>
-            <button class="btn btn-outline-success btn-sm" @click="paste" :disabled="store.clipboard.items.length === 0">
-                <i class="ri-clipboard-line"></i> {{ t('paste') }}
+            <button class="btn btn-outline-success btn-sm" @click="paste" :disabled="store.clipboard.items.length === 0" :title="t('paste')">
+                <i class="ri-clipboard-line"></i> 
+                <span class="d-none d-md-inline">{{ t('paste') }}</span>
                 <span v-if="store.clipboard.items.length > 0" class="badge bg-success ms-1">{{ store.clipboard.items.length }}</span>
             </button>
-            
-            <div class="vr mx-2"></div>
-            
-            <button class="btn btn-outline-danger btn-sm" @click="deleteSelected" :disabled="store.selectedItems.length === 0">
-                <i class="ri-delete-bin-line"></i> {{ t('delete') }}
+
+            <div class="vr mx-1"></div>
+
+            <button class="btn btn-outline-danger btn-sm" @click="deleteSelected" :disabled="store.selectedItems.length === 0" :title="t('delete')">
+                <i class="ri-delete-bin-line"></i> <span class="d-none d-md-inline">{{ t('delete') }}</span>
             </button>
-            <button class="btn btn-outline-secondary btn-sm" @click="renameSelected" :disabled="store.selectedItems.length !== 1">
-                <i class="ri-edit-line"></i> {{ t('rename') }}
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" @click="chmodSelected" :disabled="store.selectedItems.length === 0">
-                <i class="ri-lock-2-line"></i> {{ t('perms') }}
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" @click="showProperties" :disabled="store.selectedItems.length === 0">
-                <i class="ri-information-line"></i> {{ t('properties') }}
-            </button>
-            <button class="btn btn-outline-info btn-sm" @click="diffSelected" :disabled="store.selectedItems.length !== 2">
-                <i class="ri-diff-line"></i> Diff
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" @click="createArchive" :disabled="store.selectedItems.length === 0">
-                <i class="ri-file-zip-line"></i> {{ t('archive') }}
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" @click="extractArchive" :disabled="store.selectedItems.length !== 1 || !isArchive(store.selectedItems[0])">
-                <i class="ri-folder-zip-line"></i> {{ t('extract') }}
-            </button>
+
+            <!-- Overflow Menu -->
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="ri-more-2-fill"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 1}" href="#" @click.prevent="downloadSelected">
+                        <i class="ri-download-line me-2"></i> {{ t('download') }}
+                    </a></li>
+                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 1}" href="#" @click.prevent="renameSelected">
+                        <i class="ri-edit-line me-2"></i> {{ t('rename') }}
+                    </a></li>
+                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="chmodSelected">
+                        <i class="ri-lock-2-line me-2"></i> {{ t('perms') }}
+                    </a></li>
+                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="showProperties">
+                        <i class="ri-information-line me-2"></i> {{ t('properties') }}
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 2}" href="#" @click.prevent="diffSelected">
+                        <i class="ri-diff-line me-2"></i> Diff
+                    </a></li>
+                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="createArchive">
+                        <i class="ri-file-zip-line me-2"></i> {{ t('archive') }}
+                    </a></li>
+                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 1 || !isArchive(store.selectedItems[0])}" href="#" @click.prevent="extractArchive">
+                        <i class="ri-folder-zip-line me-2"></i> {{ t('extract') }}
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" @click.prevent="store.toggleHidden()">
+                        <i class="me-2" :class="store.showHidden ? 'ri-eye-line' : 'ri-eye-off-line'"></i>
+                        {{ t('show_hidden') }}
+                    </a></li>
+                </ul>
+            </div>
         </div>
 
         <!-- Main -->
@@ -230,32 +285,39 @@
              @drop.prevent="onDrop($event, null)">
             
             <!-- Sidebar -->
-            <div class="sidebar p-2">
-                 <!-- Connect -->
-                 <div class="mb-4 px-2">
-                     <button class="btn btn-outline-primary btn-sm w-100" @click="showWebDav">
-                         <i class="ri-link me-1"></i> {{ t('webdav_connect') }}
-                     </button>
+            <div class="sidebar offcanvas-lg offcanvas-start p-2" id="sidebarOffcanvas" tabindex="-1">
+                 <div class="offcanvas-header d-lg-none">
+                     <h5 class="offcanvas-title">Menu</h5>
+                     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarOffcanvas"></button>
                  </div>
-
-                 <!-- Recent Files -->
-                 <div v-if="store.recentFiles.length > 0" class="mb-4">
-                     <div class="d-flex justify-content-between align-items-center mb-2 px-2">
-                         <h6 class="small fw-bold text-uppercase text-muted mb-0">{{ t('recent_files') }}</h6>
-                         <button class="btn btn-link btn-sm p-0 text-decoration-none" @click="store.clearRecent()">
-                             <i class="ri-delete-bin-7-line"></i>
+                 <div class="offcanvas-body d-flex flex-column p-0">
+                     <!-- Connect -->
+                     <div class="mb-4 px-2">
+                         <button class="btn btn-outline-primary btn-sm w-100" @click="showWebDav">
+                             <i class="ri-link me-1"></i> {{ t('webdav_connect') }}
                          </button>
                      </div>
-                     <div v-for="file in store.recentFiles" :key="file.path" 
-                          class="d-flex align-items-center py-1 px-2 rounded small file-item"
-                          @click="open(file)">
-                         <i :class="getIcon(file)" class="me-2"></i>
-                         <span class="text-truncate">{{ file.name }}</span>
-                     </div>
-                 </div>
 
-                 <h6 class="small fw-bold text-uppercase text-muted mb-2 px-2">Explorer</h6>
-                 <file-tree path="" name="Root" :root="true"></file-tree>
+                     <!-- Recent Files -->
+                     <div v-if="store.recentFiles.length > 0" class="mb-4">
+                         <div class="d-flex justify-content-between align-items-center mb-2 px-2">
+                             <h6 class="small fw-bold text-uppercase text-muted mb-0">{{ t('recent_files') }}</h6>
+                             <button class="btn btn-link btn-sm p-0 text-decoration-none" @click="store.clearRecent()">
+                                 <i class="ri-delete-bin-7-line"></i>
+                             </button>
+                         </div>
+                         <div v-for="file in store.recentFiles" :key="file.path" 
+                              class="d-flex align-items-center py-1 px-2 rounded small file-item"
+                              @click="open(file)"
+                              data-bs-dismiss="offcanvas" data-bs-target="#sidebarOffcanvas">
+                             <i :class="getIcon(file)" class="me-2"></i>
+                             <span class="text-truncate">{{ file.name }}</span>
+                         </div>
+                     </div>
+
+                     <h6 class="small fw-bold text-uppercase text-muted mb-2 px-2">Explorer</h6>
+                     <file-tree path="" name="Root" :root="true" @click="isMobile ? closeOffcanvas() : null"></file-tree>
+                 </div>
             </div>
 
             <!-- Content -->
@@ -269,7 +331,7 @@
                 </div>
 
                 <div v-else>
-                    <div :class="[containerClass, {'d-flex flex-wrap align-content-start': store.viewMode === 'grid'}]">
+                    <div :class="containerClass">
                         <div v-if="store.files.length === 0" class="w-100 text-center text-muted mt-5">
                             <i class="ri-folder-open-line" style="font-size: 4rem;"></i>
                             <p>{{ t('empty_dir') }}</p>
@@ -282,11 +344,11 @@
                                 {{ t('name') }}
                                 <i v-if="store.sortBy === 'name'" :class="store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill'"></i>
                             </div>
-                            <div style="width: 100px; text-align: right;" @click="setSort('size')" style="cursor: pointer;">
+                            <div class="file-meta-col size-col" @click="setSort('size')" style="cursor: pointer;">
                                 {{ t('size') }}
                                 <i v-if="store.sortBy === 'size'" :class="store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill'"></i>
                             </div>
-                            <div style="width: 150px; text-align: right;" @click="setSort('mtime')" style="cursor: pointer;">
+                            <div class="file-meta-col date-col" @click="setSort('mtime')" style="cursor: pointer;">
                                 {{ t('date') }}
                                 <i v-if="store.sortBy === 'mtime'" :class="store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill'"></i>
                             </div>
@@ -301,6 +363,8 @@
                              @dragleave="file.type === 'dir' ? onDragLeave(file) : null"
                              @drop.prevent="file.type === 'dir' ? onDrop($event, file) : null"
                              @click.stop="handleItemClick($event, file)"
+                             @touchstart="handleTouchStart($event, file)"
+                             @touchend="handleTouchEnd"
                              @dblclick.stop="open(file)"
                              @contextmenu.prevent.stop="showContextMenu($event, file)">
                             
@@ -308,19 +372,20 @@
                                 <img v-if="store.viewMode === 'grid' && isImage(file)" 
                                      :src="getThumbUrl(file)" 
                                      class="rounded shadow-sm"
-                                     style="width: 64px; height: 64px; object-fit: cover;"
+                                     style="width: 100%; height: 100%; object-fit: cover;"
                                      draggable="false">
                                 <i v-else :class="getIcon(file)"></i>
                             </div>
                             
                             <div class="file-name" :title="file.name">
                                 {{ file.name }}
+                                <i v-if="file.type === 'dir'" class="ri-arrow-right-line d-md-none ms-2 text-muted" @click.stop="open(file)"></i>
                             </div>
                             
                             <!-- List View Meta -->
                             <template v-if="store.viewMode === 'list'">
-                                <div class="file-meta">{{ formatSize(file.size) }}</div>
-                                <div class="file-meta" style="width: 150px;">{{ formatDate(file.mtime) }}</div>
+                                <div class="file-meta-col size-col">{{ formatSize(file.size) }}</div>
+                                <div class="file-meta-col date-col">{{ formatDate(file.mtime) }}</div>
                             </template>
                         </div>
                     </div>
@@ -351,7 +416,7 @@
         
         <!-- Editor Modal -->
         <div class="modal fade" id="editorModal" tabindex="-1" data-bs-backdrop="static">
-            <div class="modal-dialog modal-xl modal-dialog-centered" style="height: 90vh;">
+            <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered" style="height: 90vh;">
                 <div class="modal-content h-100">
                     <div class="modal-header py-2">
                         <h5 class="modal-title fs-6">{{ t('editing', {name: editorFile?.name}) }}</h5>
@@ -370,7 +435,7 @@
 
         <!-- Diff Modal -->
         <div class="modal fade" id="diffModal" tabindex="-1">
-            <div class="modal-dialog modal-xl modal-dialog-centered" style="height: 90vh;">
+            <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered" style="height: 90vh;">
                 <div class="modal-content h-100">
                     <div class="modal-header py-2">
                         <h5 class="modal-title fs-6">Compare Files</h5>
@@ -406,7 +471,7 @@
 
         <!-- Properties Modal -->
         <div class="modal fade" id="propModal" tabindex="-1">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-fullscreen-sm-down">
                 <div class="modal-content">
                     <div class="modal-header py-2">
                         <h5 class="modal-title fs-6">{{ t('properties') }}</h5>
