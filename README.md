@@ -1,68 +1,51 @@
-# CodeIgniter 4 Application Starter
+# eXtplorer 3
 
-## What is CodeIgniter?
+eXtplorer 3 is a modern, web-based file manager built for speed, security, and ease of deployment. It is the direct successor to the classic eXtplorer 2, completely rewritten from the ground up to meet modern web standards while retaining the powerful features that made the original a favorite for system administrators.
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+**Note:** Starting with version 3, eXtplorer is only a **standalone application**. It no longer functions as a Joomla! component or integration module, allowing for a cleaner codebase and broader compatibility with any PHP server environment.
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+## 🚀 Key Features
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+*   **Modern UI:** A sleek, responsive Single Page Application (SPA) powered by **Vue.js 3** and **Bootstrap 5**.
+*   **Virtual File System (VFS):** Manage files on your **Local server**, or connect remotely via **FTP** or **SFTP (SSH)** using the same interface.
+*   **Full File Operations:** Create, Rename, Move, Copy, Delete, and Change Permissions (Chmod/Chown) with ease.
+*   **Advanced Editor:** Integrated **Ace Editor** with syntax highlighting for 100+ languages.
+*   **Visual Assets:** Instant image thumbnails in grid view and a built-in lightbox with navigation.
+*   **Diff Viewer:** Compare two files side-by-side to see changes.
+*   **Archives:** Create and extract ZIP, TAR, and TAR.GZ archives directly in the browser.
+*   **User Management:** Robust Role-Based Access Control (RBAC) with support for Groups and granular permissions.
+*   **Keyboard Friendly:** Desktop-like experience with keyboard shortcuts and right-click context menus.
+*   **Multilingual:** Full support for English, German, and French (i18n ready).
+*   **Appearance:** Dark Mode, Light Mode, and automatic System Theme detection.
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+## 📋 Server Requirements
 
-## Installation & updates
+To run eXtplorer 3, your server must meet the following requirements:
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+*   **PHP:** Version 8.1 or higher.
+*   **PHP Extensions:**
+    *   `intl` (Required for CodeIgniter 4)
+    *   `mbstring`, `json`, `xml`, `curl`
+    *   `gd` (Required for image thumbnails)
+    *   `zip` (Required for ZIP archive support)
+    *   `phar` (Required for TAR/GZ support)
+    *   `ftp` (Optional, for remote FTP management)
+    *   `ssh2` (Optional, for SFTP management)
+*   **Web Server:** Apache (with `mod_rewrite` enabled) or Nginx.
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+## 📦 Installation
 
-## Setup
+eXtplorer 3 is designed to be deployed as a single, self-contained bundle.
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+1.  **Download:** Grab the latest release ZIP from the [GitHub Releases](https://github.com/soerennb/extplorer/releases) page.
+2.  **Upload:** Extract the contents to a directory on your web server.
+3.  **Permissions:** Ensure the `writable/` directory has write permissions for the web server user.
+4.  **Access:** Navigate to the URL in your browser.
 
-## Important Change with index.php
+## 🛠 Development & Building
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+If you are contributing to eXtplorer or building from source:
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
-
-**Please** read the user guide for a better explanation of how CI4 works!
-
-## Repository Management
-
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
-
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
-
-## Server Requirements
-
-PHP version 8.1 or higher is required, with the following extensions installed:
-
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
-
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - If you are still using PHP 7.4 or 8.0, you should upgrade immediately.
-> - The end of life date for PHP 8.1 will be December 31, 2025.
-
-Additionally, make sure that the following extensions are enabled in your PHP:
-
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+1.  Clone the repository.
+2.  Install development dependencies: `./composer install`.
+3.  To create a deployable archive, run: `./build.sh`.
