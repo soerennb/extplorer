@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>eXtplorer 3</title>
+    <link rel="icon" type="image/svg+xml" href="<?= base_url('favicon.svg') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/remixicon.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/diff2html.min.css') ?>">
@@ -21,6 +22,8 @@
         
         .content-area { flex: 1; overflow-y: auto; padding: 1rem; background-color: var(--bs-body-bg); }
         
+        .navbar-logo { height: 48px; width: auto; margin-right: 10px; }
+        
         .file-item { 
             cursor: pointer; 
             border-radius: 4px;
@@ -30,6 +33,7 @@
         .file-item:hover { background-color: var(--bs-tertiary-bg); }
         .file-item.selected { background-color: var(--bs-primary) !important; color: white !important; }
         .file-item.selected .file-meta { color: rgba(255,255,255,0.8) !important; }
+        .file-item.drag-over { background-color: var(--bs-info-bg-subtle) !important; border: 1px dashed var(--bs-info) !important; }
         
         /* Grid View */
         .grid-view .file-item { 
@@ -54,12 +58,27 @@
         .list-view .file-item {
             display: flex;
             align-items: center;
-            padding: 8px 15px;
+            padding: 2px 15px;
             border-bottom: 1px solid var(--bs-border-color);
             width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
         }
-        .list-view .file-icon { font-size: 1.5rem; margin-right: 15px; width: 30px; text-align: center;}
-        .list-view .file-name { flex: 1; }
+        .list-view .file-icon { 
+            font-size: 1.2rem; 
+            margin-right: 8px; 
+            width: 24px; 
+            min-width: 24px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        .list-view .file-name { 
+            flex: 1; 
+            text-overflow: ellipsis; 
+            overflow: hidden;
+            line-height: 1.2;
+        }
         .list-view .file-meta { font-size: 0.8rem; color: var(--bs-secondary-color); margin-left: 15px; width: 100px; text-align: right;}
         
         .rotate-90 { transform: rotate(90deg); }
@@ -78,7 +97,7 @@
         <nav class="navbar navbar-expand-lg navbar-dark">
             <div class="container-fluid">
                 <a class="navbar-brand d-flex align-items-center" href="#">
-                    <i class="ri-folder-shield-2-line me-2"></i> {{ t('app_name') }}
+                    <img src="<?= base_url('logo-dark.svg') ?>" alt="Logo" class="navbar-logo">
                 </a>
                 
                 <div class="d-flex align-items-center text-white me-3">
@@ -105,10 +124,10 @@
                         <i class="ri-refresh-line"></i>
                     </button>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-light" :class="{active: store.viewMode === 'grid'}" @click="store.viewMode = 'grid'">
+                        <button class="btn btn-outline-light" :class="{active: store.viewMode === 'grid'}" @click="store.toggleViewMode('grid')">
                             <i class="ri-grid-fill"></i>
                         </button>
-                        <button class="btn btn-outline-light" :class="{active: store.viewMode === 'list'}" @click="store.viewMode = 'list'">
+                        <button class="btn btn-outline-light" :class="{active: store.viewMode === 'list'}" @click="store.toggleViewMode('list')">
                             <i class="ri-list-check"></i>
                         </button>
                     </div>
@@ -250,7 +269,7 @@
                 </div>
 
                 <div v-else>
-                    <div :class="{'d-flex flex-wrap align-content-start': store.viewMode === 'grid'}">
+                    <div :class="[containerClass, {'d-flex flex-wrap align-content-start': store.viewMode === 'grid'}]">
                         <div v-if="store.files.length === 0" class="w-100 text-center text-muted mt-5">
                             <i class="ri-folder-open-line" style="font-size: 4rem;"></i>
                             <p>{{ t('empty_dir') }}</p>
@@ -275,12 +294,13 @@
 
                         <!-- File Loop -->
                         <div v-for="file in filteredFiles" :key="file.name" class="file-item" 
-                             :class="[containerClass, {'selected': store.isSelected(file)}]"
+                             :class="{'selected': store.isSelected(file), 'drag-over': file.isDragOver}"
                              draggable="true"
                              @dragstart="onDragStart($event, file)"
-                             @dragover.prevent="file.type === 'dir' ? onDragOver($event) : null"
+                             @dragover.prevent="file.type === 'dir' ? onDragOver($event, file) : null"
+                             @dragleave="file.type === 'dir' ? onDragLeave(file) : null"
                              @drop.prevent="file.type === 'dir' ? onDrop($event, file) : null"
-                             @click.stop="store.toggleSelection(file); hideContextMenu()"
+                             @click.stop="handleItemClick($event, file)"
                              @dblclick.stop="open(file)"
                              @contextmenu.prevent.stop="showContextMenu($event, file)">
                             
@@ -311,8 +331,9 @@
         <!-- Status Bar -->
         <div class="bg-body-tertiary border-top px-3 py-1 small text-muted d-flex justify-content-between align-items-center">
             <div>
+                <span class="me-2 fw-bold text-primary">v{{ appVersion }}</span>
                 <span>{{ t('items_count', {count: store.pagination.total}) }}</span>
-                <span class="ms-2">({{ window.connectionMode === 'local' ? t('local_fs') : window.connectionMode.toUpperCase() }})</span>
+                <span class="ms-2">({{ connectionMode === 'local' ? t('local_fs') : connectionMode.toUpperCase() }})</span>
             </div>
             
             <div v-if="store.pagination.total > store.pagination.pageSize" class="d-flex align-items-center gap-3">
@@ -508,6 +529,7 @@
     <!-- Scripts -->
     <script>
         window.baseUrl = "<?= base_url() ?>";
+        window.appVersion = "<?= config('App')->version ?>";
         window.userRole = "<?= session('role') ?>";
         window.username = "<?= session('username') ?>";
         window.userPermissions = <?= json_encode(session('permissions') ?? []) ?>;
@@ -526,6 +548,6 @@
     <script src="<?= base_url('assets/js/i18n.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/FileTree.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/UserAdmin.js') ?>"></script>
-    <script src="<?= base_url('assets/js/app.js') ?>"></script>
+    <script src="<?= base_url('assets/js/app.js?v=' . time()) ?>"></script>
 </body>
 </html>

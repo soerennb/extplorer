@@ -175,6 +175,7 @@ class UserAdminController extends BaseController
         if (($check = $this->checkAdmin()) !== true) return $check;
 
         return $this->respond([
+            'app_version' => config('App')->version,
             'php_version' => PHP_VERSION,
             'server_os' => PHP_OS,
             'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown',

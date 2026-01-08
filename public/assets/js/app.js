@@ -18,94 +18,16 @@ const app = createApp({
         let diffModal = null;
         let propModal = null;
         let webdavModal = null;
-// ... (applyTheme method)
-        const applyTheme = () => {
-            let t = theme.value;
-            if (t === 'auto') {
-                t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            }
-            document.documentElement.setAttribute('data-bs-theme', t);
-            if (aceEditor) {
-                aceEditor.setTheme(t === 'dark' ? "ace/theme/monokai" : "ace/theme/chrome");
-            }
-        };
 
-        const setTheme = (t) => {
-            theme.value = t;
-            localStorage.setItem('extplorer_theme', t);
-            applyTheme();
-        };
-
-        const toggleTheme = () => {
-            const next = { 'auto': 'light', 'light': 'dark', 'dark': 'auto' };
-            setTheme(next[theme.value]);
-        };
-
+        // --- Computed ---
         const isAdmin = computed(() => {
             const role = String(window.userRole || '').toLowerCase();
             const user = String(window.username || '').toLowerCase();
             const perms = window.userPermissions || [];
-            
-            return role === 'admin' || 
-                   user === 'admin' || 
-                   perms.includes('*') || 
-                   perms.includes('admin_users');
+            return role === 'admin' || user === 'admin' || perms.includes('*') || perms.includes('admin_users');
         });
 
-        const webDavUrl = computed(() => {
-            return window.baseUrl.replace(/\/$/, '') + '/dav';
-        });
-
-        // Helpers
-        const isImage = (file) => {
-            if (file.type === 'dir') return false;
-            const ext = file.extension ? file.extension.toLowerCase() : '';
-            return ['jpg','jpeg','png','gif','webp','svg'].includes(ext);
-        };
-
-        const isArchive = (file) => {
-            if (file.type === 'dir') return false;
-            const ext = file.extension ? file.extension.toLowerCase() : '';
-            return ['zip','tar','gz'].includes(ext);
-        };
-
-        const getThumbUrl = (file) => {
-            return baseUrl + 'api/thumb?path=' + encodeURIComponent(file.path);
-        };
-
-        const getIcon = (file) => {
-            if (file.type === 'dir') return 'ri-folder-fill text-warning';
-            
-            const ext = file.extension ? file.extension.toLowerCase() : '';
-            if (['jpg','jpeg','png','gif','svg','webp'].includes(ext)) return 'ri-image-fill text-success';
-            if (['mp3','wav','ogg'].includes(ext)) return 'ri-music-fill text-info';
-            if (['mp4','webm','mov'].includes(ext)) return 'ri-movie-fill text-info';
-            if (['pdf'].includes(ext)) return 'ri-file-pdf-line text-danger';
-            if (['zip','tar','gz','rar'].includes(ext)) return 'ri-file-zip-line text-warning';
-            if (['php','js','css','html','json','sql'].includes(ext)) return 'ri-code-s-slash-line text-primary';
-            if (['txt','md'].includes(ext)) return 'ri-file-text-line text-secondary';
-            
-            return 'ri-file-line text-secondary';
-        };
-
-        const formatSize = (bytes) => {
-            if (bytes === 0) return ''; // Directories
-            if (!bytes) return '-';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        };
-
-        const formatDate = (timestamp) => {
-            if (!timestamp) return '-';
-            const date = new Date(timestamp * 1000);
-            return date.toLocaleString();
-        };
-
-        const containerClass = computed(() => {
-            return store.viewMode === 'grid' ? 'grid-view' : 'list-view';
-        });
+        const webDavUrl = computed(() => window.baseUrl.replace(/\/$/, '') + '/dav');
 
         const filteredFiles = computed(() => {
             let result = store.files;
@@ -124,30 +46,61 @@ const app = createApp({
             });
         });
 
-        // Core Actions
-        const goUp = () => {
-            if (!store.cwd) return;
-            const parts = store.cwd.split('/');
-            parts.pop();
-            store.loadPath(parts.join('/'));
+        const containerClass = computed(() => store.viewMode === 'grid' ? 'grid-view' : 'list-view');
+
+        // --- Helpers ---
+        const isImage = (f) => f.type !== 'dir' && ['jpg','jpeg','png','gif','webp','svg'].includes(f.extension?.toLowerCase());
+        const isArchive = (f) => f.type !== 'dir' && ['zip','tar','gz'].includes(f.extension?.toLowerCase());
+        const getThumbUrl = (f) => window.baseUrl + 'api/thumb?path=' + encodeURIComponent(f.path);
+        const formatSize = (b) => {
+            if (b === 0 || !b) return b === 0 ? '' : '-';
+            const k = 1024, sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(b) / Math.log(k));
+            return parseFloat((b / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        };
+        const formatDate = (t) => t ? new Date(t * 1000).toLocaleString() : '-';
+        const getIcon = (f) => {
+            if (f.type === 'dir') return 'ri-folder-fill text-warning';
+            const ext = f.extension?.toLowerCase();
+            if (['jpg','jpeg','png','gif','svg','webp'].includes(ext)) return 'ri-image-fill text-success';
+            if (['mp3','wav','ogg'].includes(ext)) return 'ri-music-fill text-info';
+            if (['mp4','webm','mov'].includes(ext)) return 'ri-movie-fill text-info';
+            if (['pdf'].includes(ext)) return 'ri-file-pdf-line text-danger';
+            if (['zip','tar','gz','rar'].includes(ext)) return 'ri-file-zip-line text-warning';
+            if (['php','js','css','html','json','sql'].includes(ext)) return 'ri-code-s-slash-line text-primary';
+            return 'ri-file-line text-secondary';
         };
 
+        // --- UI & Theme ---
+        const applyTheme = () => {
+            let t = theme.value;
+            if (t === 'auto') t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-bs-theme', t);
+            if (aceEditor) aceEditor.setTheme(t === 'dark' ? "ace/theme/monokai" : "ace/theme/chrome");
+        };
+        const setTheme = (t) => { theme.value = t; localStorage.setItem('extplorer_theme', t); applyTheme(); };
+        const toggleTheme = () => { const next = { 'auto': 'light', 'light': 'dark', 'dark': 'auto' }; setTheme(next[theme.value]); };
+
+        // --- Core Actions ---
         const reload = () => store.loadPath(store.cwd);
-
-        const changePage = (delta) => {
-            const newPage = store.pagination.page + delta;
-            if (newPage > 0 && newPage <= Math.ceil(store.pagination.total / store.pagination.pageSize)) {
-                store.loadPath(store.cwd, newPage);
+        const goUp = () => { if (store.cwd) { const p = store.cwd.split('/'); p.pop(); store.loadPath(p.join('/')); } };
+        
+        const handleItemClick = (e, file) => {
+            if (e.ctrlKey || e.metaKey) {
+                store.toggleSelection(file);
+            } else {
+                store.selectedItems = [file];
             }
+            hideContextMenu();
         };
+
+        const changePage = (d) => { const n = store.pagination.page + d; if (n > 0 && n <= Math.ceil(store.pagination.total / store.pagination.pageSize)) store.loadPath(store.cwd, n); };
 
         const open = async (file) => {
-            if (file.type === 'dir') {
-                store.loadPath(file.path);
-            } else {
-                const ext = file.extension ? file.extension.toLowerCase() : '';
+            if (file.type === 'dir') store.loadPath(file.path);
+            else {
+                const ext = file.extension?.toLowerCase();
                 const textExts = ['php','js','css','html','json','xml','txt','md','sql','gitignore','env'];
-                
                 if (textExts.includes(ext)) {
                     try {
                         const res = await Api.get('content', { path: file.path });
@@ -156,18 +109,10 @@ const app = createApp({
                         editorModal.show();
                         const setContent = () => {
                             aceEditor.setValue(res.content, -1);
-                            let mode = 'text';
-                            if(ext === 'php') mode = 'php';
-                            if(ext === 'js') mode = 'javascript';
-                            if(ext === 'html') mode = 'html';
-                            if(ext === 'css') mode = 'css';
-                            if(ext === 'json') mode = 'json';
-                            if(ext === 'xml') mode = 'xml';
-                            if(ext === 'md') mode = 'markdown';
-                            if(ext === 'sql') mode = 'sql';
-                            aceEditor.session.setMode("ace/mode/" + mode);
+                            const modeMap = { 'php':'php', 'js':'javascript', 'html':'html', 'css':'css', 'json':'json', 'xml':'xml', 'md':'markdown', 'sql':'sql' };
+                            aceEditor.session.setMode("ace/mode/" + (modeMap[ext] || 'text'));
                         };
-                        if(aceEditor) setContent();
+                        if (aceEditor) setContent();
                         else document.getElementById('editorModal').addEventListener('shown.bs.modal', setContent, { once: true });
                     } catch(e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
                 } else if (isImage(file)) {
@@ -176,9 +121,7 @@ const app = createApp({
                     imageViewer.index = imageViewer.list.findIndex(f => f.name === file.name);
                     updateImageViewer();
                     imageModal.show();
-                } else {
-                    Swal.fire('Info', 'File type not supported for browser preview.', 'info');
-                }
+                } else Swal.fire('Info', 'Preview not supported for this file type.', 'info');
             }
         };
 
@@ -192,50 +135,21 @@ const app = createApp({
             } catch(e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
         };
 
-        // UI & Modal Actions
-        const openAdmin = () => { if (userAdmin.value) userAdmin.value.open(); };
-        
-        const toggleTheme = () => {
-            theme.value = theme.value === 'light' ? 'dark' : 'light';
-            localStorage.setItem('extplorer_theme', theme.value);
-            document.documentElement.setAttribute('data-bs-theme', theme.value);
-        };
-
-        const changePassword = async () => {
-            const { value: password } = await Swal.fire({
-                title: i18n.t('change_password'),
-                input: 'password',
-                inputLabel: 'New Password',
-                showCancelButton: true,
-                inputValidator: (v) => !v ? 'Required!' : null
-            });
-            if (password) {
-                try {
-                    await Api.put('profile/password', { password });
-                    Swal.fire(i18n.t('saved'), '', 'success');
-                } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
-            }
-        };
-
-        // File Operations
+        // --- File Operations ---
         const createFolder = async () => {
             const { value: name } = await Swal.fire({ title: i18n.t('new_folder'), input: 'text', showCancelButton: true });
             if (name) {
-                try {
-                    await Api.post('mkdir', { path: store.cwd ? store.cwd + '/' + name : name });
-                    reload();
-                } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
+                try { await Api.post('mkdir', { path: store.cwd ? store.cwd + '/' + name : name }); reload(); }
+                catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
             }
         };
 
         const deleteSelected = async () => {
             if (!store.selectedItems.length) return;
-            const res = await Swal.fire({ title: i18n.t('confirm_title'), icon: 'warning', showCancelButton: true });
+            const res = await Swal.fire({ title: i18n.t('confirm_title'), text: i18n.t('confirm_text'), icon: 'warning', showCancelButton: true });
             if (res.isConfirmed) {
                 try {
-                    for (const f of store.selectedItems) {
-                        await Api.post('rm', { path: f.path });
-                    }
+                    for (const f of store.selectedItems) await Api.post('rm', { path: f.path });
                     reload();
                     store.selectedItems = [];
                 } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
@@ -248,9 +162,7 @@ const app = createApp({
             const { value: newName } = await Swal.fire({ title: i18n.t('rename'), input: 'text', inputValue: file.name, showCancelButton: true });
             if (newName && newName !== file.name) {
                 try {
-                    const oldPath = file.path;
-                    const newPath = (store.cwd ? store.cwd + '/' : '') + newName;
-                    await Api.post('mv', { from: oldPath, to: newPath });
+                    await Api.post('mv', { from: file.path, to: (store.cwd ? store.cwd + '/' : '') + newName });
                     reload();
                     store.selectedItems = [];
                 } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
@@ -258,79 +170,47 @@ const app = createApp({
         };
 
         const uploadFile = () => {
-            const input = document.createElement('input');
-            input.type = 'file';
+            const input = document.createElement('input'); input.type = 'file';
             input.onchange = async e => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                const CHUNK_SIZE = 1024 * 1024; // 1MB
-                const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-                
+                const file = e.target.files[0]; if (!file) return;
+                const CHUNK_SIZE = 1024 * 1024;
                 try {
                     store.isLoading = true;
-                    
                     if (file.size <= CHUNK_SIZE) {
-                        // Standard upload for small files
-                        const fd = new FormData();
-                        fd.append('file', file);
-                        fd.append('path', store.cwd);
+                        const fd = new FormData(); fd.append('file', file); fd.append('path', store.cwd);
                         const headers = { 'X-Requested-With': 'XMLHttpRequest' };
                         if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
-                        await fetch(window.baseUrl + 'api/upload', { method: 'POST', headers: headers, body: fd });
+                        await fetch(window.baseUrl + 'api/upload', { method: 'POST', headers, body: fd });
                     } else {
-                        // Chunked upload
-                        for (let i = 0; i < totalChunks; i++) {
+                        const total = Math.ceil(file.size / CHUNK_SIZE);
+                        for (let i = 0; i < total; i++) {
                             const chunk = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-                            const fd = new FormData();
-                            fd.append('file', chunk);
-                            fd.append('filename', file.name);
-                            fd.append('chunkIndex', i);
-                            fd.append('totalChunks', totalChunks);
-                            fd.append('path', store.cwd);
-                            
+                            const fd = new FormData(); fd.append('file', chunk); fd.append('filename', file.name);
+                            fd.append('chunkIndex', i); fd.append('totalChunks', total); fd.append('path', store.cwd);
                             const headers = { 'X-Requested-With': 'XMLHttpRequest' };
                             if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
-                            
-                            await fetch(window.baseUrl + 'api/upload_chunk', { method: 'POST', headers: headers, body: fd });
+                            await fetch(window.baseUrl + 'api/upload_chunk', { method: 'POST', headers, body: fd });
                         }
                     }
                     reload();
                     Swal.fire(i18n.t('uploaded'), '', 'success');
-                } catch (e) { 
-                    Swal.fire(i18n.t('error'), 'Upload failed', 'error'); 
-                } finally { 
-                    store.isLoading = false; 
-                }
+                } catch (e) { Swal.fire(i18n.t('error'), 'Upload failed', 'error'); }
+                finally { store.isLoading = false; }
             };
             input.click();
         };
 
-        const copySelected = () => {
-            if (!store.selectedItems.length) return;
-            store.clipboard.items = [...store.selectedItems];
-            store.clipboard.mode = 'copy';
-        };
-
-        const cutSelected = () => {
-            if (!store.selectedItems.length) return;
-            store.clipboard.items = [...store.selectedItems];
-            store.clipboard.mode = 'cut';
-        };
-
+        const copySelected = () => { if (store.selectedItems.length) { store.clipboard.items = [...store.selectedItems]; store.clipboard.mode = 'copy'; } };
+        const cutSelected = () => { if (store.selectedItems.length) { store.clipboard.items = [...store.selectedItems]; store.clipboard.mode = 'cut'; } };
         const paste = async () => {
             if (!store.clipboard.items.length) return;
             try {
                 store.isLoading = true;
                 for (const file of store.clipboard.items) {
                     const to = (store.cwd ? store.cwd + '/' : '') + file.name;
-                    const endpoint = store.clipboard.mode === 'copy' ? 'cp' : 'mv';
-                    await Api.post(endpoint, { from: file.path, to: to });
+                    await Api.post(store.clipboard.mode === 'copy' ? 'cp' : 'mv', { from: file.path, to });
                 }
-                if (store.clipboard.mode === 'cut') {
-                    store.clipboard.items = [];
-                    store.clipboard.mode = null;
-                }
+                if (store.clipboard.mode === 'cut') { store.clipboard.items = []; store.clipboard.mode = null; }
                 reload();
                 Swal.fire(i18n.t('success'), '', 'success');
             } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
@@ -338,85 +218,45 @@ const app = createApp({
         };
 
         const downloadSelected = () => {
-            if (store.selectedItems.length !== 1) return;
-            window.location.href = baseUrl + 'api/download?path=' + encodeURIComponent(store.selectedItems[0].path);
+            if (store.selectedItems.length === 1) window.location.href = window.baseUrl + 'api/download?path=' + encodeURIComponent(store.selectedItems[0].path);
         };
 
         const createArchive = async () => {
             if (!store.selectedItems.length) return;
             const { value: name } = await Swal.fire({ title: i18n.t('archive'), input: 'text', inputValue: 'archive.zip', showCancelButton: true });
             if (name) {
-                try {
-                    const paths = store.selectedItems.map(f => f.path);
-                    await Api.post('archive', { paths, name, cwd: store.cwd });
-                    reload();
-                } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
+                try { await Api.post('archive', { paths: store.selectedItems.map(f => f.path), name, cwd: store.cwd }); reload(); }
+                catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
             }
         };
 
         const extractArchive = async () => {
-            if (store.selectedItems.length !== 1) return;
-            try {
-                await Api.post('extract', { path: store.selectedItems[0].path, cwd: store.cwd });
-                reload();
-            } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
+            if (store.selectedItems.length === 1) {
+                try { await Api.post('extract', { path: store.selectedItems[0].path, cwd: store.cwd }); reload(); }
+                catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
+            }
         };
 
         const chmodSelected = async () => {
             if (!store.selectedItems.length) return;
-            const firstFile = store.selectedItems[0];
-
-            const { value: formValues } = await Swal.fire({
+            const { value: form } = await Swal.fire({
                 title: i18n.t('perms'),
-                html:
-                    `<input id="swal-input1" class="swal2-input" placeholder="Octal Mode" value="${firstFile.perms || '755'}">` +
-                    '<div class="form-check mt-3 text-start ms-5">' +
-                    '  <input class="form-check-input" type="checkbox" id="swal-input2">' +
-                    '  <label class="form-check-label" for="swal-input2">Apply Recursively</label>' +
-                    '</div>',
-                focusConfirm: false,
-                preConfirm: () => {
-                    return [
-                        document.getElementById('swal-input1').value,
-                        document.getElementById('swal-input2').checked
-                    ]
-                },
-                showCancelButton: true
+                html: `<input id="swal-i1" class="swal2-input" placeholder="Octal Mode" value="${store.selectedItems[0].perms || '755'}">` +
+                      '<div class="form-check mt-3 text-start ms-5"><input class="form-check-input" type="checkbox" id="swal-i2"><label class="form-check-label" for="swal-i2">Apply Recursively</label></div>',
+                focusConfirm: false, preConfirm: () => [document.getElementById('swal-i1').value, document.getElementById('swal-i2').checked], showCancelButton: true
             });
-
-            if (formValues) {
-                const [mode, recursive] = formValues;
-                if (!mode || !/^[0-7]{3,4}$/.test(mode)) {
-                    Swal.fire(i18n.t('error'), 'Invalid octal mode!', 'error');
-                    return;
-                }
-                try {
-                    const paths = store.selectedItems.map(f => f.path);
-                    await Api.post('chmod', { paths, mode, recursive });
-                    reload();
-                    store.selectedItems = [];
-                    Swal.fire(i18n.t('saved'), '', 'success');
-                } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
+            if (form) {
+                const [mode, recursive] = form;
+                if (!mode || !/^[0-7]{3,4}$/.test(mode)) return Swal.fire(i18n.t('error'), 'Invalid octal mode!', 'error');
+                try { await Api.post('chmod', { paths: store.selectedItems.map(f => f.path), mode, recursive }); reload(); store.selectedItems = []; Swal.fire(i18n.t('saved'), '', 'success'); }
+                catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
             }
         };
 
         const showProperties = () => {
             if (!store.selectedItems.length) return;
-            if (store.selectedItems.length === 1) {
-                propFile.value = JSON.parse(JSON.stringify(store.selectedItems[0])); // Clone
-                propFile.value.isBulk = false;
-            } else {
-                propFile.value = {
-                    name: store.selectedItems.length + ' items selected',
-                    path: store.cwd,
-                    size: store.selectedItems.reduce((acc, f) => acc + f.size, 0),
-                    mime: 'multiple',
-                    owner: '',
-                    group: '',
-                    isBulk: true,
-                    paths: store.selectedItems.map(f => f.path)
-                };
-            }
+            if (store.selectedItems.length === 1) { propFile.value = { ...store.selectedItems[0], isBulk: false }; }
+            else { propFile.value = { name: store.selectedItems.length + ' items selected', path: store.cwd, size: store.selectedItems.reduce((a, f) => a + f.size, 0), mime: 'multiple', owner: '', group: '', isBulk: true, paths: store.selectedItems.map(f => f.path) }; }
             propFile.value.recursive = false;
             propModal.show();
         };
@@ -424,132 +264,131 @@ const app = createApp({
         const saveChown = async () => {
             if (!propFile.value) return;
             try {
-                const data = {
-                    user: propFile.value.owner,
-                    group: propFile.value.group,
-                    recursive: propFile.value.recursive
-                };
-                if (propFile.value.isBulk) {
-                    data.paths = propFile.value.paths;
-                } else {
-                    data.path = propFile.value.path;
-                }
-                await Api.post('chown', data);
-                reload();
-                Swal.fire(i18n.t('saved'), '', 'success');
+                const data = { user: propFile.value.owner, group: propFile.value.group, recursive: propFile.value.recursive };
+                if (propFile.value.isBulk) data.paths = propFile.value.paths; else data.path = propFile.value.path;
+                await Api.post('chown', data); reload(); Swal.fire(i18n.t('saved'), '', 'success');
             } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
         };
 
         const calcDirSize = async () => {
             if (!propFile.value || propFile.value.type !== 'dir') return;
-            try {
-                const res = await Api.get('dirsize', { path: propFile.value.path });
-                propFile.value.size = res.size;
-            } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
-        };
-
-        const showWebDav = () => {
-            webdavModal.show();
-        };
-
-        const copyWebDavUrl = () => {
-            const input = document.getElementById('webdav_url_input');
-            input.select();
-            document.execCommand('copy');
-            Swal.fire({ title: 'Copied!', icon: 'success', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false });
+            try { const res = await Api.get('dirsize', { path: propFile.value.path }); propFile.value.size = res.size; }
+            catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
         };
 
         const diffSelected = async () => {
             if (store.selectedItems.length !== 2) return;
-            const [file1, file2] = store.selectedItems;
             try {
                 store.isLoading = true;
-                const [res1, res2] = await Promise.all([
-                    Api.get('content', { path: file1.path }),
-                    Api.get('content', { path: file2.path })
-                ]);
-                const udiff = Diff.createPatch(file1.name, res1.content, res2.content);
-                const diffViewer = document.getElementById('diffViewer');
-                const diff2htmlUi = new Diff2HtmlUI(diffViewer, udiff, {
-                    drawFileList: true,
-                    matching: 'lines',
-                    outputFormat: 'side-by-side',
-                });
-                diff2htmlUi.draw();
+                const [r1, r2] = await Promise.all([Api.get('content', { path: store.selectedItems[0].path }), Api.get('content', { path: store.selectedItems[1].path })]);
+                const udiff = Diff.createPatch(store.selectedItems[0].name, r1.content, r2.content);
+                new Diff2HtmlUI(document.getElementById('diffViewer'), udiff, { drawFileList: true, matching: 'lines', outputFormat: 'side-by-side' }).draw();
                 diffModal.show();
             } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
             finally { store.isLoading = false; }
         };
 
-        // Image Viewer
+        // --- Remote/Auth ---
+        const openAdmin = () => { if (userAdmin.value) userAdmin.value.open(); };
+        const showWebDav = () => webdavModal.show();
+        const copyWebDavUrl = () => {
+            const i = document.getElementById('webdav_url_input'); i.select(); document.execCommand('copy');
+            Swal.fire({ title: 'Copied!', icon: 'success', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false });
+        };
+        const changePassword = async () => {
+            const { value: p } = await Swal.fire({ title: i18n.t('change_password'), input: 'password', showCancelButton: true });
+            if (p) {
+                try {
+                    await fetch(window.baseUrl + 'api/profile/password', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.csrfHash }, body: JSON.stringify({ password: p }) })
+                    .then(res => { if(!res.ok) throw new Error('Failed'); });
+                    Swal.fire(i18n.t('saved'), '', 'success');
+                } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
+            }
+        };
+
+        // --- Image Viewer ---
         const updateImageViewer = () => {
-            if (imageViewer.index < 0) return;
-            const file = imageViewer.list[imageViewer.index];
-            imageViewer.src = baseUrl + 'api/download?path=' + encodeURIComponent(file.path) + '&inline=1';
+            if (imageViewer.index >= 0) imageViewer.src = window.baseUrl + 'api/download?path=' + encodeURIComponent(imageViewer.list[imageViewer.index].path) + '&inline=1';
         };
         const nextImage = () => { if (imageViewer.index < imageViewer.list.length - 1) { imageViewer.index++; updateImageViewer(); } };
         const prevImage = () => { if (imageViewer.index > 0) { imageViewer.index--; updateImageViewer(); } };
 
         // Drag & Drop
-        const onDragStart = (e, file) => { e.dataTransfer.setData('text/plain', JSON.stringify(file)); e.dataTransfer.effectAllowed = 'move'; };
-        const onDragOver = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; };
+        const onDragStart = (e, f) => {
+            // If dragging a selected item, move all selected items
+            const items = store.isSelected(f) ? store.selectedItems : [f];
+            e.dataTransfer.setData('text/plain', JSON.stringify(items));
+            e.dataTransfer.effectAllowed = 'move';
+        };
+
+        const onDragOver = (e, file = null) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (file && file.type === 'dir') {
+                file.isDragOver = true;
+            }
+        };
+
+        const onDragLeave = (file) => {
+            if (file) file.isDragOver = false;
+        };
+
         const onDrop = async (e, target) => {
             e.preventDefault();
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                const fd = new FormData();
-                fd.append('file', e.dataTransfer.files[0]);
-                fd.append('path', target ? target.path : store.cwd);
-                try {
-                    store.isLoading = true;
-                    await fetch(baseUrl + 'api/upload', { method: 'POST', body: fd });
-                    reload();
-                } finally { store.isLoading = false; }
+            if (target) target.isDragOver = false;
+
+            // 1. External Files (Upload)
+            if (e.dataTransfer.files?.length) {
+                const path = target ? target.path : store.cwd;
+                for (let file of e.dataTransfer.files) {
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    fd.append('path', path);
+                    try {
+                        store.isLoading = true;
+                        await fetch(window.baseUrl + 'api/upload', { method: 'POST', body: fd });
+                    } finally { store.isLoading = false; }
+                }
+                reload();
                 return;
             }
+
+            // 2. Internal Move
             try {
-                const source = JSON.parse(e.dataTransfer.getData('text/plain'));
-                if (!target || source.path === target.path) return;
-                await Api.post('mv', { from: source.path, to: target.path + '/' + source.name });
+                const s = JSON.parse(e.dataTransfer.getData('text/plain'));
+                const items = Array.isArray(s) ? s : [s];
+                
+                if (!target) return; // Dropped on background
+
+                for (let item of items) {
+                    if (item.path === target.path) continue;
+                    await Api.post('mv', { from: item.path, to: target.path + '/' + item.name });
+                }
                 reload();
-            } catch (e) {}
-        };
-
-        const setSort = (key) => {
-            if (store.sortBy === key) store.sortDesc = !store.sortDesc;
-            else { store.sortBy = key; store.sortDesc = false; }
-        };
-
-        // Context Menu
-        const showContextMenu = (e, file) => {
-            contextMenu.visible = true; contextMenu.x = e.clientX; contextMenu.y = e.clientY; contextMenu.file = file;
-            store.selectedItems = [file];
-        };
-        const hideContextMenu = () => contextMenu.visible = false;
-        const cmAction = (action) => {
-            hideContextMenu();
-            const file = contextMenu.file;
-            if (!file) return;
-            switch(action) {
-                case 'open': open(file); break;
-                case 'download': downloadSelected(); break;
-                case 'copy': copySelected(); break;
-                case 'cut': cutSelected(); break;
-                case 'paste': paste(); break;
-                case 'rename': renameSelected(); break;
-                case 'perms': chmodSelected(); break;
-                case 'properties': showProperties(); break;
-                case 'delete': deleteSelected(); break;
+                store.selectedItems = [];
+            } catch (e) {
+                console.error("Drop error", e);
             }
+        };
+
+        const setSort = (k) => { if (store.sortBy === k) store.sortDesc = !store.sortDesc; else { store.sortBy = k; store.sortDesc = false; } };
+        const showContextMenu = (e, f) => { contextMenu.visible = true; contextMenu.x = e.clientX; contextMenu.y = e.clientY; contextMenu.file = f; store.selectedItems = [f]; };
+        const hideContextMenu = () => contextMenu.visible = false;
+        const cmAction = (a) => {
+            hideContextMenu(); const f = contextMenu.file; if (!f) return;
+            const actions = { 'open':()=>open(f), 'download':downloadSelected, 'copy':copySelected, 'cut':cutSelected, 'paste':paste, 'rename':renameSelected, 'perms':chmodSelected, 'properties':showProperties, 'delete':deleteSelected };
+            if (actions[a]) actions[a]();
         };
 
         // Initial Load
         onMounted(async () => {
             applyTheme();
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-                if (theme.value === 'auto') applyTheme();
-            });
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (theme.value === 'auto') applyTheme(); });
             await i18n.load('en');
-            store.loadPath('');
+            
+            const lastPath = localStorage.getItem('extplorer_last_path') || '';
+            store.loadPath(lastPath);
+            
             ace.config.set('basePath', window.baseUrl + 'assets/vendor/ace');
             editorModal = new bootstrap.Modal(document.getElementById('editorModal'));
             imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
@@ -557,65 +396,37 @@ const app = createApp({
             propModal = new bootstrap.Modal(document.getElementById('propModal'));
             webdavModal = new bootstrap.Modal(document.getElementById('webdavModal'));
             
-            // Shortcuts
             window.addEventListener('keydown', (e) => {
-                const target = e.target;
-                const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
-                
-                // Editor specific
-                if (editorFile.value && !isInput) {
-                    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                        e.preventDefault();
-                        saveFile();
-                    }
-                    return;
-                }
-
-                if (isInput) return;
-
-                // Global shortcuts
-                if (e.key === 'Delete') {
-                    e.preventDefault();
-                    deleteSelected();
-                } else if (e.key === 'F2') {
-                    e.preventDefault();
-                    renameSelected();
-                } else if (e.key === 'Enter') {
-                    if (store.selectedItems.length === 1) {
-                        e.preventDefault();
-                        open(store.selectedItems[0]);
-                    }
-                } else if (e.key === 'Escape') {
-                    store.clearSelection();
-                    hideContextMenu();
-                } else if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-                    e.preventDefault();
-                    store.selectedItems = [...filteredFiles.value];
-                }
+                const t = e.target, isI = t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable;
+                if (editorFile.value && !isI) { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveFile(); } return; }
+                if (isI) return;
+                if (e.key === 'Delete') { e.preventDefault(); deleteSelected(); }
+                else if (e.key === 'F2') { e.preventDefault(); renameSelected(); }
+                else if (e.key === 'Enter' && store.selectedItems.length === 1) { e.preventDefault(); open(store.selectedItems[0]); }
+                else if (e.key === 'Escape') { store.clearSelection(); hideContextMenu(); }
+                else if ((e.ctrlKey || e.metaKey) && e.key === 'a') { e.preventDefault(); store.selectedItems = [...filteredFiles.value]; }
             });
 
             document.getElementById('editorModal').addEventListener('shown.bs.modal', () => {
-                if (!aceEditor) {
-                    aceEditor = ace.edit("aceEditor");
-                    aceEditor.setTheme("ace/theme/monokai");
-                }
+                if (!aceEditor) { aceEditor = ace.edit("aceEditor"); aceEditor.setTheme(document.documentElement.getAttribute('data-bs-theme') === 'dark' ? "ace/theme/monokai" : "ace/theme/chrome"); }
                 aceEditor.resize();
             });
         });
 
         return {
             store, i18n, t: (k, p) => i18n.t(k, p),
-            goUp, reload, changePage, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles,
+            goUp, reload, handleItemClick, changePage, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles,
             isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin,
             contextMenu, showContextMenu, hideContextMenu, cmAction,
-            imageViewer, nextImage, prevImage,
-            showWebDav, copyWebDavUrl, webDavUrl,
-            onDragStart, onDragOver, onDrop,
+            imageViewer, nextImage, prevImage, showWebDav, copyWebDavUrl, webDavUrl,
+            onDragStart, onDragOver, onDragLeave, onDrop,
             setSort, isImage, isArchive, getThumbUrl,
             createFolder, deleteSelected, renameSelected, uploadFile, downloadSelected, createArchive, extractArchive, chmodSelected,
-            diffSelected, copySelected, cutSelected, paste,
-            editorFile, propFile, saveChown, calcDirSize,
-            username: window.username
+            showProperties, diffSelected, copySelected, cutSelected, paste,
+            editorFile, propFile, saveChown, calcDirSize, 
+            username: window.username,
+            connectionMode: window.connectionMode,
+            appVersion: window.appVersion
         };
     }
 });

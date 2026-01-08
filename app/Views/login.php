@@ -4,15 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - eXtplorer 3</title>
+    <link rel="icon" type="image/svg+xml" href="<?= base_url('favicon.svg') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
     <style>
         body, html { height: 100%; background-color: #f5f5f5; display: flex; align-items: center; justify-content: center; }
         .login-card { width: 100%; max-width: 400px; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .login-logo { max-width: 200px; height: auto; display: block; margin: 0 auto 1.5rem; }
     </style>
 </head>
 <body>
     <div class="login-card">
-        <h3 class="text-center mb-4">eXtplorer 3</h3>
+        <img src="<?= base_url('logo.svg') ?>" alt="eXtplorer 3" class="login-logo">
         
         <?php if (session()->getFlashdata('error')): ?>
             <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
@@ -31,17 +33,30 @@
             
             <div id="remote_fields" style="display:none;">
                 <div class="mb-3">
-                    <label id="host_label" class="form-label">Host</label>
+                    <label class="form-label">Host</label>
                     <input type="text" name="remote_host" class="form-control" placeholder="example.com">
                 </div>
                 <div class="mb-3">
-                    <label id="port_label" class="form-label">Port</label>
+                    <label class="form-label">Port</label>
                     <input type="number" name="remote_port" id="remote_port" class="form-control" value="21">
                 </div>
             </div>
 
             <div class="mb-3">
-//...
+                <label class="form-label">Username</label>
+                <input type="text" name="username" class="form-control" required autofocus>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+            <div class="text-center mt-3 text-muted small">
+                Default Local: admin / admin
+            </div>
+        </form>
+    </div>
+
     <script>
         function toggleRemoteFields(val) {
             const fields = document.getElementById('remote_fields');

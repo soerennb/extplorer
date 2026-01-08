@@ -224,4 +224,11 @@ class App extends BaseConfig
      * @see http://www.w3.org/TR/CSP/
      */
     public bool $CSPEnabled = false;
+
+    /**
+     * --------------------------------------------------------------------------
+     * Application Version
+     * --------------------------------------------------------------------------
+     */
+    public string $version = '3.0.0-beta.1';
 }

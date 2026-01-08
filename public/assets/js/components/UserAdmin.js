@@ -223,7 +223,8 @@ const UserAdmin = {
                         <div v-else>
                             <table class="table table-sm table-bordered">
                                 <tbody>
-                                    <tr><th style="width: 200px;">PHP Version</th><td>{{ system.php_version }}</td></tr>
+                                    <tr><th style="width: 200px;">eXtplorer Version</th><td><span class="badge bg-success">{{ system.app_version }}</span></td></tr>
+                                    <tr><th>PHP Version</th><td>{{ system.php_version }}</td></tr>
                                     <tr><th>OS</th><td>{{ system.server_os }}</td></tr>
                                     <tr><th>Server Software</th><td>{{ system.server_software }}</td></tr>
                                     <tr><th>Memory Limit</th><td>{{ system.memory_limit }}</td></tr>

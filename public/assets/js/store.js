@@ -17,6 +17,11 @@ const store = Vue.reactive({
         total: 0
     },
 
+    toggleViewMode(mode) {
+        this.viewMode = mode;
+        localStorage.setItem('extplorer_view_mode', mode);
+    },
+
     toggleHidden() {
         this.showHidden = !this.showHidden;
         localStorage.setItem('extplorer_show_hidden', this.showHidden);
@@ -64,6 +69,9 @@ const store = Vue.reactive({
             });
             this.files = items;
             this.cwd = path;
+            
+            // Persist Last Path
+            localStorage.setItem('extplorer_last_path', path);
         } catch (e) {
             this.error = e.message;
             console.error(e);
