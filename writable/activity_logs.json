@@ -1,5 +1,13 @@
 [
     {
+        "timestamp": 1767955366,
+        "user": "admin",
+        "action": "Delete",
+        "path": "manrope",
+        "details": "",
+        "ip": "127.0.0.1"
+    },
+    {
         "timestamp": 1767955248,
         "user": "admin",
         "action": "Upload",

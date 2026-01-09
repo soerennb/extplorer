@@ -32,6 +32,7 @@ const FileTree = {
         },
         async loadChildren() {
             this.isLoading = true;
+            this.children = []; // Clear current children to ensure we reflect deletions
             try {
                 const res = await Api.get('ls', { path: this.path });
                 this.children = res.items.filter(item => item.type === 'dir');
