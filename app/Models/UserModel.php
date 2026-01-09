@@ -51,7 +51,7 @@ class UserModel
         file_put_contents($this->usersFile, json_encode($users, JSON_PRETTY_PRINT));
     }
 
-    public function addUser(string $username, string $password, string $role = 'user', string $homeDir = '/', array $groups = []): bool
+    public function addUser(string $username, string $password, string $role = 'user', string $homeDir = '/', array $groups = [], string $allowedExt = '', string $blockedExt = ''): bool
     {
         if ($this->getUser($username)) {
             return false;
@@ -62,7 +62,9 @@ class UserModel
             'password_hash' => password_hash($password, PASSWORD_DEFAULT),
             'role' => $role,
             'home_dir' => $homeDir,
-            'groups' => $groups
+            'groups' => $groups,
+            'allowed_extensions' => $allowedExt,
+            'blocked_extensions' => $blockedExt
         ];
         $this->saveUsers($users);
         return true;
@@ -76,6 +78,8 @@ class UserModel
                 if (isset($data['role'])) $user['role'] = $data['role'];
                 if (isset($data['home_dir'])) $user['home_dir'] = $data['home_dir'];
                 if (isset($data['groups'])) $user['groups'] = $data['groups'];
+                if (isset($data['allowed_extensions'])) $user['allowed_extensions'] = $data['allowed_extensions'];
+                if (isset($data['blocked_extensions'])) $user['blocked_extensions'] = $data['blocked_extensions'];
                 if (!empty($data['password'])) {
                     $user['password_hash'] = password_hash($data['password'], PASSWORD_DEFAULT);
                 }

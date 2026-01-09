@@ -183,6 +183,30 @@ class ApiController extends BaseController
         }
     }
 
+    private function isExtensionAllowed(string $filename): bool
+    {
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        
+        $allowed = session('allowed_extensions');
+        $blocked = session('blocked_extensions');
+
+        if ($allowed) {
+            $allowedList = array_map('trim', explode(',', strtolower($allowed)));
+            if (!in_array($ext, $allowedList)) {
+                return false;
+            }
+        }
+
+        if ($blocked) {
+            $blockedList = array_map('trim', explode(',', strtolower($blocked)));
+            if (in_array($ext, $blockedList)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public function upload()
     {
         if (!can('upload')) return $this->failForbidden();
@@ -193,6 +217,11 @@ class ApiController extends BaseController
             return $this->fail($file ? $file->getErrorString() : 'No file uploaded');
         }
 
+        $name = $file->getClientName();
+        if (!$this->isExtensionAllowed($name)) {
+            return $this->fail("Uploading files with this extension is not allowed.");
+        }
+
         try {
             $targetDir = $this->fs->resolvePath($path);
             
@@ -200,8 +229,8 @@ class ApiController extends BaseController
                 return $this->fail("Target directory does not exist.");
             }
             
-            $file->move($targetDir, $file->getClientName());
-            LogService::log('Upload', $path, 'File: ' . $file->getClientName());
+            $file->move($targetDir, $name);
+            LogService::log('Upload', $path, 'File: ' . $name);
             return $this->respond(['status' => 'success']);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
@@ -219,6 +248,10 @@ class ApiController extends BaseController
         $targetPath = $this->request->getPost('path') ?? '';
 
         if (!$file || !$file->isValid()) return $this->fail('Invalid chunk');
+
+        if (!$this->isExtensionAllowed($filename)) {
+            return $this->fail("Uploading files with this extension is not allowed.");
+        }
 
         $tempDir = WRITEPATH . 'uploads/chunks/' . md5(session_id() . $filename);
         if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);

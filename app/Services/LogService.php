@@ -6,12 +6,12 @@ class LogService
 {
     private static string $filePath = WRITEPATH . 'activity_logs.json';
 
-    public static function log(string $action, string $path = '', string $details = '')
+    public static function log(string $action, string $path = '', string $details = '', ?string $username = null)
     {
         $logs = self::getLogs();
         $entry = [
             'timestamp' => time(),
-            'user' => session('username') ?? 'System',
+            'user' => $username ?? session('username') ?? 'System',
             'action' => $action,
             'path' => $path,
             'details' => $details,

@@ -7,6 +7,8 @@ use App\Models\UserModel;
 
 class AuthBackend extends AbstractBasic
 {
+    protected ?array $currentUser = null;
+
     /**
      * Validates a username and password
      *
@@ -14,7 +16,7 @@ class AuthBackend extends AbstractBasic
      * @param string $password
      * @return bool
      */
-    protected function validateUserPass($username, $password)
+    protected function validateUserPass($username, $password): bool
     {
         $userModel = new UserModel();
         $user = $userModel->verifyUser($username, $password);
@@ -28,8 +30,8 @@ class AuthBackend extends AbstractBasic
         return false;
     }
 
-    public function getCurrentUser()
+    public function getCurrentUser(): ?array
     {
-        return $this->currentUser ?? null;
+        return $this->currentUser;
     }
 }

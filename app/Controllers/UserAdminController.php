@@ -124,12 +124,18 @@ class UserAdminController extends BaseController
         $password = $json->password ?? '';
         $role = $json->role ?? 'user';
         $homeDir = $json->home_dir ?? '/';
+        $allowedExt = $json->allowed_extensions ?? '';
+        $blockedExt = $json->blocked_extensions ?? '';
 
         if (!$username || !$password) {
             return $this->fail('Username and Password required');
         }
 
-        if ($this->userModel->addUser($username, $password, $role, $homeDir)) {
+        if (strlen($password) < 8) {
+            return $this->fail('Password must be at least 8 characters long');
+        }
+
+        if ($this->userModel->addUser($username, $password, $role, $homeDir, [], $allowedExt, $blockedExt)) {
             LogService::log('Create User', $username);
             return $this->respondCreated(['status' => 'success']);
         } else {

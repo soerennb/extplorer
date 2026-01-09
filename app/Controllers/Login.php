@@ -16,6 +16,11 @@ class Login extends BaseController
 
     public function auth()
     {
+        $throttler = \Config\Services::throttler();
+        if ($throttler->check(md5($this->request->getIPAddress()), 5, 60) === false) {
+            return redirect()->back()->with('error', 'Too many login attempts. Please try again in a minute.');
+        }
+
         $mode = $this->request->getPost('mode') ?? 'local';
         $username = $this->request->getPost('username');
         $password = $this->request->getPost('password');
@@ -31,6 +36,7 @@ class Login extends BaseController
                     new \App\Services\VFS\Ssh2Adapter($host, $username, $password, $port);
                 }
                 
+                session()->regenerate();
                 session()->set([
                     'isLoggedIn' => true,
                     'username' => $username,
@@ -56,11 +62,14 @@ class Login extends BaseController
 
         if ($user) {
             $permissions = $userModel->getPermissions($username);
+            session()->regenerate();
             session()->set([
                 'isLoggedIn' => true,
                 'username' => $user['username'],
                 'role' => $user['role'],
                 'home_dir' => $user['home_dir'],
+                'allowed_extensions' => $user['allowed_extensions'] ?? '',
+                'blocked_extensions' => $user['blocked_extensions'] ?? '',
                 'permissions' => $permissions,
                 'connection' => ['mode' => 'local']
             ]);

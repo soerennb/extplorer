@@ -54,21 +54,21 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public $scriptSrc = 'self';
+    public $scriptSrc = ['self', 'unsafe-eval', 'unsafe-inline'];
 
     /**
      * Lists allowed stylesheets' URLs.
      *
      * @var list<string>|string
      */
-    public $styleSrc = 'self';
+    public $styleSrc = ['self', 'unsafe-inline'];
 
     /**
      * Defines the origins from which images can be loaded.
      *
      * @var list<string>|string
      */
-    public $imageSrc = 'self';
+    public $imageSrc = ['self', 'data:'];
 
     /**
      * Restricts the URLs that can appear in a page's `<base>` element.
@@ -84,7 +84,7 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public $childSrc = 'self';
+    public $childSrc = ['self', 'blob:'];
 
     /**
      * Limits the origins that you can connect to (via XHR,
@@ -131,7 +131,7 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string|null
      */
-    public $mediaSrc;
+    public $mediaSrc = ['self', 'data:'];
 
     /**
      * Allows control over Flash and other plugins.
@@ -162,15 +162,15 @@ class ContentSecurityPolicy extends BaseConfig
     /**
      * Nonce tag for style
      */
-    public string $styleNonceTag = '{csp-style-nonce}';
+    public string $styleNonceTag = '';
 
     /**
      * Nonce tag for script
      */
-    public string $scriptNonceTag = '{csp-script-nonce}';
+    public string $scriptNonceTag = '';
 
     /**
      * Replace nonce tag automatically
      */
-    public bool $autoNonce = true;
+    public bool $autoNonce = false;
 }

@@ -8,8 +8,9 @@
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
     <style>
         body, html { height: 100%; background-color: #f5f5f5; display: flex; align-items: center; justify-content: center; }
-        .login-card { width: 100%; max-width: 400px; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .login-card { width: 100%; max-width: 600px; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .login-logo { max-width: 200px; height: auto; display: block; margin: 0 auto 1.5rem; }
+        .d-none { display: none; }
     </style>
 </head>
 <body>
@@ -24,14 +25,14 @@
             <?= csrf_field() ?>
             <div class="mb-3">
                 <label class="form-label">Connection Mode</label>
-                <select name="mode" class="form-select" onchange="toggleRemoteFields(this.value)">
+                <select name="mode" id="connection_mode" class="form-select">
                     <option value="local">Local Filesystem</option>
                     <option value="ftp">FTP Server</option>
                     <option value="sftp">SFTP (SSH)</option>
                 </select>
             </div>
             
-            <div id="remote_fields" style="display:none;">
+            <div id="remote_fields" class="d-none">
                 <div class="mb-3">
                     <label class="form-label">Host</label>
                     <input type="text" name="remote_host" class="form-control" placeholder="example.com">
@@ -58,10 +59,20 @@
     </div>
 
     <script>
+        document.getElementById('connection_mode').addEventListener('change', function() {
+            toggleRemoteFields(this.value);
+        });
+
         function toggleRemoteFields(val) {
             const fields = document.getElementById('remote_fields');
             const port = document.getElementById('remote_port');
-            fields.style.display = (val === 'ftp' || val === 'sftp') ? 'block' : 'none';
+            
+            if (val === 'ftp' || val === 'sftp') {
+                fields.classList.remove('d-none');
+            } else {
+                fields.classList.add('d-none');
+            }
+            
             if (val === 'ftp') port.value = 21;
             if (val === 'sftp') port.value = 22;
         }

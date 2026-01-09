@@ -78,6 +78,14 @@ const UserAdmin = {
                                         <label class="form-label small">Home Dir</label>
                                         <input type="text" class="form-control form-control-sm" v-model="editingUser.home_dir">
                                     </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Allowed Extensions (csv)</label>
+                                        <input type="text" class="form-control form-control-sm" v-model="editingUser.allowed_extensions" placeholder="e.g. jpg,png,pdf">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Blocked Extensions (csv)</label>
+                                        <input type="text" class="form-control form-control-sm" v-model="editingUser.blocked_extensions" placeholder="e.g. php,exe">
+                                    </div>
                                     <div class="col-md-12">
                                         <label class="form-label small d-block">Groups</label>
                                         <div class="d-flex flex-wrap gap-2">
@@ -303,11 +311,11 @@ const UserAdmin = {
         // User Methods
         showAddForm() {
             this.isNew = true;
-            this.editingUser = { username: '', password: '', role: 'user', home_dir: '/', groups: [] };
+            this.editingUser = { username: '', password: '', role: 'user', home_dir: '/', groups: [], allowed_extensions: '', blocked_extensions: '' };
         },
         editUser(user) {
             this.isNew = false;
-            this.editingUser = { ...user, password: '', groups: user.groups || [] };
+            this.editingUser = { ...user, password: '', groups: user.groups || [], allowed_extensions: user.allowed_extensions || '', blocked_extensions: user.blocked_extensions || '' };
         },
         cancelEdit() { this.editingUser = null; },
         async saveUser() {

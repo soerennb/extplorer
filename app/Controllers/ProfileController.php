@@ -16,6 +16,10 @@ class ProfileController extends BaseController
 
         if (!$password) return $this->fail('Password required');
 
+        if (strlen($password) < 8) {
+            return $this->fail('Password must be at least 8 characters long');
+        }
+
         $username = session('username');
         if (!$username) return $this->failForbidden('Not logged in');
 

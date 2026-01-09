@@ -13,39 +13,56 @@ class DavController extends BaseController
 {
     public function index(...$path)
     {
-        // 1. Setup Auth
-        $authBackend = new AuthBackend();
-        $authPlugin = new AuthPlugin($authBackend);
-
-        // 2. We need to catch the "currentUser" to determine the root
-        // But SabreDAV does auth during the 'start' of the server.
-        // To determine the root path dynamically based on the user, 
-        // we can use a custom middleware or just check Basic Auth headers manually.
-
-        $authHeader = $this->request->getServer('HTTP_AUTHORIZATION');
-        if (!$authHeader) {
-            header('WWW-Authenticate: Basic realm="eXtplorer3 WebDAV"');
-            header('HTTP/1.0 401 Unauthorized');
-            echo 'Authentication required';
+        // 1. Security Check: Rate Limiting
+        $throttler = \Config\Services::throttler();
+        if ($throttler->check('dav-' . $this->request->getIPAddress(), 120, MINUTE) === false) {
+            header('HTTP/1.1 429 Too Many Requests');
+            echo 'Too many requests. Please slow down.';
             exit;
         }
 
-        list($user, $pass) = explode(':', base64_decode(substr($authHeader, 6)), 2);
-        
-        $userModel = new UserModel();
-        $userData = $userModel->verifyUser($user, $pass);
+        // 2. Security Check: HTTPS Enforcement (Optional but recommended)
+        // If not already handled by a global filter
+        if (!ENVIRONMENT === 'development' && !$this->request->isSecure()) {
+            header('HTTP/1.1 403 Forbidden');
+            echo 'SSL/HTTPS is required for WebDAV.';
+            exit;
+        }
+
+        // 3. Setup Auth Backend
+        $authBackend = new AuthBackend();
+
+        // 4. Determine User and Root Path BEFORE starting SabreDAV
+        $authHeader = $this->request->getServer('HTTP_AUTHORIZATION');
+        $userData = null;
+
+        if ($authHeader && stripos($authHeader, 'Basic ') === 0) {
+            $credentials = base64_decode(substr($authHeader, 6));
+            if (str_contains($credentials, ':')) {
+                [$user, $pass] = explode(':', $credentials, 2);
+                $userModel = new UserModel();
+                $userData = $userModel->verifyUser($user, $pass);
+                
+                if (!$userData) {
+                    \App\Services\LogService::log('WebDAV Auth Failed', 'dav', "Failed login attempt", $user);
+                } else {
+                    // Optional: Log successful logins (might be noisy)
+                    // \App\Services\LogService::log('WebDAV Login', 'dav', "Successful login", $user);
+                }
+            }
+        }
 
         if (!$userData) {
             header('WWW-Authenticate: Basic realm="eXtplorer3 WebDAV"');
-            header('HTTP/1.0 401 Unauthorized');
-            echo 'Invalid credentials';
+            header('HTTP/1.1 401 Unauthorized');
+            echo 'Authentication required';
             exit;
         }
 
         // 3. Determine Root Path
         $baseRoot = WRITEPATH . 'file_manager_root';
         $userHome = trim($userData['home_dir'] ?? '', '/\\');
-        $rootPath = $baseRoot . ( $userHome ? DIRECTORY_SEPARATOR . $userHome : '');
+        $rootPath = $baseRoot . ($userHome ? DIRECTORY_SEPARATOR . $userHome : '');
 
         if (!is_dir($rootPath)) {
             mkdir($rootPath, 0777, true);
@@ -56,14 +73,29 @@ class DavController extends BaseController
         $server = new Server($rootNode);
 
         // Set the base URL (important!)
-        // If the route is /dav, set it to /dav
-        $server->setBaseUri('/dav');
+        // Determine base URI dynamically using site_url
+        $baseUri = parse_url(site_url('dav'), PHP_URL_PATH);
+        if (!$baseUri) $baseUri = '/dav';
+        $server->setBaseUri($baseUri);
 
-        // Add Auth Plugin anyway so it's compliant
+        // Add Auth Plugin
+        $authPlugin = new AuthPlugin($authBackend);
         $server->addPlugin($authPlugin);
 
         // Add Browser Plugin (for viewing in browser)
         $server->addPlugin(new \Sabre\DAV\Browser\Plugin());
+
+        // Add Locks Plugin (Essential for Windows/macOS clients)
+        $davCacheDir = WRITEPATH . 'cache/dav';
+        if (!is_dir($davCacheDir)) {
+            mkdir($davCacheDir, 0777, true);
+        }
+
+        $locksBackend = new \Sabre\DAV\Locks\Backend\File($davCacheDir . '/locks');
+        $server->addPlugin(new \Sabre\DAV\Locks\Plugin($locksBackend));
+
+        // Add Temporary File Filter (to hide .DS_Store, etc.)
+        $server->addPlugin(new \Sabre\DAV\TemporaryFileFilterPlugin($davCacheDir . '/temp'));
 
         // 5. Start Server
         $server->start();

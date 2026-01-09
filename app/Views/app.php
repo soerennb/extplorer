@@ -126,6 +126,16 @@
         [data-bs-theme="light"] .navbar { background-color: var(--bs-dark) !important; }
         
         .dropdown-menu { box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); }
+        .icon-large { font-size: 4rem; }
+        .thumb-grid { width: 100%; height: 100%; object-fit: cover; }
+
+        .list-view-header-spacer { width: 45px; }
+        .cursor-pointer { cursor: pointer; }
+        .h-90vh { height: 90vh; }
+        .h-100 { height: 100%; }
+        .w-100 { width: 100%; }
+        .max-h-90vh { max-height: 90vh; }
+        .z-1060 { z-index: 1060; }
     </style>
 </head>
 <body>
@@ -339,16 +349,16 @@
 
                         <!-- Header for List View -->
                         <div v-if="store.viewMode === 'list' && store.files.length > 0" class="d-flex text-muted border-bottom px-3 py-2 small fw-bold user-select-none w-100">
-                            <div style="width: 45px;"></div>
-                            <div class="flex-grow-1" @click="setSort('name')" style="cursor: pointer;">
+                            <div class="list-view-header-spacer"></div>
+                            <div class="flex-grow-1 cursor-pointer" @click="setSort('name')">
                                 {{ t('name') }}
                                 <i v-if="store.sortBy === 'name'" :class="store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill'"></i>
                             </div>
-                            <div class="file-meta-col size-col" @click="setSort('size')" style="cursor: pointer;">
+                            <div class="file-meta-col size-col cursor-pointer" @click="setSort('size')">
                                 {{ t('size') }}
                                 <i v-if="store.sortBy === 'size'" :class="store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill'"></i>
                             </div>
-                            <div class="file-meta-col date-col" @click="setSort('mtime')" style="cursor: pointer;">
+                            <div class="file-meta-col date-col cursor-pointer" @click="setSort('mtime')">
                                 {{ t('date') }}
                                 <i v-if="store.sortBy === 'mtime'" :class="store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill'"></i>
                             </div>
@@ -371,8 +381,7 @@
                             <div class="file-icon">
                                 <img v-if="store.viewMode === 'grid' && isImage(file)" 
                                      :src="getThumbUrl(file)" 
-                                     class="rounded shadow-sm"
-                                     style="width: 100%; height: 100%; object-fit: cover;"
+                                     class="rounded shadow-sm thumb-grid"
                                      draggable="false">
                                 <i v-else :class="getIcon(file)"></i>
                             </div>
@@ -416,14 +425,14 @@
         
         <!-- Editor Modal -->
         <div class="modal fade" id="editorModal" tabindex="-1" data-bs-backdrop="static">
-            <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered" style="height: 90vh;">
+            <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered h-90vh">
                 <div class="modal-content h-100">
                     <div class="modal-header py-2">
                         <h5 class="modal-title fs-6">{{ t('editing', {name: editorFile?.name}) }}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body p-0" style="overflow: hidden;">
-                        <div id="aceEditor" style="height: 100%; width: 100%;"></div>
+                    <div class="modal-body p-0 overflow-hidden">
+                        <div id="aceEditor" class="h-100 w-100"></div>
                     </div>
                     <div class="modal-footer py-2">
                         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ t('close') }}</button>
@@ -435,13 +444,13 @@
 
         <!-- Diff Modal -->
         <div class="modal fade" id="diffModal" tabindex="-1">
-            <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered" style="height: 90vh;">
+            <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered h-90vh">
                 <div class="modal-content h-100">
                     <div class="modal-header py-2">
                         <h5 class="modal-title fs-6">Compare Files</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body" style="overflow-y: auto;">
+                    <div class="modal-body overflow-auto">
                         <div id="diffViewer"></div>
                     </div>
                 </div>
@@ -453,11 +462,11 @@
             <div class="modal-dialog modal-xl modal-dialog-centered">
                 <div class="modal-content bg-transparent border-0 shadow-none">
                     <div class="modal-body p-0 text-center position-relative d-flex align-items-center justify-content-center">
-                        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" style="z-index: 1060;"></button>
+                        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-1060" data-bs-dismiss="modal"></button>
                         <button v-if="imageViewer.list.length > 1" class="btn btn-dark bg-opacity-50 position-absolute start-0 m-3 rounded-circle" @click.stop="prevImage" :disabled="imageViewer.index <= 0">
                             <i class="ri-arrow-left-s-line fs-4"></i>
                         </button>
-                        <img v-if="imageViewer.src" :src="imageViewer.src" class="img-fluid rounded" style="max-height: 90vh;">
+                        <img v-if="imageViewer.src" :src="imageViewer.src" class="img-fluid rounded max-h-90vh">
                         <button v-if="imageViewer.list.length > 1" class="btn btn-dark bg-opacity-50 position-absolute end-0 m-3 rounded-circle" @click.stop="nextImage" :disabled="imageViewer.index >= imageViewer.list.length - 1">
                             <i class="ri-arrow-right-s-line fs-4"></i>
                         </button>
@@ -479,7 +488,7 @@
                     </div>
                     <div v-if="propFile" class="modal-body">
                         <div class="text-center mb-3">
-                            <i :class="getIcon(propFile)" style="font-size: 4rem;"></i>
+                            <i :class="getIcon(propFile)" class="icon-large"></i>
                             <h6 class="mt-2">{{ propFile.name }}</h6>
                         </div>
                         <table class="table table-sm small">
