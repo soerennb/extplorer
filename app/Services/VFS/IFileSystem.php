@@ -109,4 +109,30 @@ interface IFileSystem
      * @return int Size in bytes
      */
     public function getDirectorySize(string $path): int;
+
+    /**
+     * Create an archive from the given sources.
+     *
+     * @param array $sources List of relative paths
+     * @param string $destination Relative path to destination archive
+     * @return bool True on success
+     */
+    public function archive(array $sources, string $destination): bool;
+
+    /**
+     * Extract an archive to the given destination.
+     *
+     * @param string $archive Relative path to archive
+     * @param string $destination Relative path to destination directory
+     * @return bool True on success
+     */
+    public function extract(string $archive, string $destination): bool;
+
+    /**
+     * Search for files matching the query.
+     *
+     * @param string $query Search term
+     * @return array List of matching files with metadata
+     */
+    public function search(string $query): array;
 }

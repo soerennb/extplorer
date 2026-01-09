@@ -179,34 +179,44 @@ const app = createApp({
         };
 
         const uploadFile = () => {
-            const input = document.createElement('input'); input.type = 'file';
-            input.onchange = async e => {
-                const file = e.target.files[0]; if (!file) return;
-                const CHUNK_SIZE = 1024 * 1024;
-                try {
-                    store.isLoading = true;
+            const input = document.createElement('input'); input.type = 'file'; input.multiple = true;
+            input.onchange = e => { if (e.target.files.length) performUpload(e.target.files); };
+            input.click();
+        };
+
+        const performUpload = async (files, targetPath = null) => {
+            const path = targetPath !== null ? targetPath : store.cwd;
+            const CHUNK_SIZE = 1024 * 1024;
+            try {
+                store.isLoading = true;
+                for (let file of files) {
+                    store.uploadProgress = 0;
                     if (file.size <= CHUNK_SIZE) {
-                        const fd = new FormData(); fd.append('file', file); fd.append('path', store.cwd);
+                        const fd = new FormData(); fd.append('file', file); fd.append('path', path);
                         const headers = { 'X-Requested-With': 'XMLHttpRequest' };
                         if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
                         await fetch(window.baseUrl + 'api/upload', { method: 'POST', headers, body: fd });
+                        store.uploadProgress = 100;
                     } else {
                         const total = Math.ceil(file.size / CHUNK_SIZE);
                         for (let i = 0; i < total; i++) {
                             const chunk = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
                             const fd = new FormData(); fd.append('file', chunk); fd.append('filename', file.name);
-                            fd.append('chunkIndex', i); fd.append('totalChunks', total); fd.append('path', store.cwd);
+                            fd.append('chunkIndex', i); fd.append('totalChunks', total); fd.append('path', path);
                             const headers = { 'X-Requested-With': 'XMLHttpRequest' };
                             if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
                             await fetch(window.baseUrl + 'api/upload_chunk', { method: 'POST', headers, body: fd });
+                            store.uploadProgress = Math.round(((i + 1) / total) * 100);
                         }
                     }
-                    reload();
-                    Swal.fire(i18n.t('uploaded'), '', 'success');
-                } catch (e) { Swal.fire(i18n.t('error'), 'Upload failed', 'error'); }
-                finally { store.isLoading = false; }
-            };
-            input.click();
+                }
+                reload();
+                Swal.fire(i18n.t('uploaded'), '', 'success');
+            } catch (e) { Swal.fire(i18n.t('error'), 'Upload failed', 'error'); }
+            finally { 
+                store.isLoading = false; 
+                setTimeout(() => store.uploadProgress = 0, 1000);
+            }
         };
 
         const copySelected = () => { if (store.selectedItems.length) { store.clipboard.items = [...store.selectedItems]; store.clipboard.mode = 'copy'; } };
@@ -348,17 +358,7 @@ const app = createApp({
 
             // 1. External Files (Upload)
             if (e.dataTransfer.files?.length) {
-                const path = target ? target.path : store.cwd;
-                for (let file of e.dataTransfer.files) {
-                    const fd = new FormData();
-                    fd.append('file', file);
-                    fd.append('path', path);
-                    try {
-                        store.isLoading = true;
-                        await fetch(window.baseUrl + 'api/upload', { method: 'POST', body: fd });
-                    } finally { store.isLoading = false; }
-                }
-                reload();
+                performUpload(e.dataTransfer.files, target ? target.path : store.cwd);
                 return;
             }
 
@@ -380,7 +380,7 @@ const app = createApp({
             }
         };
 
-                const setSort = (k) => { if (store.sortBy === k) store.sortDesc = !store.sortDesc; else { store.sortBy = key; store.sortDesc = false; } };
+        const setSort = (k) => { if (store.sortBy === k) store.sortDesc = !store.sortDesc; else { store.sortBy = k; store.sortDesc = false; } };
 
                 
 
