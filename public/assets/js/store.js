@@ -13,6 +13,9 @@ const store = Vue.reactive({
     isLoading: false,
     isDraggingOver: false,
     uploadProgress: 0,
+    uploadCurrent: 0,
+    uploadTotal: 0,
+    uploadFileName: '',
     error: null,
     pagination: {
         page: 1,

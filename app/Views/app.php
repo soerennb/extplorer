@@ -335,8 +335,14 @@
 
             <!-- Content -->
             <div class="content-area position-relative" @click.stop="store.clearSelection(); hideContextMenu()">
-                <div v-if="store.uploadProgress > 0 && store.uploadProgress < 100" class="progress mb-3" style="height: 5px;">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" :style="{width: store.uploadProgress + '%'}"></div>
+                <div v-if="store.uploadProgress > 0" class="mb-3">
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Uploading: <strong>{{ store.uploadFileName }}</strong></span>
+                        <span v-if="store.uploadTotal > 1">{{ store.uploadCurrent + 1 }} / {{ store.uploadTotal }}</span>
+                    </div>
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" :style="{width: store.uploadProgress + '%'}"></div>
+                    </div>
                 </div>
 
                 <div v-if="store.isLoading && store.uploadProgress === 0" class="position-absolute top-50 start-50 translate-middle">

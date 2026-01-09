@@ -188,8 +188,13 @@ const app = createApp({
             const path = targetPath !== null ? targetPath : store.cwd;
             const CHUNK_SIZE = 1024 * 1024;
             try {
-                if (!silent) store.isLoading = true;
+                if (!silent) {
+                    store.isLoading = true;
+                    store.uploadTotal = files.length;
+                    store.uploadCurrent = 0;
+                }
                 for (let file of files) {
+                    store.uploadFileName = file.name;
                     store.uploadProgress = 0;
                     if (file.size <= CHUNK_SIZE) {
                         const fd = new FormData(); fd.append('file', file); fd.append('path', path);
@@ -209,6 +214,7 @@ const app = createApp({
                             store.uploadProgress = Math.round(((i + 1) / total) * 100);
                         }
                     }
+                    store.uploadCurrent++;
                 }
                 if (!silent) {
                     reload();
@@ -218,9 +224,18 @@ const app = createApp({
             finally { 
                 if (!silent) {
                     store.isLoading = false; 
-                    setTimeout(() => store.uploadProgress = 0, 1000);
+                    resetUploadProgress();
                 }
             }
+        };
+
+        const resetUploadProgress = () => {
+            setTimeout(() => {
+                store.uploadProgress = 0;
+                store.uploadCurrent = 0;
+                store.uploadTotal = 0;
+                store.uploadFileName = '';
+            }, 1000);
         };
 
         const copySelected = () => { if (store.selectedItems.length) { store.clipboard.items = [...store.selectedItems]; store.clipboard.mode = 'copy'; } };
@@ -373,6 +388,18 @@ const app = createApp({
             }
         };
 
+        const countEntries = async (item) => {
+            if (item.isFile) return 1;
+            if (item.isDirectory) {
+                let count = 0;
+                const dirReader = item.createReader();
+                const entries = await new Promise(resolve => dirReader.readEntries(resolve));
+                for (let entry of entries) count += await countEntries(entry);
+                return count;
+            }
+            return 0;
+        };
+
         const onDrop = async (e, target) => {
             e.preventDefault();
             store.isDraggingOver = false;
@@ -383,11 +410,22 @@ const app = createApp({
             if (items && items.length > 0 && items[0].kind === 'file') {
                 const targetPath = target ? target.path : store.cwd;
                 store.isLoading = true;
+                store.uploadProgress = 0;
+                store.uploadCurrent = 0;
+                store.uploadTotal = 0;
+
+                // Scan for total items first
                 for (let i = 0; i < items.length; i++) {
-                    const item = items[i].webkitGetAsEntry();
-                    if (item) await traverseFileTree(item, targetPath);
+                    const entry = items[i].webkitGetAsEntry();
+                    if (entry) store.uploadTotal += await countEntries(entry);
+                }
+
+                for (let i = 0; i < items.length; i++) {
+                    const entry = items[i].webkitGetAsEntry();
+                    if (entry) await traverseFileTree(entry, targetPath);
                 }
                 store.isLoading = false;
+                resetUploadProgress();
                 reload();
                 Swal.fire(i18n.t('uploaded'), '', 'success');
                 return;
