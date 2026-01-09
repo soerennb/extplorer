@@ -26,7 +26,8 @@
             .sidebar { width: auto; border-right: none; }
         }
         
-        .content-area { flex: 1; overflow-y: auto; padding: 1rem; background-color: var(--bs-body-bg); }
+        /* Main Container Drag Over */
+        .main-container.drag-over { background-color: var(--bs-primary-bg-subtle); border: 2px dashed var(--bs-primary); }
         
         .navbar-logo { height: 48px; width: auto; margin-right: 10px; }
         
@@ -289,9 +290,11 @@
 
         <!-- Main -->
         <div class="main-container" 
+             :class="{'drag-over': store.isDraggingOver}"
              @click="store.clearSelection(); hideContextMenu()" 
              @contextmenu.prevent="hideContextMenu()"
-             @dragover.prevent="onDragOver" 
+             @dragover.prevent="onDragOver($event, null)" 
+             @dragleave="onDragLeave(null)"
              @drop.prevent="onDrop($event, null)">
             
             <!-- Sidebar -->

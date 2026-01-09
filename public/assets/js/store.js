@@ -11,6 +11,7 @@ const store = Vue.reactive({
     viewMode: localStorage.getItem('extplorer_view_mode') || 'grid',
     isMobile: window.innerWidth < 992,
     isLoading: false,
+    isDraggingOver: false,
     uploadProgress: 0,
     error: null,
     pagination: {

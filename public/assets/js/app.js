@@ -184,11 +184,11 @@ const app = createApp({
             input.click();
         };
 
-        const performUpload = async (files, targetPath = null) => {
+        const performUpload = async (files, targetPath = null, silent = false) => {
             const path = targetPath !== null ? targetPath : store.cwd;
             const CHUNK_SIZE = 1024 * 1024;
             try {
-                store.isLoading = true;
+                if (!silent) store.isLoading = true;
                 for (let file of files) {
                     store.uploadProgress = 0;
                     if (file.size <= CHUNK_SIZE) {
@@ -210,12 +210,16 @@ const app = createApp({
                         }
                     }
                 }
-                reload();
-                Swal.fire(i18n.t('uploaded'), '', 'success');
-            } catch (e) { Swal.fire(i18n.t('error'), 'Upload failed', 'error'); }
+                if (!silent) {
+                    reload();
+                    Swal.fire(i18n.t('uploaded'), '', 'success');
+                }
+            } catch (e) { if (!silent) Swal.fire(i18n.t('error'), 'Upload failed', 'error'); }
             finally { 
-                store.isLoading = false; 
-                setTimeout(() => store.uploadProgress = 0, 1000);
+                if (!silent) {
+                    store.isLoading = false; 
+                    setTimeout(() => store.uploadProgress = 0, 1000);
+                }
             }
         };
 
@@ -334,7 +338,6 @@ const app = createApp({
 
         // Drag & Drop
         const onDragStart = (e, f) => {
-            // If dragging a selected item, move all selected items
             const items = store.isSelected(f) ? store.selectedItems : [f];
             e.dataTransfer.setData('text/plain', JSON.stringify(items));
             e.dataTransfer.effectAllowed = 'move';
@@ -345,39 +348,66 @@ const app = createApp({
             e.dataTransfer.dropEffect = 'move';
             if (file && file.type === 'dir') {
                 file.isDragOver = true;
+            } else if (!file) {
+                store.isDraggingOver = true;
             }
         };
 
-        const onDragLeave = (file) => {
+        const onDragLeave = (file = null) => {
             if (file) file.isDragOver = false;
+            else store.isDraggingOver = false;
+        };
+
+        const traverseFileTree = async (item, path) => {
+            if (item.isFile) {
+                const file = await new Promise(resolve => item.file(resolve));
+                await performUpload([file], path, true);
+            } else if (item.isDirectory) {
+                const newPath = (path ? path + '/' : '') + item.name;
+                try { await Api.post('mkdir', { path: newPath }); } catch(e) {} // Ignore if exists
+                const dirReader = item.createReader();
+                const entries = await new Promise(resolve => dirReader.readEntries(resolve));
+                for (let entry of entries) {
+                    await traverseFileTree(entry, newPath);
+                }
+            }
         };
 
         const onDrop = async (e, target) => {
             e.preventDefault();
+            store.isDraggingOver = false;
             if (target) target.isDragOver = false;
 
-            // 1. External Files (Upload)
-            if (e.dataTransfer.files?.length) {
-                performUpload(e.dataTransfer.files, target ? target.path : store.cwd);
+            // 1. External Files/Folders (Upload)
+            const items = e.dataTransfer.items;
+            if (items && items.length > 0 && items[0].kind === 'file') {
+                const targetPath = target ? target.path : store.cwd;
+                store.isLoading = true;
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i].webkitGetAsEntry();
+                    if (item) await traverseFileTree(item, targetPath);
+                }
+                store.isLoading = false;
+                reload();
+                Swal.fire(i18n.t('uploaded'), '', 'success');
                 return;
             }
 
             // 2. Internal Move
             try {
-                const s = JSON.parse(e.dataTransfer.getData('text/plain'));
-                const items = Array.isArray(s) ? s : [s];
-                
-                if (!target) return; // Dropped on background
+                const s = e.dataTransfer.getData('text/plain');
+                if (!s) return;
+                const items = JSON.parse(s);
+                const list = Array.isArray(items) ? items : [items];
+                if (!target) return;
 
-                for (let item of items) {
+                for (let item of list) {
                     if (item.path === target.path) continue;
                     await Api.post('mv', { from: item.path, to: target.path + '/' + item.name });
                 }
                 reload();
                 store.selectedItems = [];
-            } catch (e) {
-                console.error("Drop error", e);
-            }
+            } catch (e) { console.error("Drop error", e); }
         };
 
         const setSort = (k) => { if (store.sortBy === k) store.sortDesc = !store.sortDesc; else { store.sortBy = k; store.sortDesc = false; } };
