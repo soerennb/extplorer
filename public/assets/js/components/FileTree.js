@@ -7,6 +7,7 @@ const FileTree = {
     },
     data() {
         return {
+            store,
             isOpen: this.root,
             isLoading: false,
             isDragOver: false,
@@ -15,7 +16,7 @@ const FileTree = {
     },
     computed: {
         isSelected() {
-            return store.cwd === this.path;
+            return this.store.cwd === this.path;
         },
         indent() {
             return { paddingLeft: this.root ? '0px' : '15px' };
@@ -42,7 +43,7 @@ const FileTree = {
             }
         },
         select() {
-            store.loadPath(this.path);
+            this.store.loadPath(this.path);
         },
         onDragOver(e) {
             e.preventDefault();
@@ -60,6 +61,20 @@ const FileTree = {
     mounted() {
         if (this.root) {
              this.loadChildren();
+        }
+    },
+    watch: {
+        'store.treeVersion'() {
+            if (this.isOpen) {
+                this.loadChildren();
+            }
+        }
+    },
+    watch: {
+        'store.treeVersion'() {
+            if (this.isOpen) {
+                this.loadChildren();
+            }
         }
     },
     template: `

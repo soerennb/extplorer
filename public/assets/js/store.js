@@ -12,11 +12,16 @@ const store = Vue.reactive({
     isMobile: window.innerWidth < 992,
     isLoading: false,
     isDraggingOver: false,
+    treeVersion: 0,
     uploadProgress: 0,
     uploadCurrent: 0,
     uploadTotal: 0,
     uploadFileName: '',
     error: null,
+
+    refreshTree() {
+        this.treeVersion++;
+    },
     pagination: {
         page: 1,
         pageSize: 100,

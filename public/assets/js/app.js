@@ -82,7 +82,7 @@ const app = createApp({
         const toggleTheme = () => { const next = { 'auto': 'light', 'light': 'dark', 'dark': 'auto' }; setTheme(next[theme.value]); };
 
         // --- Core Actions ---
-        const reload = () => store.loadPath(store.cwd);
+        const reload = () => { store.loadPath(store.cwd); store.refreshTree(); };
         const goUp = () => { if (store.cwd) { const p = store.cwd.split('/'); p.pop(); store.loadPath(p.join('/')); } };
         
         const closeOffcanvas = () => {
@@ -148,7 +148,7 @@ const app = createApp({
         const createFolder = async () => {
             const { value: name } = await Swal.fire({ title: i18n.t('new_folder'), input: 'text', showCancelButton: true });
             if (name) {
-                try { await Api.post('mkdir', { path: store.cwd ? store.cwd + '/' + name : name }); reload(); }
+                try { await Api.post('mkdir', { path: store.cwd ? store.cwd + '/' + name : name }); reload(); store.refreshTree(); }
                 catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
             }
         };
@@ -160,6 +160,7 @@ const app = createApp({
                 try {
                     for (const f of store.selectedItems) await Api.post('rm', { path: f.path });
                     reload();
+                    store.refreshTree();
                     store.selectedItems = [];
                 } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
             }
@@ -173,6 +174,7 @@ const app = createApp({
                 try {
                     await Api.post('mv', { from: file.path, to: (store.cwd ? store.cwd + '/' : '') + newName });
                     reload();
+                    store.refreshTree();
                     store.selectedItems = [];
                 } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
             }
@@ -218,6 +220,7 @@ const app = createApp({
                 }
                 if (!silent) {
                     reload();
+                    store.refreshTree();
                     Swal.fire(i18n.t('uploaded'), '', 'success');
                 }
             } catch (e) { if (!silent) Swal.fire(i18n.t('error'), 'Upload failed', 'error'); }
@@ -250,6 +253,7 @@ const app = createApp({
                 }
                 if (store.clipboard.mode === 'cut') { store.clipboard.items = []; store.clipboard.mode = null; }
                 reload();
+                store.refreshTree();
                 Swal.fire(i18n.t('success'), '', 'success');
             } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
             finally { store.isLoading = false; }
@@ -263,14 +267,14 @@ const app = createApp({
             if (!store.selectedItems.length) return;
             const { value: name } = await Swal.fire({ title: i18n.t('archive'), input: 'text', inputValue: 'archive.zip', showCancelButton: true });
             if (name) {
-                try { await Api.post('archive', { paths: store.selectedItems.map(f => f.path), name, cwd: store.cwd }); reload(); }
+                try { await Api.post('archive', { paths: store.selectedItems.map(f => f.path), name, cwd: store.cwd }); reload(); store.refreshTree(); }
                 catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
             }
         };
 
         const extractArchive = async () => {
             if (store.selectedItems.length === 1) {
-                try { await Api.post('extract', { path: store.selectedItems[0].path, cwd: store.cwd }); reload(); }
+                try { await Api.post('extract', { path: store.selectedItems[0].path, cwd: store.cwd }); reload(); store.refreshTree(); }
                 catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
             }
         };
@@ -427,6 +431,7 @@ const app = createApp({
                 store.isLoading = false;
                 resetUploadProgress();
                 reload();
+                store.refreshTree();
                 Swal.fire(i18n.t('uploaded'), '', 'success');
                 return;
             }

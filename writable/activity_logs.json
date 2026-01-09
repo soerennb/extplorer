@@ -1,5 +1,109 @@
 [
     {
+        "timestamp": 1767955248,
+        "user": "admin",
+        "action": "Upload",
+        "path": "manrope",
+        "details": "File: Manrope-700-normal.ttf",
+        "ip": "127.0.0.1"
+    },
+    {
+        "timestamp": 1767955248,
+        "user": "admin",
+        "action": "Upload",
+        "path": "manrope",
+        "details": "File: Manrope-600-normal.ttf",
+        "ip": "127.0.0.1"
+    },
+    {
+        "timestamp": 1767955248,
+        "user": "admin",
+        "action": "Upload",
+        "path": "manrope",
+        "details": "File: Manrope-500-normal.ttf",
+        "ip": "127.0.0.1"
+    },
+    {
+        "timestamp": 1767955248,
+        "user": "admin",
+        "action": "Upload",
+        "path": "manrope",
+        "details": "File: Manrope-400-normal.ttf",
+        "ip": "127.0.0.1"
+    },
+    {
+        "timestamp": 1767955248,
+        "user": "admin",
+        "action": "Create Directory",
+        "path": "manrope",
+        "details": "",
+        "ip": "127.0.0.1"
+    },
+    {
+        "timestamp": 1767955241,
+        "user": "admin",
+        "action": "Delete",
+        "path": "Manrope-700-normal.ttf",
+        "details": "",
+        "ip": "127.0.0.1"
+    },
+    {
+        "timestamp": 1767955241,
+        "user": "admin",
+        "action": "Delete",
+        "path": "Manrope-600-normal.ttf",
+        "details": "",
+        "ip": "127.0.0.1"
+    },
+    {
+        "timestamp": 1767955241,
+        "user": "admin",
+        "action": "Delete",
+        "path": "Manrope-500-normal.ttf",
+        "details": "",
+        "ip": "127.0.0.1"
+    },
+    {
+        "timestamp": 1767955241,
+        "user": "admin",
+        "action": "Delete",
+        "path": "Manrope-400-normal.ttf",
+        "details": "",
+        "ip": "127.0.0.1"
+    },
+    {
+        "timestamp": 1767955235,
+        "user": "admin",
+        "action": "Upload",
+        "path": "",
+        "details": "File: Manrope-700-normal.ttf",
+        "ip": "127.0.0.1"
+    },
+    {
+        "timestamp": 1767955235,
+        "user": "admin",
+        "action": "Upload",
+        "path": "",
+        "details": "File: Manrope-600-normal.ttf",
+        "ip": "127.0.0.1"
+    },
+    {
+        "timestamp": 1767955235,
+        "user": "admin",
+        "action": "Upload",
+        "path": "",
+        "details": "File: Manrope-500-normal.ttf",
+        "ip": "127.0.0.1"
+    },
+    {
+        "timestamp": 1767955226,
+        "user": "admin",
+        "action": "Upload",
+        "path": "",
+        "details": "File: Manrope-400-normal.ttf",
+        "ip": "127.0.0.1"
+    },
+    {
         "timestamp": 1767950680,
         "user": "admin",
         "action": "Save File",
