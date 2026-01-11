@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/remixicon.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/diff2html.min.css') ?>">
-    <style>
+    <style nonce="<?= csp_style_nonce() ?>">
         body, html { height: 100%; overflow: hidden; }
         #app { display: flex; flex-direction: column; height: 100%; }
         .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
@@ -652,7 +652,7 @@
     </div> <!-- End #app -->
 
     <!-- Scripts -->
-    <script>
+    <script nonce="<?= csp_script_nonce() ?>">
         window.baseUrl = "<?= base_url() ?>";
         window.appVersion = "<?= config('App')->version ?>";
         window.userRole = "<?= session('role') ?>";
