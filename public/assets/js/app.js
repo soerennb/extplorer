@@ -35,8 +35,9 @@ const app = createApp({
         const webDavUrl = computed(() => window.baseUrl.replace(/\/$/, '') + '/dav');
 
         const filteredFiles = computed(() => {
-            let result = store.files;
-            if (store.searchQuery) {
+            let result = store.isTrashMode ? store.trashItems : store.files;
+            
+            if (store.searchQuery && !store.isTrashMode) {
                 const lower = store.searchQuery.toLowerCase();
                 result = result.filter(f => f.name.toLowerCase().includes(lower));
             }
@@ -85,6 +86,66 @@ const app = createApp({
         };
         const setTheme = (t) => { theme.value = t; localStorage.setItem('extplorer_theme', t); applyTheme(); };
         const toggleTheme = () => { const next = { 'auto': 'light', 'light': 'dark', 'dark': 'auto' }; setTheme(next[theme.value]); };
+
+        // --- Trash Actions ---
+        const toggleTrash = () => {
+            if (store.isTrashMode) {
+                store.exitTrash();
+            } else {
+                store.loadTrash();
+                closeOffcanvas();
+            }
+        };
+
+        const restoreSelected = async () => {
+            if (!store.selectedItems.length) return;
+            try {
+                store.isLoading = true;
+                for (const item of store.selectedItems) {
+                    await Api.post('trash/restore', { id: item.id });
+                }
+                store.loadTrash();
+                Swal.fire(i18n.t('restored') || 'Restored', '', 'success');
+            } catch(e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
+            finally { store.isLoading = false; }
+        };
+
+        const deletePermanent = async () => {
+            if (!store.selectedItems.length) return;
+            const res = await Swal.fire({ 
+                title: i18n.t('confirm_permanent_delete') || 'Delete Permanently?', 
+                text: i18n.t('cannot_undo') || 'This cannot be undone!', 
+                icon: 'warning', 
+                showCancelButton: true,
+                confirmButtonColor: '#d33'
+            });
+            if (res.isConfirmed) {
+                try {
+                    store.isLoading = true;
+                    for (const item of store.selectedItems) {
+                        await Api.post('trash/delete', { id: item.id });
+                    }
+                    store.loadTrash();
+                } catch(e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
+                finally { store.isLoading = false; }
+            }
+        };
+
+        const emptyTrash = async () => {
+            const res = await Swal.fire({ 
+                title: 'Empty Trash?', 
+                text: 'All items will be permanently deleted.', 
+                icon: 'warning', 
+                showCancelButton: true,
+                confirmButtonColor: '#d33'
+            });
+            if (res.isConfirmed) {
+                try {
+                    await Api.post('trash/empty', {});
+                    store.loadTrash();
+                } catch(e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
+            }
+        };
 
         // --- Core Actions ---
         const reload = () => { store.loadPath(store.cwd); store.refreshTree(); };
@@ -498,7 +559,11 @@ const app = createApp({
         const hideContextMenu = () => contextMenu.visible = false;
         const cmAction = (a) => {
             hideContextMenu(); const f = contextMenu.file; if (!f) return;
-            const actions = { 'open':()=>open(f), 'download':downloadSelected, 'copy':copySelected, 'cut':cutSelected, 'paste':paste, 'rename':renameSelected, 'perms':chmodSelected, 'properties':showProperties, 'delete':deleteSelected };
+            const actions = { 
+                'open':()=>open(f), 'download':downloadSelected, 'copy':copySelected, 'cut':cutSelected, 'paste':paste, 
+                'rename':renameSelected, 'perms':chmodSelected, 'properties':showProperties, 'delete':deleteSelected,
+                'restore': restoreSelected, 'delete_perm': deletePermanent
+            };
             if (actions[a]) actions[a]();
         };
 
@@ -546,6 +611,7 @@ const app = createApp({
             createFolder, deleteSelected, renameSelected, uploadFile, downloadSelected, createArchive, extractArchive, chmodSelected,
             showProperties, diffSelected, copySelected, cutSelected, paste,
             editorFile, propFile, saveChown, calcDirSize, 
+            toggleTrash, restoreSelected, deletePermanent, emptyTrash,
             username: window.username,
             connectionMode: window.connectionMode,
             appVersion: window.appVersion

@@ -18,6 +18,10 @@ const store = Vue.reactive({
     uploadTotal: 0,
     uploadFileName: '',
     error: null,
+    
+    // Trash State
+    isTrashMode: false,
+    trashItems: [],
 
     refreshTree() {
         this.treeVersion++;
@@ -41,6 +45,28 @@ const store = Vue.reactive({
         this.showHidden = !this.showHidden;
         localStorage.setItem('extplorer_show_hidden', this.showHidden);
         this.loadPath(this.cwd);
+    },
+    
+    // Trash Actions
+    async loadTrash() {
+        this.isLoading = true;
+        this.error = null;
+        this.isTrashMode = true;
+        this.selectedItems = [];
+        try {
+            const res = await Api.get('trash/list');
+            this.trashItems = res.items.map(i => ({...i, mtime: i.deletedAt})); // Map deletedAt to mtime for sorting
+            this.pagination.total = this.trashItems.length;
+        } catch (e) {
+            this.error = e.message;
+        } finally {
+            this.isLoading = false;
+        }
+    },
+
+    exitTrash() {
+        this.isTrashMode = false;
+        this.loadPath(this.cwd || '');
     },
 
     addToRecent(file) {

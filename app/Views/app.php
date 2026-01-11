@@ -224,68 +224,81 @@
 
         <!-- Toolbar -->
         <div class="bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap">
-            <button class="btn btn-primary btn-sm" @click="createFolder" :title="t('new_folder')">
-                <i class="ri-folder-add-line"></i> <span class="d-none d-md-inline">{{ t('new_folder') }}</span>
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" @click="uploadFile" :title="t('upload')">
-                <i class="ri-upload-cloud-2-line"></i> <span class="d-none d-md-inline">{{ t('upload') }}</span>
-            </button>
-            
-            <div class="vr mx-1"></div>
-
-            <button class="btn btn-outline-secondary btn-sm" @click="copySelected" :disabled="store.selectedItems.length === 0" :title="t('copy')">
-                <i class="ri-file-copy-line"></i> <span class="d-none d-xl-inline">{{ t('copy') }}</span>
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" @click="cutSelected" :disabled="store.selectedItems.length === 0" :title="t('cut')">
-                <i class="ri-scissors-cut-line"></i> <span class="d-none d-xl-inline">{{ t('cut') }}</span>
-            </button>
-            <button class="btn btn-outline-success btn-sm" @click="paste" :disabled="store.clipboard.items.length === 0" :title="t('paste')">
-                <i class="ri-clipboard-line"></i> 
-                <span class="d-none d-md-inline">{{ t('paste') }}</span>
-                <span v-if="store.clipboard.items.length > 0" class="badge bg-success ms-1">{{ store.clipboard.items.length }}</span>
-            </button>
-
-            <div class="vr mx-1"></div>
-
-            <button class="btn btn-outline-danger btn-sm" @click="deleteSelected" :disabled="store.selectedItems.length === 0" :title="t('delete')">
-                <i class="ri-delete-bin-line"></i> <span class="d-none d-md-inline">{{ t('delete') }}</span>
-            </button>
-
-            <!-- Overflow Menu -->
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="ri-more-2-fill"></i>
+            <template v-if="!store.isTrashMode">
+                <button class="btn btn-primary btn-sm" @click="createFolder" :title="t('new_folder')">
+                    <i class="ri-folder-add-line"></i> <span class="d-none d-md-inline">{{ t('new_folder') }}</span>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow">
-                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 1}" href="#" @click.prevent="downloadSelected">
-                        <i class="ri-download-line me-2"></i> {{ t('download') }}
-                    </a></li>
-                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 1}" href="#" @click.prevent="renameSelected">
-                        <i class="ri-edit-line me-2"></i> {{ t('rename') }}
-                    </a></li>
-                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="chmodSelected">
-                        <i class="ri-lock-2-line me-2"></i> {{ t('perms') }}
-                    </a></li>
-                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="showProperties">
-                        <i class="ri-information-line me-2"></i> {{ t('properties') }}
-                    </a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 2}" href="#" @click.prevent="diffSelected">
-                        <i class="ri-diff-line me-2"></i> Diff
-                    </a></li>
-                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="createArchive">
-                        <i class="ri-file-zip-line me-2"></i> {{ t('archive') }}
-                    </a></li>
-                    <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 1 || !isArchive(store.selectedItems[0])}" href="#" @click.prevent="extractArchive">
-                        <i class="ri-folder-zip-line me-2"></i> {{ t('extract') }}
-                    </a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#" @click.prevent="store.toggleHidden()">
-                        <i class="me-2" :class="store.showHidden ? 'ri-eye-line' : 'ri-eye-off-line'"></i>
-                        {{ t('show_hidden') }}
-                    </a></li>
-                </ul>
-            </div>
+                <button class="btn btn-outline-secondary btn-sm" @click="uploadFile" :title="t('upload')">
+                    <i class="ri-upload-cloud-2-line"></i> <span class="d-none d-md-inline">{{ t('upload') }}</span>
+                </button>
+                
+                <div class="vr mx-1"></div>
+
+                <button class="btn btn-outline-secondary btn-sm" @click="copySelected" :disabled="store.selectedItems.length === 0" :title="t('copy')">
+                    <i class="ri-file-copy-line"></i> <span class="d-none d-xl-inline">{{ t('copy') }}</span>
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" @click="cutSelected" :disabled="store.selectedItems.length === 0" :title="t('cut')">
+                    <i class="ri-scissors-cut-line"></i> <span class="d-none d-xl-inline">{{ t('cut') }}</span>
+                </button>
+                <button class="btn btn-outline-success btn-sm" @click="paste" :disabled="store.clipboard.items.length === 0" :title="t('paste')">
+                    <i class="ri-clipboard-line"></i> 
+                    <span class="d-none d-md-inline">{{ t('paste') }}</span>
+                    <span v-if="store.clipboard.items.length > 0" class="badge bg-success ms-1">{{ store.clipboard.items.length }}</span>
+                </button>
+
+                <div class="vr mx-1"></div>
+
+                <button class="btn btn-outline-danger btn-sm" @click="deleteSelected" :disabled="store.selectedItems.length === 0" :title="t('delete')">
+                    <i class="ri-delete-bin-line"></i> <span class="d-none d-md-inline">{{ t('delete') }}</span>
+                </button>
+
+                <!-- Overflow Menu -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="ri-more-2-fill"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 1}" href="#" @click.prevent="downloadSelected">
+                            <i class="ri-download-line me-2"></i> {{ t('download') }}
+                        </a></li>
+                        <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 1}" href="#" @click.prevent="renameSelected">
+                            <i class="ri-edit-line me-2"></i> {{ t('rename') }}
+                        </a></li>
+                        <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="chmodSelected">
+                            <i class="ri-lock-2-line me-2"></i> {{ t('perms') }}
+                        </a></li>
+                        <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="showProperties">
+                            <i class="ri-information-line me-2"></i> {{ t('properties') }}
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 2}" href="#" @click.prevent="diffSelected">
+                            <i class="ri-diff-line me-2"></i> Diff
+                        </a></li>
+                        <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="createArchive">
+                            <i class="ri-file-zip-line me-2"></i> {{ t('archive') }}
+                        </a></li>
+                        <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 1 || !isArchive(store.selectedItems[0])}" href="#" @click.prevent="extractArchive">
+                            <i class="ri-folder-zip-line me-2"></i> {{ t('extract') }}
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" @click.prevent="store.toggleHidden()">
+                            <i class="me-2" :class="store.showHidden ? 'ri-eye-line' : 'ri-eye-off-line'"></i>
+                            {{ t('show_hidden') }}
+                        </a></li>
+                    </ul>
+                </div>
+            </template>
+            <template v-else>
+                <div class="d-flex align-items-center text-danger fw-bold me-auto">
+                    <i class="ri-delete-bin-line me-2"></i> {{ t('trash') || 'Recycle Bin' }}
+                </div>
+                <button class="btn btn-success btn-sm me-2" @click="restoreSelected" :disabled="store.selectedItems.length === 0">
+                    <i class="ri-restart-line"></i> {{ t('restore') || 'Restore' }}
+                </button>
+                <button class="btn btn-outline-danger btn-sm" @click="emptyTrash">
+                    <i class="ri-delete-bin-2-line"></i> {{ t('empty_trash') || 'Empty Trash' }}
+                </button>
+            </template>
         </div>
 
         <!-- Main -->
@@ -330,6 +343,16 @@
 
                      <h6 class="small fw-bold text-uppercase text-muted mb-2 px-2">Explorer</h6>
                      <file-tree path="" name="Root" :root="true" @click="isMobile ? closeOffcanvas() : null"></file-tree>
+                     
+                     <div class="mt-4 px-2">
+                         <div class="d-flex align-items-center py-1 px-2 rounded small file-item" 
+                              :class="{'bg-danger-subtle text-danger': store.isTrashMode}"
+                              @click="toggleTrash"
+                              data-bs-dismiss="offcanvas" data-bs-target="#sidebarOffcanvas">
+                             <i class="ri-delete-bin-line me-2"></i>
+                             <span>{{ t('trash') || 'Recycle Bin' }}</span>
+                         </div>
+                     </div>
                  </div>
             </div>
 
@@ -579,36 +602,50 @@
         <div v-if="contextMenu.visible" 
              class="dropdown-menu show" 
              :style="{top: contextMenu.y + 'px', left: contextMenu.x + 'px', position: 'fixed', zIndex: 1050}">
-            <a class="dropdown-item" href="#" @click.prevent="cmAction('open')">
-                <i class="ri-folder-open-line me-2"></i> {{ t('open') || 'Open' }}
-            </a>
-            <a class="dropdown-item" href="#" @click.prevent="cmAction('download')">
-                <i class="ri-download-line me-2"></i> {{ t('download') }}
-            </a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="#" @click.prevent="cmAction('copy')">
-                <i class="ri-file-copy-line me-2"></i> {{ t('copy') }}
-            </a>
-            <a class="dropdown-item" href="#" @click.prevent="cmAction('cut')">
-                <i class="ri-scissors-cut-line me-2"></i> {{ t('cut') }}
-            </a>
-            <a class="dropdown-item" href="#" @click.prevent="cmAction('paste')" :class="{disabled: store.clipboard.items.length === 0}">
-                <i class="ri-clipboard-line me-2"></i> {{ t('paste') }}
-            </a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="#" @click.prevent="cmAction('rename')">
-                <i class="ri-edit-line me-2"></i> {{ t('rename') }}
-            </a>
-            <a class="dropdown-item" href="#" @click.prevent="cmAction('perms')">
-                <i class="ri-lock-2-line me-2"></i> {{ t('perms') }}
-            </a>
-            <a class="dropdown-item" href="#" @click.prevent="cmAction('properties')">
-                <i class="ri-information-line me-2"></i> {{ t('properties') }}
-            </a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item text-danger" href="#" @click.prevent="cmAction('delete')">
-                <i class="ri-delete-bin-line me-2"></i> {{ t('delete') }}
-            </a>
+            <template v-if="!store.isTrashMode">
+                <a class="dropdown-item" href="#" @click.prevent="cmAction('open')">
+                    <i class="ri-folder-open-line me-2"></i> {{ t('open') || 'Open' }}
+                </a>
+                <a class="dropdown-item" href="#" @click.prevent="cmAction('download')">
+                    <i class="ri-download-line me-2"></i> {{ t('download') }}
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="#" @click.prevent="cmAction('copy')">
+                    <i class="ri-file-copy-line me-2"></i> {{ t('copy') }}
+                </a>
+                <a class="dropdown-item" href="#" @click.prevent="cmAction('cut')">
+                    <i class="ri-scissors-cut-line me-2"></i> {{ t('cut') }}
+                </a>
+                <a class="dropdown-item" href="#" @click.prevent="cmAction('paste')" :class="{disabled: store.clipboard.items.length === 0}">
+                    <i class="ri-clipboard-line me-2"></i> {{ t('paste') }}
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="#" @click.prevent="cmAction('rename')">
+                    <i class="ri-edit-line me-2"></i> {{ t('rename') }}
+                </a>
+                <a class="dropdown-item" href="#" @click.prevent="cmAction('perms')">
+                    <i class="ri-lock-2-line me-2"></i> {{ t('perms') }}
+                </a>
+                <a class="dropdown-item" href="#" @click.prevent="cmAction('properties')">
+                    <i class="ri-information-line me-2"></i> {{ t('properties') }}
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item text-danger" href="#" @click.prevent="cmAction('delete')">
+                    <i class="ri-delete-bin-line me-2"></i> {{ t('delete') }}
+                </a>
+            </template>
+            <template v-else>
+                <a class="dropdown-item text-success" href="#" @click.prevent="cmAction('restore')">
+                    <i class="ri-restart-line me-2"></i> {{ t('restore') || 'Restore' }}
+                </a>
+                <a class="dropdown-item" href="#" @click.prevent="cmAction('properties')">
+                    <i class="ri-information-line me-2"></i> {{ t('properties') }}
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item text-danger" href="#" @click.prevent="cmAction('delete_perm')">
+                    <i class="ri-delete-bin-2-line me-2"></i> {{ t('delete_perm') || 'Delete Permanently' }}
+                </a>
+            </template>
         </div>
 
     </div> <!-- End #app -->

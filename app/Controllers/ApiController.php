@@ -122,8 +122,80 @@ class ApiController extends BaseController
         if (!$path) return $this->fail('Path required');
 
         try {
-            $this->fs->delete($path);
-            LogService::log('Delete', $path);
+            // Use TrashService instead of direct delete
+            $username = session('username');
+            $trashService = new \App\Services\TrashService($username);
+            
+            // Resolve full path to verify existence and for the move operation
+            $fullPath = $this->fs->resolvePath($path);
+            
+            $trashService->moveToTrash($fullPath, $path);
+            
+            LogService::log('Move to Trash', $path);
+            return $this->respond(['status' => 'success']);
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    public function trashList()
+    {
+        if (!can('read')) return $this->failForbidden();
+        try {
+            $username = session('username');
+            $trashService = new \App\Services\TrashService($username);
+            return $this->respond(['items' => $trashService->listItems()]);
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    public function trashRestore()
+    {
+        if (!can('delete')) return $this->failForbidden(); // Restore implies write/delete permission
+        $json = $this->request->getJSON();
+        $id = $json->id ?? null;
+
+        if (!$id) return $this->fail('ID required');
+
+        try {
+            $username = session('username');
+            $trashService = new \App\Services\TrashService($username);
+            $trashService->restore($id, $this->fs);
+            LogService::log('Restore from Trash', $id);
+            return $this->respond(['status' => 'success']);
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    public function trashDelete()
+    {
+        if (!can('delete')) return $this->failForbidden();
+        $json = $this->request->getJSON();
+        $id = $json->id ?? null;
+
+        if (!$id) return $this->fail('ID required');
+
+        try {
+            $username = session('username');
+            $trashService = new \App\Services\TrashService($username);
+            $trashService->deletePermanently($id);
+            LogService::log('Permanent Delete', $id);
+            return $this->respond(['status' => 'success']);
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    public function trashEmpty()
+    {
+        if (!can('delete')) return $this->failForbidden();
+        try {
+            $username = session('username');
+            $trashService = new \App\Services\TrashService($username);
+            $trashService->emptyTrash();
+            LogService::log('Empty Trash', 'All items');
             return $this->respond(['status' => 'success']);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
