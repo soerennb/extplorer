@@ -55,5 +55,33 @@
     "calculate": "Berechnen",
     "prev": "Zurück",
     "next": "Weiter",
-    "page_info": "Seite {current} von {total}"
+    "page_info": "Seite {current} von {total}",
+
+    "trash": "Papierkorb",
+    "restore": "Wiederherstellen",
+    "delete_perm": "Endgültig löschen",
+    "empty_trash": "Papierkorb leeren",
+    "restored": "Wiederhergestellt",
+    "confirm_permanent_delete": "Endgültig löschen?",
+    "cannot_undo": "Das kann nicht rückgängig gemacht werden!",
+
+    "profile_settings": "Profil & Einstellungen",
+    "general": "Allgemein",
+    "security": "Sicherheit",
+    "username": "Benutzername",
+    "role": "Rolle",
+    "home_dir": "Home-Verzeichnis",
+    "new_password": "Neues Passwort",
+    "update": "Aktualisieren",
+    
+    "two_factor_auth": "Zwei-Faktor-Authentifizierung",
+    "2fa_active": "2FA ist derzeit aktiviert.",
+    "2fa_desc": "Schützen Sie Ihr Konto, indem Sie beim Anmelden einen Code von Ihrem Mobilgerät anfordern.",
+    "disable": "Deaktivieren",
+    "enable_2fa": "2FA aktivieren",
+    "scan_qr": "QR-Code scannen",
+    "verify": "Bestätigen",
+    "cancel": "Abbrechen",
+    "recovery_codes": "Wiederherstellungscodes",
+    "done": "Fertig"
 }

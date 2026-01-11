@@ -51,5 +51,33 @@
     "show_hidden": "Fichiers cachés",
     "prev": "Précédent",
     "next": "Suivant",
-    "page_info": "Page {current} sur {total}"
+    "page_info": "Page {current} sur {total}",
+
+    "trash": "Corbeille",
+    "restore": "Restaurer",
+    "delete_perm": "Supprimer définitivement",
+    "empty_trash": "Vider la corbeille",
+    "restored": "Restauré",
+    "confirm_permanent_delete": "Supprimer définitivement ?",
+    "cannot_undo": "Cette action est irréversible !",
+
+    "profile_settings": "Profil & Paramètres",
+    "general": "Général",
+    "security": "Sécurité",
+    "username": "Nom d'utilisateur",
+    "role": "Rôle",
+    "home_dir": "Répertoire personnel",
+    "new_password": "Nouveau mot de passe",
+    "update": "Mettre à jour",
+    
+    "two_factor_auth": "Authentification à deux facteurs",
+    "2fa_active": "La 2FA est actuellement activée.",
+    "2fa_desc": "Protégez votre compte en demandant un code depuis votre appareil mobile lors de la connexion.",
+    "disable": "Désactiver",
+    "enable_2fa": "Activer la 2FA",
+    "scan_qr": "Scanner le QR Code",
+    "verify": "Vérifier",
+    "cancel": "Annuler",
+    "recovery_codes": "Codes de récupération",
+    "done": "Terminé"
 }
