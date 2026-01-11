@@ -22,7 +22,7 @@ class ContentSecurityPolicy extends BaseConfig
     /**
      * Default CSP report context
      */
-    public bool $reportOnly = false;
+    public bool $reportOnly = true;
 
     /**
      * Specifies a URL where a browser will send reports
