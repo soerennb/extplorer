@@ -54,5 +54,34 @@
     "calculate": "Calculate",
     "prev": "Prev",
     "next": "Next",
-    "page_info": "Page {current} of {total}"
+    "page_info": "Page {current} of {total}",
+    
+    "extract": "Extract",
+    "trash": "Recycle Bin",
+    "restore": "Restore",
+    "delete_perm": "Delete Permanently",
+    "empty_trash": "Empty Trash",
+    "restored": "Restored",
+    "confirm_permanent_delete": "Delete Permanently?",
+    "cannot_undo": "This cannot be undone!",
+
+    "profile_settings": "Profile & Settings",
+    "general": "General",
+    "security": "Security",
+    "username": "Username",
+    "role": "Role",
+    "home_dir": "Home Directory",
+    "new_password": "New Password",
+    "update": "Update",
+    
+    "two_factor_auth": "Two-Factor Authentication",
+    "2fa_active": "2FA is currently enabled.",
+    "2fa_desc": "Protect your account by requiring a code from your mobile device when logging in.",
+    "disable": "Disable",
+    "enable_2fa": "Enable 2FA",
+    "scan_qr": "Scan QR Code",
+    "verify": "Verify",
+    "cancel": "Cancel",
+    "recovery_codes": "Recovery Codes",
+    "done": "Done"
 }
