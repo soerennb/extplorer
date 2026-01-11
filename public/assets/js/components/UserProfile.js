@@ -13,7 +13,7 @@ const UserProfile = {
                             <a class="nav-link" :class="{active: activeTab === 'general'}" href="#" @click.prevent="activeTab = 'general'">{{ t('general') || 'General' }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" :class="{active: activeTab === 'security'}" href="#" @click.prevent="activeTab = 'Security'">{{ t('security') || 'Security' }}</a>
+                            <a class="nav-link" :class="{active: activeTab === 'security'}" href="#" @click.prevent="activeTab = 'security'">{{ t('security') || 'Security' }}</a>
                         </li>
                     </ul>
 
