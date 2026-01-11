@@ -32,6 +32,12 @@ $routes->group('api', function($routes) {
     $routes->post('chmod', 'ApiController::chmod');
     $routes->post('chown', 'ApiController::chown');
 
+    // Trash
+    $routes->get('trash/list', 'ApiController::trashList');
+    $routes->post('trash/restore', 'ApiController::trashRestore');
+    $routes->post('trash/delete', 'ApiController::trashDelete');
+    $routes->post('trash/empty', 'ApiController::trashEmpty');
+
     $routes->get('users', 'UserAdminController::index');
     $routes->post('users', 'UserAdminController::create');
     $routes->put('users/(:segment)', 'UserAdminController::update/$1');
@@ -48,5 +54,10 @@ $routes->group('api', function($routes) {
     $routes->get('system', 'UserAdminController::systemInfo');
     $routes->get('logs', 'UserAdminController::getLogs');
 
+    // Profile
+    $routes->get('profile/details', 'ProfileController::getDetails');
     $routes->put('profile/password', 'ProfileController::updatePassword');
+    $routes->get('profile/2fa/setup', 'ProfileController::setup2fa');
+    $routes->post('profile/2fa/enable', 'ProfileController::enable2fa');
+    $routes->post('profile/2fa/disable', 'ProfileController::disable2fa');
 });
