@@ -69,10 +69,13 @@ class Login extends BaseController
                 }
                 
                 $service = new \App\Services\TwoFactorService();
-                if (!$service->verifyCode($user['2fa_secret'], $code)) {
+                $secret = $userModel->get2faSecret($username);
+                
+                if (!$service->verifyCode($secret, $code)) {
                      // Check recovery codes
                      $validRecovery = false;
-                     $recoveryCodes = $user['recovery_codes'] ?? [];
+                     $recoveryCodes = $userModel->getRecoveryCodes($username);
+                     
                      if (in_array($code, $recoveryCodes)) {
                          $validRecovery = true;
                          // Remove used code

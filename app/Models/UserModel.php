@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Config\Services;
+
 class UserModel
 {
     private string $usersFile;
@@ -85,9 +87,27 @@ class UserModel
                 if (isset($data['blocked_extensions'])) $user['blocked_extensions'] = $data['blocked_extensions'];
 
                 // 2FA Fields
-                if (array_key_exists('2fa_secret', $data)) $user['2fa_secret'] = $data['2fa_secret'];
+                if (array_key_exists('2fa_secret', $data)) {
+                    $val = $data['2fa_secret'];
+                    if ($val) {
+                        $enc = Services::encrypter();
+                        $user['2fa_secret'] = base64_encode($enc->encrypt($val));
+                    } else {
+                        $user['2fa_secret'] = null;
+                    }
+                }
+                
                 if (array_key_exists('2fa_enabled', $data)) $user['2fa_enabled'] = $data['2fa_enabled'];
-                if (array_key_exists('recovery_codes', $data)) $user['recovery_codes'] = $data['recovery_codes'];
+                
+                if (array_key_exists('recovery_codes', $data)) {
+                    $val = $data['recovery_codes'];
+                    if (!empty($val)) {
+                        $enc = Services::encrypter();
+                        $user['recovery_codes'] = base64_encode($enc->encrypt(json_encode($val)));
+                    } else {
+                        $user['recovery_codes'] = [];
+                    }
+                }
 
                 if (!empty($data['password'])) {
                     $user['password_hash'] = password_hash($data['password'], PASSWORD_DEFAULT);
@@ -111,6 +131,36 @@ class UserModel
         if (count($users) === count($newUsers)) return false;
         $this->saveUsers(array_values($newUsers));
         return true;
+    }
+
+    public function get2faSecret(string $username): ?string
+    {
+        $user = $this->getUser($username);
+        if (!$user || empty($user['2fa_secret'])) return null;
+        
+        try {
+            $enc = Services::encrypter();
+            return $enc->decrypt(base64_decode($user['2fa_secret']));
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    public function getRecoveryCodes(string $username): array
+    {
+        $user = $this->getUser($username);
+        if (!$user || empty($user['recovery_codes'])) return [];
+        
+        try {
+            // Check if it's already an array (unencrypted legacy)
+            if (is_array($user['recovery_codes'])) return $user['recovery_codes'];
+
+            $enc = Services::encrypter();
+            $json = $enc->decrypt(base64_decode($user['recovery_codes']));
+            return json_decode($json, true) ?? [];
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     // --- Roles & Permissions ---
