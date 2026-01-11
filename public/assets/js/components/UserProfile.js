@@ -49,7 +49,7 @@ const UserProfile = {
                         <!-- 2FA -->
                         <h6 class="border-bottom pb-2 mb-3 mt-4">{{ t('two_factor_auth') || 'Two-Factor Authentication' }}</h6>
                         
-                        <div v-if="details.2fa_enabled" class="alert alert-success d-flex align-items-center">
+                        <div v-if="details['2fa_enabled']" class="alert alert-success d-flex align-items-center">
                             <i class="ri-shield-check-line fs-4 me-3"></i>
                             <div>
                                 <strong>{{ t('2fa_active') || '2FA is currently enabled.' }}</strong><br>
