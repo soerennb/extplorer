@@ -1,4 +1,4 @@
-const { createApp, computed, onMounted, ref } = Vue;
+const { createApp, computed, onMounted, ref, watch } = Vue;
 
 const app = createApp({
     components: {
@@ -18,6 +18,11 @@ const app = createApp({
         let diffModal = null;
         let propModal = null;
         let webdavModal = null;
+
+        // --- Watchers ---
+        watch(() => store.cwd, (newCwd) => {
+            document.title = 'eXtplorer' + (newCwd ? ' - /' + newCwd : '');
+        }, { immediate: true });
 
         // --- Computed ---
         const isAdmin = computed(() => {

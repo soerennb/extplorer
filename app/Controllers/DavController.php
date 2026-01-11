@@ -65,7 +65,7 @@ class DavController extends BaseController
         $rootPath = $baseRoot . ($userHome ? DIRECTORY_SEPARATOR . $userHome : '');
 
         if (!is_dir($rootPath)) {
-            mkdir($rootPath, 0777, true);
+            mkdir($rootPath, 0755, true);
         }
 
         // 4. Initialize SabreDAV
@@ -88,7 +88,7 @@ class DavController extends BaseController
         // Add Locks Plugin (Essential for Windows/macOS clients)
         $davCacheDir = WRITEPATH . 'cache/dav';
         if (!is_dir($davCacheDir)) {
-            mkdir($davCacheDir, 0777, true);
+            mkdir($davCacheDir, 0755, true);
         }
 
         $locksBackend = new \Sabre\DAV\Locks\Backend\File($davCacheDir . '/locks');

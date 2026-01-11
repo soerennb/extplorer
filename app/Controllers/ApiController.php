@@ -35,7 +35,7 @@ class ApiController extends BaseController
             // Ensure root exists
             $baseRoot = WRITEPATH . 'file_manager_root';
             if (!is_dir($baseRoot)) {
-                mkdir($baseRoot, 0777, true);
+                mkdir($baseRoot, 0755, true);
             }
 
             $userHome = session('home_dir') ?: '/';
@@ -50,7 +50,7 @@ class ApiController extends BaseController
             }
 
             if (!is_dir($root)) {
-                mkdir($root, 0777, true);
+                mkdir($root, 0755, true);
             }
 
             $this->fs = new LocalAdapter($root);
@@ -204,6 +204,14 @@ class ApiController extends BaseController
             }
         }
 
+        // Hardened Default: Block dangerous extensions if not explicitly allowed
+        if (empty($allowed)) {
+            $dangerous = ['php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'pl', 'py', 'rb', 'cgi', 'exe', 'sh', 'bat', 'cmd', 'htaccess', 'htpasswd'];
+            if (in_array($ext, $dangerous)) {
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -254,7 +262,7 @@ class ApiController extends BaseController
         }
 
         $tempDir = WRITEPATH . 'uploads/chunks/' . md5(session_id() . $filename);
-        if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);
+        if (!is_dir($tempDir)) mkdir($tempDir, 0755, true);
 
         $file->move($tempDir, $chunkIndex . '.part');
 
@@ -333,6 +341,14 @@ class ApiController extends BaseController
                 return $this->failNotFound('File not found');
             }
 
+            // Security: Only allow inline for safe image types
+            $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+            $safeInlineTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            
+            if ($inline && !in_array($ext, $safeInlineTypes)) {
+                $inline = false;
+            }
+
             return $this->response->download($fullPath, null, (bool)$inline);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
@@ -352,7 +368,7 @@ class ApiController extends BaseController
             // Cache file path (hash of full path + mtime to invalidate on change)
             $cacheName = md5($fullPath . filemtime($fullPath)) . '.jpg';
             $cacheDir = WRITEPATH . 'cache/thumbs';
-            if (!is_dir($cacheDir)) mkdir($cacheDir, 0777, true);
+            if (!is_dir($cacheDir)) mkdir($cacheDir, 0755, true);
             $cachePath = $cacheDir . DIRECTORY_SEPARATOR . $cacheName;
 
             // Generate if not exists
