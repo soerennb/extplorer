@@ -190,7 +190,7 @@
                             <i class="ri-user-line"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow">
-                            <li><a class="dropdown-item" href="#" @click.prevent="changePassword">{{ t('change_password') || 'Change Password' }}</a></li>
+                            <li><a class="dropdown-item" href="#" @click.prevent="openProfile">{{ t('profile_settings') || 'Profile & Settings' }}</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><h6 class="dropdown-header">Appearance</h6></li>
                             <li><a class="dropdown-item" :class="{active: theme === 'light'}" href="#" @click.prevent="setTheme('light')">
@@ -221,6 +221,7 @@
 
         <!-- Components -->
         <user-admin ref="userAdmin"></user-admin>
+        <user-profile ref="userProfile"></user-profile>
 
         <!-- Toolbar -->
         <div class="bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap">
@@ -672,6 +673,7 @@
     <script src="<?= base_url('assets/js/i18n.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/FileTree.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/UserAdmin.js') ?>"></script>
+    <script src="<?= base_url('assets/js/components/UserProfile.js') ?>"></script>
     <script src="<?= base_url('assets/js/app.js?v=' . time()) ?>"></script>
 </body>
 </html>

@@ -49,8 +49,17 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-control" required>
+                <input type="password" name="password" class="form-control" required value="<?= old('password') ?>">
             </div>
+
+            <?php if (session()->getFlashdata('2fa_required')): ?>
+            <div class="mb-3">
+                <label class="form-label text-primary fw-bold">Two-Factor Code</label>
+                <input type="text" name="2fa_code" class="form-control" placeholder="000 000" autofocus autocomplete="off">
+                <div class="form-text">Enter the code from your authenticator app.</div>
+            </div>
+            <?php endif; ?>
+
             <button type="submit" class="btn btn-primary w-100">Login</button>
             <div class="text-center mt-3 text-muted small">
                 Default Local: admin / admin

@@ -3,12 +3,14 @@ const { createApp, computed, onMounted, ref, watch } = Vue;
 const app = createApp({
     components: {
         FileTree,
-        UserAdmin
+        UserAdmin,
+        UserProfile
     },
     setup() {
         const editorFile = ref(null);
         const propFile = ref(null);
-        const userAdmin = ref(null); 
+        const userAdmin = ref(null);
+        const userProfile = ref(null);
         const contextMenu = Vue.reactive({ visible: false, x: 0, y: 0, file: null });
         const imageViewer = Vue.reactive({ src: '', index: 0, list: [] });
         const theme = ref(localStorage.getItem('extplorer_theme') || 'auto');
@@ -398,21 +400,13 @@ const app = createApp({
 
         // --- Remote/Auth ---
         const openAdmin = () => { if (userAdmin.value) userAdmin.value.open(); };
+        const openProfile = () => { if (userProfile.value) userProfile.value.open(); };
         const showWebDav = () => webdavModal.show();
         const copyWebDavUrl = () => {
             const i = document.getElementById('webdav_url_input'); i.select(); document.execCommand('copy');
             Swal.fire({ title: 'Copied!', icon: 'success', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false });
         };
-        const changePassword = async () => {
-            const { value: p } = await Swal.fire({ title: i18n.t('change_password'), input: 'password', showCancelButton: true });
-            if (p) {
-                try {
-                    await fetch(window.baseUrl + 'api/profile/password', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.csrfHash }, body: JSON.stringify({ password: p }) })
-                    .then(res => { if(!res.ok) throw new Error('Failed'); });
-                    Swal.fire(i18n.t('saved'), '', 'success');
-                } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
-            }
-        };
+        const changePassword = () => openProfile();
 
         // --- Image Viewer ---
         const updateImageViewer = () => {
@@ -603,7 +597,7 @@ const app = createApp({
         return {
             store, i18n, t: (k, p) => i18n.t(k, p),
             goUp, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles,
-            isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin,
+            isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile,
             contextMenu, showContextMenu, hideContextMenu, cmAction,
             imageViewer, nextImage, prevImage, showWebDav, copyWebDavUrl, webDavUrl,
             onDragStart, onDragOver, onDragLeave, onDrop,

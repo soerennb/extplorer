@@ -61,6 +61,31 @@ class Login extends BaseController
         $user = $userModel->verifyUser($username, $password);
 
         if ($user) {
+            // 2FA Check
+            if (!empty($user['2fa_enabled'])) {
+                $code = $this->request->getPost('2fa_code');
+                if (!$code) {
+                    return redirect()->back()->withInput()->with('2fa_required', true);
+                }
+                
+                $service = new \App\Services\TwoFactorService();
+                if (!$service->verifyCode($user['2fa_secret'], $code)) {
+                     // Check recovery codes
+                     $validRecovery = false;
+                     $recoveryCodes = $user['recovery_codes'] ?? [];
+                     if (in_array($code, $recoveryCodes)) {
+                         $validRecovery = true;
+                         // Remove used code
+                         $recoveryCodes = array_diff($recoveryCodes, [$code]);
+                         $userModel->updateUser($username, ['recovery_codes' => array_values($recoveryCodes)]);
+                     }
+                     
+                     if (!$validRecovery) {
+                         return redirect()->back()->withInput()->with('2fa_required', true)->with('error', 'Invalid 2FA Code');
+                     }
+                }
+            }
+
             $permissions = $userModel->getPermissions($username);
             session()->regenerate();
             session()->set([

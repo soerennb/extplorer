@@ -64,7 +64,10 @@ class UserModel
             'home_dir' => $homeDir,
             'groups' => $groups,
             'allowed_extensions' => $allowedExt,
-            'blocked_extensions' => $blockedExt
+            'blocked_extensions' => $blockedExt,
+            '2fa_secret' => null,
+            '2fa_enabled' => false,
+            'recovery_codes' => []
         ];
         $this->saveUsers($users);
         return true;
@@ -80,6 +83,12 @@ class UserModel
                 if (isset($data['groups'])) $user['groups'] = $data['groups'];
                 if (isset($data['allowed_extensions'])) $user['allowed_extensions'] = $data['allowed_extensions'];
                 if (isset($data['blocked_extensions'])) $user['blocked_extensions'] = $data['blocked_extensions'];
+
+                // 2FA Fields
+                if (array_key_exists('2fa_secret', $data)) $user['2fa_secret'] = $data['2fa_secret'];
+                if (array_key_exists('2fa_enabled', $data)) $user['2fa_enabled'] = $data['2fa_enabled'];
+                if (array_key_exists('recovery_codes', $data)) $user['recovery_codes'] = $data['recovery_codes'];
+
                 if (!empty($data['password'])) {
                     $user['password_hash'] = password_hash($data['password'], PASSWORD_DEFAULT);
                 }
