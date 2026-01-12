@@ -83,5 +83,18 @@
     "verify": "Bestätigen",
     "cancel": "Abbrechen",
     "recovery_codes": "Wiederherstellungscodes",
-    "done": "Fertig"
+    "done": "Fertig",
+
+    "share_title": "Teilen",
+    "share_desc": "Erstellen Sie einen öffentlichen Link für dieses Element.",
+    "password_optional": "Passwort (Optional)",
+    "expiration_optional": "Ablaufdatum (Optional)",
+    "never": "Niemals",
+    "day": "Tag",
+    "days": "Tage",
+    "create_link": "Link erstellen",
+    "password_protected": "Passwortgeschützt",
+    "downloads": "Downloads",
+    "stop_sharing": "Freigabe beenden",
+    "expires": "Läuft ab"
 }

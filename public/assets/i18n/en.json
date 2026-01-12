@@ -83,5 +83,18 @@
     "verify": "Verify",
     "cancel": "Cancel",
     "recovery_codes": "Recovery Codes",
-    "done": "Done"
+    "done": "Done",
+
+    "share_title": "Share",
+    "share_desc": "Create a public link for this item.",
+    "password_optional": "Password (Optional)",
+    "expiration_optional": "Expiration (Optional)",
+    "never": "Never",
+    "day": "Day",
+    "days": "Days",
+    "create_link": "Create Link",
+    "password_protected": "Password Protected",
+    "downloads": "Downloads",
+    "stop_sharing": "Stop Sharing",
+    "expires": "Expires"
 }
