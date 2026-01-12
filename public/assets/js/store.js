@@ -86,6 +86,7 @@ const store = Vue.reactive({
 
     async loadPath(path, page = 1) {
         this.isLoading = true;
+        this.isTrashMode = false; // Always exit trash mode when navigating
         this.error = null;
         this.selectedItems = []; // Clear selection on navigate
         this.searchQuery = ''; // Clear search query when navigating
