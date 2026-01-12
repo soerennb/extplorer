@@ -6,7 +6,8 @@ const app = createApp({
         UserAdmin,
         UserProfile,
         ShareModal,
-        UploadModal
+        UploadModal,
+        FileHistoryModal
     },
     setup() {
         const editorFile = ref(null);
@@ -15,6 +16,7 @@ const app = createApp({
         const userProfile = ref(null);
         const shareModal = ref(null);
         const uploadModal = ref(null);
+        const fileHistoryModal = ref(null);
         const contextMenu = Vue.reactive({ visible: false, x: 0, y: 0, file: null });
         const imageViewer = Vue.reactive({ src: '', index: 0, list: [] });
         const theme = ref(localStorage.getItem('extplorer_theme') || 'auto');
@@ -399,6 +401,12 @@ const app = createApp({
             }
         };
 
+        const openHistory = () => {
+            if (store.selectedItems.length === 1 && fileHistoryModal.value) {
+                fileHistoryModal.value.open(store.selectedItems[0]);
+            }
+        };
+
         const calcDirSize = async () => {
             if (!propFile.value || propFile.value.type !== 'dir') return;
             try { const res = await Api.get('dirsize', { path: propFile.value.path }); propFile.value.size = res.size; }
@@ -581,7 +589,7 @@ const app = createApp({
                 'open':()=>open(f), 'download':downloadSelected, 'copy':copySelected, 'cut':cutSelected, 'paste':paste, 
                 'rename':renameSelected, 'perms':chmodSelected, 'properties':showProperties, 'delete':deleteSelected,
                 'restore': restoreSelected, 'delete_perm': deletePermanent,
-                'share': openShare
+                'share': openShare, 'history': openHistory
             };
             if (actions[a]) actions[a]();
         };
@@ -622,7 +630,7 @@ const app = createApp({
         return {
             store, i18n, t: (k, p) => i18n.t(k, p),
             goUp, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles,
-            isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal,
+            isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal,
             contextMenu, showContextMenu, hideContextMenu, cmAction,
             imageViewer, nextImage, prevImage, showWebDav, copyWebDavUrl, webDavUrl,
             onDragStart, onDragOver, onDragLeave, onDrop,

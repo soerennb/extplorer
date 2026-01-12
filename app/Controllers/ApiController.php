@@ -120,8 +120,49 @@ class ApiController extends BaseController
         if (!$path) return $this->fail('Path required');
 
         try {
+            // Versioning: Backup existing file before saving
+            $username = session('username');
+            $fullPath = $this->fs->resolvePath($path);
+            $versionService = new \App\Services\VersionService($username);
+            $versionService->createVersion($fullPath, $path);
+
             $this->fs->writeFile($path, $content ?? '');
             LogService::log('Save File', $path);
+            return $this->respond(['status' => 'success']);
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    public function versionList()
+    {
+        if (!can('read')) return $this->failForbidden();
+        $path = $this->request->getGet('path');
+        if (!$path) return $this->fail('Path required');
+
+        try {
+            $username = session('username');
+            $versionService = new \App\Services\VersionService($username);
+            return $this->respond(['versions' => $versionService->listVersions($path)]);
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    public function versionRestore()
+    {
+        if (!can('write')) return $this->failForbidden();
+        $json = $this->request->getJSON();
+        $path = $json->path ?? null;
+        $versionId = $json->version_id ?? null;
+
+        if (!$path || !$versionId) return $this->fail('Path and Version ID required');
+
+        try {
+            $username = session('username');
+            $versionService = new \App\Services\VersionService($username);
+            $versionService->restoreVersion($path, $versionId, $this->fs);
+            LogService::log('Restore Version', $path, 'Version: ' . $versionId);
             return $this->respond(['status' => 'success']);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());

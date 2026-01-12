@@ -98,6 +98,12 @@
     "stop_sharing": "Freigabe beenden",
     "expires": "Läuft ab",
 
+    "version_history": "Versionsverlauf",
+    "no_versions": "Keine vorherigen Versionen für diese Datei gefunden.",
+    "history_desc": "Das Wiederherstellen einer Version überschreibt die aktuelle Datei.",
+    "confirm_restore": "Diese Version wiederherstellen?",
+    "restore_text": "Der aktuelle Dateiinhalt wird ersetzt.",
+
     "upload_files": "Dateien hochladen",
     "drag_drop_desc": "Dateien hierher ziehen oder klicken zum Auswählen",
     "ready": "Bereit",

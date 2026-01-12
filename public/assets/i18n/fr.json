@@ -94,6 +94,12 @@
     "stop_sharing": "Arrêter le partage",
     "expires": "Expire",
 
+    "version_history": "Historique des versions",
+    "no_versions": "Aucune version précédente trouvée pour ce fichier.",
+    "history_desc": "La restauration d'une version écrasera le fichier actuel.",
+    "confirm_restore": "Restaurer cette version ?",
+    "restore_text": "Le contenu actuel du fichier sera remplacé.",
+
     "upload_files": "Télécharger des fichiers",
     "drag_drop_desc": "Glissez des fichiers ici ou cliquez pour parcourir",
     "ready": "Prêt",

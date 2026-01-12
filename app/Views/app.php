@@ -224,6 +224,7 @@
         <user-profile ref="userProfile"></user-profile>
         <share-modal ref="shareModal"></share-modal>
         <upload-modal ref="uploadModal"></upload-modal>
+        <file-history-modal ref="fileHistoryModal"></file-history-modal>
 
         <!-- Toolbar -->
         <div class="bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap">
@@ -639,6 +640,9 @@
                 <a class="dropdown-item" href="#" @click.prevent="cmAction('properties')">
                     <i class="ri-information-line me-2"></i> {{ t('properties') }}
                 </a>
+                <a v-if="contextMenu.file && contextMenu.file.type !== 'dir'" class="dropdown-item" href="#" @click.prevent="cmAction('history')">
+                    <i class="ri-history-line me-2"></i> {{ t('version_history') || 'Version History' }}
+                </a>
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item text-danger" href="#" @click.prevent="cmAction('delete')">
                     <i class="ri-delete-bin-line me-2"></i> {{ t('delete') }}
@@ -685,6 +689,7 @@
     <script src="<?= base_url('assets/js/components/UserProfile.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/ShareModal.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/UploadModal.js') ?>"></script>
+    <script src="<?= base_url('assets/js/components/FileHistoryModal.js') ?>"></script>
     <script src="<?= base_url('assets/js/app.js?v=' . time()) ?>"></script>
 </body>
 </html>

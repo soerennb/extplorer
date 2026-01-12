@@ -49,6 +49,10 @@ $routes->group('api', function($routes) {
     $routes->post('trash/delete', 'ApiController::trashDelete');
     $routes->post('trash/empty', 'ApiController::trashEmpty');
 
+    // Versions
+    $routes->get('versions/list', 'ApiController::versionList');
+    $routes->post('versions/restore', 'ApiController::versionRestore');
+
     $routes->get('users', 'UserAdminController::index');
     $routes->post('users', 'UserAdminController::create');
     $routes->put('users/(:segment)', 'UserAdminController::update/$1');

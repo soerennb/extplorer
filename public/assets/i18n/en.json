@@ -98,6 +98,12 @@
     "stop_sharing": "Stop Sharing",
     "expires": "Expires",
     
+    "version_history": "Version History",
+    "no_versions": "No previous versions found for this file.",
+    "history_desc": "Restoring a version will overwrite the current file.",
+    "confirm_restore": "Restore this version?",
+    "restore_text": "The current file content will be replaced.",
+
     "upload_files": "Upload Files",
     "drag_drop_desc": "Drag files here or click to browse",
     "ready": "Ready",
