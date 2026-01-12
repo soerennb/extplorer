@@ -469,9 +469,14 @@ class ApiController extends BaseController
                 return $this->failNotFound('File not found');
             }
 
-            // Security: Only allow inline for safe image types
+            // Security: Only allow inline for safe media types
             $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
-            $safeInlineTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $safeInlineTypes = [
+                'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg',
+                'pdf', 
+                'mp4', 'webm', 'ogv',
+                'mp3', 'wav', 'ogg'
+            ];
             
             if ($inline && !in_array($ext, $safeInlineTypes)) {
                 $inline = false;

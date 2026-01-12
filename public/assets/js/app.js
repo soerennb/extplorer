@@ -18,11 +18,11 @@ const app = createApp({
         const uploadModal = ref(null);
         const fileHistoryModal = ref(null);
         const contextMenu = Vue.reactive({ visible: false, x: 0, y: 0, file: null });
-        const imageViewer = Vue.reactive({ src: '', index: 0, list: [] });
+        const previewState = Vue.reactive({ src: '', index: 0, list: [], type: '', filename: '' });
         const theme = ref(localStorage.getItem('extplorer_theme') || 'auto');
         let aceEditor = null;
         let editorModal = null;
-        let imageModal = null;
+        let previewModal = null;
         let diffModal = null;
         let propModal = null;
         let webdavModal = null;
@@ -183,6 +183,10 @@ const app = createApp({
             } else {
                 const ext = file.extension?.toLowerCase();
                 const textExts = ['php','js','css','html','json','xml','txt','md','sql','gitignore','env'];
+                const imgExts = ['jpg','jpeg','png','gif','webp','svg'];
+                const vidExts = ['mp4','webm','ogv'];
+                const audExts = ['mp3','wav','ogg'];
+
                 if (textExts.includes(ext)) {
                     try {
                         const res = await Api.get('content', { path: file.path });
@@ -197,12 +201,18 @@ const app = createApp({
                         if (aceEditor) setContent();
                         else document.getElementById('editorModal').addEventListener('shown.bs.modal', setContent, { once: true });
                     } catch(e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
-                } else if (isImage(file)) {
+                } else if (imgExts.includes(ext) || vidExts.includes(ext) || audExts.includes(ext) || ext === 'pdf') {
                     store.addToRecent(file);
-                    imageViewer.list = filteredFiles.value.filter(f => isImage(f));
-                    imageViewer.index = imageViewer.list.findIndex(f => f.name === file.name);
-                    updateImageViewer();
-                    imageModal.show();
+                    
+                    const isMedia = (f) => {
+                        const e = f.extension?.toLowerCase();
+                        return imgExts.includes(e) || vidExts.includes(e) || audExts.includes(e) || e === 'pdf';
+                    };
+
+                    previewState.list = filteredFiles.value.filter(f => isMedia(f));
+                    previewState.index = previewState.list.findIndex(f => f.name === file.name);
+                    updatePreviewer();
+                    previewModal.show();
                     closeOffcanvas();
                 } else Swal.fire('Info', 'Preview not supported for this file type.', 'info');
             }
@@ -435,12 +445,22 @@ const app = createApp({
         };
         const changePassword = () => openProfile();
 
-        // --- Image Viewer ---
-        const updateImageViewer = () => {
-            if (imageViewer.index >= 0) imageViewer.src = window.baseUrl + 'api/download?path=' + encodeURIComponent(imageViewer.list[imageViewer.index].path) + '&inline=1';
+        // --- Preview Viewer ---
+        const updatePreviewer = () => {
+            if (previewState.index >= 0) {
+                const file = previewState.list[previewState.index];
+                const ext = file.extension?.toLowerCase();
+                previewState.filename = file.name;
+                previewState.src = window.baseUrl + 'api/download?path=' + encodeURIComponent(file.path) + '&inline=1';
+                
+                if (['jpg','jpeg','png','gif','webp','svg'].includes(ext)) previewState.type = 'image';
+                else if (['mp4','webm','ogv'].includes(ext)) previewState.type = 'video';
+                else if (['mp3','wav','ogg'].includes(ext)) previewState.type = 'audio';
+                else if (ext === 'pdf') previewState.type = 'pdf';
+            }
         };
-        const nextImage = () => { if (imageViewer.index < imageViewer.list.length - 1) { imageViewer.index++; updateImageViewer(); } };
-        const prevImage = () => { if (imageViewer.index > 0) { imageViewer.index--; updateImageViewer(); } };
+        const nextPreview = () => { if (previewState.index < previewState.list.length - 1) { previewState.index++; updatePreviewer(); } };
+        const prevPreview = () => { if (previewState.index > 0) { previewState.index--; updatePreviewer(); } };
 
         // Drag & Drop
         const onDragStart = (e, f) => {
@@ -605,7 +625,7 @@ const app = createApp({
             
             ace.config.set('basePath', window.baseUrl + 'assets/vendor/ace');
             editorModal = new bootstrap.Modal(document.getElementById('editorModal'));
-            imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+            previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
             diffModal = new bootstrap.Modal(document.getElementById('diffModal'));
             propModal = new bootstrap.Modal(document.getElementById('propModal'));
             webdavModal = new bootstrap.Modal(document.getElementById('webdavModal'));
@@ -632,7 +652,7 @@ const app = createApp({
             goUp, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles,
             isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal,
             contextMenu, showContextMenu, hideContextMenu, cmAction,
-            imageViewer, nextImage, prevImage, showWebDav, copyWebDavUrl, webDavUrl,
+            previewState, nextPreview, prevPreview, showWebDav, copyWebDavUrl, webDavUrl,
             onDragStart, onDragOver, onDragLeave, onDrop,
             setSort, isImage, isArchive, getThumbUrl,
             createFolder, deleteSelected, renameSelected, uploadFile, downloadSelected, createArchive, extractArchive, chmodSelected,

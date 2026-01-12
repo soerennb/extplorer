@@ -501,22 +501,38 @@
             </div>
         </div>
 
-        <!-- Image Viewer Modal -->
-        <div class="modal fade" id="imageModal" tabindex="-1">
+        <!-- Preview Modal -->
+        <div class="modal fade" id="previewModal" tabindex="-1">
             <div class="modal-dialog modal-xl modal-dialog-centered">
-                <div class="modal-content bg-transparent border-0 shadow-none">
-                    <div class="modal-body p-0 text-center position-relative d-flex align-items-center justify-content-center">
-                        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-1060" data-bs-dismiss="modal"></button>
-                        <button v-if="imageViewer.list.length > 1" class="btn btn-dark bg-opacity-50 position-absolute start-0 m-3 rounded-circle" @click.stop="prevImage" :disabled="imageViewer.index <= 0">
+                <div class="modal-content bg-dark border-0 shadow-lg">
+                    <div class="modal-header border-0 py-2">
+                        <h6 class="modal-title text-white">{{ previewState.filename }}</h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-0 text-center position-relative d-flex align-items-center justify-content-center" style="min-height: 400px; background: #000;">
+                        
+                        <!-- Image -->
+                        <img v-if="previewState.type === 'image'" :src="previewState.src" class="img-fluid rounded max-h-90vh">
+                        
+                        <!-- Video -->
+                        <video v-if="previewState.type === 'video'" :src="previewState.src" controls autoplay class="w-100 max-h-90vh"></video>
+                        
+                        <!-- Audio -->
+                        <div v-if="previewState.type === 'audio'" class="p-5 w-100">
+                            <i class="ri-music-2-line fs-1 text-white-50 d-block mb-3"></i>
+                            <audio :src="previewState.src" controls autoplay class="w-100"></audio>
+                        </div>
+
+                        <!-- PDF -->
+                        <iframe v-if="previewState.type === 'pdf'" :src="previewState.src" class="w-100" style="height: 80vh; border: none;"></iframe>
+
+                        <!-- Controls -->
+                        <button v-if="previewState.list.length > 1" class="btn btn-dark bg-opacity-50 position-absolute start-0 m-3 rounded-circle" @click.stop="prevPreview" :disabled="previewState.index <= 0">
                             <i class="ri-arrow-left-s-line fs-4"></i>
                         </button>
-                        <img v-if="imageViewer.src" :src="imageViewer.src" class="img-fluid rounded max-h-90vh">
-                        <button v-if="imageViewer.list.length > 1" class="btn btn-dark bg-opacity-50 position-absolute end-0 m-3 rounded-circle" @click.stop="nextImage" :disabled="imageViewer.index >= imageViewer.list.length - 1">
+                        <button v-if="previewState.list.length > 1" class="btn btn-dark bg-opacity-50 position-absolute end-0 m-3 rounded-circle" @click.stop="nextPreview" :disabled="previewState.index >= previewState.list.length - 1">
                             <i class="ri-arrow-right-s-line fs-4"></i>
                         </button>
-                        <div v-if="imageViewer.list.length > 1" class="position-absolute bottom-0 mb-3 badge bg-dark bg-opacity-75">
-                            {{ imageViewer.index + 1 }} / {{ imageViewer.list.length }}
-                        </div>
                     </div>
                 </div>
             </div>
