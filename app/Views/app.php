@@ -222,6 +222,7 @@
         <!-- Components -->
         <user-admin ref="userAdmin"></user-admin>
         <user-profile ref="userProfile"></user-profile>
+        <share-modal ref="shareModal"></share-modal>
 
         <!-- Toolbar -->
         <div class="bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap">
@@ -610,6 +611,9 @@
                 <a class="dropdown-item" href="#" @click.prevent="cmAction('download')">
                     <i class="ri-download-line me-2"></i> {{ t('download') }}
                 </a>
+                <a class="dropdown-item" href="#" @click.prevent="cmAction('share')">
+                    <i class="ri-share-line me-2"></i> {{ t('share_title') || 'Share' }}
+                </a>
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item" href="#" @click.prevent="cmAction('copy')">
                     <i class="ri-file-copy-line me-2"></i> {{ t('copy') }}
@@ -674,6 +678,7 @@
     <script src="<?= base_url('assets/js/components/FileTree.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/UserAdmin.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/UserProfile.js') ?>"></script>
+    <script src="<?= base_url('assets/js/components/ShareModal.js') ?>"></script>
     <script src="<?= base_url('assets/js/app.js?v=' . time()) ?>"></script>
 </body>
 </html>

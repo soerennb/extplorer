@@ -606,4 +606,67 @@ class ApiController extends BaseController
             return $this->fail($e->getMessage());
         }
     }
+
+    // --- Share API ---
+
+    public function shareCreate()
+    {
+        if (!can('read')) return $this->failForbidden();
+        
+        $json = $this->request->getJSON();
+        $path = $json->path ?? null;
+        $password = $json->password ?? null;
+        $expires = $json->expires ?? null; // Timestamp or ISO string? Let's assume timestamp from frontend
+        
+        if (!$path) return $this->fail('Path required');
+        
+        // Verify existence within user jail
+        try {
+            $this->fs->resolvePath($path); // Throws if invalid/traversal
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+
+        try {
+            $service = new \App\Services\ShareService();
+            $share = $service->createShare($path, session('username'), $password, $expires);
+            LogService::log('Create Share', $path);
+            return $this->respond(['status' => 'success', 'share' => $share]);
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    public function shareDelete()
+    {
+        $json = $this->request->getJSON();
+        $hash = $json->hash ?? null;
+        if (!$hash) return $this->fail('Hash required');
+
+        try {
+            $service = new \App\Services\ShareService();
+            $share = $service->getShare($hash);
+            
+            // Allow admin to delete any share, user only their own
+            if ($share && ($share['created_by'] === session('username') || can('admin_users'))) {
+                $service->deleteShare($hash);
+                LogService::log('Delete Share', $hash);
+                return $this->respond(['status' => 'success']);
+            }
+            return $this->failForbidden();
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    public function shareList()
+    {
+        try {
+            $service = new \App\Services\ShareService();
+            $shares = $service->listUserShares(session('username'));
+            return $this->respond(['items' => $shares]);
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
 }

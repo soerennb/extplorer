@@ -4,13 +4,15 @@ const app = createApp({
     components: {
         FileTree,
         UserAdmin,
-        UserProfile
+        UserProfile,
+        ShareModal
     },
     setup() {
         const editorFile = ref(null);
         const propFile = ref(null);
         const userAdmin = ref(null);
         const userProfile = ref(null);
+        const shareModal = ref(null);
         const contextMenu = Vue.reactive({ visible: false, x: 0, y: 0, file: null });
         const imageViewer = Vue.reactive({ src: '', index: 0, list: [] });
         const theme = ref(localStorage.getItem('extplorer_theme') || 'auto');
@@ -380,6 +382,12 @@ const app = createApp({
             } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
         };
 
+        const openShare = () => {
+            if (store.selectedItems.length === 1 && shareModal.value) {
+                shareModal.value.open(store.selectedItems[0]);
+            }
+        };
+
         const calcDirSize = async () => {
             if (!propFile.value || propFile.value.type !== 'dir') return;
             try { const res = await Api.get('dirsize', { path: propFile.value.path }); propFile.value.size = res.size; }
@@ -556,7 +564,8 @@ const app = createApp({
             const actions = { 
                 'open':()=>open(f), 'download':downloadSelected, 'copy':copySelected, 'cut':cutSelected, 'paste':paste, 
                 'rename':renameSelected, 'perms':chmodSelected, 'properties':showProperties, 'delete':deleteSelected,
-                'restore': restoreSelected, 'delete_perm': deletePermanent
+                'restore': restoreSelected, 'delete_perm': deletePermanent,
+                'share': openShare
             };
             if (actions[a]) actions[a]();
         };

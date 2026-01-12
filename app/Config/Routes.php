@@ -13,6 +13,12 @@ $routes->get('logout', 'Login::logout');
 $routes->add('dav', 'DavController::index');
 $routes->add('dav/(:any)', 'DavController::index/$1');
 
+// Public Shares
+$routes->get('s/(:segment)', 'ShareController::index/$1');
+$routes->post('s/(:segment)/auth', 'ShareController::auth/$1');
+$routes->get('s/(:segment)/download', 'ShareController::download/$1');
+$routes->get('s/(:segment)/ls', 'ShareController::ls/$1');
+
 $routes->group('api', function($routes) {
     $routes->get('ls', 'ApiController::ls');
     $routes->get('content', 'ApiController::content');
@@ -31,6 +37,11 @@ $routes->group('api', function($routes) {
     $routes->post('extract', 'ApiController::extract');
     $routes->post('chmod', 'ApiController::chmod');
     $routes->post('chown', 'ApiController::chown');
+
+    // Share Management
+    $routes->post('share/create', 'ApiController::shareCreate');
+    $routes->post('share/delete', 'ApiController::shareDelete');
+    $routes->get('share/list', 'ApiController::shareList');
 
     // Trash
     $routes->get('trash/list', 'ApiController::trashList');
