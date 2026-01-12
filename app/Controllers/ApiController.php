@@ -482,7 +482,20 @@ class ApiController extends BaseController
                 $inline = false;
             }
 
-            return $this->response->download($fullPath, null, (bool)$inline);
+            if ($inline) {
+                $mimes = \Config\Services::mimes();
+                $mime = $mimes->getMimeType($ext);
+                if (is_array($mime)) $mime = $mime[0]; // Get first if multiple
+                
+                if (!$mime) $mime = mime_content_type($fullPath); // Fallback
+
+                return $this->response
+                    ->setHeader('Content-Type', $mime)
+                    ->setHeader('Content-Disposition', 'inline; filename="' . basename($fullPath) . '"')
+                    ->setBody(file_get_contents($fullPath));
+            }
+
+            return $this->response->download($fullPath, null);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
         }

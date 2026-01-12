@@ -26,6 +26,12 @@ const store = Vue.reactive({
     refreshTree() {
         this.treeVersion++;
     },
+
+    async reload() {
+        await this.loadPath(this.cwd);
+        this.refreshTree();
+    },
+
     pagination: {
         page: 1,
         pageSize: 100,

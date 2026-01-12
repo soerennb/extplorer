@@ -184,7 +184,12 @@ const UploadModal = {
             }
             
             uploading.value = false;
-            store.reload(); // Refresh tree
+            if (typeof store.reload === 'function') {
+                await store.reload();
+            } else {
+                await store.loadPath(store.cwd);
+                store.refreshTree();
+            }
             if (files.value.every(f => f.status === 'done')) {
                 setTimeout(() => {
                     modalInstance.hide();

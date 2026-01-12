@@ -19,6 +19,7 @@
         .file-meta { font-size: 0.85rem; color: #adb5bd; }
         .preview-box { display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column; }
         .preview-icon { font-size: 5rem; color: #dee2e6; }
+        .max-h-80vh { max-height: 80vh; }
     </style>
 </head>
 <body>
@@ -70,12 +71,34 @@
                 </div>
             <?php endif; ?>
         </div>
+
+        <!-- Preview Modal -->
+        <div class="modal fade" id="previewModal" tabindex="-1">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content bg-dark border-0 shadow-lg">
+                    <div class="modal-header border-0 py-2">
+                        <h6 class="modal-title text-white">{{ previewState.filename }}</h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-0 text-center position-relative d-flex align-items-center justify-content-center" style="min-height: 400px; background: #000;">
+                        <img v-if="previewState.type === 'image'" :src="previewState.src" class="img-fluid rounded max-h-80vh">
+                        <video v-if="previewState.type === 'video'" :src="previewState.src" controls autoplay class="w-100 max-h-80vh"></video>
+                        <div v-if="previewState.type === 'audio'" class="p-5 w-100">
+                            <i class="ri-music-2-line fs-1 text-white-50 d-block mb-3"></i>
+                            <audio :src="previewState.src" controls autoplay class="w-100"></audio>
+                        </div>
+                        <iframe v-if="previewState.type === 'pdf'" :src="previewState.src" class="w-100" style="height: 70vh; border: none;"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <?php if (!$is_file): ?>
     <script src="<?= base_url('assets/js/vue.global.js') ?>"></script>
+    <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
     <script nonce="<?= csp_script_nonce() ?>">
-        const { createApp, ref, onMounted } = Vue;
+        const { createApp, ref, reactive, onMounted } = Vue;
         const hash = "<?= $hash ?>";
         const baseUrl = "<?= base_url() ?>";
 
@@ -84,6 +107,8 @@
                 const files = ref([]);
                 const loading = ref(false);
                 const currentPath = ref('');
+                const previewState = reactive({ src: '', type: '', filename: '' });
+                let previewModal = null;
 
                 const loadPath = async (path = '') => {
                     loading.value = true;
@@ -105,9 +130,27 @@
                         const newPath = currentPath.value ? currentPath.value + '/' + file.name : file.name;
                         loadPath(newPath);
                     } else {
-                        // Download file
-                        const path = currentPath.value ? currentPath.value + '/' + file.name : file.name;
-                        window.location.href = baseUrl + 's/' + hash + '/download?path=' + encodeURIComponent(path);
+                        const ext = file.name.split('.').pop().toLowerCase();
+                        const imgExts = ['jpg','jpeg','png','gif','webp','svg'];
+                        const vidExts = ['mp4','webm','ogv'];
+                        const audExts = ['mp3','wav','ogg'];
+                        
+                        if (imgExts.includes(ext) || vidExts.includes(ext) || audExts.includes(ext) || ext === 'pdf') {
+                            previewState.filename = file.name;
+                            const path = currentPath.value ? currentPath.value + '/' + file.name : file.name;
+                            previewState.src = baseUrl + 's/' + hash + '/download?path=' + encodeURIComponent(path) + '&inline=1';
+                            
+                            if (imgExts.includes(ext)) previewState.type = 'image';
+                            else if (vidExts.includes(ext)) previewState.type = 'video';
+                            else if (audExts.includes(ext)) previewState.type = 'audio';
+                            else if (ext === 'pdf') previewState.type = 'pdf';
+                            
+                            previewModal.show();
+                        } else {
+                            // Download file
+                            const path = currentPath.value ? currentPath.value + '/' + file.name : file.name;
+                            window.location.href = baseUrl + 's/' + hash + '/download?path=' + encodeURIComponent(path);
+                        }
                     }
                 };
 
@@ -120,6 +163,10 @@
 
                 const getIcon = (f) => {
                     if (f.type === 'dir') return 'ri-folder-fill text-warning';
+                    const ext = f.name.split('.').pop().toLowerCase();
+                    if (['jpg','jpeg','png','gif','svg','webp'].includes(ext)) return 'ri-image-fill text-success';
+                    if (['mp4','webm','ogv'].includes(ext)) return 'ri-movie-fill text-info';
+                    if (['pdf'].includes(ext)) return 'ri-file-pdf-line text-danger';
                     return 'ri-file-line text-secondary';
                 };
                 
@@ -131,9 +178,12 @@
                 };
                 const formatDate = (t) => new Date(t*1000).toLocaleDateString();
 
-                onMounted(() => loadPath());
+                onMounted(() => {
+                    loadPath();
+                    previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+                });
 
-                return { files, loading, currentPath, open, goUp, getIcon, formatSize, formatDate };
+                return { files, loading, currentPath, open, goUp, getIcon, formatSize, formatDate, previewState };
             }
         }).mount('#app');
     </script>

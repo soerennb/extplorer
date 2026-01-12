@@ -83,6 +83,7 @@ class ShareController extends BaseController
         }
 
         $fullPath = WRITEPATH . 'file_manager_root/' . $share['path'];
+        $inline = $this->request->getGet('inline');
         
         // Handle sub-path request (e.g. /s/{hash}/download?path=subfolder/file.txt)
         $subPath = $this->request->getGet('path');
@@ -98,7 +99,7 @@ class ShareController extends BaseController
             // Zip directory
             $zipName = basename($fullPath) . '.zip';
             $tempZip = WRITEPATH . 'cache/' . uniqid('share_') . '.zip';
-            $fs = new LocalAdapter(dirname($fullPath)); // Adapter at parent to zip folder
+            $fs = new LocalAdapter(dirname($fullPath)); 
             $fs->archive([basename($fullPath)], $tempZip);
             
             $this->response->setHeader('Content-Type', 'application/zip')
@@ -106,6 +107,19 @@ class ShareController extends BaseController
                            ->setBody(file_get_contents($tempZip));
             @unlink($tempZip);
             return $this->response;
+        }
+
+        if ($inline) {
+            $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+            $mimes = \Config\Services::mimes();
+            $mime = $mimes->getMimeType($ext);
+            if (is_array($mime)) $mime = $mime[0];
+            if (!$mime) $mime = mime_content_type($fullPath);
+
+            return $this->response
+                ->setHeader('Content-Type', $mime)
+                ->setHeader('Content-Disposition', 'inline; filename="' . basename($fullPath) . '"')
+                ->setBody(file_get_contents($fullPath));
         }
 
         return $this->response->download($fullPath, null);
