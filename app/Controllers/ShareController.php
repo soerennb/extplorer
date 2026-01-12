@@ -110,11 +110,7 @@ class ShareController extends BaseController
         }
 
         if ($inline) {
-            $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
-            $mimes = \Config\Services::mimes();
-            $mime = $mimes->getMimeType($ext);
-            if (is_array($mime)) $mime = $mime[0];
-            if (!$mime) $mime = mime_content_type($fullPath);
+            $mime = mime_content_type($fullPath);
 
             return $this->response
                 ->setHeader('Content-Type', $mime)

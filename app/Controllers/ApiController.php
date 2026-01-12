@@ -483,11 +483,7 @@ class ApiController extends BaseController
             }
 
             if ($inline) {
-                $mimes = \Config\Services::mimes();
-                $mime = $mimes->getMimeType($ext);
-                if (is_array($mime)) $mime = $mime[0]; // Get first if multiple
-                
-                if (!$mime) $mime = mime_content_type($fullPath); // Fallback
+                $mime = mime_content_type($fullPath);
 
                 return $this->response
                     ->setHeader('Content-Type', $mime)
