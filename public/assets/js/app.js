@@ -272,7 +272,11 @@ const app = createApp({
                         const fd = new FormData(); fd.append('file', file); fd.append('path', path);
                         const headers = { 'X-Requested-With': 'XMLHttpRequest' };
                         if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
-                        await fetch(window.baseUrl + 'api/upload', { method: 'POST', headers, body: fd });
+                        const res = await fetch(window.baseUrl + 'api/upload', { method: 'POST', headers, body: fd });
+                        if (!res.ok) {
+                            const json = await res.json();
+                            throw new Error(json.messages?.error || json.message || 'Upload failed');
+                        }
                         store.uploadProgress = 100;
                     } else {
                         const total = Math.ceil(file.size / CHUNK_SIZE);
@@ -282,7 +286,11 @@ const app = createApp({
                             fd.append('chunkIndex', i); fd.append('totalChunks', total); fd.append('path', path);
                             const headers = { 'X-Requested-With': 'XMLHttpRequest' };
                             if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
-                            await fetch(window.baseUrl + 'api/upload_chunk', { method: 'POST', headers, body: fd });
+                            const res = await fetch(window.baseUrl + 'api/upload_chunk', { method: 'POST', headers, body: fd });
+                            if (!res.ok) {
+                                const json = await res.json();
+                                throw new Error(json.messages?.error || json.message || 'Upload chunk failed');
+                            }
                             store.uploadProgress = Math.round(((i + 1) / total) * 100);
                         }
                     }
@@ -293,7 +301,7 @@ const app = createApp({
                     store.refreshTree();
                     Swal.fire(i18n.t('uploaded'), '', 'success');
                 }
-            } catch (e) { if (!silent) Swal.fire(i18n.t('error'), 'Upload failed', 'error'); }
+            } catch (e) { if (!silent) Swal.fire(i18n.t('error'), e.message, 'error'); }
             finally { 
                 if (!silent) {
                     store.isLoading = false; 
