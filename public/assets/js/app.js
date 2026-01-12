@@ -495,20 +495,25 @@ const app = createApp({
                 store.uploadTotal = 0;
 
                 // Scan for total items first
-                for (let i = 0; i < items.length; i++) {
-                    const entry = items[i].webkitGetAsEntry();
-                    if (entry) store.uploadTotal += await countEntries(entry);
-                }
+                try {
+                    for (let i = 0; i < items.length; i++) {
+                        const entry = items[i].webkitGetAsEntry();
+                        if (entry) store.uploadTotal += await countEntries(entry);
+                    }
 
-                for (let i = 0; i < items.length; i++) {
-                    const entry = items[i].webkitGetAsEntry();
-                    if (entry) await traverseFileTree(entry, targetPath);
+                    for (let i = 0; i < items.length; i++) {
+                        const entry = items[i].webkitGetAsEntry();
+                        if (entry) await traverseFileTree(entry, targetPath);
+                    }
+                    Swal.fire(i18n.t('uploaded'), '', 'success');
+                } catch (e) {
+                    Swal.fire(i18n.t('error'), e.message, 'error');
+                } finally {
+                    store.isLoading = false;
+                    resetUploadProgress();
+                    reload();
+                    store.refreshTree();
                 }
-                store.isLoading = false;
-                resetUploadProgress();
-                reload();
-                store.refreshTree();
-                Swal.fire(i18n.t('uploaded'), '', 'success');
                 return;
             }
 
