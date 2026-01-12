@@ -416,12 +416,16 @@
                              @dblclick.stop="open(file)"
                              @contextmenu.prevent.stop="showContextMenu($event, file)">
                             
-                            <div class="file-icon">
+                            <div class="file-icon position-relative">
                                 <img v-if="store.viewMode === 'grid' && isImage(file)" 
                                      :src="getThumbUrl(file)" 
                                      class="rounded shadow-sm thumb-grid"
                                      draggable="false">
                                 <i v-else :class="getIcon(file)"></i>
+                                
+                                <div v-if="file.is_shared" class="position-absolute bottom-0 end-0 bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 18px; height: 18px; transform: translate(20%, 20%); z-index: 1;">
+                                    <i class="ri-share-forward-line text-primary" style="font-size: 12px;"></i>
+                                </div>
                             </div>
                             
                             <div class="file-name" :title="file.name">

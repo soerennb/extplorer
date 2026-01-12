@@ -73,6 +73,21 @@ class ApiController extends BaseController
                 $data = array_slice($data, $offset, $limit);
             }
 
+            // Inject Share Status
+            try {
+                $username = session('username');
+                $shareService = new \App\Services\ShareService();
+                $shares = $shareService->listUserShares($username);
+                $shareMap = [];
+                foreach ($shares as $s) $shareMap[$s['path']] = true;
+
+                foreach ($data as &$item) {
+                    if (isset($shareMap[$item['path']])) $item['is_shared'] = true;
+                }
+            } catch (\Exception $e) {
+                // Ignore share service errors to not break ls
+            }
+
             return $this->respond([
                 'items' => $data,
                 'total' => $total
