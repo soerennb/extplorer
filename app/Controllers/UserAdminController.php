@@ -191,6 +191,7 @@ class UserAdminController extends BaseController
             'extensions' => implode(', ', get_loaded_extensions()),
             'disk_free' => disk_free_space(WRITEPATH),
             'disk_total' => disk_total_space(WRITEPATH),
+            'system_blocklist' => ['php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'pl', 'py', 'rb', 'cgi', 'exe', 'sh', 'bat', 'cmd', 'htaccess', 'htpasswd']
         ]);
     }
 

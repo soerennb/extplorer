@@ -85,6 +85,10 @@ const UserAdmin = {
                                     <div class="col-md-6">
                                         <label class="form-label small">Blocked Extensions (csv)</label>
                                         <input type="text" class="form-control form-control-sm" v-model="editingUser.blocked_extensions" placeholder="e.g. php,exe">
+                                        <div v-if="system && system.system_blocklist" class="mt-1">
+                                            <span class="small text-muted d-block" style="font-size: 0.75rem;">System Blocklist (Always Applied):</span>
+                                            <span v-for="ext in system.system_blocklist" :key="ext" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1" style="font-size: 0.7rem;">{{ ext }}</span>
+                                        </div>
                                     </div>
                                     <div class="col-md-12">
                                         <label class="form-label small d-block">Groups</label>
@@ -284,6 +288,7 @@ const UserAdmin = {
             await this.loadUsers();
             await this.loadGroups();
             await this.loadRoles();
+            this.loadSystemInfo(false);
         },
         async loadUsers() {
             this.error = null;
@@ -298,8 +303,8 @@ const UserAdmin = {
         async loadLogs() {
             try { this.logs = await Api.get('logs'); } catch (e) {}
         },
-        async loadSystemInfo() {
-            this.tab = 'system';
+        async loadSystemInfo(switchTab = true) {
+            if (switchTab) this.tab = 'system';
             if (this.system) return;
             try { this.system = await Api.get('system'); } catch (e) { this.error = e.message; }
         },
