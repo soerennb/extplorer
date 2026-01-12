@@ -25,7 +25,9 @@ class ProfileController extends BaseController
             'role' => $user['role'],
             'home_dir' => $user['home_dir'],
             '2fa_enabled' => $user['2fa_enabled'] ?? false,
-            // Only send recovery codes if explicitly requested/verified? No, separate endpoint.
+            'allowed_extensions' => $user['allowed_extensions'] ?? '',
+            'blocked_extensions' => $user['blocked_extensions'] ?? '',
+            'system_blocklist' => ['php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'pl', 'py', 'rb', 'cgi', 'exe', 'sh', 'bat', 'cmd', 'htaccess', 'htpasswd']
         ]);
     }
 

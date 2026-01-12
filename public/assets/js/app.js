@@ -5,7 +5,8 @@ const app = createApp({
         FileTree,
         UserAdmin,
         UserProfile,
-        ShareModal
+        ShareModal,
+        UploadModal
     },
     setup() {
         const editorFile = ref(null);
@@ -13,6 +14,7 @@ const app = createApp({
         const userAdmin = ref(null);
         const userProfile = ref(null);
         const shareModal = ref(null);
+        const uploadModal = ref(null);
         const contextMenu = Vue.reactive({ visible: false, x: 0, y: 0, file: null });
         const imageViewer = Vue.reactive({ src: '', index: 0, list: [] });
         const theme = ref(localStorage.getItem('extplorer_theme') || 'auto');
@@ -251,9 +253,7 @@ const app = createApp({
         };
 
         const uploadFile = () => {
-            const input = document.createElement('input'); input.type = 'file'; input.multiple = true;
-            input.onchange = e => { if (e.target.files.length) performUpload(e.target.files); };
-            input.click();
+            if (uploadModal.value) uploadModal.value.open();
         };
 
         const performUpload = async (files, targetPath = null, silent = false) => {

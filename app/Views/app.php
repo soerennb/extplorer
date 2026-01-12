@@ -223,6 +223,7 @@
         <user-admin ref="userAdmin"></user-admin>
         <user-profile ref="userProfile"></user-profile>
         <share-modal ref="shareModal"></share-modal>
+        <upload-modal ref="uploadModal"></upload-modal>
 
         <!-- Toolbar -->
         <div class="bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap">
@@ -683,6 +684,7 @@
     <script src="<?= base_url('assets/js/components/UserAdmin.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/UserProfile.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/ShareModal.js') ?>"></script>
+    <script src="<?= base_url('assets/js/components/UploadModal.js') ?>"></script>
     <script src="<?= base_url('assets/js/app.js?v=' . time()) ?>"></script>
 </body>
 </html>

@@ -96,5 +96,11 @@
     "password_protected": "Passwortgeschützt",
     "downloads": "Downloads",
     "stop_sharing": "Freigabe beenden",
-    "expires": "Läuft ab"
+    "expires": "Läuft ab",
+
+    "upload_files": "Dateien hochladen",
+    "drag_drop_desc": "Dateien hierher ziehen oder klicken zum Auswählen",
+    "ready": "Bereit",
+    "blocked": "Blockiert",
+    "blocked_files_msg": "Einige Dateien haben blockierte Endungen und werden übersprungen."
 }

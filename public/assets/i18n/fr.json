@@ -92,5 +92,11 @@
     "password_protected": "Protégé par mot de passe",
     "downloads": "Téléchargements",
     "stop_sharing": "Arrêter le partage",
-    "expires": "Expire"
+    "expires": "Expire",
+
+    "upload_files": "Télécharger des fichiers",
+    "drag_drop_desc": "Glissez des fichiers ici ou cliquez pour parcourir",
+    "ready": "Prêt",
+    "blocked": "Bloqué",
+    "blocked_files_msg": "Certains fichiers ont des extensions bloquées et seront ignorés."
 }

@@ -96,5 +96,11 @@
     "password_protected": "Password Protected",
     "downloads": "Downloads",
     "stop_sharing": "Stop Sharing",
-    "expires": "Expires"
+    "expires": "Expires",
+    
+    "upload_files": "Upload Files",
+    "drag_drop_desc": "Drag files here or click to browse",
+    "ready": "Ready",
+    "blocked": "Blocked",
+    "blocked_files_msg": "Some files have blocked extensions and will be skipped."
 }
