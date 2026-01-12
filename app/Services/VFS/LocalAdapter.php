@@ -339,8 +339,14 @@ class LocalAdapter implements IFileSystem
             $group = $groupData['name'] ?? $groupData['gid'];
         }
 
+        $name = basename($fullPath);
+        // Ensure valid UTF-8 for JSON compatibility
+        if (!mb_check_encoding($name, 'UTF-8')) {
+            $name = mb_convert_encoding($name, 'UTF-8', 'ISO-8859-1');
+        }
+
         return [
-            'name' => basename($fullPath),
+            'name' => $name,
             'path' => $relativePath,
             'type' => $isDir ? 'dir' : 'file',
             'size' => $isDir ? 0 : filesize($fullPath),
