@@ -301,7 +301,10 @@ const app = createApp({
                     store.refreshTree();
                     Swal.fire(i18n.t('uploaded'), '', 'success');
                 }
-            } catch (e) { if (!silent) Swal.fire(i18n.t('error'), e.message, 'error'); }
+            } catch (e) { 
+                if (!silent) Swal.fire(i18n.t('error'), e.message, 'error');
+                throw e; // Rethrow to let caller know
+            }
             finally { 
                 if (!silent) {
                     store.isLoading = false; 
