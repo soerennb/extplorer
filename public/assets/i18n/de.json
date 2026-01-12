@@ -102,5 +102,10 @@
     "drag_drop_desc": "Dateien hierher ziehen oder klicken zum Auswählen",
     "ready": "Bereit",
     "blocked": "Blockiert",
-    "blocked_files_msg": "Einige Dateien haben blockierte Endungen und werden übersprungen."
+    "blocked_files_msg": "Einige Dateien haben blockierte Endungen und werden übersprungen.",
+
+    "file_extensions": "Dateierweiterungen",
+    "allowed": "Erlaubt",
+    "blocked_user": "Blockiert (Benutzer)",
+    "blocked_system": "Blockiert (System)"
 }

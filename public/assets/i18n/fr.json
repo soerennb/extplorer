@@ -98,5 +98,10 @@
     "drag_drop_desc": "Glissez des fichiers ici ou cliquez pour parcourir",
     "ready": "Prêt",
     "blocked": "Bloqué",
-    "blocked_files_msg": "Certains fichiers ont des extensions bloquées et seront ignorés."
+    "blocked_files_msg": "Certains fichiers ont des extensions bloquées et seront ignorés.",
+
+    "file_extensions": "Extensions de fichiers",
+    "allowed": "Autorisé",
+    "blocked_user": "Bloqué (Utilisateur)",
+    "blocked_system": "Bloqué (Système)"
 }

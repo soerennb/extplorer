@@ -102,5 +102,10 @@
     "drag_drop_desc": "Drag files here or click to browse",
     "ready": "Ready",
     "blocked": "Blocked",
-    "blocked_files_msg": "Some files have blocked extensions and will be skipped."
+    "blocked_files_msg": "Some files have blocked extensions and will be skipped.",
+    
+    "file_extensions": "File Extensions",
+    "allowed": "Allowed",
+    "blocked_user": "Blocked (User)",
+    "blocked_system": "Blocked (System)"
 }

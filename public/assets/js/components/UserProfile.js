@@ -29,6 +29,25 @@ const UserProfile = {
                             <label class="col-sm-3 col-form-label fw-bold">{{ t('home_dir') || 'Home Directory' }}</label>
                             <div class="col-sm-9"><input type="text" readonly class="form-control-plaintext" :value="details.home_dir"></div>
                         </div>
+
+                        <div class="mt-4 pt-3 border-top">
+                            <h6 class="mb-3">{{ t('file_extensions') || 'File Extensions' }}</h6>
+                            
+                            <div v-if="details.allowed_extensions" class="mb-2">
+                                <span class="small fw-bold d-block text-success">{{ t('allowed') || 'Allowed' }}:</span>
+                                <span v-for="ext in details.allowed_extensions.split(',')" :key="ext" class="badge bg-success-subtle text-success border border-success-subtle me-1">{{ ext.trim() }}</span>
+                            </div>
+                            
+                            <div v-if="details.blocked_extensions" class="mb-2">
+                                <span class="small fw-bold d-block text-danger">{{ t('blocked_user') || 'Blocked (User)' }}:</span>
+                                <span v-for="ext in details.blocked_extensions.split(',')" :key="ext" class="badge bg-danger-subtle text-danger border border-danger-subtle me-1">{{ ext.trim() }}</span>
+                            </div>
+
+                            <div v-if="details.system_blocklist && details.system_blocklist.length">
+                                <span class="small fw-bold d-block text-secondary">{{ t('blocked_system') || 'Blocked (System)' }}:</span>
+                                <span v-for="ext in details.system_blocklist" :key="ext" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1">{{ ext }}</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div v-if="activeTab === 'security'">
