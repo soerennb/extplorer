@@ -156,7 +156,7 @@ const app = createApp({
         };
 
         // --- Core Actions ---
-        const reload = () => { store.loadPath(store.cwd); store.refreshTree(); };
+        const reload = () => store.reload();
         const goUp = () => { if (store.cwd) { const p = store.cwd.split('/'); p.pop(); store.loadPath(p.join('/')); } };
         
         const closeOffcanvas = () => {
