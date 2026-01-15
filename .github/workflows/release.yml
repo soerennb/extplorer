@@ -33,6 +33,8 @@ jobs:
           mkdir -p release/writable/session
           mkdir -p release/writable/uploads
           mkdir -p release/writable/file_manager_root
+          mkdir -p release/writable/shared
+          mkdir -p release/writable/trash
           echo "[]" > release/writable/users.json
           cp -r app release/
           cp -r public release/

@@ -43,6 +43,8 @@ mkdir -p ${BUILD_DIR}/writable/logs
 mkdir -p ${BUILD_DIR}/writable/session
 mkdir -p ${BUILD_DIR}/writable/uploads
 mkdir -p ${BUILD_DIR}/writable/file_manager_root
+mkdir -p ${BUILD_DIR}/writable/shared
+mkdir -p ${BUILD_DIR}/writable/trash
 touch ${BUILD_DIR}/writable/users.json
 echo "[]" > ${BUILD_DIR}/writable/users.json
 
