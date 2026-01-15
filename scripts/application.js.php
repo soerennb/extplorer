@@ -502,39 +502,78 @@ function ext_init(){
     function loadDir() {
     	datastore.load({params:{start:0, limit:150, dir: datastore.directory, option:'com_extplorer', action:'getdircontents', sendWhat: datastore.sendWhat }});
     }
-   
-    
-    function rowContextMenu(grid, rowIndex, e, f) {
-    	if( typeof e == 'object') {
-    		e.preventDefault();
-    	} else {
-    		e = f;
-    	}
-    	gsm = ext_itemgrid.getSelectionModel();
-    	gsm.clickedRow = rowIndex;
-    	var selections = gsm.getSelections();
-    	if( selections.length > 1 ) {
-    		gridCtxMenu.items.get('gc_edit').disable();
-    		gridCtxMenu.items.get('gc_delete').enable();
-    		gridCtxMenu.items.get('gc_rename').disable();
-    		gridCtxMenu.items.get('gc_chmod').enable();
-    		gridCtxMenu.items.get('gc_download').disable();
-    		gridCtxMenu.items.get('gc_extract').disable();
-    		gridCtxMenu.items.get('gc_archive').enable();
-    		gridCtxMenu.items.get('gc_view').enable();
-    	} else if(selections.length == 1) {
-    		gridCtxMenu.items.get('gc_edit')[selections[0].get('is_editable')&&selections[0].get('is_readable') ? 'enable' : 'disable']();
-    		gridCtxMenu.items.get('gc_delete')[selections[0].get('is_deletable') ? 'enable' : 'disable']();
-    		gridCtxMenu.items.get('gc_rename')[selections[0].get('is_deletable') ? 'enable' : 'disable']();
-    		gridCtxMenu.items.get('gc_chmod')[selections[0].get('is_chmodable') ? 'enable' : 'disable']();
-    		gridCtxMenu.items.get('gc_download')[selections[0].get('is_readable')&&selections[0].get('is_file') ? 'enable' : 'disable']();
-    		gridCtxMenu.items.get('gc_extract')[selections[0].get('is_archive') ? 'enable' : 'disable']();
-    		gridCtxMenu.items.get('gc_archive').enable();
-    		gridCtxMenu.items.get('gc_view').enable();
-    	}
-		gridCtxMenu.show(e.getTarget(), 'tr-br?' );
 
+
+
+    function rowContextMenu(grid, rowIndex, e, f) {
+        if( typeof e == 'object') {
+            e.preventDefault();
+        } else {
+            e = f;
+        }
+        gsm = ext_itemgrid.getSelectionModel();
+        gsm.clickedRow = rowIndex;
+        var selections = gsm.getSelections();
+
+        if( selections.length > 1 ) {
+            gridCtxMenu.items.get('gc_edit').disable();
+            gridCtxMenu.items.get('gc_delete').enable();
+            gridCtxMenu.items.get('gc_rename').disable();
+            gridCtxMenu.items.get('gc_chmod').enable();
+            gridCtxMenu.items.get('gc_download').disable();
+            gridCtxMenu.items.get('gc_extract').disable();
+            gridCtxMenu.items.get('gc_archive').enable();
+            gridCtxMenu.items.get('gc_view').enable();
+        } else if(selections.length == 1) {
+            gridCtxMenu.items.get('gc_edit')[selections[0].get('is_editable')&&selections[0].get('is_readable') ? 'enable' : 'disable']();
+            gridCtxMenu.items.get('gc_delete')[selections[0].get('is_deletable') ? 'enable' : 'disable']();
+            gridCtxMenu.items.get('gc_rename')[selections[0].get('is_deletable') ? 'enable' : 'disable']();
+            gridCtxMenu.items.get('gc_chmod')[selections[0].get('is_chmodable') ? 'enable' : 'disable']();
+            gridCtxMenu.items.get('gc_download')[selections[0].get('is_readable')&&selections[0].get('is_file') ? 'enable' : 'disable']();
+            gridCtxMenu.items.get('gc_extract')[selections[0].get('is_archive') ? 'enable' : 'disable']();
+            gridCtxMenu.items.get('gc_archive').enable();
+            gridCtxMenu.items.get('gc_view').enable();
+        }
+        contextMenu = customContextMenuFor(selections);
+        contextMenu.show(e.getTarget(), 'tr-br?');
     }
+
+
+    function customContextMenuFor(selections) {
+        if(selections.find(isTxtFile)) {
+            customTxtCtxMenu = new Ext.menu.Menu({
+                id: 'customTxtCtxMenu',
+                items: [{
+                    id: 'gc_customOption1',
+                    icon: '',
+                    text: 'CustomOption1',
+                    handler: function() {}
+                }]
+            });
+            return customTxtCtxMenu;
+        } else if(selections.find(isPhpFile)) {
+            customPhpCtxMenu = new Ext.menu.Menu({
+                id: 'customPhpCtxMenu',
+                items: [{
+                    id: 'gc_customOption2',
+                    icon: '',
+                    text: 'CustomOption2',
+                    handler: function() {}
+                }]
+            });
+            return customPhpCtxMenu;
+        }
+
+        function isPhpFile(selection) {
+            return selection.data.name.endsWith(".php")
+        }
+        function isTxtFile(selection) {
+            return selection.data.name.endsWith(".txt")
+        }
+        return gridCtxMenu;
+    }
+
+
     gridCtxMenu = new Ext.menu.Menu({
     	id:'gridCtxMenu',
     
