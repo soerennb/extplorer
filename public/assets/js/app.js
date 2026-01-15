@@ -69,15 +69,17 @@ const app = createApp({
         });
 
         const emptyStateTitle = computed(() => {
-            if (store.isTrashMode) return i18n.t('trash_empty') || 'Trash is Empty';
-            if (store.searchQuery) return i18n.t('no_results') || 'No Results Found';
-            return i18n.t('empty_dir') || 'Empty Directory';
+            const getT = (k, def) => { const v = i18n.t(k); return v === k ? def : v; };
+            if (store.isTrashMode) return getT('trash_empty', 'Trash is Empty');
+            if (store.searchQuery) return getT('no_results', 'No Results Found');
+            return getT('empty_dir', 'Empty Directory');
         });
 
         const emptyStateDescription = computed(() => {
-            if (store.isTrashMode) return i18n.t('trash_empty_desc') || 'Items moved to the trash will be deleted permanently after 30 days.';
-            if (store.searchQuery) return i18n.t('no_results_desc') || 'Try adjusting your search terms to find what you are looking for.';
-            return i18n.t('empty_dir_desc') || 'This folder is empty. Start by adding new content.';
+            const getT = (k, def) => { const v = i18n.t(k); return v === k ? def : v; };
+            if (store.isTrashMode) return getT('trash_empty_desc', 'Items moved to the trash will be deleted permanently after 30 days.');
+            if (store.searchQuery) return getT('no_results_desc', 'Try adjusting your search terms to find what you are looking for.');
+            return getT('empty_dir_desc', 'This folder is empty. Start by adding new content.');
         });
 
         // --- Helpers ---

@@ -4,7 +4,8 @@ const i18n = Vue.reactive({
     
     async load(locale) {
         try {
-            const res = await fetch(`${baseUrl}assets/i18n/${locale}.json`);
+            const v = window.appVersion || Date.now();
+            const res = await fetch(`${baseUrl}assets/i18n/${locale}.json?v=${v}`);
             this.messages = await res.json();
             this.locale = locale;
         } catch(e) {
