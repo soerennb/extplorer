@@ -381,39 +381,39 @@
                 </div>
 
                 <div v-else>
-                    <div :class="containerClass">
-                        <div v-if="filteredFiles.length === 0" class="d-flex flex-column align-items-center justify-content-center w-100 text-muted py-5 my-5" style="min-height: 50vh;">
-                            <!-- Icon with background circle -->
-                            <div class="bg-body-secondary rounded-circle d-flex align-items-center justify-content-center mb-4" style="width: 120px; height: 120px;">
-                                <i :class="emptyStateIcon" style="font-size: 3.5rem; opacity: 0.5;"></i>
-                            </div>
-                            
-                            <!-- Title -->
-                            <h4 class="fw-normal mb-3">{{ emptyStateTitle }}</h4>
-                            
-                            <!-- Subtitle/Description -->
-                            <p class="mb-5 text-center px-4" style="max-width: 450px; line-height: 1.6;">
-                                {{ emptyStateDescription }}
-                            </p>
+                    <div v-if="filteredFiles.length === 0" class="d-flex flex-column align-items-center justify-content-center w-100 text-muted py-5 my-5" style="min-height: 50vh;">
+                        <!-- Icon with background circle -->
+                        <div class="bg-body-secondary rounded-circle d-flex align-items-center justify-content-center mb-4" style="width: 120px; height: 120px;">
+                            <i :class="emptyStateIcon" style="font-size: 3.5rem; opacity: 0.5;"></i>
+                        </div>
+                        
+                        <!-- Title -->
+                        <h4 class="fw-normal mb-3">{{ emptyStateTitle }}</h4>
+                        
+                        <!-- Subtitle/Description -->
+                        <p class="mb-5 text-center px-4" style="max-width: 450px; line-height: 1.6;">
+                            {{ emptyStateDescription }}
+                        </p>
 
-                            <!-- CTAs (only for normal directory) -->
-                            <div v-if="!store.isTrashMode && !store.searchQuery" class="d-flex gap-2">
-                                <button class="btn btn-primary btn-sm px-3" @click="createFolder">
-                                    <i class="ri-folder-add-line me-1"></i> {{ t('new_folder') }}
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm px-3" @click="uploadFile">
-                                    <i class="ri-upload-cloud-2-line me-1"></i> {{ t('upload') }}
-                                </button>
-                            </div>
-                            
-                            <!-- CTA for Search (Clear) -->
-                            <button v-if="store.searchQuery" class="btn btn-outline-primary btn-sm px-3" @click="store.searchQuery = ''; store.performSearch('')">
-                                <i class="ri-close-circle-line me-1"></i> Clear Search
+                        <!-- CTAs (only for normal directory) -->
+                        <div v-if="!store.isTrashMode && !store.searchQuery" class="d-flex gap-2">
+                            <button class="btn btn-primary btn-sm px-3" @click="createFolder">
+                                <i class="ri-folder-add-line me-1"></i> {{ t('new_folder') }}
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm px-3" @click="uploadFile">
+                                <i class="ri-upload-cloud-2-line me-1"></i> {{ t('upload') }}
                             </button>
                         </div>
+                        
+                        <!-- CTA for Search (Clear) -->
+                        <button v-if="store.searchQuery" class="btn btn-outline-primary btn-sm px-3" @click="store.searchQuery = ''; store.performSearch('')">
+                            <i class="ri-close-circle-line me-1"></i> Clear Search
+                        </button>
+                    </div>
 
+                    <div v-else :class="containerClass">
                         <!-- Header for List View -->
-                        <div v-if="store.viewMode === 'list' && store.files.length > 0" class="d-flex text-muted border-bottom px-3 py-2 small fw-bold user-select-none w-100">
+                        <div v-if="store.viewMode === 'list'" class="d-flex text-muted border-bottom px-3 py-2 small fw-bold user-select-none w-100">
                             <div class="list-view-header-spacer"></div>
                             <div class="flex-grow-1 cursor-pointer" @click="setSort('name')">
                                 {{ t('name') }}
