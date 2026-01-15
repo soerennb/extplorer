@@ -16,45 +16,9 @@ class ApiController extends BaseController
     public function __construct()
     {
         $conn = session('connection') ?? ['mode' => 'local'];
-
-        if ($conn['mode'] === 'ftp') {
-            $this->fs = new \App\Services\VFS\FtpAdapter(
-                $conn['host'],
-                $conn['user'],
-                $conn['pass'],
-                $conn['port']
-            );
-        } else if ($conn['mode'] === 'sftp') {
-            $this->fs = new \App\Services\VFS\Ssh2Adapter(
-                $conn['host'],
-                $conn['user'],
-                $conn['pass'],
-                $conn['port']
-            );
-        } else {
-            // Ensure root exists
-            $baseRoot = WRITEPATH . 'file_manager_root';
-            if (!is_dir($baseRoot)) {
-                mkdir($baseRoot, 0755, true);
-            }
-
-            $userHome = session('home_dir') ?: '/';
-            
-            // Sanitize userHome to prevent traversal
-            $userHome = str_replace('..', '', $userHome);
-            $userHome = trim($userHome, '/\\');
-
-            $root = $baseRoot;
-            if ($userHome) {
-                $root .= DIRECTORY_SEPARATOR . $userHome;
-            }
-
-            if (!is_dir($root)) {
-                mkdir($root, 0755, true);
-            }
-
-            $this->fs = new LocalAdapter($root);
-        }
+        $username = session('username');
+        
+        $this->fs = \App\Services\VFS\VfsFactory::createFileSystem($username, $conn);
     }
 
     public function ls()

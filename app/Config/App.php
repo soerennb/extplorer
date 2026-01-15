@@ -230,5 +230,5 @@ class App extends BaseConfig
      * Application Version
      * --------------------------------------------------------------------------
      */
-    public string $version = '3.0.0-beta.1';
+    public string $version = '3.0.0-alpha1';
 }

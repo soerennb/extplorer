@@ -29,6 +29,8 @@ eXtplorer 3 is a modern, web-based file manager application. It is the successor
 *   **Services:**
     *   **VFS (Virtual File System):** A crucial abstraction layer (`app/Services/VFS/IFileSystem.php`).
     *   **Adapters:** `LocalAdapter`, `FtpAdapter`, `Ssh2Adapter`.
+    *   **VirtualAdapter:** Implements a composite filesystem allowing "Mount Points" (e.g., `/Home`, `/Shared`).
+    *   **VfsFactory:** Factory class to instantiate the correct VFS stack (Virtual or Remote) based on user session.
     *   **Rule:** **NEVER** use native PHP file functions (`fopen`, `scandir`) directly in Controllers to manage user files. Always use the VFS service.
 
 ### Security Mandate
