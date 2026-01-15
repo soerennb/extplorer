@@ -36,6 +36,7 @@ cp -r vendor ${BUILD_DIR}/
 cp LICENSE ${BUILD_DIR}/
 cp README.md ${BUILD_DIR}/
 cp composer.json ${BUILD_DIR}/
+cp .htaccess ${BUILD_DIR}/
 
 # 4. Create necessary writable structure
 mkdir -p ${BUILD_DIR}/writable/cache/thumbs
@@ -48,8 +49,7 @@ mkdir -p ${BUILD_DIR}/writable/trash
 touch ${BUILD_DIR}/writable/users.json
 echo "[]" > ${BUILD_DIR}/writable/users.json
 
-# Copy .htaccess to root if needed (CI4 usually uses public/ as root)
-cp public/.htaccess ${BUILD_DIR}/.htaccess 2>/dev/null || true
+# Copy index.php to root if needed (CI4 usually uses public/ as root)
 cp public/index.php ${BUILD_DIR}/index.php 2>/dev/null || true
 
 # 5. Create archives

@@ -39,7 +39,7 @@ jobs:
           cp -r app release/
           cp -r public release/
           cp -r vendor release/
-          cp LICENSE README.md release/
+          cp LICENSE README.md .htaccess release/
           cd release && zip -r ../eXtplorer-$VERSION-release.zip .
 
       - name: Release
