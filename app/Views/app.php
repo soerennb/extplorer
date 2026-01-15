@@ -382,17 +382,17 @@
 
                 <div v-else>
                     <div :class="containerClass">
-                        <div v-if="filteredFiles.length === 0" class="d-flex flex-column align-items-center justify-content-center w-100 h-100 text-muted" style="min-height: 400px;">
+                        <div v-if="filteredFiles.length === 0" class="d-flex flex-column align-items-center justify-content-center w-100 text-muted py-5 my-5" style="min-height: 50vh;">
                             <!-- Icon with background circle -->
-                            <div class="bg-body-secondary rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px;">
-                                <i :class="emptyStateIcon" style="font-size: 3rem; opacity: 0.5;"></i>
+                            <div class="bg-body-secondary rounded-circle d-flex align-items-center justify-content-center mb-4" style="width: 120px; height: 120px;">
+                                <i :class="emptyStateIcon" style="font-size: 3.5rem; opacity: 0.5;"></i>
                             </div>
                             
                             <!-- Title -->
-                            <h5 class="fw-normal mb-2">{{ emptyStateTitle }}</h5>
+                            <h4 class="fw-normal mb-3">{{ emptyStateTitle }}</h4>
                             
                             <!-- Subtitle/Description -->
-                            <p class="small mb-4 text-center px-3" style="max-width: 300px;">
+                            <p class="mb-5 text-center px-4" style="max-width: 450px; line-height: 1.6;">
                                 {{ emptyStateDescription }}
                             </p>
 
