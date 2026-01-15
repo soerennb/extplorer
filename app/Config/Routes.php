@@ -10,6 +10,9 @@ $routes->get('login', 'Login::index');
 $routes->post('login/auth', 'Login::auth');
 $routes->get('logout', 'Login::logout');
 
+$routes->get('install', 'Install::index');
+$routes->post('install/create', 'Install::createAdmin');
+
 $routes->add('dav', 'DavController::index');
 $routes->add('dav/(:any)', 'DavController::index/$1');
 

@@ -35,6 +35,7 @@ class Filters extends BaseFilters
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
         'auth'          => \App\Filters\AuthFilter::class,
+        'install'       => \App\Filters\InstallFilter::class,
     ];
 
     /**
@@ -73,10 +74,11 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'install',
             // 'honeypot',
-            'csrf' => ['except' => ['dav', 'dav/*']],
+            'csrf' => ['except' => ['dav', 'dav/*', 'install/*']],
             'invalidchars',
-            'auth' => ['except' => ['login', 'login/*', 'assets/*', 'dav', 'dav/*']],
+            'auth' => ['except' => ['login', 'login/*', 'assets/*', 'dav', 'dav/*', 'install', 'install/*']],
         ],
         'after' => [
             // 'honeypot',

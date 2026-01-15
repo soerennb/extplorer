@@ -33,7 +33,7 @@ echo "Copying files..."
 cp -r app ${BUILD_DIR}/
 cp -r public ${BUILD_DIR}/
 cp -r vendor ${BUILD_DIR}/
-cp LICENSE ${BUILD_DIR}/
+cp LICENSE.md ${BUILD_DIR}/
 cp README.md ${BUILD_DIR}/
 cp composer.json ${BUILD_DIR}/
 cp .htaccess ${BUILD_DIR}/
