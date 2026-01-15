@@ -1,0 +1,35 @@
+server {
+    listen 80;
+    server_name example.com;
+    
+    # Ideally, point your root to the public/ directory.
+    # This automatically protects app/, writable/, vendor/ etc. as they are one level up.
+    root /var/www/html/extplorer3/public;
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # Pass PHP scripts to FastCGI server
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        
+        # With php-fpm (or other unix sockets):
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        # With php-cgi (or other tcp sockets):
+        # fastcgi_pass 127.0.0.1:9000;
+    }
+
+    # Security: Deny access to hidden files (except .well-known)
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+
+    # Security: Explicitly deny access to sensitive folders/files if root is NOT set to /public
+    # This is a fallback measure.
+    location ~ ^/(app|writable|vendor|tests|build|spark|composer\.json|composer\.lock|README\.md|LICENSE|\.env|\.git) {
+        deny all;
+        return 404;
+    }
+}

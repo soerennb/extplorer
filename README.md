@@ -40,7 +40,10 @@ eXtplorer 3 is designed to be deployed as a single, self-contained bundle.
 1.  **Download:** Grab the latest release ZIP from the [GitHub Releases](https://github.com/soerennb/extplorer/releases) page.
 2.  **Upload:** Extract the contents to a directory on your web server.
 3.  **Permissions:** Ensure the `writable/` directory has write permissions for the web server user.
-4.  **Access:** Navigate to the URL in your browser.
+4.  **Web Server Configuration:**
+    *   **Apache:** Works out-of-the-box via the included `.htaccess` files.
+    *   **Nginx:** Refer to the included `nginx.conf.example` for configuration.
+5.  **Access:** Navigate to the URL in your browser.
 
 ## 🛠 Development & Building
 

@@ -37,6 +37,7 @@ cp LICENSE ${BUILD_DIR}/
 cp README.md ${BUILD_DIR}/
 cp composer.json ${BUILD_DIR}/
 cp .htaccess ${BUILD_DIR}/
+cp nginx.conf.example ${BUILD_DIR}/
 
 # 4. Create necessary writable structure
 mkdir -p ${BUILD_DIR}/writable/cache/thumbs
