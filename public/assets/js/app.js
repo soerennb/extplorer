@@ -62,6 +62,24 @@ const app = createApp({
 
         const containerClass = computed(() => store.viewMode === 'grid' ? 'grid-view' : 'list-view');
 
+        const emptyStateIcon = computed(() => {
+            if (store.isTrashMode) return 'ri-delete-bin-7-line';
+            if (store.searchQuery) return 'ri-search-2-line';
+            return 'ri-folder-add-line';
+        });
+
+        const emptyStateTitle = computed(() => {
+            if (store.isTrashMode) return i18n.t('trash_empty') || 'Trash is Empty';
+            if (store.searchQuery) return i18n.t('no_results') || 'No Results Found';
+            return i18n.t('empty_dir') || 'Empty Directory';
+        });
+
+        const emptyStateDescription = computed(() => {
+            if (store.isTrashMode) return i18n.t('trash_empty_desc') || 'Items moved to the trash will be deleted permanently after 30 days.';
+            if (store.searchQuery) return i18n.t('no_results_desc') || 'Try adjusting your search terms to find what you are looking for.';
+            return i18n.t('empty_dir_desc') || 'This folder is empty. Start by adding new content.';
+        });
+
         // --- Helpers ---
         const isImage = (f) => f.type !== 'dir' && ['jpg','jpeg','png','gif','webp','svg'].includes(f.extension?.toLowerCase());
         const isArchive = (f) => f.type !== 'dir' && ['zip','tar','gz'].includes(f.extension?.toLowerCase());
@@ -650,6 +668,7 @@ const app = createApp({
         return {
             store, i18n, t: (k, p) => i18n.t(k, p),
             goUp, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles,
+            emptyStateIcon, emptyStateTitle, emptyStateDescription,
             isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal,
             contextMenu, showContextMenu, hideContextMenu, cmAction,
             previewState, nextPreview, prevPreview, showWebDav, copyWebDavUrl, webDavUrl,
