@@ -27,6 +27,7 @@ jobs:
 
       - name: Create Archive
         run: |
+          VERSION=$(grep 'public string $version' app/Config/App.php | sed -E "s/.*= '(.+)';/\1/")
           mkdir -p release/writable/cache/thumbs
           mkdir -p release/writable/logs
           mkdir -p release/writable/session
@@ -37,11 +38,11 @@ jobs:
           cp -r public release/
           cp -r vendor release/
           cp LICENSE README.md release/
-          cd release && zip -r ../extplorer3-release.zip .
+          cd release && zip -r ../eXtplorer-$VERSION-release.zip .
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: extplorer3-release.zip
+          files: eXtplorer-*-release.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
