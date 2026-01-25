@@ -7,7 +7,8 @@ const app = createApp({
         UserProfile,
         ShareModal,
         UploadModal,
-        FileHistoryModal
+        FileHistoryModal,
+        TransferModal
     },
     setup() {
         const editorFile = ref(null);
@@ -17,6 +18,7 @@ const app = createApp({
         const shareModal = ref(null);
         const uploadModal = ref(null);
         const fileHistoryModal = ref(null);
+        const transferModal = ref(null);
         const contextMenu = Vue.reactive({ visible: false, x: 0, y: 0, file: null });
         const previewState = Vue.reactive({ src: '', index: 0, list: [], type: '', filename: '' });
         const theme = ref(localStorage.getItem('extplorer_theme') || 'auto');
@@ -458,6 +460,7 @@ const app = createApp({
         // --- Remote/Auth ---
         const openAdmin = () => { if (userAdmin.value) userAdmin.value.open(); };
         const openProfile = () => { if (userProfile.value) userProfile.value.open(); };
+        const openTransfer = () => { if (transferModal.value) transferModal.value.open(); };
         const showWebDav = () => webdavModal.show();
         const copyWebDavUrl = () => {
             const i = document.getElementById('webdav_url_input'); i.select(); document.execCommand('copy');
@@ -671,7 +674,7 @@ const app = createApp({
             store, i18n, t: (k, p) => i18n.t(k, p),
             goUp, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles,
             emptyStateIcon, emptyStateTitle, emptyStateDescription,
-            isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal,
+            isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer,
             contextMenu, showContextMenu, hideContextMenu, cmAction,
             previewState, nextPreview, prevPreview, showWebDav, copyWebDavUrl, webDavUrl,
             onDragStart, onDragOver, onDragLeave, onDrop,

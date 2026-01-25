@@ -24,10 +24,70 @@ const UserAdmin = {
                         <li class="nav-item">
                             <a class="nav-link" :class="{active: tab === 'system'}" href="#" @click.prevent="loadSystemInfo">System Info</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" :class="{active: tab === 'settings'}" href="#" @click.prevent="loadSettings">Settings</a>
+                        </li>
                     </ul>
 
                     <div v-if="error" class="alert alert-danger">{{ error }}</div>
                     
+                    <!-- Settings Tab -->
+                    <div v-if="tab === 'settings'">
+                        <div v-if="!settings" class="text-center text-muted">Loading...</div>
+                        <div v-else>
+                            <form @submit.prevent="saveSettings">
+                                <h6 class="border-bottom pb-2 mb-3">Email Configuration (SMTP)</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-8">
+                                        <label class="form-label small fw-bold">SMTP Host</label>
+                                        <input type="text" class="form-control form-control-sm" v-model="settings.smtp_host" placeholder="smtp.example.com">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">Port</label>
+                                        <input type="number" class="form-control form-control-sm" v-model="settings.smtp_port" placeholder="587">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Username</label>
+                                        <input type="text" class="form-control form-control-sm" v-model="settings.smtp_user">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Password</label>
+                                        <input type="password" class="form-control form-control-sm" v-model="settings.smtp_pass" placeholder="********">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">Encryption</label>
+                                        <select class="form-select form-select-sm" v-model="settings.smtp_crypto">
+                                            <option value="tls">TLS</option>
+                                            <option value="ssl">SSL</option>
+                                            <option value="">None</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">From Email</label>
+                                        <input type="email" class="form-control form-control-sm" v-model="settings.email_from">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">From Name</label>
+                                        <input type="text" class="form-control form-control-sm" v-model="settings.email_from_name">
+                                    </div>
+                                </div>
+                                
+                                <h6 class="border-bottom pb-2 mb-3 mt-4">Transfers</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Default Expiry (Days)</label>
+                                        <input type="number" class="form-control form-control-sm" v-model="settings.default_transfer_expiry">
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 pt-3 border-top text-end">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm me-2" @click="testEmail">Send Test Email</button>
+                                    <button type="submit" class="btn btn-primary btn-sm">Save Settings</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
                     <!-- Users Tab -->
                     <div v-if="tab === 'users'">
                         <table class="table table-striped table-hover small">
@@ -266,6 +326,7 @@ const UserAdmin = {
             rolesList: {},
             logs: [],
             system: null,
+            settings: null,
             error: null,
             editingUser: null,
             editingGroup: null,
@@ -307,6 +368,25 @@ const UserAdmin = {
             if (switchTab) this.tab = 'system';
             if (this.system) return;
             try { this.system = await Api.get('system'); } catch (e) { this.error = e.message; }
+        },
+        async loadSettings(switchTab = true) {
+            if (switchTab) this.tab = 'settings';
+            try { this.settings = await Api.get('settings'); } catch (e) { this.error = e.message; }
+        },
+        async saveSettings() {
+             try {
+                 await Api.post('settings', this.settings);
+                 alert('Settings Saved');
+             } catch(e) { this.error = e.message; }
+        },
+        async testEmail() {
+             const email = prompt("Enter email to send test to:");
+             if(email) {
+                 try {
+                     await Api.post('settings/test-email', {email});
+                     alert('Test email sent!');
+                 } catch(e) { alert('Failed: ' + e.message); }
+             }
         },
         
         loadLogsTab() { this.tab = 'logs'; this.loadLogs(); },

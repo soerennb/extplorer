@@ -11,22 +11,23 @@ class InstallFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         // Check if WRITEPATH is writable
-        // We can't really do much if it's not, but let's try to handle it.
-        $writableError = !is_writable(WRITEPATH) || !is_writable(WRITEPATH . 'users.json');
+        $writableError = !is_writable(WRITEPATH);
         
-        // Check if users exist
+        // Check if users exist using UserModel
         $usersExist = false;
-        $usersFile = WRITEPATH . 'users.json';
-        if (file_exists($usersFile)) {
-            $json = json_decode(file_get_contents($usersFile), true);
-            if (!empty($json) && is_array($json) && count($json) > 0) {
+        try {
+            $userModel = new \App\Models\UserModel();
+            $users = $userModel->getUsers();
+            if (!empty($users) && count($users) > 0) {
                 $usersExist = true;
             }
+        } catch (\Exception $e) {
+            // Ignore error, assume no users
         }
 
         // Determine if we are currently accessing the install page
-        $currentPath = $request->getUri()->getPath();
-        $isInstallPage = strpos($currentPath, 'install') === 0;
+        $currentPath = trim($request->getUri()->getPath(), '/');
+        $isInstallPage = ($currentPath === 'install' || strpos($currentPath, 'install/') === 0);
 
         // If not installed (writable error OR no users)
         if ($writableError || !$usersExist) {

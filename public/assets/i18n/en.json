@@ -118,5 +118,6 @@
     "file_extensions": "File Extensions",
     "allowed": "Allowed",
     "blocked_user": "Blocked (User)",
-    "blocked_system": "Blocked (System)"
+    "blocked_system": "Blocked (System)",
+    "send_files": "Send Files"
 }

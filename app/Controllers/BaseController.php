@@ -32,14 +32,31 @@ abstract class BaseController extends Controller
      */
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
     {
-        // Load here all helpers you want to be available in your controllers that extend BaseController.
-        // Caution: Do not put the this below the parent::initController() call below.
-        $this->helpers = ['form', 'url', 'auth'];
-
-        // Caution: Do not edit this line.
+        // Do Not Edit This Line
         parent::initController($request, $response, $logger);
 
         // Preload any models, libraries, etc, here.
-        // $this->session = service('session');
+
+        // E.g.: $this->session = \Config\Services::session();
+        
+        // --- Poor Man's Cron (Auto Cleanup) ---
+        // Run once per hour on a random request
+        $cronFile = WRITEPATH . 'last_cleanup.txt';
+        $now = time();
+        $lastRun = file_exists($cronFile) ? (int)file_get_contents($cronFile) : 0;
+        
+        // 3600 seconds = 1 hour
+        if ($now - $lastRun > 3600) {
+            // Update timestamp first to prevent race conditions (simple lock)
+            file_put_contents($cronFile, $now);
+            
+            // Run logic (silently catch errors)
+            try {
+                $service = new \App\Services\ShareService();
+                $service->processCleanup();
+            } catch (\Exception $e) {
+                log_message('error', 'Auto Cleanup Failed: ' . $e->getMessage());
+            }
+        }
     }
 }

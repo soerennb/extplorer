@@ -12,21 +12,52 @@ class UserModel
 
     public function __construct()
     {
-        $this->usersFile = WRITEPATH . 'users.json';
-        $this->rolesFile = WRITEPATH . 'roles.json';
-        $this->groupsFile = WRITEPATH . 'groups.json';
+        $this->usersFile = WRITEPATH . 'users.php';
+        $this->rolesFile = WRITEPATH . 'roles.php';
+        $this->groupsFile = WRITEPATH . 'groups.php';
 
-        if (!file_exists($this->usersFile)) file_put_contents($this->usersFile, json_encode([]));
-        if (!file_exists($this->rolesFile)) file_put_contents($this->rolesFile, json_encode([]));
-        if (!file_exists($this->groupsFile)) file_put_contents($this->groupsFile, json_encode([]));
+        $this->migrateFile(WRITEPATH . 'users.json', $this->usersFile);
+        $this->migrateFile(WRITEPATH . 'roles.json', $this->rolesFile);
+        $this->migrateFile(WRITEPATH . 'groups.json', $this->groupsFile);
+
+        if (!file_exists($this->usersFile)) $this->saveData($this->usersFile, []);
+        if (!file_exists($this->rolesFile)) $this->saveData($this->rolesFile, []);
+        if (!file_exists($this->groupsFile)) $this->saveData($this->groupsFile, []);
+    }
+
+    private function migrateFile($oldPath, $newPath)
+    {
+        if (file_exists($oldPath) && !file_exists($newPath)) {
+            $data = json_decode(file_get_contents($oldPath), true) ?? [];
+            $this->saveData($newPath, $data);
+            unlink($oldPath);
+        }
+    }
+
+    private function loadData($path)
+    {
+        if (!file_exists($path)) return [];
+        $content = file_get_contents($path);
+        if (strpos($content, '<?php') === 0) {
+            // Remove the first line safely
+            $content = substr($content, strpos($content, "\n") + 1);
+        }
+        return json_decode($content, true) ?? [];
+    }
+
+    private function saveData($path, $data)
+    {
+        $content = '<?php die("Access denied"); ?>' . PHP_EOL . json_encode($data, JSON_PRETTY_PRINT);
+        file_put_contents($path, $content);
     }
 
     // --- Users ---
 
     public function getUsers(): array
     {
-        return json_decode(file_get_contents($this->usersFile), true) ?? [];
+        return $this->loadData($this->usersFile);
     }
+
 
     public function getUser(string $username): ?array
     {
@@ -50,7 +81,7 @@ class UserModel
 
     public function saveUsers(array $users): void
     {
-        file_put_contents($this->usersFile, json_encode($users, JSON_PRETTY_PRINT));
+        $this->saveData($this->usersFile, $users);
     }
 
     public function addUser(string $username, string $password, string $role = 'user', string $homeDir = '/', array $groups = [], string $allowedExt = '', string $blockedExt = ''): bool
@@ -167,24 +198,24 @@ class UserModel
 
     public function getRoles(): array
     {
-        return json_decode(file_get_contents($this->rolesFile), true) ?? [];
+        return $this->loadData($this->rolesFile);
     }
 
     public function saveRoles(array $roles): void
     {
-        file_put_contents($this->rolesFile, json_encode($roles, JSON_PRETTY_PRINT));
+        $this->saveData($this->rolesFile, $roles);
     }
 
     // --- Groups ---
 
     public function getGroups(): array
     {
-        return json_decode(file_get_contents($this->groupsFile), true) ?? [];
+        return $this->loadData($this->groupsFile);
     }
 
     public function saveGroups(array $groups): void
     {
-        file_put_contents($this->groupsFile, json_encode($groups, JSON_PRETTY_PRINT));
+        $this->saveData($this->groupsFile, $groups);
     }
 
     // --- Resolution ---

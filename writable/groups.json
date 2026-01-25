@@ -1,5 +1,0 @@
-{
-    "Administrators": ["admin"],
-    "Standard Users": ["user"],
-    "Guests": ["viewer"]
-}

@@ -20,25 +20,45 @@ class TrashService
         }
 
         // Ensure index file exists
+        $this->migrateIndex();
         if (!file_exists($this->getIndexFile())) {
-            file_put_contents($this->getIndexFile(), json_encode([]));
+            $this->saveIndex([]);
+        }
+    }
+
+    private function migrateIndex()
+    {
+        $oldFile = $this->trashRoot . DIRECTORY_SEPARATOR . 'index.json';
+        $newFile = $this->trashRoot . DIRECTORY_SEPARATOR . 'index.php';
+        
+        if (file_exists($oldFile) && !file_exists($newFile)) {
+            $data = json_decode(file_get_contents($oldFile), true) ?? [];
+            // Save to new format
+            $content = '<?php die("Access denied"); ?>' . PHP_EOL . json_encode($data, JSON_PRETTY_PRINT);
+            file_put_contents($newFile, $content);
+            unlink($oldFile);
         }
     }
 
     private function getIndexFile(): string
     {
-        return $this->trashRoot . DIRECTORY_SEPARATOR . 'index.json';
+        return $this->trashRoot . DIRECTORY_SEPARATOR . 'index.php';
     }
 
     private function getIndex(): array
     {
+        if (!file_exists($this->getIndexFile())) return [];
         $content = file_get_contents($this->getIndexFile());
+        if (strpos($content, '<?php') === 0) {
+            $content = str_replace('<?php die("Access denied"); ?>' . PHP_EOL, '', $content);
+        }
         return json_decode($content, true) ?? [];
     }
 
     private function saveIndex(array $index): void
     {
-        file_put_contents($this->getIndexFile(), json_encode($index, JSON_PRETTY_PRINT));
+        $content = '<?php die("Access denied"); ?>' . PHP_EOL . json_encode($index, JSON_PRETTY_PRINT);
+        file_put_contents($this->getIndexFile(), $content);
     }
 
     /**

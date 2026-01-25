@@ -1,5 +1,0 @@
-{
-    "admin": ["*", "admin_users"],
-    "user": ["read", "write", "upload", "delete", "archive", "extract", "chmod"],
-    "viewer": ["read"]
-}

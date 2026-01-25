@@ -51,20 +51,19 @@ class Install extends BaseController
         $userModel = new UserModel();
 
         // 1. Initialize Roles if missing
-        $rolesFile = WRITEPATH . 'roles.json';
-        $roles = [
-            'admin' => ['*'],
-            'user'  => ['read', 'write', 'upload', 'delete', 'rename', 'archive', 'extract', 'chmod']
-        ];
-        // Only write if really empty or missing permissions
-        if (!file_exists($rolesFile) || filesize($rolesFile) < 10) {
-            file_put_contents($rolesFile, json_encode($roles, JSON_PRETTY_PRINT));
+        $roles = $userModel->getRoles();
+        if (empty($roles)) {
+            $defaultRoles = [
+                'admin' => ['*'],
+                'user'  => ['read', 'write', 'upload', 'delete', 'rename', 'archive', 'extract', 'chmod']
+            ];
+            $userModel->saveRoles($defaultRoles);
         }
 
         // 2. Initialize Groups
-        $groupsFile = WRITEPATH . 'groups.json';
-        if (!file_exists($groupsFile) || filesize($groupsFile) < 10) {
-            file_put_contents($groupsFile, json_encode(['Administrators' => ['admin']], JSON_PRETTY_PRINT));
+        $groups = $userModel->getGroups();
+        if (empty($groups)) {
+            $userModel->saveGroups(['Administrators' => ['admin']]);
         }
 
         // 3. Create Admin User

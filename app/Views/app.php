@@ -225,6 +225,7 @@
         <share-modal ref="shareModal"></share-modal>
         <upload-modal ref="uploadModal"></upload-modal>
         <file-history-modal ref="fileHistoryModal"></file-history-modal>
+        <transfer-modal ref="transferModal"></transfer-modal>
 
         <!-- Toolbar -->
         <div class="bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap">
@@ -322,9 +323,12 @@
                  </div>
                  <div class="offcanvas-body d-flex flex-column p-0">
                      <!-- Connect -->
-                     <div class="mb-4 px-2">
-                         <button class="btn btn-outline-primary btn-sm w-100" @click="showWebDav">
-                             <i class="ri-link me-1"></i> {{ t('webdav_connect') }}
+                     <div class="mb-4 px-2 d-flex gap-2">
+                         <button class="btn btn-primary btn-sm flex-fill" @click="openTransfer">
+                             <i class="ri-send-plane-fill me-1"></i> {{ t('send_files') || 'Send Files' }}
+                         </button>
+                         <button class="btn btn-outline-primary btn-sm" @click="showWebDav" title="WebDAV Connect">
+                             <i class="ri-link"></i>
                          </button>
                      </div>
 
@@ -731,6 +735,7 @@
     <script src="<?= base_url('assets/js/components/ShareModal.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/UploadModal.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/FileHistoryModal.js') ?>"></script>
+    <script src="<?= base_url('assets/js/components/TransferModal.js') ?>"></script>
     <script src="<?= base_url('assets/js/app.js?v=' . time()) ?>"></script>
 </body>
 </html>

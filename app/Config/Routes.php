@@ -69,8 +69,18 @@ $routes->group('api', function($routes) {
     $routes->post('groups', 'UserAdminController::saveGroup');
     $routes->delete('groups/(:segment)', 'UserAdminController::deleteGroup/$1');
 
+    $routes->get('settings', 'SettingsController::index');
+    $routes->post('settings', 'SettingsController::update');
+    $routes->post('settings/test-email', 'SettingsController::testEmail');
+
     $routes->get('system', 'UserAdminController::systemInfo');
     $routes->get('logs', 'UserAdminController::getLogs');
+
+    // Transfer
+    $routes->post('transfer/upload', 'TransferController::upload');
+    $routes->post('transfer/send', 'TransferController::send');
+    $routes->get('transfer/history', 'TransferController::history');
+    $routes->delete('transfer/(:segment)', 'TransferController::delete/$1');
 
     // Profile
     $routes->get('profile/details', 'ProfileController::getDetails');

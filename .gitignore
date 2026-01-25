@@ -131,9 +131,17 @@ _modules/*
 builds/
 writable/file_manager_root/*
 writable/users.json
+writable/users.php
 writable/shares.json
+writable/shares.php
 writable/trash/*
 writable/versions/*
 writable/activity_logs.json
+writable/activity_logs.php
+writable/groups.json
+writable/groups.php
+writable/roles.json
+writable/roles.php
+writable/settings.php
 composer.phar
 temp_ci4/

@@ -10,26 +10,40 @@ class ShareService
 
     public function __construct(?string $sharesFile = null)
     {
-        $this->sharesFile = $sharesFile ?? (WRITEPATH . 'shares.json');
+        $this->sharesFile = $sharesFile ?? (WRITEPATH . 'shares.php');
+        
+        // Migration
+        if (file_exists(WRITEPATH . 'shares.json') && !file_exists($this->sharesFile)) {
+            $data = json_decode(file_get_contents(WRITEPATH . 'shares.json'), true) ?? [];
+            $this->saveShares($data);
+            unlink(WRITEPATH . 'shares.json');
+        }
+
         if (!file_exists($this->sharesFile)) {
-            file_put_contents($this->sharesFile, json_encode([]));
+            $this->saveShares([]);
         }
     }
 
     private function getShares(): array
     {
-        return json_decode(file_get_contents($this->sharesFile), true) ?? [];
+        if (!file_exists($this->sharesFile)) return [];
+        $content = file_get_contents($this->sharesFile);
+        if (strpos($content, '<?php') === 0) {
+            $content = str_replace('<?php die("Access denied"); ?>' . PHP_EOL, '', $content);
+        }
+        return json_decode($content, true) ?? [];
     }
 
     private function saveShares(array $shares): void
     {
-        file_put_contents($this->sharesFile, json_encode($shares, JSON_PRETTY_PRINT));
+        $content = '<?php die("Access denied"); ?>' . PHP_EOL . json_encode($shares, JSON_PRETTY_PRINT);
+        file_put_contents($this->sharesFile, $content);
     }
 
     /**
      * Creates a new share link.
      */
-    public function createShare(string $path, string $user, ?string $password = null, ?int $expiresAt = null, string $mode = 'read'): array
+    public function createShare(string $path, string $user, ?string $password = null, ?int $expiresAt = null, string $mode = 'read', array $meta = []): array
     {
         $shares = $this->getShares();
         
@@ -51,10 +65,22 @@ class ShareService
             'downloads' => 0
         ];
 
+        // Merge extra metadata (e.g. transfer info)
+        $share = array_merge($share, $meta);
+
         $shares[$hash] = $share;
         $this->saveShares($shares);
 
         return $share;
+    }
+
+    public function incrementDownloads(string $hash): void
+    {
+        $shares = $this->getShares();
+        if (isset($shares[$hash])) {
+            $shares[$hash]['downloads'] = ($shares[$hash]['downloads'] ?? 0) + 1;
+            $this->saveShares($shares);
+        }
     }
 
     /**
@@ -86,6 +112,94 @@ class ShareService
         unset($shares[$hash]);
         $this->saveShares($shares);
         return true;
+    }
+
+    public function updateShare(string $hash, array $data): void
+    {
+        $shares = $this->getShares();
+        if (isset($shares[$hash])) {
+            $shares[$hash] = array_merge($shares[$hash], $data);
+            $this->saveShares($shares);
+        }
+    }
+
+    public function getAllShares(): array
+    {
+        return $this->getShares();
+    }
+
+    /**
+     * Processes cleanup of expired shares and sends warnings.
+     * Returns an array with stats: ['expired' => int, 'warned' => int]
+     */
+    public function processCleanup(): array
+    {
+        $shares = $this->getShares();
+        $now = time();
+        $expired = 0;
+        $warned = 0;
+        $settingsService = new SettingsService();
+        $emailService = new EmailService();
+
+        foreach ($shares as $hash => $share) {
+            // 1. Check Expiration
+            if ($share['expires_at'] && $now > $share['expires_at']) {
+                // If it is a transfer, delete physical files
+                if (isset($share['source']) && $share['source'] === 'transfer') {
+                    $dir = WRITEPATH . 'uploads/shares/' . $share['path'];
+                    if (is_dir($dir)) {
+                        $this->rrmdir($dir);
+                    }
+                }
+                unset($shares[$hash]);
+                $expired++;
+                continue;
+            }
+
+            // 2. Check Warnings (If 50% of life passed and 0 downloads)
+            if (isset($share['created_at']) && isset($share['sender_email']) && !isset($share['warning_sent'])) {
+                $life = $share['expires_at'] - $share['created_at'];
+                $age = $now - $share['created_at'];
+                
+                if ($share['downloads'] == 0 && $age > ($life / 2)) {
+                    // Send Email
+                    // Ideally call EmailService, but for now reuse logic
+                    $email = \Config\Services::email();
+                    $settings = $settingsService->getSettings();
+                    
+                    $email->setFrom($settings['email_from'], $settings['email_from_name']);
+                    $email->setTo($share['sender_email']);
+                    $email->setSubject("Your files haven't been downloaded yet");
+                    $email->setMessage("<h2>Reminder</h2><p>The files you sent '{$share['subject']}' have not been downloaded yet.</p>");
+                    
+                    if ($email->send()) {
+                        $shares[$hash]['warning_sent'] = true;
+                        $warned++;
+                    }
+                }
+            }
+        }
+
+        if ($expired > 0 || $warned > 0) {
+            $this->saveShares($shares);
+        }
+
+        return ['expired' => $expired, 'warned' => $warned];
+    }
+
+    private function rrmdir($dir) {
+        if (is_dir($dir)) {
+            $objects = scandir($dir);
+            foreach ($objects as $object) {
+                if ($object != "." && $object != "..") {
+                    if (is_dir($dir . DIRECTORY_SEPARATOR . $object) && !is_link($dir . "/" . $object))
+                        $this->rrmdir($dir . DIRECTORY_SEPARATOR . $object);
+                    else
+                        unlink($dir . DIRECTORY_SEPARATOR . $object);
+                }
+            }
+            rmdir($dir);
+        }
     }
 
     /**

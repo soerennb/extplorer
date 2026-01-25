@@ -30,6 +30,12 @@ class ShareController extends BaseController
 
         // Serve Content
         $root = WRITEPATH . 'file_manager_root/' . $share['path'];
+        
+        // Handle Transfer Source
+        if (isset($share['source']) && $share['source'] === 'transfer') {
+            $root = WRITEPATH . 'uploads/shares/' . $share['path'];
+        }
+
         if (!file_exists($root)) {
              throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Shared content missing.");
         }
@@ -82,7 +88,12 @@ class ShareController extends BaseController
             return $this->failForbidden();
         }
 
-        $fullPath = WRITEPATH . 'file_manager_root/' . $share['path'];
+        $rootBase = WRITEPATH . 'file_manager_root/';
+        if (isset($share['source']) && $share['source'] === 'transfer') {
+            $rootBase = WRITEPATH . 'uploads/shares/';
+        }
+
+        $fullPath = $rootBase . $share['path'];
         $inline = $this->request->getGet('inline');
         
         // Handle sub-path request (e.g. /s/{hash}/download?path=subfolder/file.txt)
@@ -94,6 +105,22 @@ class ShareController extends BaseController
         }
 
         if (!file_exists($fullPath)) return $this->failNotFound();
+
+        // Track Download (only for main download, not inline previews if possible, or count all?)
+        // Usually we count only "File Downloads" or "Zip Downloads". 
+        // If it is inline (preview), maybe we skip counting? 
+        // WeTransfer counts downloads. Let's count unless inline image/video.
+        if (!$inline) {
+             $service->incrementDownloads($hash);
+             
+             // Send notification if requested
+             if (isset($share['notify_download']) && $share['notify_download']) {
+                 // Check if already notified for this session to avoid spam? 
+                 // For now, simple implementation:
+                 $emailService = new \App\Services\EmailService();
+                 $emailService->sendDownloadNotification($share);
+             }
+        }
 
         if (is_dir($fullPath)) {
             // Zip directory
@@ -133,7 +160,12 @@ class ShareController extends BaseController
             return $this->failForbidden();
         }
 
-        $root = WRITEPATH . 'file_manager_root/' . $share['path'];
+        $rootBase = WRITEPATH . 'file_manager_root/';
+        if (isset($share['source']) && $share['source'] === 'transfer') {
+            $rootBase = WRITEPATH . 'uploads/shares/';
+        }
+
+        $root = $rootBase . $share['path'];
         
         // Subpath
         $subPath = $this->request->getGet('path') ?? '';
