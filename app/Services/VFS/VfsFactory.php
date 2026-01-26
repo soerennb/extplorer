@@ -85,7 +85,28 @@ class VfsFactory
                         $adapter = new LocalAdapter($mount['config']['path']);
                         $vfs->mount($mount['name'], $adapter, ['is_external' => true]);
                     }
-                    // Add FTP handling here later
+                    if ($mount['type'] === 'ftp') {
+                        $config = $mount['config'] ?? [];
+                        $adapter = new FtpAdapter(
+                            $config['host'] ?? '',
+                            $config['user'] ?? '',
+                            $config['pass'] ?? '',
+                            (int)($config['port'] ?? 21),
+                            $config['root'] ?? '/'
+                        );
+                        $vfs->mount($mount['name'], $adapter, ['is_external' => true]);
+                    }
+                    if ($mount['type'] === 'sftp' || $mount['type'] === 'ssh2') {
+                        $config = $mount['config'] ?? [];
+                        $adapter = new Ssh2Adapter(
+                            $config['host'] ?? '',
+                            $config['user'] ?? '',
+                            $config['pass'] ?? '',
+                            (int)($config['port'] ?? 22),
+                            $config['root'] ?? '/'
+                        );
+                        $vfs->mount($mount['name'], $adapter, ['is_external' => true]);
+                    }
                 } catch (\Exception $e) {
                     // Log invalid mount but don't crash
                     log_message('error', "Failed to load mount {$mount['name']}: " . $e->getMessage());

@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\VFS\FtpAdapter;
+use App\Services\VFS\Ssh2Adapter;
+
 class MountService
 {
     private string $mountsFile;
@@ -56,6 +59,7 @@ class MountService
         if (empty($name)) throw new \Exception("Invalid mount name.");
 
         // Type Validation
+        $type = strtolower($type);
         if ($type === 'local') {
             $path = trim($config['path'] ?? '');
             if ($path === '') {
@@ -102,8 +106,30 @@ class MountService
             if (!$isAllowed) {
                 throw new \Exception("Local path is not within an allowlisted mount root.");
             }
-        } elseif ($type === 'ftp') {
-            // Future validation
+        } elseif ($type === 'ftp' || $type === 'sftp') {
+            $host = trim((string)($config['host'] ?? ''));
+            $user = trim((string)($config['user'] ?? ''));
+            $pass = (string)($config['pass'] ?? '');
+            $port = (int)($config['port'] ?? ($type === 'sftp' ? 22 : 21));
+            $root = trim((string)($config['root'] ?? '/'));
+
+            if ($host === '') throw new \Exception("Remote host is required.");
+            if ($user === '') throw new \Exception("Remote username is required.");
+            if ($pass === '') throw new \Exception("Remote password is required.");
+            if ($port < 1 || $port > 65535) throw new \Exception("Remote port is invalid.");
+
+            $config['host'] = $host;
+            $config['user'] = $user;
+            $config['pass'] = $pass;
+            $config['port'] = $port;
+            $config['root'] = $root === '' ? '/' : $root;
+
+            // Validate connectivity/auth
+            if ($type === 'ftp') {
+                new FtpAdapter($host, $user, $pass, $port, $config['root']);
+            } else {
+                new Ssh2Adapter($host, $user, $pass, $port, $config['root']);
+            }
         } else {
             throw new \Exception("Unknown mount type.");
         }

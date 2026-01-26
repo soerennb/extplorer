@@ -127,7 +127,7 @@ const UserProfile = {
                                 <div v-for="mount in mounts" :key="mount.id" class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
                                         <div class="fw-bold">{{ mount.name }}</div>
-                                        <div class="small text-muted font-monospace">{{ mount.config.path }}</div>
+                                        <div class="small text-muted font-monospace">{{ mountSummary(mount) }}</div>
                                     </div>
                                     <button class="btn btn-outline-danger btn-sm" @click="removeMount(mount.id)">
                                         <i class="ri-delete-bin-line"></i>
@@ -143,13 +143,45 @@ const UserProfile = {
                                             <label class="form-label small">{{ t('mount_name') || 'Name (Folder Name)' }}</label>
                                             <input type="text" class="form-control form-control-sm" v-model="newMount.name" placeholder="e.g. Projects">
                                         </div>
-                                        <div class="col-md-8">
+                                        <div class="col-md-4">
+                                            <label class="form-label small">{{ t('mount_type') || 'Type' }}</label>
+                                            <select class="form-select form-select-sm" v-model="newMount.type">
+                                                <option value="local">{{ t('mount_type_local') || 'Local' }}</option>
+                                                <option value="ftp">{{ t('mount_type_ftp') || 'FTP' }}</option>
+                                                <option value="sftp">{{ t('mount_type_sftp') || 'SFTP' }}</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4" v-if="newMount.type === 'local'">
                                             <label class="form-label small">{{ t('mount_path') || 'Path (Local Server Path)' }}</label>
                                             <input type="text" class="form-control form-control-sm" v-model="newMount.config.path" placeholder="/absolute/path/on/server">
                                         </div>
                                     </div>
+                                    <div class="row g-2 mt-1" v-if="newMount.type !== 'local'">
+                                        <div class="col-md-6">
+                                            <label class="form-label small">{{ t('mount_host') || 'Host' }}</label>
+                                            <input type="text" class="form-control form-control-sm" v-model="newMount.config.host" placeholder="example.com">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small">{{ t('mount_port') || 'Port' }}</label>
+                                            <input type="number" class="form-control form-control-sm" v-model.number="newMount.config.port" min="1" max="65535">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small">{{ t('mount_root') || 'Root Path' }}</label>
+                                            <input type="text" class="form-control form-control-sm" v-model="newMount.config.root" placeholder="/">
+                                        </div>
+                                    </div>
+                                    <div class="row g-2 mt-1" v-if="newMount.type !== 'local'">
+                                        <div class="col-md-6">
+                                            <label class="form-label small">{{ t('mount_user') || 'Username' }}</label>
+                                            <input type="text" class="form-control form-control-sm" v-model="newMount.config.user" placeholder="user">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small">{{ t('mount_pass') || 'Password' }}</label>
+                                            <input type="password" class="form-control form-control-sm" v-model="newMount.config.pass" placeholder="••••••••">
+                                        </div>
+                                    </div>
                                     <div class="mt-3 text-end">
-                                        <button class="btn btn-primary btn-sm" @click="addMount" :disabled="!newMount.name || !newMount.config.path">{{ t('mount_add') || 'Add Mount' }}</button>
+                                        <button class="btn btn-primary btn-sm" @click="addMount" :disabled="!canSubmitMount">{{ t('mount_add') || 'Add Mount' }}</button>
                                     </div>
                                 </div>
                             </div>
@@ -161,7 +193,7 @@ const UserProfile = {
     </div>
     `,
     setup() {
-        const { ref, reactive, computed, onMounted } = Vue;
+        const { ref, reactive, computed, onMounted, watch } = Vue;
         const details = ref({});
         const loading = ref(false);
         const activeTab = ref('general');
@@ -169,7 +201,11 @@ const UserProfile = {
         const setup = reactive({ step: 0, qr: '', secret: '', code: '', recoveryCodes: [] });
         const mounts = ref([]);
         const mountsLoading = ref(false);
-        const newMount = reactive({ name: '', type: 'local', config: { path: '' } });
+        const newMount = reactive({
+            name: '',
+            type: 'local',
+            config: { path: '', host: '', port: 21, user: '', pass: '', root: '/' }
+        });
         let modalInstance = null;
 
         const canMount = computed(() => {
@@ -197,8 +233,7 @@ const UserProfile = {
         const addMount = async () => {
             try {
                 await Api.post('mounts', newMount);
-                newMount.name = '';
-                newMount.config.path = '';
+                resetNewMount();
                 await loadMounts();
                 Swal.fire(i18n.t('success'), i18n.t('mount_added'), 'success');
                 store.reload();
@@ -220,6 +255,33 @@ const UserProfile = {
                 Swal.fire('Success', 'Password updated', 'success');
                 passwordForm.new = '';
             } catch(e) { Swal.fire('Error', e.message, 'error'); }
+        };
+
+        const resetNewMount = () => {
+            newMount.name = '';
+            newMount.type = 'local';
+            newMount.config.path = '';
+            newMount.config.host = '';
+            newMount.config.port = 21;
+            newMount.config.user = '';
+            newMount.config.pass = '';
+            newMount.config.root = '/';
+        };
+
+        const canSubmitMount = computed(() => {
+            if (!newMount.name) return false;
+            if (newMount.type === 'local') {
+                return !!newMount.config.path;
+            }
+            return !!newMount.config.host && !!newMount.config.user && !!newMount.config.pass;
+        });
+
+        const mountSummary = (mount) => {
+            if (mount.type === 'local') return mount.config?.path || '';
+            const host = mount.config?.host || '';
+            const port = mount.config?.port || '';
+            const root = mount.config?.root || '/';
+            return `${(mount.type || 'remote').toUpperCase()} ${host}:${port}${root ? ' ' + root : ''}`;
         };
 
         const start2faSetup = async () => {
@@ -251,6 +313,11 @@ const UserProfile = {
             }
         };
 
+        watch(() => newMount.type, (val) => {
+            if (val === 'ftp' && (!newMount.config.port || newMount.config.port === 22)) newMount.config.port = 21;
+            if (val === 'sftp' && (!newMount.config.port || newMount.config.port === 21)) newMount.config.port = 22;
+        });
+
         const open = () => {
             loadDetails();
             if (!modalInstance) modalInstance = new bootstrap.Modal(document.getElementById('userProfileModal'));
@@ -262,6 +329,7 @@ const UserProfile = {
             activeTab, details, loading, passwordForm, setup,
             canMount, mounts, mountsLoading, newMount, loadMounts, addMount, removeMount,
             updatePassword, start2faSetup, finish2faSetup, disable2fa,
+            canSubmitMount, mountSummary,
             open, t: (k) => i18n.t(k)
         };
     }
