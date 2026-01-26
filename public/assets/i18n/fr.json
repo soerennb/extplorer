@@ -56,7 +56,8 @@
     "show_hidden": "Fichiers cachés",
     "prev": "Précédent",
     "next": "Suivant",
-    "page_info": "Page {current} sur {total}",
+  "page_info": "Page {current} sur {total}",
+  "rows_per_page": "Lignes par page",
 
     "trash": "Corbeille",
     "restore": "Restaurer",

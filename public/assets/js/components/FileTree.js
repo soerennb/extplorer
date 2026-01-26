@@ -91,7 +91,7 @@ const FileTree = {
     template: `
         <div class="file-tree-item" :class="{'tree-indent': !root}">
             <div class="d-flex align-items-center py-1 px-2 rounded tree-item-interactive" 
-                 :class="{'bg-primary text-white': isSelected, 'text-dark': !isSelected, 'bg-info-subtle': isDragOver}"
+                 :class="{'bg-primary text-white': isSelected, 'bg-info-subtle': isDragOver}"
                  @click="select"
                  @dragover="onDragOver"
                  @dragleave="onDragLeave"

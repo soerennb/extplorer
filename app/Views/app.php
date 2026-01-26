@@ -187,7 +187,8 @@
         .preview-modal-body { min-height: 400px; background: #000; }
         .preview-pdf-frame { height: 80vh; border: none; }
         .tree-indent { padding-left: 15px; }
-        .tree-item-interactive { cursor: pointer; user-select: none; }
+        .tree-item-interactive { cursor: pointer; user-select: none; color: var(--bs-body-color); }
+        .tree-item-interactive:hover { background-color: var(--bs-tertiary-bg); }
         .tree-toggle { transition: transform 0.2s; }
         .tree-folder { color: #ffc107; }
         .tree-folder-selected { color: #fff; }
@@ -207,6 +208,7 @@
         .admin-config-box { max-height: 150px; overflow-y: auto; }
         .context-menu { position: fixed; z-index: 1050; }
         .path-breadcrumb .breadcrumb-item + .breadcrumb-item::before { color: rgba(255, 255, 255, 0.6); }
+        [data-bs-theme="dark"] .file-tree-item .border-secondary-subtle { border-color: var(--bs-secondary-color) !important; }
         .progress-w-0 { width: 0%; }
         .progress-w-5 { width: 5%; }
         .progress-w-10 { width: 10%; }
@@ -517,7 +519,10 @@
                         </button>
                     </div>
 
-                    <div v-else :class="containerClass">
+                    <div v-else :class="containerClass" class="position-relative">
+                        <button v-if="store.cwd" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 shadow-sm" @click="goUp" :title="t('up_one_level') || 'Up one level'">
+                            <i class="ri-arrow-up-line"></i>
+                        </button>
                         <!-- Header for List View -->
                         <div v-if="store.viewMode === 'list'" class="list-view-header text-muted border-bottom px-3 py-2 small fw-bold user-select-none w-100">
                             <div class="list-view-header-spacer"></div>
@@ -581,21 +586,45 @@
         </div>
         
         <!-- Status Bar -->
-        <div class="bg-body-tertiary border-top px-3 py-1 small text-muted d-flex justify-content-between align-items-center">
-            <div>
+        <div class="bg-body-tertiary border-top px-3 py-2 small text-muted d-flex flex-wrap align-items-center gap-2">
+            <div class="d-flex align-items-center me-auto">
                 <span class="me-2 fw-bold text-primary">v{{ appVersion }}</span>
                 <span>{{ t('items_count', {count: store.pagination.total}) }}</span>
                 <span class="ms-2">({{ connectionMode === 'local' ? t('local_fs') : connectionMode.toUpperCase() }})</span>
             </div>
             
-            <div v-if="store.pagination.total > store.pagination.pageSize" class="d-flex align-items-center gap-3">
-                <button class="btn btn-link btn-sm p-0 text-decoration-none" :disabled="store.pagination.page <= 1" @click="changePage(-1)">
-                    <i class="ri-arrow-left-s-line"></i> {{ t('prev') }}
-                </button>
-                <span>{{ t('page_info', {current: store.pagination.page, total: Math.ceil(store.pagination.total / store.pagination.pageSize)}) }}</span>
-                <button class="btn btn-link btn-sm p-0 text-decoration-none" :disabled="store.pagination.page >= Math.ceil(store.pagination.total / store.pagination.pageSize)" @click="changePage(1)">
-                    {{ t('next') }} <i class="ri-arrow-right-s-line"></i>
-                </button>
+            <div v-if="store.pagination.total > store.pagination.pageSize" class="d-flex align-items-center gap-2 mx-auto order-2 order-md-1">
+                <nav aria-label="File list pagination">
+                    <ul class="pagination pagination-lg mb-0 flex-wrap gap-1">
+                        <li class="page-item" :class="{disabled: store.pagination.page <= 1}">
+                            <a class="page-link d-flex align-items-center" href="#" @click.prevent="changePage(-1)" aria-label="Previous page">
+                                <i class="ri-arrow-left-s-line"></i>
+                                <span class="d-none d-sm-inline ms-1">{{ t('prev') }}</span>
+                            </a>
+                        </li>
+                        <li v-for="p in paginationPages" :key="p.key" class="page-item" :class="{active: p.type === 'page' && p.number === store.pagination.page, disabled: p.type === 'ellipsis'}">
+                            <span v-if="p.type === 'ellipsis'" class="page-link">…</span>
+                            <a v-else class="page-link" href="#" @click.prevent="goToPage(p.number)">{{ p.number }}</a>
+                        </li>
+                        <li class="page-item" :class="{disabled: store.pagination.page >= totalPages}">
+                            <a class="page-link d-flex align-items-center" href="#" @click.prevent="changePage(1)" aria-label="Next page">
+                                <span class="d-none d-sm-inline me-1">{{ t('next') }}</span>
+                                <i class="ri-arrow-right-s-line"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                <span class="text-muted small d-none d-md-inline">{{ t('page_info', {current: store.pagination.page, total: totalPages}) }}</span>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 ms-auto order-1 order-md-2">
+                <label for="pageSizeSelect" class="small text-muted d-none d-sm-inline mb-0">{{ t('rows_per_page') || 'Rows' }}</label>
+                <select id="pageSizeSelect" class="form-select form-select-sm w-auto" :value="store.pagination.pageSize" @change="setPageSize($event)">
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                </select>
             </div>
         </div>
 

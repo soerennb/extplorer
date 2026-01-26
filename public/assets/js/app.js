@@ -70,6 +70,34 @@ const app = createApp({
             return store.files;
         });
 
+        const totalPages = computed(() => Math.max(1, Math.ceil(store.pagination.total / store.pagination.pageSize)));
+        const paginationPages = computed(() => {
+            const total = totalPages.value;
+            const current = store.pagination.page;
+            if (total <= 1) return [];
+
+            const isMobile = store.isMobile;
+            const windowSize = isMobile ? 0 : 1;
+            const pages = [];
+            const addPage = (n) => pages.push({ type: 'page', number: n, key: `p${n}` });
+            const addEllipsis = () => pages.push({ type: 'ellipsis', key: `e${pages.length}` });
+
+            if (total <= (isMobile ? 3 : 5)) {
+                for (let i = 1; i <= total; i++) addPage(i);
+                return pages;
+            }
+
+            addPage(1);
+            const start = Math.max(2, current - windowSize);
+            const end = Math.min(total - 1, current + windowSize);
+            if (start > 2) addEllipsis();
+            for (let i = start; i <= end; i++) addPage(i);
+            if (end < total - 1) addEllipsis();
+            addPage(total);
+
+            return pages;
+        });
+
         const containerClass = computed(() => store.viewMode === 'grid' ? 'grid-view' : 'list-view');
         const breadcrumbs = computed(() => {
             if (!store.cwd) return [];
@@ -222,7 +250,13 @@ const app = createApp({
             hideContextMenu();
         };
 
-        const changePage = (d) => { const n = store.pagination.page + d; if (n > 0 && n <= Math.ceil(store.pagination.total / store.pagination.pageSize)) store.loadPath(store.cwd, n); };
+        const changePage = (d) => { const n = store.pagination.page + d; if (n > 0 && n <= totalPages.value) store.loadPath(store.cwd, n); };
+        const goToPage = (n) => { if (n > 0 && n <= totalPages.value) store.loadPath(store.cwd, n); };
+        const setPageSize = (event) => {
+            const next = Number(event.target.value) || store.pagination.pageSize;
+            if (next === store.pagination.pageSize) return;
+            store.setPageSize(next);
+        };
 
         const open = async (file) => {
             if (file.type === 'dir') {
@@ -735,7 +769,7 @@ const app = createApp({
 
         return {
             store, i18n, t: (k, p) => i18n.t(k, p),
-            goUp, goToPath, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles, breadcrumbs,
+            goUp, goToPath, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, goToPage, setPageSize, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles, breadcrumbs,
             emptyStateIcon, emptyStateTitle, emptyStateDescription,
             isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer,
             contextMenu, showContextMenu, hideContextMenu, cmAction,
@@ -748,7 +782,8 @@ const app = createApp({
             toggleTrash, restoreSelected, deletePermanent, emptyTrash,
             username: window.username,
             connectionMode: window.connectionMode,
-            appVersion: window.appVersion
+            appVersion: window.appVersion,
+            paginationPages, totalPages
         };
     }
 });

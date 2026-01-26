@@ -59,7 +59,8 @@
     "calculate": "Calculate",
     "prev": "Prev",
     "next": "Next",
-    "page_info": "Page {current} of {total}",
+  "page_info": "Page {current} of {total}",
+  "rows_per_page": "Rows per page",
     
     "extract": "Extract",
     "trash": "Recycle Bin",

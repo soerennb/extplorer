@@ -34,7 +34,7 @@ const store = Vue.reactive({
 
     pagination: {
         page: 1,
-        pageSize: 100,
+        pageSize: Number(localStorage.getItem('extplorer_page_size')) || 100,
         total: 0
     },
 
@@ -51,6 +51,14 @@ const store = Vue.reactive({
         this.showHidden = !this.showHidden;
         localStorage.setItem('extplorer_show_hidden', this.showHidden);
         this.loadPath(this.cwd);
+    },
+
+    setPageSize(size) {
+        const next = Number(size) || this.pagination.pageSize;
+        if (next === this.pagination.pageSize) return;
+        this.pagination.pageSize = next;
+        localStorage.setItem('extplorer_page_size', String(next));
+        this.loadPath(this.cwd, 1);
     },
     
     // Trash Actions
