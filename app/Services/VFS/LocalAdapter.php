@@ -32,10 +32,41 @@ class LocalAdapter implements IFileSystem
         $parts = array_filter(explode(DIRECTORY_SEPARATOR, $path), function ($p) {
             return $p !== '' && $p !== '.' && $p !== '..';
         });
-        
-        $safePath = $this->rootPath . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $parts);
-        
-        return $safePath;
+
+        $candidate = $this->rootPath . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $parts);
+
+        $this->assertWithinRoot($candidate);
+
+        $real = realpath($candidate);
+        if ($real !== false) {
+            return $real;
+        }
+
+        return $candidate;
+    }
+
+    private function assertWithinRoot(string $candidate): void
+    {
+        $root = rtrim($this->rootPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+
+        $check = $candidate;
+        while (!file_exists($check)) {
+            $parent = dirname($check);
+            if ($parent === $check) {
+                break;
+            }
+            $check = $parent;
+        }
+
+        $resolved = realpath($check);
+        if ($resolved === false) {
+            throw new Exception("Invalid path");
+        }
+
+        $resolved = rtrim($resolved, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (!str_starts_with($resolved, $root)) {
+            throw new Exception("Path traversal blocked");
+        }
     }
 
     private function isWithinRoot(string $fullPath): bool

@@ -78,6 +78,7 @@ $routes->group('api', function($routes) {
     $routes->get('settings', 'SettingsController::index');
     $routes->post('settings', 'SettingsController::update');
     $routes->post('settings/test-email', 'SettingsController::testEmail');
+    $routes->post('settings/validate-email', 'SettingsController::validateEmail');
 
     $routes->get('system', 'UserAdminController::systemInfo');
     $routes->get('logs', 'UserAdminController::getLogs');

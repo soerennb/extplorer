@@ -130,6 +130,7 @@ _modules/*
 #-------------------------
 builds/
 writable/file_manager_root/*
+writable/last_cleanup.txt
 writable/users.json
 writable/users.php
 writable/shares.json

@@ -58,6 +58,9 @@ class MountService
         // Type Validation
         if ($type === 'local') {
             $path = trim($config['path'] ?? '');
+            if ($path === '') {
+                throw new \Exception("Local path is required.");
+            }
 
             // Auto-convert WSL paths if running on Windows
             if (DIRECTORY_SEPARATOR === '\\' && preg_match('|^/mnt/([a-z])/(.*)|i', $path, $matches)) {
@@ -66,10 +69,38 @@ class MountService
             }
 
             error_log("Checking local mount path: '$path'");
-            if (!is_dir($path)) {
+            $realPath = realpath($path);
+            if (!$realPath || !is_dir($realPath)) {
                 // Should we allow mounting non-existent paths? Maybe creation later? 
                 // For now, strict validation.
                 throw new \Exception("Local path does not exist or is not readable: $path");
+            }
+
+            $settingsService = new SettingsService();
+            $allowedRoots = array_merge(
+                config('App')->mountRootAllowlist ?? [],
+                $settingsService->get('mount_root_allowlist', [])
+            );
+            $allowedRoots = array_values(array_filter($allowedRoots, static fn($root) => is_string($root) && $root !== ''));
+            if (empty($allowedRoots)) {
+                throw new \Exception("External mounts are disabled. Configure mountRootAllowlist.");
+            }
+
+            $isAllowed = false;
+            foreach ($allowedRoots as $root) {
+                $rootReal = realpath($root);
+                if (!$rootReal) {
+                    continue;
+                }
+                $rootReal = rtrim($rootReal, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+                if (str_starts_with($realPath . DIRECTORY_SEPARATOR, $rootReal)) {
+                    $isAllowed = true;
+                    break;
+                }
+            }
+
+            if (!$isAllowed) {
+                throw new \Exception("Local path is not within an allowlisted mount root.");
             }
         } elseif ($type === 'ftp') {
             // Future validation

@@ -19,24 +19,32 @@ class EmailService
     private function initializeConfig()
     {
         $settings = $this->settingsService->getSettings();
+        $this->email->initialize($this->buildConfig($settings));
+    }
 
+    private function buildConfig(array $settings): array
+    {
+        $protocol = $settings['email_protocol'] ?? 'smtp';
         $config = [
-            'protocol' => 'smtp',
-            'SMTPHost' => $settings['smtp_host'],
-            'SMTPPort' => (int)$settings['smtp_port'],
-            'SMTPUser' => $settings['smtp_user'],
-            'SMTPPass' => $settings['smtp_pass'],
-            'SMTPCrypto' => $settings['smtp_crypto'],
+            'protocol' => $protocol,
             'mailType' => 'html',
             'charset'  => 'utf-8',
             'newline'  => "\r\n",
-            'fromEmail' => $settings['email_from'],
-            'fromName'  => $settings['email_from_name'],
+            'fromEmail' => $settings['email_from'] ?? 'noreply@example.com',
+            'fromName'  => $settings['email_from_name'] ?? 'eXtplorer',
         ];
 
-        // If no host configured, fallback to standard mail() or log?
-        // For now, we apply what we have.
-        $this->email->initialize($config);
+        if ($protocol === 'smtp') {
+            $config['SMTPHost'] = $settings['smtp_host'] ?? '';
+            $config['SMTPPort'] = (int)($settings['smtp_port'] ?? 587);
+            $config['SMTPUser'] = $settings['smtp_user'] ?? '';
+            $config['SMTPPass'] = $settings['smtp_pass'] ?? '';
+            $config['SMTPCrypto'] = $settings['smtp_crypto'] ?? 'tls';
+        } elseif ($protocol === 'sendmail') {
+            $config['mailPath'] = $settings['sendmail_path'] ?? '/usr/sbin/sendmail';
+        }
+
+        return $config;
     }
 
     public function sendTestEmail(string $recipient): bool
@@ -101,5 +109,70 @@ class EmailService
     public function getDebugger(): string
     {
         return $this->email->printDebugger(['headers']);
+    }
+
+    public function sendTestEmailWithConfig(string $recipient, array $settings): array
+    {
+        $email = Services::email();
+        $email->initialize($this->buildConfig($settings));
+        $email->setFrom($settings['email_from'] ?? 'noreply@example.com', $settings['email_from_name'] ?? 'eXtplorer');
+        $email->setTo($recipient);
+        $email->setSubject('eXtplorer Test Email');
+        $email->setMessage('<h1>Test Email</h1><p>If you are reading this, your email settings are correct.</p>');
+
+        $ok = $email->send();
+        return [
+            'ok' => $ok,
+            'debug' => $email->printDebugger(['headers']),
+        ];
+    }
+
+    public function validateConfig(array $settings): array
+    {
+        $protocol = $settings['email_protocol'] ?? 'smtp';
+        if ($protocol === 'sendmail') {
+            $path = $settings['sendmail_path'] ?? '/usr/sbin/sendmail';
+            if (!is_file($path) || !is_executable($path)) {
+                return ['ok' => false, 'message' => "Sendmail not available at {$path}"];
+            }
+            return ['ok' => true, 'message' => 'Sendmail path is available'];
+        }
+
+        if ($protocol === 'mail') {
+            return ['ok' => true, 'message' => 'PHP mail() selected'];
+        }
+
+        $email = Services::email();
+        $email->initialize($this->buildConfig($settings));
+
+        try {
+            $ref = new \ReflectionClass($email);
+            $connect = $ref->getMethod('SMTPConnect');
+            $connect->setAccessible(true);
+            $auth = $ref->getMethod('SMTPAuthenticate');
+            $auth->setAccessible(true);
+            $end = $ref->getMethod('SMTPEnd');
+            $end->setAccessible(true);
+
+            $connected = (bool) $connect->invoke($email);
+            if (!$connected) {
+                return ['ok' => false, 'message' => $email->printDebugger(['headers'])];
+            }
+
+            $authed = true;
+            if (!empty($settings['smtp_user']) || !empty($settings['smtp_pass'])) {
+                $authed = (bool) $auth->invoke($email);
+            }
+
+            $end->invoke($email);
+
+            if (!$authed) {
+                return ['ok' => false, 'message' => $email->printDebugger(['headers'])];
+            }
+
+            return ['ok' => true, 'message' => 'SMTP connection and authentication successful'];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'message' => $e->getMessage()];
+        }
     }
 }

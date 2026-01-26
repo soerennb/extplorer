@@ -35,52 +35,104 @@ const UserAdmin = {
                     <div v-if="tab === 'settings'">
                         <div v-if="!settings" class="text-center text-muted">Loading...</div>
                         <div v-else>
+                            <ul class="nav nav-pills mb-3">
+                                <li class="nav-item">
+                                    <a class="nav-link" :class="{active: settingsTab === 'email'}" href="#" @click.prevent="settingsTab = 'email'">Email</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" :class="{active: settingsTab === 'mounts'}" href="#" @click.prevent="settingsTab = 'mounts'">Mounts</a>
+                                </li>
+                            </ul>
+
                             <form @submit.prevent="saveSettings">
-                                <h6 class="border-bottom pb-2 mb-3">Email Configuration (SMTP)</h6>
-                                <div class="row g-3">
-                                    <div class="col-md-8">
-                                        <label class="form-label small fw-bold">SMTP Host</label>
-                                        <input type="text" class="form-control form-control-sm" v-model="settings.smtp_host" placeholder="smtp.example.com">
+                                <div v-if="settingsTab === 'email'">
+                                    <h6 class="border-bottom pb-2 mb-3">Email Configuration</h6>
+                                    <div v-if="emailValidation.message" class="alert small" :class="emailValidation.ok ? 'alert-success' : 'alert-danger'">
+                                        {{ emailValidation.message }}
                                     </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">Port</label>
-                                        <input type="number" class="form-control form-control-sm" v-model="settings.smtp_port" placeholder="587">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Protocol</label>
+                                            <select class="form-select form-select-sm" v-model="settings.email_protocol">
+                                                <option value="smtp">SMTP</option>
+                                                <option value="sendmail">Sendmail</option>
+                                                <option value="mail">PHP mail()</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-8" v-if="settings.email_protocol === 'sendmail'">
+                                            <label class="form-label small fw-bold">Sendmail Path</label>
+                                            <input type="text" class="form-control form-control-sm" v-model="settings.sendmail_path" placeholder="/usr/sbin/sendmail">
+                                        </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Username</label>
-                                        <input type="text" class="form-control form-control-sm" v-model="settings.smtp_user">
+
+                                    <div v-if="settings.email_protocol === 'smtp'" class="row g-3 mt-1">
+                                        <div class="col-md-8">
+                                            <label class="form-label small fw-bold">SMTP Host</label>
+                                            <input type="text" class="form-control form-control-sm" v-model="settings.smtp_host" placeholder="smtp.example.com">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Port</label>
+                                            <input type="number" class="form-control form-control-sm" v-model="settings.smtp_port" placeholder="587">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold">Username</label>
+                                            <input type="text" class="form-control form-control-sm" v-model="settings.smtp_user">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold">Password</label>
+                                            <input type="password" class="form-control form-control-sm" v-model="settings.smtp_pass" placeholder="********">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Encryption</label>
+                                            <select class="form-select form-select-sm" v-model="settings.smtp_crypto">
+                                                <option value="tls">TLS</option>
+                                                <option value="ssl">SSL</option>
+                                                <option value="">None</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">From Email</label>
+                                            <input type="email" class="form-control form-control-sm" v-model="settings.email_from">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">From Name</label>
+                                            <input type="text" class="form-control form-control-sm" v-model="settings.email_from_name">
+                                        </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Password</label>
-                                        <input type="password" class="form-control form-control-sm" v-model="settings.smtp_pass" placeholder="********">
+
+                                    <div v-if="settings.email_protocol !== 'smtp'" class="row g-3 mt-1">
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold">From Email</label>
+                                            <input type="email" class="form-control form-control-sm" v-model="settings.email_from">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold">From Name</label>
+                                            <input type="text" class="form-control form-control-sm" v-model="settings.email_from_name">
+                                        </div>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">Encryption</label>
-                                        <select class="form-select form-select-sm" v-model="settings.smtp_crypto">
-                                            <option value="tls">TLS</option>
-                                            <option value="ssl">SSL</option>
-                                            <option value="">None</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">From Email</label>
-                                        <input type="email" class="form-control form-control-sm" v-model="settings.email_from">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-bold">From Name</label>
-                                        <input type="text" class="form-control form-control-sm" v-model="settings.email_from_name">
+
+                                    <h6 class="border-bottom pb-2 mb-3 mt-4">Transfers</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold">Default Expiry (Days)</label>
+                                            <input type="number" class="form-control form-control-sm" v-model="settings.default_transfer_expiry">
+                                        </div>
                                     </div>
                                 </div>
-                                
-                                <h6 class="border-bottom pb-2 mb-3 mt-4">Transfers</h6>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-bold">Default Expiry (Days)</label>
-                                        <input type="number" class="form-control form-control-sm" v-model="settings.default_transfer_expiry">
+
+                                <div v-if="settingsTab === 'mounts'">
+                                    <h6 class="border-bottom pb-2 mb-3">External Mounts</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-12">
+                                            <label class="form-label small fw-bold">Allowlist (one path per line)</label>
+                                            <textarea class="form-control form-control-sm" rows="4" v-model="settings.mount_root_allowlist_text" placeholder="/srv/data&#10;/mnt/storage"></textarea>
+                                            <div class="form-text">Only paths under these roots can be mounted. Leave empty to disable external mounts.</div>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div class="mt-4 pt-3 border-top text-end">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm me-2" @click="validateEmailSettings">Validate</button>
                                     <button type="button" class="btn btn-outline-secondary btn-sm me-2" @click="testEmail">Send Test Email</button>
                                     <button type="submit" class="btn btn-primary btn-sm">Save Settings</button>
                                 </div>
@@ -327,6 +379,8 @@ const UserAdmin = {
             logs: [],
             system: null,
             settings: null,
+            settingsTab: 'email',
+            emailValidation: { ok: null, message: '', timeoutId: null },
             error: null,
             editingUser: null,
             editingGroup: null,
@@ -371,7 +425,19 @@ const UserAdmin = {
         },
         async loadSettings(switchTab = true) {
             if (switchTab) this.tab = 'settings';
-            try { this.settings = await Api.get('settings'); } catch (e) { this.error = e.message; }
+            try {
+                this.settings = await Api.get('settings');
+                if (!this.settings.mount_root_allowlist_text && Array.isArray(this.settings.mount_root_allowlist)) {
+                    this.settings.mount_root_allowlist_text = this.settings.mount_root_allowlist.join('\n');
+                }
+                if (!this.settings.email_protocol) {
+                    this.settings.email_protocol = 'smtp';
+                }
+                if (!this.settings.sendmail_path) {
+                    this.settings.sendmail_path = '/usr/sbin/sendmail';
+                }
+                this.clearEmailValidation();
+            } catch (e) { this.error = e.message; }
         },
         async saveSettings() {
              try {
@@ -383,10 +449,36 @@ const UserAdmin = {
              const email = prompt("Enter email to send test to:");
              if(email) {
                  try {
-                     await Api.post('settings/test-email', {email});
-                     alert('Test email sent!');
-                 } catch(e) { alert('Failed: ' + e.message); }
+                     await Api.post('settings/test-email', {...this.settings, email});
+                     this.setEmailValidation(true, 'Test email sent successfully.');
+                 } catch(e) {
+                     this.setEmailValidation(false, 'Test failed: ' + e.message);
+                 }
              }
+        },
+        async validateEmailSettings() {
+             try {
+                 const res = await Api.post('settings/validate-email', this.settings);
+                 this.setEmailValidation(true, res.message || 'Validation successful');
+             } catch(e) {
+                 this.setEmailValidation(false, 'Validation failed: ' + e.message);
+             }
+        },
+        setEmailValidation(ok, message) {
+            this.clearEmailValidation();
+            this.emailValidation.ok = ok;
+            this.emailValidation.message = message;
+            this.emailValidation.timeoutId = setTimeout(() => {
+                this.clearEmailValidation();
+            }, 5000);
+        },
+        clearEmailValidation() {
+            if (this.emailValidation.timeoutId) {
+                clearTimeout(this.emailValidation.timeoutId);
+            }
+            this.emailValidation.ok = null;
+            this.emailValidation.message = '';
+            this.emailValidation.timeoutId = null;
         },
         
         loadLogsTab() { this.tab = 'logs'; this.loadLogs(); },

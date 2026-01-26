@@ -161,6 +161,14 @@ class App extends BaseConfig
     public string $appTimezone = 'UTC';
 
     /**
+     * Allowed base paths for external mounts.
+     * Empty list denies all external mounts.
+     *
+     * @var list<string>
+     */
+    public array $mountRootAllowlist = [];
+
+    /**
      * --------------------------------------------------------------------------
      * Default Character Set
      * --------------------------------------------------------------------------

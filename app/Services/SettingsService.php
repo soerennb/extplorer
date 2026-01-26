@@ -54,15 +54,18 @@ class SettingsService
     private function getDefaultSettings(): array
     {
         return [
+            'email_protocol' => 'smtp',
             'smtp_host' => '',
             'smtp_port' => 587,
             'smtp_user' => '',
             'smtp_pass' => '',
             'smtp_crypto' => 'tls', // ssl, tls, null
+            'sendmail_path' => '/usr/sbin/sendmail',
             'email_from' => 'noreply@example.com',
             'email_from_name' => 'eXtplorer',
             'default_transfer_expiry' => 7,
             'allow_public_uploads' => false,
+            'mount_root_allowlist' => [],
         ];
     }
 }

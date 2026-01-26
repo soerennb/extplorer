@@ -202,7 +202,7 @@ class UserModel
         if (empty($roles)) {
             $roles = [
                 'admin' => ['*'],
-                'user'  => ['read', 'write', 'upload', 'delete', 'rename', 'archive', 'extract', 'chmod', 'mount_external']
+                'user'  => ['read', 'write', 'upload', 'delete', 'rename', 'archive', 'extract', 'chmod']
             ];
             $this->saveRoles($roles);
         }

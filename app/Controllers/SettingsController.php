@@ -37,6 +37,8 @@ class SettingsController extends BaseController
             $settings['smtp_pass'] = '********';
         }
 
+        $settings['mount_root_allowlist_text'] = implode("\n", $settings['mount_root_allowlist'] ?? []);
+
         return $this->respond($settings);
     }
 
@@ -46,6 +48,34 @@ class SettingsController extends BaseController
 
         $json = $this->request->getJSON(true);
         if (!$json) return $this->fail('Invalid JSON');
+
+        if (isset($json['mount_root_allowlist_text'])) {
+            $lines = preg_split('/\r\n|\r|\n/', (string) $json['mount_root_allowlist_text']);
+            $json['mount_root_allowlist'] = array_values(array_filter(array_map('trim', $lines)));
+            unset($json['mount_root_allowlist_text']);
+        }
+
+        if (isset($json['mount_root_allowlist']) && is_string($json['mount_root_allowlist'])) {
+            $lines = preg_split('/\r\n|\r|\n/', $json['mount_root_allowlist']);
+            $json['mount_root_allowlist'] = array_values(array_filter(array_map('trim', $lines)));
+        }
+
+        if (isset($json['email_protocol'])) {
+            $protocol = strtolower(trim((string) $json['email_protocol']));
+            $allowed = ['smtp', 'sendmail', 'mail'];
+            if (!in_array($protocol, $allowed, true)) {
+                return $this->fail('Invalid email protocol');
+            }
+            $json['email_protocol'] = $protocol;
+        }
+
+        if (isset($json['sendmail_path'])) {
+            $path = trim((string) $json['sendmail_path']);
+            if ($path === '' || strpos($path, "\0") !== false) {
+                return $this->fail('Invalid sendmail path');
+            }
+            $json['sendmail_path'] = $path;
+        }
 
         // If password is mask, don't update it (keep existing)
         if (isset($json['smtp_pass']) && $json['smtp_pass'] === '********') {
@@ -62,21 +92,42 @@ class SettingsController extends BaseController
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
 
-        $email = $this->request->getJSON()->email ?? null;
+        $payload = $this->request->getJSON(true) ?? [];
+        $email = $payload['email'] ?? null;
         if (!$email) return $this->fail('Email required');
 
-        // Temporarily save settings from request to test un-saved configs? 
-        // Or strictly test saved settings?
-        // Usually safer to test SAVED settings to ensure persistence works, 
-        // but often users want to test BEFORE saving. 
-        // Let's instantiate EmailService which loads from DISK.
-        // So user must save first. 
-        
+        $current = $this->settingsService->getSettings();
+        if (($payload['smtp_pass'] ?? null) === '********') {
+            $payload['smtp_pass'] = $current['smtp_pass'] ?? '';
+        }
+        $settings = array_merge($current, $payload);
+
         $svc = new EmailService();
-        if ($svc->sendTestEmail($email)) {
-             return $this->respond(['status' => 'success']);
+        $result = $svc->sendTestEmailWithConfig($email, $settings);
+        if ($result['ok']) {
+            return $this->respond(['status' => 'success']);
         }
 
-        return $this->fail('Failed to send email. Check logs. ' . strip_tags($svc->getDebugger()));
+        return $this->fail('Failed to send email. ' . strip_tags($result['debug'] ?? ''));
+    }
+
+    public function validateEmail()
+    {
+        if (($check = $this->checkAdmin()) !== true) return $check;
+
+        $payload = $this->request->getJSON(true) ?? [];
+        $current = $this->settingsService->getSettings();
+        if (($payload['smtp_pass'] ?? null) === '********') {
+            $payload['smtp_pass'] = $current['smtp_pass'] ?? '';
+        }
+        $settings = array_merge($current, $payload);
+
+        $svc = new EmailService();
+        $result = $svc->validateConfig($settings);
+        if ($result['ok']) {
+            return $this->respond(['status' => 'success', 'message' => $result['message'] ?? 'OK']);
+        }
+
+        return $this->fail($result['message'] ?? 'Validation failed');
     }
 }

@@ -23,7 +23,7 @@ class DavController extends BaseController
 
         // 2. Security Check: HTTPS Enforcement (Optional but recommended)
         // If not already handled by a global filter
-        if (!ENVIRONMENT === 'development' && !$this->request->isSecure()) {
+        if (ENVIRONMENT !== 'development' && !$this->request->isSecure()) {
             header('HTTP/1.1 403 Forbidden');
             echo 'SSL/HTTPS is required for WebDAV.';
             exit;

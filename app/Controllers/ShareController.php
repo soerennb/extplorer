@@ -93,16 +93,24 @@ class ShareController extends BaseController
             $rootBase = WRITEPATH . 'uploads/shares/';
         }
 
-        $fullPath = $rootBase . $share['path'];
+        $basePath = $rootBase . $share['path'];
         $inline = $this->request->getGet('inline');
-        
-        // Handle sub-path request (e.g. /s/{hash}/download?path=subfolder/file.txt)
+
         $subPath = $this->request->getGet('path');
-        if ($subPath) {
-            // Sanitize
-            $subPath = str_replace('..', '', $subPath);
-            $fullPath .= '/' . $subPath;
+        if (is_file($basePath)) {
+            if ($subPath) {
+                return $this->failForbidden();
+            }
+            $fs = new LocalAdapter(dirname($basePath));
+            $relPath = basename($basePath);
+        } else {
+            $fs = new LocalAdapter($basePath);
+            $subPath = $subPath ?? '';
+            $subPath = ltrim($subPath, '/');
+            $relPath = $subPath === '' ? '.' : $subPath;
         }
+
+        $fullPath = $fs->resolvePath($relPath);
 
         if (!file_exists($fullPath)) return $this->failNotFound();
 
@@ -126,8 +134,7 @@ class ShareController extends BaseController
             // Zip directory
             $zipName = basename($fullPath) . '.zip';
             $tempZip = WRITEPATH . 'cache/' . uniqid('share_') . '.zip';
-            $fs = new LocalAdapter(dirname($fullPath)); 
-            $fs->archive([basename($fullPath)], $tempZip);
+            $fs->archive([$relPath], $tempZip);
             
             $this->response->setHeader('Content-Type', 'application/zip')
                            ->setHeader('Content-Disposition', 'attachment; filename="'.$zipName.'"')
@@ -165,16 +172,17 @@ class ShareController extends BaseController
             $rootBase = WRITEPATH . 'uploads/shares/';
         }
 
-        $root = $rootBase . $share['path'];
-        
-        // Subpath
+        $basePath = $rootBase . $share['path'];
+        if (is_file($basePath)) {
+            return $this->failForbidden();
+        }
+
         $subPath = $this->request->getGet('path') ?? '';
-        $subPath = str_replace('..', '', $subPath);
-        
-        // Create adapter jailed to the SHARE ROOT
+        $subPath = ltrim($subPath, '/');
+
         try {
-            $fs = new LocalAdapter($root); 
-            $items = $fs->listDirectory($subPath, false); // Don't show hidden
+            $fs = new LocalAdapter($basePath);
+            $items = $fs->listDirectory($subPath, false);
             return $this->respond(['items' => $items]);
         } catch (\Exception $e) {
             return $this->fail($e->getMessage());
