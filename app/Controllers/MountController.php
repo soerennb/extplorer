@@ -20,7 +20,7 @@ class MountController extends BaseController
     public function index()
     {
         $username = session('username');
-        $mounts = $this->mountService->getUserMounts($username);
+        $mounts = $this->mountService->getUserMounts($username, false);
         return $this->respond(array_values($mounts));
     }
 

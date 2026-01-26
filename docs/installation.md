@@ -16,6 +16,7 @@ Ensure your server meets the following criteria:
     *   `zip` (Required for Archives)
     *   `ftp` (Optional, for FTP mounts)
     *   `ssh2` (Optional, for SFTP/SSH mounts)
+*   **Encryption key:** Set `encryption.key` in your `.env` file to store remote mount credentials securely.
 
 ## 2. Installation Steps
 

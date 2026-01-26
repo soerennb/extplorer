@@ -4,14 +4,17 @@ namespace App\Services;
 
 use App\Services\VFS\FtpAdapter;
 use App\Services\VFS\Ssh2Adapter;
+use CodeIgniter\Encryption\EncrypterInterface;
 
 class MountService
 {
     private string $mountsFile;
+    private bool $encryptionRawData;
 
     public function __construct()
     {
         $this->mountsFile = WRITEPATH . 'mounts.php';
+        $this->encryptionRawData = (bool)config('Encryption')->rawData;
         
         // Migration/Init
         if (file_exists(WRITEPATH . 'mounts.json') && !file_exists($this->mountsFile)) {
@@ -32,7 +35,9 @@ class MountService
         if (strpos($content, '<?php') === 0) {
             $content = substr($content, strpos($content, "\n") + 1);
         }
-        return json_decode($content, true) ?? [];
+        $mounts = json_decode($content, true) ?? [];
+        $mounts = $this->migrateMountSecrets($mounts);
+        return $mounts;
     }
 
     private function saveMounts(array $mounts): void
@@ -41,10 +46,14 @@ class MountService
         file_put_contents($this->mountsFile, $content);
     }
 
-    public function getUserMounts(string $username): array
+    public function getUserMounts(string $username, bool $includeSecrets = false): array
     {
         $all = $this->getMounts();
-        return array_filter($all, fn($m) => $m['user'] === $username);
+        $filtered = array_filter($all, fn($m) => $m['user'] === $username);
+        if ($includeSecrets) {
+            return $this->decryptMountSecrets($filtered);
+        }
+        return $this->stripMountSecrets($filtered);
     }
 
     public function addMount(string $username, string $name, string $type, array $config): string
@@ -117,10 +126,13 @@ class MountService
             if ($user === '') throw new \Exception("Remote username is required.");
             if ($pass === '') throw new \Exception("Remote password is required.");
             if ($port < 1 || $port > 65535) throw new \Exception("Remote port is invalid.");
+            if (!$this->canEncrypt()) {
+                throw new \Exception("Encryption key not configured. Set Config\\Encryption::\$key before adding remote mounts.");
+            }
 
             $config['host'] = $host;
             $config['user'] = $user;
-            $config['pass'] = $pass;
+            $config['pass'] = $this->encryptSecret($pass);
             $config['port'] = $port;
             $config['root'] = $root === '' ? '/' : $root;
 
@@ -165,5 +177,105 @@ class MountService
         unset($mounts[$id]);
         $this->saveMounts($mounts);
         return true;
+    }
+
+    private function canEncrypt(): bool
+    {
+        $key = (string)config('Encryption')->key;
+        return $key !== '';
+    }
+
+    private function getEncrypter(): EncrypterInterface
+    {
+        return \Config\Services::encrypter();
+    }
+
+    private function isEncryptedSecret($value): bool
+    {
+        return is_string($value) && str_starts_with($value, 'enc:');
+    }
+
+    private function encodeCiphertext(string $ciphertext): string
+    {
+        return $this->encryptionRawData ? base64_encode($ciphertext) : $ciphertext;
+    }
+
+    private function decodeCiphertext(string $ciphertext): string
+    {
+        if ($this->encryptionRawData) {
+            $decoded = base64_decode($ciphertext, true);
+            return $decoded === false ? '' : $decoded;
+        }
+        return $ciphertext;
+    }
+
+    private function encryptSecret(string $value): string
+    {
+        if ($value === '') return '';
+        $encrypted = $this->getEncrypter()->encrypt($value);
+        return 'enc:' . $this->encodeCiphertext($encrypted);
+    }
+
+    private function decryptSecret(string $value): string
+    {
+        if (!$this->isEncryptedSecret($value)) return $value;
+        $payload = substr($value, 4);
+        $decoded = $this->decodeCiphertext($payload);
+        if ($decoded === '') {
+            log_message('error', 'Failed to decode encrypted mount secret');
+            return '';
+        }
+        try {
+            return (string)$this->getEncrypter()->decrypt($decoded);
+        } catch (\Throwable $e) {
+            log_message('error', 'Failed to decrypt mount secret: ' . $e->getMessage());
+            return '';
+        }
+    }
+
+    private function migrateMountSecrets(array $mounts): array
+    {
+        if (!$this->canEncrypt()) {
+            return $mounts;
+        }
+        $dirty = false;
+        foreach ($mounts as $id => $mount) {
+            $type = strtolower((string)($mount['type'] ?? ''));
+            if (!in_array($type, ['ftp', 'sftp', 'ssh2'], true)) continue;
+            $pass = $mount['config']['pass'] ?? null;
+            if (is_string($pass) && $pass !== '' && !$this->isEncryptedSecret($pass)) {
+                $mounts[$id]['config']['pass'] = $this->encryptSecret($pass);
+                $dirty = true;
+            }
+        }
+        if ($dirty) {
+            $this->saveMounts($mounts);
+        }
+        return $mounts;
+    }
+
+    private function decryptMountSecrets(array $mounts): array
+    {
+        foreach ($mounts as $id => $mount) {
+            $type = strtolower((string)($mount['type'] ?? ''));
+            if (!in_array($type, ['ftp', 'sftp', 'ssh2'], true)) continue;
+            $pass = $mount['config']['pass'] ?? null;
+            if (is_string($pass) && $pass !== '') {
+                $mounts[$id]['config']['pass'] = $this->decryptSecret($pass);
+            }
+        }
+        return $mounts;
+    }
+
+    private function stripMountSecrets(array $mounts): array
+    {
+        foreach ($mounts as $id => $mount) {
+            $type = strtolower((string)($mount['type'] ?? ''));
+            if (!in_array($type, ['ftp', 'sftp', 'ssh2'], true)) continue;
+            if (isset($mounts[$id]['config']['pass'])) {
+                unset($mounts[$id]['config']['pass']);
+            }
+        }
+        return $mounts;
     }
 }

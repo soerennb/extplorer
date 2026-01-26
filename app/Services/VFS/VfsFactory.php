@@ -78,7 +78,7 @@ class VfsFactory
         // --- Custom Mounts ---
         try {
             $mountService = new \App\Services\MountService();
-            $mounts = $mountService->getUserMounts($username);
+            $mounts = $mountService->getUserMounts($username, true);
             foreach ($mounts as $mount) {
                 try {
                     if ($mount['type'] === 'local') {
