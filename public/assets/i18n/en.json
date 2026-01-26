@@ -61,6 +61,8 @@
     "next": "Next",
   "page_info": "Page {current} of {total}",
   "rows_per_page": "Rows per page",
+  "password_change_required": "Password change required",
+  "password_change_required_desc": "You are using the default admin password. Please set a new password now.",
     
     "extract": "Extract",
     "trash": "Recycle Bin",
@@ -95,7 +97,8 @@
     "mount_pass": "Password",
     "mount_add": "Add Mount",
     "mount_added": "Mount added.",
-    "new_password": "New Password",
+  "new_password": "New Password",
+  "current_password": "Current Password",
     "update": "Update",
     
     "two_factor_auth": "Two-Factor Authentication",

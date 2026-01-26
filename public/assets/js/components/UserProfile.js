@@ -8,6 +8,13 @@ const UserProfile = {
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div v-if="forcePasswordChange" class="alert alert-warning d-flex align-items-start">
+                        <i class="ri-alert-line fs-5 me-2 mt-1"></i>
+                        <div>
+                            <strong>{{ t('password_change_required') || 'Password change required' }}</strong>
+                            <div class="small">{{ t('password_change_required_desc') || 'You are using the default admin password. Please set a new password now.' }}</div>
+                        </div>
+                    </div>
                     <ul class="nav nav-tabs mb-3">
                         <li class="nav-item">
                             <a class="nav-link" :class="{active: activeTab === 'general'}" href="#" @click.prevent="activeTab = 'general'">{{ t('general') || 'General' }}</a>
@@ -57,6 +64,12 @@ const UserProfile = {
                         <!-- Change Password -->
                         <h6 class="border-bottom pb-2 mb-3">{{ t('change_password') || 'Change Password' }}</h6>
                         <div class="mb-3 row">
+                            <label class="col-sm-3 col-form-label">{{ t('current_password') || 'Current Password' }}</label>
+                            <div class="col-sm-9">
+                                <input type="password" class="form-control" v-model="passwordForm.current" placeholder="••••••••">
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
                             <label class="col-sm-3 col-form-label">{{ t('new_password') || 'New Password' }}</label>
                             <div class="col-sm-9">
                                 <input type="password" class="form-control" v-model="passwordForm.new" placeholder="Min 8 chars">
@@ -64,7 +77,7 @@ const UserProfile = {
                         </div>
                         <div class="mb-3 row">
                             <div class="col-sm-9 offset-sm-3">
-                                <button class="btn btn-primary btn-sm" @click="updatePassword" :disabled="!passwordForm.new || passwordForm.new.length < 8">{{ t('update') || 'Update' }}</button>
+                                <button class="btn btn-primary btn-sm" @click="updatePassword" :disabled="!passwordForm.current || !passwordForm.new || passwordForm.new.length < 8">{{ t('update') || 'Update' }}</button>
                             </div>
                         </div>
 
@@ -197,7 +210,7 @@ const UserProfile = {
         const details = ref({});
         const loading = ref(false);
         const activeTab = ref('general');
-        const passwordForm = reactive({ new: '' });
+        const passwordForm = reactive({ current: '', new: '' });
         const setup = reactive({ step: 0, qr: '', secret: '', code: '', recoveryCodes: [] });
         const mounts = ref([]);
         const mountsLoading = ref(false);
@@ -206,6 +219,7 @@ const UserProfile = {
             type: 'local',
             config: { path: '', host: '', port: 21, user: '', pass: '', root: '/' }
         });
+        const forcePasswordChange = ref(!!window.forcePasswordChange);
         let modalInstance = null;
 
         const canMount = computed(() => {
@@ -251,9 +265,12 @@ const UserProfile = {
 
         const updatePassword = async () => {
             try {
-                await Api.post('profile/password', { password: passwordForm.new });
+                await Api.put('profile/password', { password: passwordForm.new, old_password: passwordForm.current });
                 Swal.fire('Success', 'Password updated', 'success');
+                passwordForm.current = '';
                 passwordForm.new = '';
+                forcePasswordChange.value = false;
+                window.forcePasswordChange = false;
             } catch(e) { Swal.fire('Error', e.message, 'error'); }
         };
 
@@ -318,8 +335,10 @@ const UserProfile = {
             if (val === 'sftp' && (!newMount.config.port || newMount.config.port === 21)) newMount.config.port = 22;
         });
 
-        const open = () => {
+        const open = (tab = null) => {
             loadDetails();
+            if (forcePasswordChange.value) activeTab.value = 'security';
+            if (tab) activeTab.value = tab;
             if (!modalInstance) modalInstance = new bootstrap.Modal(document.getElementById('userProfileModal'));
             modalInstance.show();
         };
@@ -330,7 +349,7 @@ const UserProfile = {
             canMount, mounts, mountsLoading, newMount, loadMounts, addMount, removeMount,
             updatePassword, start2faSetup, finish2faSetup, disable2fa,
             canSubmitMount, mountSummary,
-            open, t: (k) => i18n.t(k)
+            open, forcePasswordChange, t: (k) => i18n.t(k)
         };
     }
 };

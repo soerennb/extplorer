@@ -98,8 +98,10 @@ class ProfileController extends BaseController
     {
         $json = $this->request->getJSON();
         $password = $json->password ?? '';
+        $oldPassword = $json->old_password ?? '';
 
         if (!$password) return $this->fail('Password required');
+        if (!$oldPassword) return $this->fail('Current password required');
 
         if (strlen($password) < 8) {
             return $this->fail('Password must be at least 8 characters long');
@@ -109,7 +111,13 @@ class ProfileController extends BaseController
         if (!$username) return $this->failForbidden('Not logged in');
 
         $userModel = new UserModel();
+        if (!$userModel->verifyUser($username, $oldPassword)) {
+            return $this->fail('Current password is incorrect');
+        }
         if ($userModel->changePassword($username, $password)) {
+            if (session('force_password_change')) {
+                session()->remove('force_password_change');
+            }
             return $this->respond(['status' => 'success']);
         } else {
             return $this->fail('Failed to update password');

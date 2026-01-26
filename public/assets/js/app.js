@@ -1,4 +1,4 @@
-const { createApp, computed, onMounted, ref, watch } = Vue;
+const { createApp, computed, onMounted, ref, watch, nextTick } = Vue;
 
 const app = createApp({
     components: {
@@ -519,14 +519,14 @@ const app = createApp({
 
         // --- Remote/Auth ---
         const openAdmin = () => { if (userAdmin.value) userAdmin.value.open(); };
-        const openProfile = () => { if (userProfile.value) userProfile.value.open(); };
+        const openProfile = (tab = null) => { if (userProfile.value) userProfile.value.open(tab); };
         const openTransfer = () => { if (transferModal.value) transferModal.value.open(); };
         const showWebDav = () => webdavModal.show();
         const copyWebDavUrl = () => {
             const i = document.getElementById('webdav_url_input'); i.select(); document.execCommand('copy');
             Swal.fire({ title: 'Copied!', icon: 'success', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false });
         };
-        const changePassword = () => openProfile();
+        const changePassword = () => openProfile('security');
 
         // --- Preview Viewer ---
         const updatePreviewer = () => {
@@ -749,6 +749,12 @@ const app = createApp({
                 updateHeaderShadow();
                 contentArea.addEventListener('scroll', updateHeaderShadow);
             }
+
+            nextTick(() => {
+                if (window.forcePasswordChange) {
+                    openProfile('security');
+                }
+            });
             
             window.addEventListener('keydown', (e) => {
                 const t = e.target, isI = t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable;

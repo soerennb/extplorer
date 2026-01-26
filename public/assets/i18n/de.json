@@ -62,6 +62,8 @@
     "next": "Weiter",
   "page_info": "Seite {current} von {total}",
   "rows_per_page": "Zeilen pro Seite",
+  "password_change_required": "Passwortaenderung erforderlich",
+  "password_change_required_desc": "Du verwendest das Standard-Admin-Passwort. Bitte setze jetzt ein neues Passwort.",
 
     "trash": "Papierkorb",
     "restore": "Wiederherstellen",
@@ -77,7 +79,8 @@
     "username": "Benutzername",
     "role": "Rolle",
     "home_dir": "Home-Verzeichnis",
-    "new_password": "Neues Passwort",
+  "new_password": "Neues Passwort",
+  "current_password": "Aktuelles Passwort",
     "update": "Aktualisieren",
     
     "two_factor_auth": "Zwei-Faktor-Authentifizierung",

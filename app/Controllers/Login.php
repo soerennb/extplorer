@@ -11,7 +11,11 @@ class Login extends BaseController
         if (session()->get('isLoggedIn')) {
             return redirect()->to('/');
         }
-        return view('login');
+        $userModel = new UserModel();
+        $admin = $userModel->getUser('admin');
+        $showDefaultCreds = $admin && password_verify('admin', $admin['password_hash']);
+
+        return view('login', ['show_default_creds' => $showDefaultCreds]);
     }
 
     public function auth()
@@ -99,7 +103,8 @@ class Login extends BaseController
                 'allowed_extensions' => $user['allowed_extensions'] ?? '',
                 'blocked_extensions' => $user['blocked_extensions'] ?? '',
                 'permissions' => $permissions,
-                'connection' => ['mode' => 'local']
+                'connection' => ['mode' => 'local'],
+                'force_password_change' => ($user['username'] === 'admin' && password_verify('admin', $user['password_hash']))
             ]);
             return redirect()->to('/');
         } else {

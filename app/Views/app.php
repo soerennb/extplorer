@@ -850,6 +850,7 @@
         window.username = "<?= session('username') ?>";
         window.userPermissions = <?= json_encode(session('permissions') ?? []) ?>;
         window.connectionMode = "<?= session('connection')['mode'] ?? 'local' ?>";
+        window.forcePasswordChange = <?= session('force_password_change') ? 'true' : 'false' ?>;
         window.csrfTokenName = "<?= csrf_token() ?>";
         window.csrfHash = "<?= csrf_hash() ?>";
         window.cspStyleNonce = "<?= service('csp')->getStyleNonce() ?>";

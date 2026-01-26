@@ -58,6 +58,8 @@
     "next": "Suivant",
   "page_info": "Page {current} sur {total}",
   "rows_per_page": "Lignes par page",
+  "password_change_required": "Changement de mot de passe requis",
+  "password_change_required_desc": "Vous utilisez le mot de passe admin par defaut. Veuillez en definir un nouveau.",
 
     "trash": "Corbeille",
     "restore": "Restaurer",
@@ -73,7 +75,8 @@
     "username": "Nom d'utilisateur",
     "role": "Rôle",
     "home_dir": "Répertoire personnel",
-    "new_password": "Nouveau mot de passe",
+  "new_password": "Nouveau mot de passe",
+  "current_password": "Mot de passe actuel",
     "update": "Mettre à jour",
     
     "two_factor_auth": "Authentification à deux facteurs",
