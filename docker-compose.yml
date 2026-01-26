@@ -1,11 +1,22 @@
 services:
+  init:
+    image: ghcr.io/soerennb/extplorer3:latest
+    entrypoint: ["/usr/local/bin/init-code"]
+    restart: "no"
+    environment:
+      - EXTPLORER_CODE_FORCE=0
+    volumes:
+      - extplorer_code:/var/www/html
+      - extplorer_writable:/var/www/html/writable
+    networks:
+      - extplorer-net
+
   app:
-    build: .
-    image: extplorer:latest
+    image: ghcr.io/soerennb/extplorer3:latest
     restart: unless-stopped
     volumes:
-      - .:/var/www/html
-      - ./writable:/var/www/html/writable
+      - extplorer_code:/var/www/html
+      - extplorer_writable:/var/www/html/writable
     environment:
       # CI4 Configuration
       - CI_ENVIRONMENT=production
@@ -15,11 +26,17 @@ services:
       # eXtplorer Configuration
       - EXTPLORER_ADMIN_USER=admin
       - EXTPLORER_ADMIN_PASS=admin1234
+
+      # Apply env settings into writable/settings.php on every boot
+      # - EXTPLORER_APPLY_ENV=1
       
       # PHP Limits (Optional overrides)
       # You can use a custom php.ini if needed
     networks:
       - extplorer-net
+    depends_on:
+      init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "php -r '$fp=@fsockopen(\"127.0.0.1\",9000); if($fp){fclose($fp); exit(0);} exit(1);'"]
       interval: 30s
@@ -33,7 +50,7 @@ services:
       - "8080:80"
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - .:/var/www/html:ro
+      - extplorer_code:/var/www/html:ro
     depends_on:
       - app
     networks:
@@ -47,3 +64,7 @@ services:
 networks:
   extplorer-net:
     driver: bridge
+
+volumes:
+  extplorer_code:
+  extplorer_writable:

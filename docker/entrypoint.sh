@@ -8,7 +8,33 @@ set -e
 # Define WRITEPATH for internal use
 REAL_WRITEPATH=${WRITEPATH:-/var/www/html/writable}
 
+mkdir -p "$REAL_WRITEPATH"
+
+for dir in \
+    cache \
+    cache/thumbs \
+    cache/dav \
+    logs \
+    session \
+    uploads \
+    uploads/temp \
+    uploads/shares \
+    uploads/chunks \
+    file_manager_root \
+    shared \
+    trash; do
+    mkdir -p "$REAL_WRITEPATH/$dir"
+done
+
+if [ "$(id -u)" = "0" ]; then
+    chown -R www-data:www-data "$REAL_WRITEPATH"
+fi
+
 # 2. Initial Setup / Auto-Config
+if [ ! -f "$REAL_WRITEPATH/installed.lock" ] || [ "${EXTPLORER_APPLY_ENV:-0}" = "1" ]; then
+    php /usr/local/bin/apply-env-settings.php || true
+fi
+
 if [ ! -f "$REAL_WRITEPATH/installed.lock" ]; then
     echo "First run detected..."
     

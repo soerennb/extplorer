@@ -45,6 +45,59 @@ eXtplorer 3 is designed to be deployed as a single, self-contained bundle.
     *   **Nginx:** Refer to the included `nginx.conf.example` for configuration.
 5.  **Access:** Navigate to the URL in your browser.
 
+## 🐳 Docker (GHCR Images)
+
+Prebuilt images are published to GHCR and intended to run as a multi-container setup with nginx and php-fpm separated.
+
+### Quick Start (Compose)
+
+```bash
+docker compose up -d
+```
+
+The default `docker-compose.yml` uses:
+- `ghcr.io/soerennb/extplorer3:latest` for the app (php-fpm)
+- `nginx:alpine` for the web server
+- An `init` service that populates the shared code volume on first run and on image updates
+
+### Volumes
+
+- `extplorer_code`: contains the application code copied from the image.
+- `extplorer_writable`: contains persistent data (uploads, logs, sessions, etc.).
+
+### Update Flow
+
+1. Pull the latest images: `docker compose pull`
+2. Restart: `docker compose up -d`
+
+The init container compares the image version with the version stored in the code volume and refreshes the code automatically when the image changes.
+
+### Environment Variables (common)
+
+Core app settings:
+- `CI_ENVIRONMENT`
+- `app.baseURL` (or `app_baseURL`)
+- `WRITEPATH`
+- `encryption.key`
+
+Admin bootstrap:
+- `EXTPLORER_ADMIN_USER`
+- `EXTPLORER_ADMIN_PASS`
+
+Settings synced into `writable/settings.php` (apply once on first run, or always if `EXTPLORER_APPLY_ENV=1`):
+- `EXTPLORER_EMAIL_PROTOCOL`
+- `EXTPLORER_SMTP_HOST`
+- `EXTPLORER_SMTP_PORT`
+- `EXTPLORER_SMTP_USER`
+- `EXTPLORER_SMTP_PASS`
+- `EXTPLORER_SMTP_CRYPTO`
+- `EXTPLORER_SENDMAIL_PATH`
+- `EXTPLORER_EMAIL_FROM`
+- `EXTPLORER_EMAIL_FROM_NAME`
+- `EXTPLORER_DEFAULT_TRANSFER_EXPIRY`
+- `EXTPLORER_ALLOW_PUBLIC_UPLOADS`
+- `EXTPLORER_MOUNT_ROOT_ALLOWLIST` (comma- or newline-separated)
+
 ## 🛠 Development & Building
 
 If you are contributing to eXtplorer or building from source:
