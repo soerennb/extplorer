@@ -168,6 +168,7 @@
         .admin-meta-label { width: 200px; }
         .admin-config-box { max-height: 150px; overflow-y: auto; }
         .context-menu { position: fixed; z-index: 1050; }
+        .path-breadcrumb .breadcrumb-item + .breadcrumb-item::before { color: rgba(255, 255, 255, 0.6); }
         .progress-w-0 { width: 0%; }
         .progress-w-5 { width: 5%; }
         .progress-w-10 { width: 10%; }
@@ -208,7 +209,7 @@
                 
                 <div class="d-flex align-items-center text-white me-3">
                     <span class="me-2 text-white-50">{{ t('path') }}</span>
-                    <nav aria-label="breadcrumb">
+                    <nav aria-label="breadcrumb" class="path-breadcrumb">
                         <ol class="breadcrumb mb-0">
                             <li class="breadcrumb-item">
                                 <a href="#" class="link-light text-decoration-none" @click.prevent="goToPath('')">/</a>
