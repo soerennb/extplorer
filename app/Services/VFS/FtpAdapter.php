@@ -13,6 +13,9 @@ class FtpAdapter implements IFileSystem
 
     public function __construct(string $host, string $user, string $pass, int $port = 21, string $root = '/')
     {
+        if (!function_exists('ftp_connect')) {
+            throw new Exception("FTP extension not installed");
+        }
         $this->host = $host;
         $this->port = $port;
         $this->root = '/' . trim($root, '/');
