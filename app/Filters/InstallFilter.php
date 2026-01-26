@@ -28,6 +28,11 @@ class InstallFilter implements FilterInterface
         // Determine if we are currently accessing the install page
         $currentPath = trim($request->getUri()->getPath(), '/');
         $isInstallPage = ($currentPath === 'install' || strpos($currentPath, 'install/') === 0);
+        $isHealthCheck = ($currentPath === 'health');
+
+        if ($isHealthCheck) {
+            return;
+        }
 
         // If not installed (writable error OR no users)
         if ($writableError || !$usersExist) {

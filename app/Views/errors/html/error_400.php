@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title><?= lang('Errors.badRequest') ?></title>
 
-    <style>
+    <style <?= csp_style_nonce() ?>>
         div.logo {
             height: 200px;
             width: 155px;

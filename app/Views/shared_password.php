@@ -7,7 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="<?= base_url('favicon.svg') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/remixicon.css') ?>">
-    <style nonce="<?= csp_style_nonce() ?>">
+    <style <?= csp_style_nonce() ?>>
         body, html { height: 100%; background-color: #f8f9fa; }
 </head>
 <body>

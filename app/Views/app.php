@@ -42,6 +42,7 @@
         .file-item.selected { background-color: var(--bs-primary) !important; color: white !important; }
         .file-item.selected .file-meta { color: rgba(255,255,255,0.8) !important; }
         .file-item.drag-over { background-color: var(--bs-info-bg-subtle) !important; border: 1px dashed var(--bs-info) !important; }
+        .mount-badge { font-size: 0.65rem; }
         
         /* Grid View */
         .grid-view {
@@ -513,7 +514,7 @@
                             
                             <div class="file-name" :title="file.name">
                                 {{ file.name }}
-                                <span v-if="file.is_mount && file.is_external" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-1" style="font-size: 0.65rem;">Mount</span>
+                                <span v-if="file.is_mount && file.is_external" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-1 mount-badge">Mount</span>
                                 <i v-if="file.type === 'dir'" class="ri-arrow-right-line d-md-none ms-2 text-muted" @click.stop="open(file)"></i>
                             </div>
                             

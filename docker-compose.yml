@@ -4,6 +4,7 @@ services:
     image: extplorer:latest
     restart: unless-stopped
     volumes:
+      - .:/var/www/html
       - ./writable:/var/www/html/writable
     environment:
       # CI4 Configuration
@@ -19,6 +20,11 @@ services:
       # You can use a custom php.ini if needed
     networks:
       - extplorer-net
+    healthcheck:
+      test: ["CMD-SHELL", "php -r '$fp=@fsockopen(\"127.0.0.1\",9000); if($fp){fclose($fp); exit(0);} exit(1);'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   web:
     image: nginx:alpine
@@ -27,14 +33,16 @@ services:
       - "8080:80"
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
-      # Map public assets from app? 
-      # Ideally the Nginx image should contain static assets.
-      # For development/simple setup, we share the volume from 'app'
-      - ./public:/var/www/html/public
+      - .:/var/www/html:ro
     depends_on:
       - app
     networks:
       - extplorer-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 networks:
   extplorer-net:

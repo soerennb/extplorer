@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Install eXtplorer 3</title>
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
-    <style>
+    <style <?= csp_style_nonce() ?>>
         body { background-color: #f8f9fa; padding-top: 50px; }
         .install-card { max-width: 600px; margin: 0 auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .status-ok { color: green; font-weight: bold; }

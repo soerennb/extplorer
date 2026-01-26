@@ -19,10 +19,8 @@ writable/*.php
 .github
 Dockerfile
 docker-compose.yml
-docker/
 tests/
 phpunit.xml.dist
 README.md
 LICENSE.md
 build.sh
-composer.lock

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Installation Error</title>
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
-    <style>
+    <style <?= csp_style_nonce() ?>>
         body { padding-top: 50px; background-color: #f8f9fa; }
         .error-card { max-width: 600px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; border-left: 5px solid red; }
     </style>

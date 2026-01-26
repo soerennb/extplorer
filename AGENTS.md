@@ -12,6 +12,16 @@ bd close <id>         # Complete work
 bd sync               # Sync with git
 ```
 
+## CSP Implementation Rules (Must Follow)
+
+To avoid CSP warnings and regressions:
+
+- **No inline scripts/styles**: prefer external JS/CSS files. If inline is unavoidable, always add `<?= csp_script_nonce() ?>` / `<?= csp_style_nonce() ?>` to the `<script>`/`<style>` tag.
+- **No inline event handlers**: avoid `onclick=`, `onload=`, etc. Use JS event listeners in a script file or a nonce’d script block.
+- **No `style=` attributes**: move styles into CSS classes and include them in a nonce’d `<style>` block or external stylesheet.
+- **Keep CSP strict**: do not add `unsafe-inline` back to `script-src` or `style-src`. If a new use case requires it, refactor instead.
+- **Before finishing**: scan `app/Views` for inline scripts/styles/handlers and ensure they follow the rules above.
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
@@ -37,4 +47,3 @@ bd sync               # Sync with git
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
-

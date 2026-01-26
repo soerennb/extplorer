@@ -6,7 +6,7 @@
 
     <title><?= lang('Errors.whoops') ?></title>
 
-    <style>
+    <style <?= csp_style_nonce() ?>>
         <?= preg_replace('#[\r\n\t ]+#', ' ', file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'debug.css')) ?>
     </style>
 </head>

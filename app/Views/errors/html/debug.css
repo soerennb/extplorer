@@ -157,6 +157,18 @@ table {
     width: 100%;
     overflow: hidden;
 }
+.debug-table-full {
+    width: 100%;
+}
+.debug-col-10 {
+    width: 10em;
+}
+.debug-col-12 {
+    width: 12em;
+}
+.debug-col-15 {
+    width: 15em;
+}
 th {
     text-align: left;
     border-bottom: 1px solid #e7e7e7;

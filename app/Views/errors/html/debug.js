@@ -3,8 +3,13 @@ var contentDivs = new Array();
 
 function init()
 {
+    var tabs = document.getElementById('tabs');
+    if (! tabs) {
+        return;
+    }
+
     // Grab the tab links and content divs from the page
-    var tabListItems = document.getElementById('tabs').childNodes;
+    var tabListItems = tabs.childNodes;
     console.log(tabListItems);
     for (var i = 0; i < tabListItems.length; i ++)
     {
@@ -114,3 +119,15 @@ function toggle(elem)
 
     return false;
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    init();
+
+    var toggleLinks = document.querySelectorAll('.js-toggle-args');
+    for (var i = 0; i < toggleLinks.length; i++) {
+        toggleLinks[i].onclick = function (event) {
+            event.preventDefault();
+            return toggle(this.getAttribute('data-target'));
+        };
+    }
+});

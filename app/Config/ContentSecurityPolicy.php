@@ -54,14 +54,14 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public $scriptSrc = ['self', 'unsafe-eval', 'unsafe-inline'];
+    public $scriptSrc = ['self', 'unsafe-eval'];
 
     /**
      * Lists allowed stylesheets' URLs.
      *
      * @var list<string>|string
      */
-    public $styleSrc = ['self', 'unsafe-inline'];
+    public $styleSrc = ['self'];
 
     /**
      * Defines the origins from which images can be loaded.

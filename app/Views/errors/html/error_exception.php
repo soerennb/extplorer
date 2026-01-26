@@ -11,15 +11,15 @@ $errorId = uniqid('error', true);
     <meta name="robots" content="noindex">
 
     <title><?= esc($title) ?></title>
-    <style>
+    <style <?= csp_style_nonce() ?>>
         <?= preg_replace('#[\r\n\t ]+#', ' ', file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'debug.css')) ?>
     </style>
 
-    <script>
+    <script <?= csp_script_nonce() ?>>
         <?= file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'debug.js') ?>
     </script>
 </head>
-<body onload="init()">
+<body>
 
     <!-- Header -->
     <div class="header">
@@ -113,7 +113,7 @@ $errorId = uniqid('error', true);
                                 &nbsp;&nbsp;&mdash;&nbsp;&nbsp;<?= esc($row['class'] . $row['type'] . $row['function']) ?>
                                 <?php if (! empty($row['args'])) : ?>
                                     <?php $argsId = $errorId . 'args' . $index ?>
-                                    ( <a href="#" onclick="return toggle('<?= esc($argsId, 'attr') ?>');">arguments</a> )
+                                    ( <a href="#" class="js-toggle-args" data-target="<?= esc($argsId, 'attr') ?>">arguments</a> )
                                     <div class="args" id="<?= esc($argsId, 'attr') ?>">
                                         <table cellspacing="0">
 
@@ -229,7 +229,7 @@ $errorId = uniqid('error', true);
                 <table>
                     <tbody>
                         <tr>
-                            <td style="width: 10em">Path</td>
+                            <td class="debug-col-10">Path</td>
                             <td><?= esc($request->getUri()) ?></td>
                         </tr>
                         <tr>
@@ -241,7 +241,7 @@ $errorId = uniqid('error', true);
                             <td><?= esc($request->getIPAddress()) ?></td>
                         </tr>
                         <tr>
-                            <td style="width: 10em">Is AJAX Request?</td>
+                            <td class="debug-col-10">Is AJAX Request?</td>
                             <td><?= $request->isAJAX() ? 'yes' : 'no' ?></td>
                         </tr>
                         <tr>
@@ -272,7 +272,7 @@ $errorId = uniqid('error', true);
 
                     <h3>$<?= esc($var) ?></h3>
 
-                    <table style="width: 100%">
+                    <table class="debug-table-full">
                         <thead>
                             <tr>
                                 <th>Key</th>
@@ -348,7 +348,7 @@ $errorId = uniqid('error', true);
             <div class="content" id="response">
                 <table>
                     <tr>
-                        <td style="width: 15em">Response Status</td>
+                        <td class="debug-col-15">Response Status</td>
                         <td><?= esc($response->getStatusCode() . ' - ' . $response->getReasonPhrase()) ?></td>
                     </tr>
                 </table>
@@ -408,7 +408,7 @@ $errorId = uniqid('error', true);
                             <td><?= esc(static::describeMemory(memory_get_usage(true))) ?></td>
                         </tr>
                         <tr>
-                            <td style="width: 12em">Peak Memory Usage:</td>
+                            <td class="debug-col-12">Peak Memory Usage:</td>
                             <td><?= esc(static::describeMemory(memory_get_peak_usage(true))) ?></td>
                         </tr>
                         <tr>
