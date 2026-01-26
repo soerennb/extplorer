@@ -76,9 +76,9 @@ class Filters extends BaseFilters
         'before' => [
             'install',
             // 'honeypot',
-            'csrf' => ['except' => ['dav', 'dav/*', 'install/*']],
+            'csrf' => ['except' => ['dav', 'dav/*', 'install', 'install/*', '*/install', '*/install/*', '*/public/install', '*/public/install/*']],
             'invalidchars',
-            'auth' => ['except' => ['health', 'login', 'login/*', 'assets/*', 'dav', 'dav/*', 'install', 'install/*']],
+            'auth' => ['except' => ['health', 'login', 'login/*', 'assets/*', 'dav', 'dav/*', 'install', 'install/*', '*/install', '*/install/*', '*/public/install', '*/public/install/*']],
         ],
         'after' => [
             // 'honeypot',

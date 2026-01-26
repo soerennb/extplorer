@@ -6,9 +6,9 @@ use App\Models\UserModel;
 
 class Install extends BaseController
 {
-    public function index()
+    private function getChecks(): array
     {
-        $checks = [
+        return [
             'php' => [
                 'name' => 'PHP Version >= 8.1',
                 'status' => version_compare(PHP_VERSION, '8.1.0', '>='),
@@ -26,6 +26,11 @@ class Install extends BaseController
                 'gd' => extension_loaded('gd'),
             ]
         ];
+    }
+
+    public function index()
+    {
+        $checks = $this->getChecks();
 
         // Check if writable is writable, if not, show error page only
         if (!$checks['writable']['status']) {
@@ -37,15 +42,18 @@ class Install extends BaseController
 
     public function createAdmin()
     {
-        if ($this->request->getMethod() !== 'post') {
+        if ($this->request->getMethod() !== 'POST') {
             return redirect()->to('install');
         }
 
-        $username = $this->request->getPost('username');
-        $password = $this->request->getPost('password');
+        $username = trim((string) $this->request->getPost('username'));
+        $password = (string) $this->request->getPost('password');
         
         if (strlen($password) < 8) {
-            return redirect()->back()->with('error', 'Password must be at least 8 characters.');
+            return view('install/index', [
+                'checks' => $this->getChecks(),
+                'error' => 'Password must be at least 8 characters.'
+            ]);
         }
 
         $userModel = new UserModel();
@@ -67,10 +75,20 @@ class Install extends BaseController
         }
 
         // 3. Create Admin User
-        if ($userModel->addUser($username, $password, 'admin', '/', ['Administrators'])) {
+        $created = $userModel->addUser($username, $password, 'admin', '/', ['Administrators']);
+        $user = $userModel->getUser($username);
+
+        if ($created && $user) {
             return redirect()->to('login')->with('message', 'Installation successful! Please login.');
-        } else {
-            return redirect()->back()->with('error', 'Failed to create user. It might already exist.');
         }
+
+        $error = $created
+            ? 'Failed to write user data. Please verify write permissions for the writable directory.'
+            : 'Failed to create user. It might already exist.';
+
+        return view('install/index', [
+            'checks' => $this->getChecks(),
+            'error' => $error
+        ]);
     }
 }

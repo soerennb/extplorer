@@ -27,8 +27,9 @@ class InstallFilter implements FilterInterface
 
         // Determine if we are currently accessing the install page
         $currentPath = trim($request->getUri()->getPath(), '/');
-        $isInstallPage = ($currentPath === 'install' || strpos($currentPath, 'install/') === 0);
-        $isHealthCheck = ($currentPath === 'health');
+        // Match install/health as a path segment (works for subfolder deployments)
+        $isInstallPage = preg_match('#(^|/)install(/|$)#', $currentPath) === 1;
+        $isHealthCheck = preg_match('#(^|/)health(/|$)#', $currentPath) === 1;
 
         if ($isHealthCheck) {
             return;
