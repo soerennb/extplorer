@@ -772,11 +772,44 @@
         window.connectionMode = "<?= session('connection')['mode'] ?? 'local' ?>";
         window.csrfTokenName = "<?= csrf_token() ?>";
         window.csrfHash = "<?= csrf_hash() ?>";
+        window.cspStyleNonce = "<?= service('csp')->getStyleNonce() ?>";
     </script>
     <script src="<?= base_url('assets/js/vue.global.js') ?>"></script>
     <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/sweetalert2.min.js') ?>"></script>
+    <script <?= csp_script_nonce() ?>>
+        (function() {
+            if (!window.cspStyleNonce) return;
+            const doc = document;
+            const origCreateElement = doc.createElement.bind(doc);
+            const origCreateElementNS = doc.createElementNS.bind(doc);
+
+            doc.createElement = function(tagName, options) {
+                const el = origCreateElement(tagName, options);
+                if (String(tagName).toLowerCase() === 'style') {
+                    el.setAttribute('nonce', window.cspStyleNonce);
+                }
+                return el;
+            };
+            doc.createElementNS = function(ns, tagName, options) {
+                const el = origCreateElementNS(ns, tagName, options);
+                if (String(tagName).toLowerCase() === 'style') {
+                    el.setAttribute('nonce', window.cspStyleNonce);
+                }
+                return el;
+            };
+
+            window.__restoreCreateElement = function() {
+                doc.createElement = origCreateElement;
+                doc.createElementNS = origCreateElementNS;
+                delete window.__restoreCreateElement;
+            };
+        })();
+    </script>
     <script src="<?= base_url('assets/vendor/ace/ace.min.js') ?>"></script>
+    <script <?= csp_script_nonce() ?>>
+        if (window.__restoreCreateElement) window.__restoreCreateElement();
+    </script>
     <script src="<?= base_url('assets/js/diff.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/diff2html-ui.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/api.js') ?>"></script>
