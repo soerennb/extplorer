@@ -63,6 +63,17 @@ const app = createApp({
         });
 
         const containerClass = computed(() => store.viewMode === 'grid' ? 'grid-view' : 'list-view');
+        const breadcrumbs = computed(() => {
+            if (!store.cwd) return [];
+            const parts = store.cwd.split('/').filter(Boolean);
+            const crumbs = [];
+            let current = '';
+            for (const part of parts) {
+                current = current ? `${current}/${part}` : part;
+                crumbs.push({ name: part, path: current });
+            }
+            return crumbs;
+        });
 
         const emptyStateIcon = computed(() => {
             if (store.isTrashMode) return 'ri-delete-bin-7-line';
@@ -184,6 +195,9 @@ const app = createApp({
         // --- Core Actions ---
         const reload = () => store.reload();
         const goUp = () => { if (store.cwd) { const p = store.cwd.split('/'); p.pop(); store.loadPath(p.join('/')); } };
+        const goToPath = (path) => {
+            store.loadPath(path);
+        };
         
         const closeOffcanvas = () => {
             const el = document.getElementById('sidebarOffcanvas');
@@ -698,7 +712,7 @@ const app = createApp({
 
         return {
             store, i18n, t: (k, p) => i18n.t(k, p),
-            goUp, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles,
+            goUp, goToPath, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles, breadcrumbs,
             emptyStateIcon, emptyStateTitle, emptyStateDescription,
             isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer,
             contextMenu, showContextMenu, hideContextMenu, cmAction,

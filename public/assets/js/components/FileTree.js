@@ -70,13 +70,18 @@ const FileTree = {
         }
     },
     watch: {
-        'store.treeVersion'() {
-            if (this.isOpen) {
-                this.loadChildren();
+        'store.cwd'(val) {
+            if (!this.path) return;
+            const normalized = String(val || '').replace(/^\/+|\/+$/g, '');
+            const myPath = String(this.path || '').replace(/^\/+|\/+$/g, '');
+            if (!normalized || !myPath) return;
+            if (normalized === myPath || normalized.startsWith(myPath + '/')) {
+                if (!this.isOpen) this.isOpen = true;
+                if (this.children.length === 0) {
+                    this.loadChildren();
+                }
             }
-        }
-    },
-    watch: {
+        },
         'store.treeVersion'() {
             if (this.isOpen) {
                 this.loadChildren();

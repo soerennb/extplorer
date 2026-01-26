@@ -207,7 +207,17 @@
                 </a>
                 
                 <div class="d-flex align-items-center text-white me-3">
-                    <span class="me-2 text-white-50">{{ t('path') }}</span> /{{ store.cwd }}
+                    <span class="me-2 text-white-50">{{ t('path') }}</span>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item">
+                                <a href="#" class="link-light text-decoration-none" @click.prevent="goToPath('')">/</a>
+                            </li>
+                            <li v-for="(crumb, idx) in breadcrumbs" :key="crumb.path" class="breadcrumb-item">
+                                <a href="#" class="link-light text-decoration-none" @click.prevent="goToPath(crumb.path)">{{ crumb.name }}</a>
+                            </li>
+                        </ol>
+                    </nav>
                 </div>
 
                 <div class="me-3">
