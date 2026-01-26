@@ -22,6 +22,10 @@ To avoid CSP warnings and regressions:
 - **Keep CSP strict**: do not add `unsafe-inline` back to `script-src` or `style-src`. If a new use case requires it, refactor instead.
 - **Before finishing**: scan `app/Views` for inline scripts/styles/handlers and ensure they follow the rules above.
 
+## Docker Note
+
+- Docker uses an init container to populate the shared code volume; updates refresh automatically based on the image version marker.
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
