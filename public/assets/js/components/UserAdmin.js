@@ -146,8 +146,8 @@ const UserAdmin = {
                                         <label class="form-label small">Blocked Extensions (csv)</label>
                                         <input type="text" class="form-control form-control-sm" v-model="editingUser.blocked_extensions" placeholder="e.g. php,exe">
                                         <div v-if="system && system.system_blocklist" class="mt-1">
-                                            <span class="small text-muted d-block" style="font-size: 0.75rem;">System Blocklist (Always Applied):</span>
-                                            <span v-for="ext in system.system_blocklist" :key="ext" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1" style="font-size: 0.7rem;">{{ ext }}</span>
+                                            <span class="small text-muted d-block admin-note">System Blocklist (Always Applied):</span>
+                                            <span v-for="ext in system.system_blocklist" :key="ext" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1 admin-badge">{{ ext }}</span>
                                         </div>
                                     </div>
                                     <div class="col-md-12">
@@ -265,7 +265,7 @@ const UserAdmin = {
 
                     <!-- Logs Tab -->
                     <div v-if="tab === 'logs'">
-                        <div class="table-responsive" style="max-height: 400px;">
+                        <div class="table-responsive admin-table-scroll">
                             <table class="table table-sm table-striped table-hover small">
                                 <thead class="sticky-top bg-body">
                                     <tr>
@@ -281,7 +281,7 @@ const UserAdmin = {
                                         <td class="text-nowrap">{{ formatDate(log.timestamp) }}</td>
                                         <td>{{ log.user }}</td>
                                         <td><strong>{{ log.action }}</strong></td>
-                                        <td class="text-truncate" style="max-width: 200px;" :title="log.path">{{ log.path }}</td>
+                                        <td class="text-truncate admin-log-path" :title="log.path">{{ log.path }}</td>
                                         <td>{{ log.ip }}</td>
                                     </tr>
                                 </tbody>
@@ -295,7 +295,7 @@ const UserAdmin = {
                         <div v-else>
                             <table class="table table-sm table-bordered">
                                 <tbody>
-                                    <tr><th style="width: 200px;">eXtplorer Version</th><td><span class="badge bg-success">{{ system.app_version }}</span></td></tr>
+                                    <tr><th class="admin-meta-label">eXtplorer Version</th><td><span class="badge bg-success">{{ system.app_version }}</span></td></tr>
                                     <tr><th>PHP Version</th><td>{{ system.php_version }}</td></tr>
                                     <tr><th>OS</th><td>{{ system.server_os }}</td></tr>
                                     <tr><th>Server Software</th><td>{{ system.server_software }}</td></tr>
@@ -307,7 +307,7 @@ const UserAdmin = {
                                 </tbody>
                             </table>
                             <h6>Loaded Extensions</h6>
-                            <div class="small text-muted p-2 bg-light border rounded" style="max-height: 150px; overflow-y: auto;">
+                            <div class="small text-muted p-2 bg-light border rounded admin-config-box">
                                 {{ system.extensions }}
                             </div>
                         </div>

@@ -15,6 +15,9 @@ const UserProfile = {
                         <li class="nav-item">
                             <a class="nav-link" :class="{active: activeTab === 'security'}" href="#" @click.prevent="activeTab = 'security'">{{ t('security') || 'Security' }}</a>
                         </li>
+                        <li class="nav-item" v-if="canMount">
+                            <a class="nav-link" :class="{active: activeTab === 'mounts'}" href="#" @click.prevent="loadMounts">{{ t('mounts') || 'Mounts' }}</a>
+                        </li>
                     </ul>
 
                     <div v-if="activeTab === 'general'">
@@ -86,10 +89,10 @@ const UserProfile = {
                                 <div class="card-body text-center">
                                     <h6 class="card-title">{{ t('scan_qr') || 'Scan QR Code' }}</h6>
                                     <div class="my-3 bg-white p-2 d-inline-block rounded">
-                                        <img :src="setup.qr" style="width: 200px; height: 200px;">
+                                        <img :src="setup.qr" class="qr-image">
                                     </div>
                                     <p class="small user-select-all font-monospace">{{ setup.secret }}</p>
-                                    <div class="input-group input-group-sm mb-3" style="max-width: 300px; margin: 0 auto;">
+                                    <div class="input-group input-group-sm mb-3 qr-input-group">
                                         <input type="text" class="form-control" placeholder="000 000" v-model="setup.code">
                                         <button class="btn btn-success" @click="finish2faSetup" :disabled="!setup.code">{{ t('verify') || 'Verify' }}</button>
                                     </div>
@@ -110,19 +113,69 @@ const UserProfile = {
                             </div>
                         </div>
                     </div>
+
+                    <div v-if="activeTab === 'mounts'">
+                        <h6 class="border-bottom pb-2 mb-3">{{ t('manage_mounts') || 'Manage Virtual Mounts' }}</h6>
+                        <p class="small text-muted">{{ t('mounts_desc') || 'Mount external directories as folders in your root view.' }}</p>
+                        
+                        <div v-if="mountsLoading" class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>
+                        <div v-else>
+                            <div v-if="mounts.length === 0" class="text-center py-4 text-muted small">
+                                {{ t('no_mounts') || 'No mounts defined.' }}
+                            </div>
+                            <div v-else class="list-group list-group-flush mb-4 border rounded">
+                                <div v-for="mount in mounts" :key="mount.id" class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-bold">{{ mount.name }}</div>
+                                        <div class="small text-muted font-monospace">{{ mount.config.path }}</div>
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm" @click="removeMount(mount.id)">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card bg-body-tertiary">
+                                <div class="card-body">
+                                    <h6>{{ t('add_mount') || 'Add New Mount' }}</h6>
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label small">{{ t('mount_name') || 'Name (Folder Name)' }}</label>
+                                            <input type="text" class="form-control form-control-sm" v-model="newMount.name" placeholder="e.g. Projects">
+                                        </div>
+                                        <div class="col-md-8">
+                                            <label class="form-label small">{{ t('mount_path') || 'Path (Local Server Path)' }}</label>
+                                            <input type="text" class="form-control form-control-sm" v-model="newMount.config.path" placeholder="/absolute/path/on/server">
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 text-end">
+                                        <button class="btn btn-primary btn-sm" @click="addMount" :disabled="!newMount.name || !newMount.config.path">{{ t('mount_add') || 'Add Mount' }}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     `,
     setup() {
-        const { ref, reactive, onMounted } = Vue;
+        const { ref, reactive, computed, onMounted } = Vue;
         const details = ref({});
         const loading = ref(false);
         const activeTab = ref('general');
         const passwordForm = reactive({ new: '' });
         const setup = reactive({ step: 0, qr: '', secret: '', code: '', recoveryCodes: [] });
+        const mounts = ref([]);
+        const mountsLoading = ref(false);
+        const newMount = reactive({ name: '', type: 'local', config: { path: '' } });
         let modalInstance = null;
+
+        const canMount = computed(() => {
+            const perms = window.userPermissions || [];
+            return perms.includes('*') || perms.includes('mount_external');
+        });
 
         const loadDetails = async () => {
             loading.value = true;
@@ -130,6 +183,35 @@ const UserProfile = {
                 details.value = await Api.get('profile/details');
             } catch(e) { console.error(e); }
             finally { loading.value = false; }
+        };
+
+        const loadMounts = async () => {
+            activeTab.value = 'mounts';
+            mountsLoading.value = true;
+            try {
+                mounts.value = await Api.get('mounts');
+            } catch(e) { console.error(e); }
+            finally { mountsLoading.value = false; }
+        };
+
+        const addMount = async () => {
+            try {
+                await Api.post('mounts', newMount);
+                newMount.name = '';
+                newMount.config.path = '';
+                await loadMounts();
+                Swal.fire(i18n.t('success'), i18n.t('mount_added'), 'success');
+                store.reload();
+            } catch(e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
+        };
+
+        const removeMount = async (id) => {
+            if (!confirm(i18n.t('confirm_title'))) return;
+            try {
+                await Api.delete('mounts/' + id);
+                await loadMounts();
+                store.reload();
+            } catch(e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
         };
 
         const updatePassword = async () => {
@@ -178,6 +260,7 @@ const UserProfile = {
         // Expose to parent via ref
         return { 
             activeTab, details, loading, passwordForm, setup,
+            canMount, mounts, mountsLoading, newMount, loadMounts, addMount, removeMount,
             updatePassword, start2faSetup, finish2faSetup, disable2fa,
             open, t: (k) => i18n.t(k)
         };

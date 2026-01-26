@@ -8,10 +8,13 @@ class VirtualAdapter implements IFileSystem
 {
     /** @var array<string, IFileSystem> */
     private array $mounts = [];
+    /** @var array<string, array> */
+    private array $mountMetadata = [];
 
-    public function mount(string $alias, IFileSystem $adapter): void
+    public function mount(string $alias, IFileSystem $adapter, array $metadata = []): void
     {
         $this->mounts[$alias] = $adapter;
+        $this->mountMetadata[$alias] = $metadata;
     }
 
     private function resolveMount(string $path): array
@@ -36,10 +39,16 @@ class VirtualAdapter implements IFileSystem
             // Root: List mounts
             $result = [];
             foreach ($this->mounts as $alias => $adapter) {
-                $result[] = [
+                $type = 'local';
+                if ($adapter instanceof FtpAdapter) $type = 'ftp';
+                if ($adapter instanceof Ssh2Adapter) $type = 'ssh2';
+
+                $item = [
                     'name' => $alias,
                     'path' => $alias,
                     'type' => 'dir',
+                    'is_mount' => true,
+                    'mount_type' => $type,
                     'size' => 0, // Could sum up, but expensive
                     'mtime' => time(),
                     'perms' => '0755',
@@ -48,6 +57,10 @@ class VirtualAdapter implements IFileSystem
                     'mime' => 'directory',
                     'extension' => null
                 ];
+                if (isset($this->mountMetadata[$alias])) {
+                    $item = array_merge($item, $this->mountMetadata[$alias]);
+                }
+                $result[] = $item;
             }
             return $result;
         }
@@ -186,10 +199,16 @@ class VirtualAdapter implements IFileSystem
         
         if ($relPath === '') {
              // Metadata for the mount itself
-             return [
+             $type = 'local';
+             if ($adapter instanceof FtpAdapter) $type = 'ftp';
+             if ($adapter instanceof Ssh2Adapter) $type = 'ssh2';
+
+             $item = [
                 'name' => basename($path),
                 'path' => $path,
                 'type' => 'dir',
+                'is_mount' => true,
+                'mount_type' => $type,
                 'size' => 0,
                 'mtime' => time(),
                 'perms' => '0755',
@@ -198,6 +217,10 @@ class VirtualAdapter implements IFileSystem
                 'mime' => 'directory',
                 'extension' => null
             ];
+            if (isset($this->mountMetadata[$item['name']])) {
+                $item = array_merge($item, $this->mountMetadata[$item['name']]);
+            }
+            return $item;
         }
 
         $meta = $adapter->getMetadata($relPath);

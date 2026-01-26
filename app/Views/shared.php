@@ -7,7 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="<?= base_url('favicon.svg') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/remixicon.css') ?>">
-    <style nonce="<?= csp_style_nonce() ?>">
+    <style <?= csp_style_nonce() ?>>
         body, html { height: 100%; background-color: #f8f9fa; }
         .shared-container { max-width: 1000px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
         .shared-header { padding: 1rem; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
@@ -20,6 +20,8 @@
         .preview-box { display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column; }
         .preview-icon { font-size: 5rem; color: #dee2e6; }
         .max-h-80vh { max-height: 80vh; }
+        .preview-modal-body { min-height: 400px; background: #000; }
+        .preview-pdf-frame { height: 70vh; border: none; }
     </style>
 </head>
 <body>
@@ -80,14 +82,14 @@
                         <h6 class="modal-title text-white">{{ previewState.filename }}</h6>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body p-0 text-center position-relative d-flex align-items-center justify-content-center" style="min-height: 400px; background: #000;">
+                    <div class="modal-body p-0 text-center position-relative d-flex align-items-center justify-content-center preview-modal-body">
                         <img v-if="previewState.type === 'image'" :src="previewState.src" class="img-fluid rounded max-h-80vh">
                         <video v-if="previewState.type === 'video'" :src="previewState.src" controls autoplay class="w-100 max-h-80vh"></video>
                         <div v-if="previewState.type === 'audio'" class="p-5 w-100">
                             <i class="ri-music-2-line fs-1 text-white-50 d-block mb-3"></i>
                             <audio :src="previewState.src" controls autoplay class="w-100"></audio>
                         </div>
-                        <iframe v-if="previewState.type === 'pdf'" :src="previewState.src" class="w-100" style="height: 70vh; border: none;"></iframe>
+                        <iframe v-if="previewState.type === 'pdf'" :src="previewState.src" class="w-100 preview-pdf-frame"></iframe>
                     </div>
                 </div>
             </div>
@@ -97,7 +99,7 @@
     <?php if (!$is_file): ?>
     <script src="<?= base_url('assets/js/vue.global.js') ?>"></script>
     <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
-    <script nonce="<?= csp_script_nonce() ?>">
+    <script <?= csp_script_nonce() ?>>
         const { createApp, ref, reactive, onMounted } = Vue;
         const hash = "<?= $hash ?>";
         const baseUrl = "<?= base_url() ?>";

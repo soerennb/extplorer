@@ -198,7 +198,15 @@ class UserModel
 
     public function getRoles(): array
     {
-        return $this->loadData($this->rolesFile);
+        $roles = $this->loadData($this->rolesFile);
+        if (empty($roles)) {
+            $roles = [
+                'admin' => ['*'],
+                'user'  => ['read', 'write', 'upload', 'delete', 'rename', 'archive', 'extract', 'chmod', 'mount_external']
+            ];
+            $this->saveRoles($roles);
+        }
+        return $roles;
     }
 
     public function saveRoles(array $roles): void

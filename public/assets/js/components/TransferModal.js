@@ -31,15 +31,25 @@ const TransferModal = {
                         </div>
 
                         <div v-else>
+                            <div v-if="resumeState" class="alert alert-info d-flex align-items-center justify-content-between mb-3">
+                                <div>
+                                    <i class="ri-history-line me-2"></i> Unfinished transfer found ({{ resumeState.fileNames.length }} files).
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-danger" @click="resetForm">Discard</button>
+                                    <button class="btn btn-sm btn-primary" @click="resumeUpload">Resume</button>
+                                </div>
+                            </div>
+
                             <div class="row">
                                 <!-- Left: File Drop -->
                                 <div class="col-md-6 border-end">
-                                    <div class="dropzone p-4 mb-3 border border-2 border-dashed rounded text-center bg-light"
+                                    <div class="dropzone p-4 mb-3 border border-2 border-dashed rounded text-center bg-light transfer-dropzone"
                                          @dragover.prevent="isDragOver = true"
                                          @dragleave="isDragOver = false"
                                          @drop.prevent="handleDrop"
                                          :class="{'bg-primary-subtle border-primary': isDragOver}"
-                                         style="min-height: 200px; display: flex; flex-direction: column; justify-content: center;">
+                                    >
                                         
                                         <div v-if="files.length === 0">
                                             <i class="ri-upload-cloud-2-line display-4 text-muted mb-2"></i>
@@ -60,7 +70,7 @@ const TransferModal = {
                                                 <span class="fw-bold">{{ files.length }} Files</span>
                                                 <span class="badge bg-secondary">{{ formatSize(totalSize) }}</span>
                                             </div>
-                                            <div class="list-group list-group-flush overflow-auto" style="max-height: 250px;">
+                                            <div class="list-group list-group-flush overflow-auto transfer-files-list">
                                                 <div v-for="(f, idx) in files" :key="idx" class="list-group-item d-flex justify-content-between align-items-center p-2 small">
                                                     <div class="text-truncate me-2" :title="f.name">
                                                         <i :class="getIcon(f.name)" class="me-1"></i> {{ f.name }}
@@ -148,7 +158,7 @@ const TransferModal = {
                                 <tbody>
                                     <tr v-for="item in history" :key="item.hash">
                                         <td class="fw-bold">{{ item.subject || '(No Subject)' }}</td>
-                                        <td class="text-truncate" style="max-width: 150px;" :title="item.recipients?.join(', ')">
+                                        <td class="text-truncate transfer-recipient" :title="item.recipients?.join(', ')">
                                             {{ item.recipients ? item.recipients[0] + (item.recipients.length > 1 ? ' +' + (item.recipients.length-1) : '') : '-' }}
                                         </td>
                                         <td>{{ formatDate(item.created_at) }}</td>
@@ -192,6 +202,8 @@ const TransferModal = {
             uploadProgress: 0,
             successLink: null,
             
+            resumeState: null,
+            
             history: [],
             loadingHistory: false,
             modal: null
@@ -204,11 +216,25 @@ const TransferModal = {
     },
     mounted() {
         this.modal = new bootstrap.Modal(document.getElementById('transferModal'));
+        document.getElementById('transferModal').addEventListener('show.bs.modal', this.checkResume);
     },
     methods: {
+        checkResume() {
+            const saved = localStorage.getItem('extplorer_transfer_resume');
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    // Basic expiry check (24h)
+                    if (Date.now() - state.timestamp < 86400000) {
+                        this.resumeState = state;
+                    } else {
+                        localStorage.removeItem('extplorer_transfer_resume');
+                    }
+                } catch(e) { localStorage.removeItem('extplorer_transfer_resume'); }
+            }
+        },
         open() {
             this.modal.show();
-            // Reset state if needed
             if (!this.files.length && !this.successLink) {
                  this.tab = 'new';
             }
@@ -220,30 +246,54 @@ const TransferModal = {
             this.successLink = null;
             this.uploadProgress = 0;
             this.isUploading = false;
+            this.resumeState = null;
+            localStorage.removeItem('extplorer_transfer_resume');
+        },
+        async resumeUpload() {
+            if (!this.resumeState) return;
+            
+            const { sessionId, recipients, form, fileNames } = this.resumeState;
+            
+            // Restore Form
+            this.recipients = recipients;
+            this.form = form;
+            this.resumeState.isResuming = true;
+            
+            // Ask user to re-select files (security restriction: can't restore File objects)
+            const { value: fileList } = await Swal.fire({
+                title: 'Resume Upload',
+                text: `Please re-select the following files to resume: ${fileNames.join(', ')}`,
+                input: 'file',
+                inputAttributes: { multiple: 'multiple' },
+                showCancelButton: true
+            });
+
+            if (fileList && fileList.length > 0) {
+                // Verify files match
+                const selectedNames = Array.from(fileList).map(f => f.name).sort();
+                const savedNames = fileNames.sort();
+                
+                // Simple name check
+                if (JSON.stringify(selectedNames) !== JSON.stringify(savedNames)) {
+                    return Swal.fire('Error', 'Selected files do not match the pending upload.', 'error');
+                }
+                
+                this.files = Array.from(fileList);
+                this.sendTransfer(sessionId); // Pass existing session ID
+            }
         },
         handleDrop(e) {
             this.isDragOver = false;
             const items = e.dataTransfer.items;
             if (items) {
-                // Simplified: only taking files for now. Recursive directory support is complex in browser without webkitGetAsEntry
-                // But we can try to use standard API or the same logic as app.js
-                // For MVP, flat files or we iterate
                 for (let i=0; i < items.length; i++) {
                     const item = items[i];
                     if (item.kind === 'file') {
                         const entry = item.webkitGetAsEntry();
-                        if (entry.isFile) {
-                            entry.file(f => this.files.push(f));
-                        } else if (entry.isDirectory) {
-                             // Traverse? Or just alert limitation
-                             // Let's rely on standard FileList from drop first for simple files
-                        }
+                        if (entry.isFile) entry.file(f => this.files.push(f));
                     }
                 }
-                // Fallback for simple file drop
-                if (this.files.length === 0) {
-                     [...e.dataTransfer.files].forEach(f => this.files.push(f));
-                }
+                if (this.files.length === 0) [...e.dataTransfer.files].forEach(f => this.files.push(f));
             }
         },
         handleFileSelect(e) {
@@ -252,49 +302,68 @@ const TransferModal = {
         removeFile(idx) {
             this.files.splice(idx, 1);
         },
-        async sendTransfer() {
+        async sendTransfer(existingSessionId = null) {
             const validRecipients = this.recipients.filter(e => e && e.includes('@'));
             if (validRecipients.length === 0) return alert('Please enter at least one valid recipient email.');
 
             this.isUploading = true;
+            this.resumeState = null; // Hide resume UI
             this.uploadProgress = 0;
-            const sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
             
+            const sessionId = existingSessionId || (Date.now().toString(36) + Math.random().toString(36).substr(2));
+            
+            // Save state for resume
+            localStorage.setItem('extplorer_transfer_resume', JSON.stringify({
+                sessionId,
+                recipients: this.recipients,
+                form: this.form,
+                fileNames: this.files.map(f => f.name),
+                timestamp: Date.now()
+            }));
+
             try {
                 // 1. Upload Files
                 const totalBytes = this.totalSize;
-                let uploadedBytes = 0;
+                let uploadedBytes = 0; // Local counter for progress
 
                 for (let file of this.files) {
                     const CHUNK_SIZE = 1024 * 1024; // 1MB
                     const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
                     
-                    if (file.size <= CHUNK_SIZE) {
-                         const fd = new FormData();
-                         fd.append('file', file);
-                         fd.append('sessionId', sessionId);
-                         fd.append('fileName', file.name);
-                         fd.append('chunkIndex', 0);
-                         fd.append('totalChunks', 1);
-                         await this.uploadChunk(fd);
-                         uploadedBytes += file.size;
-                    } else {
-                        for (let i = 0; i < totalChunks; i++) {
-                            const chunk = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-                            const fd = new FormData();
-                            fd.append('file', chunk);
-                            fd.append('sessionId', sessionId);
-                            fd.append('fileName', file.name);
-                            fd.append('chunkIndex', i);
-                            fd.append('totalChunks', totalChunks);
-                            await this.uploadChunk(fd);
-                            uploadedBytes += chunk.size;
-                            this.uploadProgress = Math.round((uploadedBytes / totalBytes) * 90);
-                        }
+                    // Check status from server to skip chunks
+                    let startChunk = 0;
+                    if (existingSessionId) {
+                        try {
+                            const status = await Api.get(`transfer/status?sessionId=${sessionId}&fileName=${encodeURIComponent(file.name)}`);
+                            if (status.status === 'complete') {
+                                uploadedBytes += file.size;
+                                continue; // Skip file
+                            }
+                            if (status.status === 'partial') {
+                                startChunk = Math.floor(status.uploaded / CHUNK_SIZE);
+                                uploadedBytes += (startChunk * CHUNK_SIZE);
+                            }
+                        } catch(e) { console.warn("Status check failed", e); }
+                    }
+
+                    for (let i = startChunk; i < totalChunks; i++) {
+                        const chunk = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+                        const fd = new FormData();
+                        fd.append('file', chunk);
+                        fd.append('sessionId', sessionId);
+                        fd.append('fileName', file.name);
+                        fd.append('chunkIndex', i);
+                        fd.append('totalChunks', totalChunks);
+                        
+                        await this.uploadChunk(fd);
+                        
+                        uploadedBytes += chunk.size;
+                        // Avoid >100% due to chunk overhead/estimates
+                        this.uploadProgress = Math.min(95, Math.round((uploadedBytes / totalBytes) * 95));
                     }
                 }
                 
-                this.uploadProgress = 90;
+                this.uploadProgress = 98;
 
                 // 2. Finalize Send
                 const res = await Api.post('transfer/send', {
@@ -308,6 +377,7 @@ const TransferModal = {
 
                 this.uploadProgress = 100;
                 this.successLink = res.link;
+                localStorage.removeItem('extplorer_transfer_resume'); // Clear resume state
 
             } catch (e) {
                 alert('Transfer failed: ' + e.message);
@@ -317,14 +387,25 @@ const TransferModal = {
         async uploadChunk(formData) {
              const headers = { 'X-Requested-With': 'XMLHttpRequest' };
              if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
-             const res = await fetch(window.baseUrl + 'api/transfer/upload', { method: 'POST', headers, body: formData });
-             if (!res.ok) throw new Error('Upload failed');
+             
+             // Retry logic
+             let retries = 3;
+             while (retries > 0) {
+                 try {
+                     const res = await fetch(window.baseUrl + 'api/transfer/upload', { method: 'POST', headers, body: formData });
+                     if (!res.ok) throw new Error('Upload failed');
+                     return;
+                 } catch(e) {
+                     retries--;
+                     if (retries === 0) throw e;
+                     await new Promise(r => setTimeout(r, 1000));
+                 }
+             }
         },
         copyLink() {
             const el = document.getElementById('transferLink');
             el.select();
             document.execCommand('copy');
-            // Toast?
         },
         copyItemLink(hash) {
             const link = window.baseUrl + 's/' + hash;
@@ -339,7 +420,7 @@ const TransferModal = {
             finally { this.loadingHistory = false; }
         },
         async deleteItem(hash) {
-            if (!confirm('Are you sure you want to delete this transfer? The link will stop working immediately.')) return;
+            if (!confirm('Are you sure?')) return;
             try {
                 await Api.delete('transfer/' + hash);
                 this.loadHistory();
@@ -356,9 +437,6 @@ const TransferModal = {
         },
         formatDate(ts) { return new Date(ts * 1000).toLocaleDateString(); },
         isExpired(ts) { return Date.now()/1000 > ts; },
-        getIcon(name) {
-             // Simple icon logic
-             return 'ri-file-line';
-        }
+        getIcon(name) { return 'ri-file-line'; }
     }
 };

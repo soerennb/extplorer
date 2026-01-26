@@ -7,8 +7,9 @@
     <link rel="icon" type="image/svg+xml" href="<?= base_url('favicon.svg') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/remixicon.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/sweetalert2.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/diff2html.min.css') ?>">
-    <style nonce="<?= csp_style_nonce() ?>">
+    <style <?= csp_style_nonce() ?>>
         body, html { height: 100%; overflow: hidden; }
         #app { display: flex; flex-direction: column; height: 100%; }
         .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
@@ -137,7 +138,58 @@
         .w-100 { width: 100%; }
         .max-h-90vh { max-height: 90vh; }
         .z-1060 { z-index: 1060; }
+        .progress-thin { height: 5px; }
+        .empty-state { min-height: 50vh; }
+        .empty-state-icon { width: 120px; height: 120px; }
+        .empty-state-icon-glyph { font-size: 3.5rem; opacity: 0.5; }
+        .empty-state-text { max-width: 450px; line-height: 1.6; }
+        .shared-badge { width: 18px; height: 18px; transform: translate(20%, 20%); z-index: 1; }
+        .shared-badge-icon { font-size: 12px; }
+        .preview-modal-body { min-height: 400px; background: #000; }
+        .preview-pdf-frame { height: 80vh; border: none; }
+        .tree-indent { padding-left: 15px; }
+        .tree-item-interactive { cursor: pointer; user-select: none; }
+        .tree-toggle { transition: transform 0.2s; }
+        .tree-folder { color: #ffc107; }
+        .tree-folder-selected { color: #fff; }
+        .transfer-dropzone { min-height: 200px; display: flex; flex-direction: column; justify-content: center; }
+        .transfer-files-list { max-height: 250px; }
+        .transfer-recipient { max-width: 150px; }
+        .upload-list { max-height: 300px; overflow-y: auto; }
+        .upload-status { width: 150px; }
+        .progress-compact { height: 6px; }
+        .qr-image { width: 200px; height: 200px; }
+        .qr-input-group { max-width: 300px; margin: 0 auto; }
+        .admin-note { font-size: 0.75rem; }
+        .admin-badge { font-size: 0.7rem; }
+        .admin-table-scroll { max-height: 400px; }
+        .admin-log-path { max-width: 200px; }
+        .admin-meta-label { width: 200px; }
+        .admin-config-box { max-height: 150px; overflow-y: auto; }
+        .context-menu { position: fixed; z-index: 1050; }
+        .progress-w-0 { width: 0%; }
+        .progress-w-5 { width: 5%; }
+        .progress-w-10 { width: 10%; }
+        .progress-w-15 { width: 15%; }
+        .progress-w-20 { width: 20%; }
+        .progress-w-25 { width: 25%; }
+        .progress-w-30 { width: 30%; }
+        .progress-w-35 { width: 35%; }
+        .progress-w-40 { width: 40%; }
+        .progress-w-45 { width: 45%; }
+        .progress-w-50 { width: 50%; }
+        .progress-w-55 { width: 55%; }
+        .progress-w-60 { width: 60%; }
+        .progress-w-65 { width: 65%; }
+        .progress-w-70 { width: 70%; }
+        .progress-w-75 { width: 75%; }
+        .progress-w-80 { width: 80%; }
+        .progress-w-85 { width: 85%; }
+        .progress-w-90 { width: 90%; }
+        .progress-w-95 { width: 95%; }
+        .progress-w-100 { width: 100%; }
     </style>
+    <style <?= csp_style_nonce() ?> id="context-menu-style"></style>
 </head>
 <body>
     <div id="app" v-cloak>
@@ -371,8 +423,8 @@
                         <span>Uploading: <strong>{{ store.uploadFileName }}</strong></span>
                         <span v-if="store.uploadTotal > 1">{{ store.uploadCurrent + 1 }} / {{ store.uploadTotal }}</span>
                     </div>
-                    <div class="progress" style="height: 5px;">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" :style="{width: store.uploadProgress + '%'}"></div>
+                    <div class="progress progress-thin">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" :class="'progress-w-' + Math.round(store.uploadProgress / 5) * 5"></div>
                     </div>
                 </div>
 
@@ -385,17 +437,17 @@
                 </div>
 
                 <div v-else>
-                    <div v-if="filteredFiles.length === 0" class="d-flex flex-column align-items-center justify-content-center w-100 text-muted py-5 my-5" style="min-height: 50vh;">
+                    <div v-if="filteredFiles.length === 0" class="d-flex flex-column align-items-center justify-content-center w-100 text-muted py-5 my-5 empty-state">
                         <!-- Icon with background circle -->
-                        <div class="bg-body-secondary rounded-circle d-flex align-items-center justify-content-center mb-4" style="width: 120px; height: 120px;">
-                            <i :class="emptyStateIcon" style="font-size: 3.5rem; opacity: 0.5;"></i>
+                        <div class="bg-body-secondary rounded-circle d-flex align-items-center justify-content-center mb-4 empty-state-icon">
+                            <i :class="emptyStateIcon" class="empty-state-icon-glyph"></i>
                         </div>
                         
                         <!-- Title -->
                         <h4 class="fw-normal mb-3">{{ emptyStateTitle }}</h4>
                         
                         <!-- Subtitle/Description -->
-                        <p class="mb-5 text-center px-4" style="max-width: 450px; line-height: 1.6;">
+                        <p class="mb-5 text-center px-4 empty-state-text">
                             {{ emptyStateDescription }}
                         </p>
 
@@ -454,13 +506,14 @@
                                      draggable="false">
                                 <i v-else :class="getIcon(file)"></i>
                                 
-                                <div v-if="file.is_shared" class="position-absolute bottom-0 end-0 bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 18px; height: 18px; transform: translate(20%, 20%); z-index: 1;">
-                                    <i class="ri-share-forward-line text-primary" style="font-size: 12px;"></i>
+                                <div v-if="file.is_shared" class="position-absolute bottom-0 end-0 bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center shared-badge">
+                                    <i class="ri-share-forward-line text-primary shared-badge-icon"></i>
                                 </div>
                             </div>
                             
                             <div class="file-name" :title="file.name">
                                 {{ file.name }}
+                                <span v-if="file.is_mount && file.is_external" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-1" style="font-size: 0.65rem;">Mount</span>
                                 <i v-if="file.type === 'dir'" class="ri-arrow-right-line d-md-none ms-2 text-muted" @click.stop="open(file)"></i>
                             </div>
                             
@@ -538,7 +591,7 @@
                         <h6 class="modal-title text-white">{{ previewState.filename }}</h6>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body p-0 text-center position-relative d-flex align-items-center justify-content-center" style="min-height: 400px; background: #000;">
+                    <div class="modal-body p-0 text-center position-relative d-flex align-items-center justify-content-center preview-modal-body">
                         
                         <!-- Image -->
                         <img v-if="previewState.type === 'image'" :src="previewState.src" class="img-fluid rounded max-h-90vh">
@@ -553,7 +606,7 @@
                         </div>
 
                         <!-- PDF -->
-                        <iframe v-if="previewState.type === 'pdf'" :src="previewState.src" class="w-100" style="height: 80vh; border: none;"></iframe>
+                        <iframe v-if="previewState.type === 'pdf'" :src="previewState.src" class="w-100 preview-pdf-frame"></iframe>
 
                         <!-- Controls -->
                         <button v-if="previewState.list.length > 1" class="btn btn-dark bg-opacity-50 position-absolute start-0 m-3 rounded-circle" @click.stop="prevPreview" :disabled="previewState.index <= 0">
@@ -653,8 +706,7 @@
 
         <!-- Context Menu -->
         <div v-if="contextMenu.visible" 
-             class="dropdown-menu show" 
-             :style="{top: contextMenu.y + 'px', left: contextMenu.x + 'px', position: 'fixed', zIndex: 1050}">
+             class="dropdown-menu show context-menu">
             <template v-if="!store.isTrashMode">
                 <a class="dropdown-item" href="#" @click.prevent="cmAction('open')">
                     <i class="ri-folder-open-line me-2"></i> {{ t('open') || 'Open' }}
@@ -710,7 +762,7 @@
     </div> <!-- End #app -->
 
     <!-- Scripts -->
-    <script nonce="<?= csp_script_nonce() ?>">
+    <script <?= csp_script_nonce() ?>>
         window.baseUrl = "<?= base_url() ?>";
         window.appVersion = "<?= config('App')->version ?>";
         window.userRole = "<?= session('role') ?>";
@@ -722,20 +774,20 @@
     </script>
     <script src="<?= base_url('assets/js/vue.global.js') ?>"></script>
     <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
-    <script src="<?= base_url('assets/js/sweetalert2.all.min.js') ?>"></script>
+    <script src="<?= base_url('assets/js/sweetalert2.min.js') ?>"></script>
     <script src="<?= base_url('assets/vendor/ace/ace.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/diff.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/diff2html-ui.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/api.js') ?>"></script>
     <script src="<?= base_url('assets/js/store.js') ?>"></script>
     <script src="<?= base_url('assets/js/i18n.js') ?>"></script>
-    <script src="<?= base_url('assets/js/components/FileTree.js') ?>"></script>
-    <script src="<?= base_url('assets/js/components/UserAdmin.js') ?>"></script>
-    <script src="<?= base_url('assets/js/components/UserProfile.js') ?>"></script>
-    <script src="<?= base_url('assets/js/components/ShareModal.js') ?>"></script>
-    <script src="<?= base_url('assets/js/components/UploadModal.js') ?>"></script>
-    <script src="<?= base_url('assets/js/components/FileHistoryModal.js') ?>"></script>
-    <script src="<?= base_url('assets/js/components/TransferModal.js') ?>"></script>
+    <script src="<?= base_url('assets/js/components/FileTree.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/components/UserAdmin.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/components/UserProfile.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/components/ShareModal.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/components/UploadModal.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/components/FileHistoryModal.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/components/TransferModal.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/app.js?v=' . time()) ?>"></script>
 </body>
 </html>

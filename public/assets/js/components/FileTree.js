@@ -3,7 +3,8 @@ const FileTree = {
     props: {
         path: String,
         name: String,
-        root: Boolean
+        root: Boolean,
+        item: Object
     },
     data() {
         return {
@@ -17,9 +18,6 @@ const FileTree = {
     computed: {
         isSelected() {
             return this.store.cwd === this.path;
-        },
-        indent() {
-            return { paddingLeft: this.root ? '0px' : '15px' };
         }
     },
     methods: {
@@ -42,6 +40,13 @@ const FileTree = {
             } finally {
                 this.isLoading = false;
             }
+        },
+        getIcon(item) {
+            if (item.is_mount && item.is_external) {
+                if (item.mount_type === 'ftp' || item.mount_type === 'ssh2') return 'ri-cloud-fill text-info';
+                return 'ri-hard-drive-2-fill text-primary';
+            }
+            return this.isOpen ? 'ri-folder-open-fill tree-folder' : 'ri-folder-fill tree-folder';
         },
         select() {
             this.store.loadPath(this.path);
@@ -79,22 +84,21 @@ const FileTree = {
         }
     },
     template: `
-        <div class="file-tree-item" :style="indent">
-            <div class="d-flex align-items-center py-1 px-2 rounded" 
+        <div class="file-tree-item" :class="{'tree-indent': !root}">
+            <div class="d-flex align-items-center py-1 px-2 rounded tree-item-interactive" 
                  :class="{'bg-primary text-white': isSelected, 'text-dark': !isSelected, 'bg-info-subtle': isDragOver}"
-                 style="cursor: pointer; user-select: none;"
                  @click="select"
                  @dragover="onDragOver"
                  @dragleave="onDragLeave"
                  @drop.stop="onDrop">
                 
                 <i v-if="!root" 
-                   class="ri-arrow-right-s-line me-1" 
+                   class="ri-arrow-right-s-line me-1 tree-toggle" 
                    :class="{'rotate-90': isOpen}"
-                   @click.stop="toggle"
-                   style="transition: transform 0.2s;"></i>
+                   @click.stop="toggle"></i>
                 
-                <i class="me-2" :class="isOpen ? 'ri-folder-open-fill' : 'ri-folder-fill'" :style="{color: isSelected ? 'white' : '#ffc107'}"></i>
+                <i class="me-2"
+                   :class="[getIcon(item || {type: 'dir'}), isSelected ? 'text-white' : '']"></i>
                 
                 <span class="text-truncate">{{ name }}</span>
             </div>
@@ -106,6 +110,7 @@ const FileTree = {
                     :key="child.path" 
                     :path="child.path" 
                     :name="child.name"
+                    :item="child"
                 ></file-tree>
             </div>
         </div>

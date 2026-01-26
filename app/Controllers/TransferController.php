@@ -23,6 +23,40 @@ class TransferController extends BaseController
         $this->settingsService = new SettingsService();
     }
 
+    public function status()
+    {
+        $sessionId = $this->request->getGet('sessionId');
+        $fileName = $this->request->getGet('fileName');
+
+        if (!$sessionId || !$fileName) {
+            return $this->fail('Missing parameters');
+        }
+
+        $fileName = basename($fileName);
+        $tempDir = WRITEPATH . 'uploads/temp/' . preg_replace('/[^a-zA-Z0-9]/', '', $sessionId);
+        $tempPath = $tempDir . '/' . $fileName . '.part';
+
+        // Check if full file already exists
+        if (file_exists($tempDir . '/' . $fileName)) {
+             return $this->respond([
+                'status' => 'complete',
+                'uploaded' => filesize($tempDir . '/' . $fileName)
+            ]);
+        }
+
+        if (file_exists($tempPath)) {
+            return $this->respond([
+                'status' => 'partial',
+                'uploaded' => filesize($tempPath)
+            ]);
+        }
+
+        return $this->respond([
+            'status' => 'new',
+            'uploaded' => 0
+        ]);
+    }
+
     /**
      * Upload a file chunk.
      */

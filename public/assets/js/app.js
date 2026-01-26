@@ -96,6 +96,10 @@ const app = createApp({
         };
         const formatDate = (t) => t ? new Date(t * 1000).toLocaleString() : '-';
         const getIcon = (f) => {
+            if (f.is_mount && f.is_external) {
+                if (f.mount_type === 'ftp' || f.mount_type === 'ssh2') return 'ri-cloud-fill text-info';
+                return 'ri-hard-drive-2-fill text-primary';
+            }
             if (f.type === 'dir') return 'ri-folder-fill text-warning';
             const ext = f.extension?.toLowerCase();
             if (['jpg','jpeg','png','gif','svg','webp'].includes(ext)) return 'ri-image-fill text-success';
@@ -624,7 +628,29 @@ const app = createApp({
 
         
 
-                const showContextMenu = (e, f) => { contextMenu.visible = true; contextMenu.x = e.clientX; contextMenu.y = e.clientY; contextMenu.file = f; store.selectedItems = [f]; };
+                const updateContextMenuStyle = () => {
+                    const styleEl = document.getElementById('context-menu-style');
+                    if (!styleEl) return;
+                    if (!contextMenu.visible) {
+                        styleEl.textContent = '';
+                        return;
+                    }
+                    styleEl.textContent = `.context-menu{top:${contextMenu.y}px;left:${contextMenu.x}px;}`;
+                };
+
+        const showContextMenu = (e, f) => { 
+            contextMenu.visible = true; 
+            contextMenu.x = e.clientX; 
+            contextMenu.y = e.clientY; 
+            contextMenu.file = f; 
+            store.selectedItems = [f]; 
+            
+            // Positioning
+            let styleEl = document.getElementById('context-menu-style');
+            if (styleEl) {
+                styleEl.textContent = `.context-menu{top:${contextMenu.y}px;left:${contextMenu.x}px;}`;
+            }
+        };
         const hideContextMenu = () => contextMenu.visible = false;
         const cmAction = (a) => {
             hideContextMenu(); const f = contextMenu.file; if (!f) return;

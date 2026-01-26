@@ -13,6 +13,11 @@ class LocalAdapter implements IFileSystem
 
     public function __construct(string $rootPath)
     {
+        // Normalize WSL paths on Windows
+        if (DIRECTORY_SEPARATOR === '\\' && preg_match('|^/mnt/([a-z])/(.*)|i', $rootPath, $matches)) {
+            $rootPath = strtoupper($matches[1]) . ':/' . $matches[2];
+        }
+
         $this->rootPath = rtrim(realpath($rootPath), DIRECTORY_SEPARATOR);
         if (!$this->rootPath || !is_dir($this->rootPath)) {
             throw new Exception("Invalid root path: $rootPath");

@@ -23,7 +23,7 @@ const UploadModal = {
                     </div>
 
                     <!-- File List -->
-                    <div v-if="files.length > 0" class="list-group list-group-flush mb-3" style="max-height: 300px; overflow-y: auto;">
+                    <div v-if="files.length > 0" class="list-group list-group-flush mb-3 upload-list">
                         <div v-for="(f, i) in files" :key="i" class="list-group-item d-flex align-items-center justify-content-between p-2">
                             <div class="d-flex align-items-center text-truncate me-2">
                                 <i :class="getFileIcon(f.file.name)" class="me-2 text-secondary"></i>
@@ -43,9 +43,9 @@ const UploadModal = {
                                 <button class="btn btn-link btn-sm text-secondary ms-2" @click="removeFile(i)"><i class="ri-close-line"></i></button>
                             </div>
                             
-                            <div v-else-if="f.status === 'uploading'" class="d-flex align-items-center" style="width: 150px;">
-                                <div class="progress w-100" style="height: 6px;">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated" :style="{width: f.progress + '%'}"></div>
+                            <div v-else-if="f.status === 'uploading'" class="d-flex align-items-center upload-status">
+                                <div class="progress w-100 progress-compact">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" :class="progressClass(f.progress)"></div>
                                 </div>
                             </div>
                             
@@ -137,6 +137,11 @@ const UploadModal = {
         
         const removeFile = (index) => files.value.splice(index, 1);
 
+        const progressClass = (value) => {
+            const clamped = Math.max(0, Math.min(100, Math.round(value / 5) * 5));
+            return `progress-w-${clamped}`;
+        };
+
         const validFilesCount = computed(() => files.value.filter(f => f.valid && f.status === 'pending').length);
         const hasBlockedFiles = computed(() => files.value.some(f => !f.valid));
 
@@ -222,7 +227,7 @@ const UploadModal = {
         return {
             dragOver, files, fileInput, uploading, configLoading, hasBlockedFiles, validFilesCount,
             handleDrop, handleFileSelect, triggerPicker, removeFile, startUpload, open,
-            getFileIcon, formatSize, t: (k) => i18n.t(k)
+            getFileIcon, formatSize, progressClass, t: (k) => i18n.t(k)
         };
     }
 };

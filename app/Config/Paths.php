@@ -53,7 +53,12 @@ class Paths
      * for maximum security, keeping it out of the app and/or
      * system directories.
      */
-    public string $writableDirectory = __DIR__ . '/../../writable';
+    public string $writableDirectory = '';
+
+    public function __construct()
+    {
+        $this->writableDirectory = getenv('WRITEPATH') ?: __DIR__ . '/../../writable';
+    }
 
     /**
      * ---------------------------------------------------------------

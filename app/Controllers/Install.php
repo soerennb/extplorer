@@ -55,7 +55,7 @@ class Install extends BaseController
         if (empty($roles)) {
             $defaultRoles = [
                 'admin' => ['*'],
-                'user'  => ['read', 'write', 'upload', 'delete', 'rename', 'archive', 'extract', 'chmod']
+                'user'  => ['read', 'write', 'upload', 'delete', 'rename', 'archive', 'extract', 'chmod', 'mount_external']
             ];
             $userModel->saveRoles($defaultRoles);
         }

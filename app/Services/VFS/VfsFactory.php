@@ -75,6 +75,24 @@ class VfsFactory
         if (!is_dir($sharedPath)) mkdir($sharedPath, 0755, true);
         $vfs->mount('Shared', new LocalAdapter($sharedPath));
         
+        // --- Custom Mounts ---
+        try {
+            $mountService = new \App\Services\MountService();
+            $mounts = $mountService->getUserMounts($username);
+            foreach ($mounts as $mount) {
+                try {
+                    if ($mount['type'] === 'local') {
+                        $adapter = new LocalAdapter($mount['config']['path']);
+                        $vfs->mount($mount['name'], $adapter, ['is_external' => true]);
+                    }
+                    // Add FTP handling here later
+                } catch (\Exception $e) {
+                    // Log invalid mount but don't crash
+                    log_message('error', "Failed to load mount {$mount['name']}: " . $e->getMessage());
+                }
+            }
+        } catch (\Exception $e) {}
+
         // Optional: Mount Public if it exists
         $publicPath = WRITEPATH . 'public';
         if (is_dir($publicPath)) {

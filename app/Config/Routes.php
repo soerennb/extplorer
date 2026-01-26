@@ -56,6 +56,11 @@ $routes->group('api', function($routes) {
     $routes->get('versions/list', 'ApiController::versionList');
     $routes->post('versions/restore', 'ApiController::versionRestore');
 
+    // Mounts
+    $routes->get('mounts', 'MountController::index');
+    $routes->post('mounts', 'MountController::create');
+    $routes->delete('mounts/(:segment)', 'MountController::delete/$1');
+
     $routes->get('users', 'UserAdminController::index');
     $routes->post('users', 'UserAdminController::create');
     $routes->put('users/(:segment)', 'UserAdminController::update/$1');
@@ -77,6 +82,7 @@ $routes->group('api', function($routes) {
     $routes->get('logs', 'UserAdminController::getLogs');
 
     // Transfer
+    $routes->get('transfer/status', 'TransferController::status');
     $routes->post('transfer/upload', 'TransferController::upload');
     $routes->post('transfer/send', 'TransferController::send');
     $routes->get('transfer/history', 'TransferController::history');
