@@ -13,6 +13,7 @@
         body, html { height: 100%; overflow: hidden; }
         #app { display: flex; flex-direction: column; height: 100%; }
         .main-container { flex: 1; display: flex; overflow: hidden; position: relative; }
+        .content-area { flex: 1; overflow: auto; min-width: 0; }
         
         /* Sidebar */
         .sidebar { 
@@ -50,6 +51,7 @@
             grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             gap: 10px;
             align-content: start;
+            width: 100%;
         }
         .grid-view .file-item { 
             width: auto; 
@@ -78,8 +80,37 @@
         @media (min-width: 768px) { .grid-view .file-name { font-size: 0.9rem; } }
 
         /* List View */
+        .list-view {
+            width: 100%;
+        }
+        .list-view,
+        .list-view-header {
+            --list-name-min: clamp(200px, 30vw, 420px);
+            --list-size: clamp(90px, 10vw, 120px);
+            --list-date: clamp(140px, 16vw, 210px);
+            --list-cols: 32px minmax(var(--list-name-min), 1fr);
+        }
+        @media (min-width: 768px) {
+            .list-view,
+            .list-view-header {
+                --list-cols: 32px minmax(var(--list-name-min), 1fr) var(--list-size) var(--list-date);
+            }
+        }
+        .list-view-header {
+            display: grid;
+            grid-template-columns: var(--list-cols);
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: var(--bs-body-bg);
+            column-gap: 8px;
+        }
+        .content-area.scrolled .list-view-header {
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
         .list-view .file-item {
-            display: flex;
+            display: grid;
+            grid-template-columns: var(--list-cols);
             align-items: center;
             padding: 8px 15px; /* Increased for touch */
             border-bottom: 1px solid var(--bs-border-color);
@@ -87,6 +118,7 @@
             white-space: nowrap;
             overflow: hidden;
             min-height: 44px; /* Touch target minimum */
+            column-gap: 8px;
         }
         @media (min-width: 768px) {
             .list-view .file-item { padding: 2px 15px; min-height: 32px; }
@@ -94,18 +126,19 @@
 
         .list-view .file-icon { 
             font-size: 1.2rem; 
-            margin-right: 8px; 
             width: 24px; 
             min-width: 24px;
             display: flex; 
             align-items: center; 
             justify-content: center; 
+            justify-self: center;
         }
         .list-view .file-name { 
             flex: 1; 
             text-overflow: ellipsis; 
             overflow: hidden;
             line-height: 1.2;
+            min-width: 0;
         }
         
         .list-view .file-meta-col {
@@ -115,12 +148,17 @@
             margin-left: 15px; 
             text-align: right;
         }
+        .list-view .file-meta-col,
+        .list-view-header .file-meta-col {
+            margin-left: 0;
+            justify-self: end;
+        }
+        .list-view-name-col {
+            min-width: 0;
+        }
         @media (min-width: 768px) {
             .list-view .file-meta-col { display: block; }
         }
-        .list-view .size-col { width: 80px; }
-        .list-view .date-col { width: 150px; }
-        
         .rotate-90 { transform: rotate(90deg); }
         
         [v-cloak] { display: none; }
@@ -132,7 +170,7 @@
         .icon-large { font-size: 4rem; }
         .thumb-grid { width: 100%; height: 100%; object-fit: cover; }
 
-        .list-view-header-spacer { width: 45px; }
+        .list-view-header-spacer { width: auto; }
         .cursor-pointer { cursor: pointer; }
         .h-90vh { height: 90vh; }
         .h-100 { height: 100%; }
@@ -429,7 +467,7 @@
             </div>
 
             <!-- Content -->
-            <div class="content-area position-relative" @click.stop="store.clearSelection(); hideContextMenu()">
+            <div id="contentArea" class="content-area position-relative" @click.stop="store.clearSelection(); hideContextMenu()">
                 <div v-if="store.uploadProgress > 0" class="mb-3">
                     <div class="d-flex justify-content-between small text-muted mb-1">
                         <span>Uploading: <strong>{{ store.uploadFileName }}</strong></span>
@@ -481,9 +519,9 @@
 
                     <div v-else :class="containerClass">
                         <!-- Header for List View -->
-                        <div v-if="store.viewMode === 'list'" class="d-flex text-muted border-bottom px-3 py-2 small fw-bold user-select-none w-100">
+                        <div v-if="store.viewMode === 'list'" class="list-view-header text-muted border-bottom px-3 py-2 small fw-bold user-select-none w-100">
                             <div class="list-view-header-spacer"></div>
-                            <div class="flex-grow-1 cursor-pointer" @click="setSort('name')">
+                            <div class="list-view-name-col cursor-pointer" @click="setSort('name')">
                                 {{ t('name') }}
                                 <i v-if="store.sortBy === 'name'" :class="store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill'"></i>
                             </div>
@@ -515,6 +553,8 @@
                                 <img v-if="store.viewMode === 'grid' && isImage(file)" 
                                      :src="getThumbUrl(file)" 
                                      class="rounded shadow-sm thumb-grid"
+                                     loading="lazy"
+                                     decoding="async"
                                      draggable="false">
                                 <i v-else :class="getIcon(file)"></i>
                                 

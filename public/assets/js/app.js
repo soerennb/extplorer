@@ -45,21 +45,29 @@ const app = createApp({
         const webDavUrl = computed(() => window.baseUrl.replace(/\/$/, '') + '/dav');
 
         const filteredFiles = computed(() => {
-            let result = store.isTrashMode ? store.trashItems : store.files;
-            
-            if (store.searchQuery && !store.isTrashMode) {
-                const lower = store.searchQuery.toLowerCase();
-                result = result.filter(f => f.name.toLowerCase().includes(lower));
+            const sortItems = (items) => {
+                const key = store.sortBy;
+                const mult = store.sortDesc ? -1 : 1;
+                return [...items].sort((a, b) => {
+                    if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+                    let valA = a[key];
+                    let valB = b[key];
+                    if (key === 'name') return valA.localeCompare(valB) * mult;
+                    return (valA - valB) * mult;
+                });
+            };
+
+            if (store.isTrashMode) {
+                return sortItems(store.trashItems);
             }
-            const key = store.sortBy;
-            const mult = store.sortDesc ? -1 : 1;
-            return [...result].sort((a, b) => {
-                if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
-                let valA = a[key];
-                let valB = b[key];
-                if (key === 'name') return valA.localeCompare(valB) * mult;
-                return (valA - valB) * mult;
-            });
+
+            if (store.searchQuery) {
+                const lower = store.searchQuery.toLowerCase();
+                const result = store.files.filter(f => f.name.toLowerCase().includes(lower));
+                return sortItems(result);
+            }
+
+            return store.files;
         });
 
         const containerClass = computed(() => store.viewMode === 'grid' ? 'grid-view' : 'list-view');
@@ -606,7 +614,13 @@ const app = createApp({
             } catch (e) { console.error("Drop error", e); }
         };
 
-        const setSort = (k) => { if (store.sortBy === k) store.sortDesc = !store.sortDesc; else { store.sortBy = k; store.sortDesc = false; } };
+        const setSort = (k) => {
+            if (store.sortBy === k) store.sortDesc = !store.sortDesc;
+            else { store.sortBy = k; store.sortDesc = false; }
+            if (!store.isTrashMode && !store.searchQuery) {
+                store.loadPath(store.cwd, 1);
+            }
+        };
 
                 
 
@@ -692,6 +706,15 @@ const app = createApp({
             diffModal = new bootstrap.Modal(document.getElementById('diffModal'));
             propModal = new bootstrap.Modal(document.getElementById('propModal'));
             webdavModal = new bootstrap.Modal(document.getElementById('webdavModal'));
+
+            const contentArea = document.getElementById('contentArea');
+            if (contentArea) {
+                const updateHeaderShadow = () => {
+                    contentArea.classList.toggle('scrolled', contentArea.scrollTop > 0);
+                };
+                updateHeaderShadow();
+                contentArea.addEventListener('scroll', updateHeaderShadow);
+            }
             
             window.addEventListener('keydown', (e) => {
                 const t = e.target, isI = t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable;

@@ -28,9 +28,28 @@ class ApiController extends BaseController
         $showHidden = $this->request->getGet('showHidden') === 'true';
         $limit = (int) ($this->request->getGet('limit') ?? 0);
         $offset = (int) ($this->request->getGet('offset') ?? 0);
+        $sortBy = $this->request->getGet('sortBy') ?? 'name';
+        $sortDesc = $this->request->getGet('sortDesc') === 'true';
+        $allowedSorts = ['name', 'size', 'mtime'];
+        if (!in_array($sortBy, $allowedSorts, true)) {
+            $sortBy = 'name';
+        }
 
         try {
             $data = $this->fs->listDirectory($path, $showHidden);
+            usort($data, function ($a, $b) use ($sortBy, $sortDesc) {
+                if (($a['type'] ?? '') !== ($b['type'] ?? '')) {
+                    return ($a['type'] ?? '') === 'dir' ? -1 : 1;
+                }
+                $valA = $a[$sortBy] ?? 0;
+                $valB = $b[$sortBy] ?? 0;
+                if ($sortBy === 'name') {
+                    $cmp = strnatcasecmp((string) $valA, (string) $valB);
+                } else {
+                    $cmp = ($valA <=> $valB);
+                }
+                return $sortDesc ? -$cmp : $cmp;
+            });
             $total = count($data);
 
             if ($limit > 0) {

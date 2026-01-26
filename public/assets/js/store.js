@@ -103,18 +103,14 @@ const store = Vue.reactive({
                 path, 
                 showHidden: this.showHidden,
                 limit: this.pagination.pageSize,
-                offset: offset
+                offset: offset,
+                sortBy: this.sortBy,
+                sortDesc: this.sortDesc
             });
             
             const items = res.items;
             this.pagination.total = res.total;
             this.pagination.page = page;
-
-            // Sort: folders first, then files
-            items.sort((a, b) => {
-                if (a.type === b.type) return a.name.localeCompare(b.name);
-                return a.type === 'dir' ? -1 : 1;
-            });
             this.files = items;
             this.cwd = path;
             
