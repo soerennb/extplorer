@@ -808,7 +808,20 @@
     </script>
     <script src="<?= base_url('assets/vendor/ace/ace.min.js') ?>"></script>
     <script <?= csp_script_nonce() ?>>
-        if (window.__restoreCreateElement) window.__restoreCreateElement();
+        (function() {
+            if (window.ace && window.ace.require && window.cspStyleNonce) {
+                const aceDom = window.ace.require("ace/lib/dom");
+                const origCreate = aceDom.createElement.bind(aceDom);
+                aceDom.createElement = function(tagName, ns) {
+                    const el = origCreate(tagName, ns);
+                    if (String(tagName).toLowerCase() === 'style') {
+                        el.setAttribute('nonce', window.cspStyleNonce);
+                    }
+                    return el;
+                };
+            }
+            if (window.__restoreCreateElement) window.__restoreCreateElement();
+        })();
     </script>
     <script src="<?= base_url('assets/js/diff.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/diff2html-ui.min.js') ?>"></script>
