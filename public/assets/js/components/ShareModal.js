@@ -29,7 +29,7 @@ const ShareModal = {
                             <strong>{{ t('downloads') || 'Downloads' }}:</strong> {{ currentShare.downloads }}
                         </div>
 
-                        <button class="btn btn-danger w-100" @click="deleteShare">{{ t('stop_sharing') || 'Stop Sharing' }}</button>
+                        <button class="btn btn-danger w-100" :disabled="loading" @click="deleteShare">{{ t('stop_sharing') || 'Stop Sharing' }}</button>
                     </div>
 
                     <div v-else>
@@ -45,12 +45,15 @@ const ShareModal = {
                             <select class="form-select" v-model="form.expiryDays">
                                 <option :value="0">{{ t('never') || 'Never' }}</option>
                                 <option :value="1">1 {{ t('day') || 'Day' }}</option>
+                                <option :value="3">3 {{ t('days') || 'Days' }}</option>
                                 <option :value="7">7 {{ t('days') || 'Days' }}</option>
+                                <option :value="14">14 {{ t('days') || 'Days' }}</option>
                                 <option :value="30">30 {{ t('days') || 'Days' }}</option>
                             </select>
+                            <div v-if="expiryPreview" class="form-text">Expires {{ expiryPreview }}</div>
                         </div>
 
-                        <button class="btn btn-primary w-100" @click="createShare">{{ t('create_link') || 'Create Link' }}</button>
+                        <button class="btn btn-primary w-100" :disabled="loading" @click="createShare">{{ t('create_link') || 'Create Link' }}</button>
                     </div>
                 </div>
             </div>
@@ -69,6 +72,12 @@ const ShareModal = {
         const shareUrl = computed(() => {
             if (!currentShare.value) return '';
             return window.baseUrl + 's/' + currentShare.value.hash;
+        });
+        const expiryPreview = computed(() => {
+            const days = Number(form.expiryDays || 0);
+            if (days <= 0) return '';
+            const ts = Math.floor(Date.now() / 1000) + (days * 86400);
+            return formatDate(ts);
         });
 
         const formatDate = (ts) => new Date(ts * 1000).toLocaleString();
@@ -151,7 +160,7 @@ const ShareModal = {
         };
 
         return {
-            open, loading, currentShare, form, createShare, deleteShare, shareUrl, copyLink, openLink, formatDate, expiryHuman,
+            open, loading, currentShare, form, createShare, deleteShare, shareUrl, copyLink, openLink, formatDate, expiryHuman, expiryPreview,
             t
         };
     }

@@ -25,7 +25,7 @@ class TransferController extends BaseController
 
     public function status()
     {
-        $sessionId = $this->request->getGet('sessionId');
+        $sessionId = $this->normalizeSessionId((string)$this->request->getGet('sessionId'));
         $fileName = $this->request->getGet('fileName');
 
         if (!$sessionId || !$fileName) {
@@ -33,7 +33,7 @@ class TransferController extends BaseController
         }
 
         $fileName = basename($fileName);
-        $tempDir = WRITEPATH . 'uploads/temp/' . preg_replace('/[^a-zA-Z0-9]/', '', $sessionId);
+        $tempDir = WRITEPATH . 'uploads/temp/' . $sessionId;
         $tempPath = $tempDir . '/' . $fileName . '.part';
 
         // Check if full file already exists
@@ -63,11 +63,12 @@ class TransferController extends BaseController
     public function upload()
     {
         $file = $this->request->getFile('file');
-        $sessionId = $this->request->getPost('sessionId');
+        $sessionId = $this->normalizeSessionId((string)$this->request->getPost('sessionId'));
         $fileName = $this->request->getPost('fileName');
         $chunkIndex = (int)$this->request->getPost('chunkIndex');
         $totalChunks = (int)$this->request->getPost('totalChunks');
         $fileOffset = (int)($this->request->getPost('fileOffset') ?? 0);
+        $fileSize = (int)($this->request->getPost('fileSize') ?? 0);
 
         if (!$file || !$sessionId || !$fileName) {
             return $this->fail('Missing parameters');
@@ -75,13 +76,18 @@ class TransferController extends BaseController
 
         // Sanitize Filename
         $fileName = basename($fileName);
-        $tempDir = WRITEPATH . 'uploads/temp/' . preg_replace('/[^a-zA-Z0-9]/', '', $sessionId);
+        $tempDir = WRITEPATH . 'uploads/temp/' . $sessionId;
         
         if (!is_dir($tempDir)) {
             mkdir($tempDir, 0777, true);
         }
 
         $tempPath = $tempDir . '/' . $fileName . '.part';
+
+        $existingSize = file_exists($tempPath) ? (int)filesize($tempPath) : 0;
+        if ($fileOffset < 0 || $fileOffset > $existingSize) {
+            return $this->fail('Upload offset mismatch; please resume the transfer.');
+        }
 
         // Write at the provided byte offset to make resume safe.
         $input = fopen($file->getTempName(), 'rb');
@@ -107,6 +113,9 @@ class TransferController extends BaseController
 
         // If last chunk, rename
         if ($chunkIndex === $totalChunks - 1) {
+            if ($fileSize > 0 && $currentSize !== $fileSize) {
+                return $this->fail('Upload incomplete; please resume the transfer.');
+            }
             rename($tempPath, $tempDir . '/' . $fileName);
         }
 
@@ -122,18 +131,18 @@ class TransferController extends BaseController
     public function send()
     {
         $json = $this->request->getJSON();
-        $sessionId = $json->sessionId ?? '';
-        $recipients = $json->recipients ?? []; // Array of emails
-        $subject = $json->subject ?? '';
-        $message = $json->message ?? '';
-        $expiryDays = (int)($json->expiresIn ?? $this->settingsService->get('default_transfer_expiry'));
-        $notifyDownload = $json->notifyDownload ?? false;
+        $sessionId = $this->normalizeSessionId((string)($json->sessionId ?? ''));
+        $recipients = $this->normalizeRecipients($json->recipients ?? []); // Array of emails
+        $subject = trim((string)($json->subject ?? ''));
+        $message = trim((string)($json->message ?? ''));
+        $expiryDays = $this->clampExpiryDays((int)($json->expiresIn ?? $this->settingsService->get('default_transfer_expiry')));
+        $notifyDownload = (bool)($json->notifyDownload ?? false);
         
         if (!$sessionId || empty($recipients)) {
             return $this->fail('Missing parameters');
         }
 
-        $tempDir = WRITEPATH . 'uploads/temp/' . preg_replace('/[^a-zA-Z0-9]/', '', $sessionId);
+        $tempDir = WRITEPATH . 'uploads/temp/' . $sessionId;
         if (!is_dir($tempDir)) {
             return $this->fail('Upload session expired or invalid');
         }
@@ -158,11 +167,14 @@ class TransferController extends BaseController
         $totalSize = 0;
         foreach ($files as $f) {
             if ($f === '.' || $f === '..') continue;
+            if (str_ends_with($f, '.part')) {
+                continue;
+            }
             rename($tempDir . '/' . $f, $absPath . '/' . $f);
             $fileList[] = $f;
             $totalSize += filesize($absPath . '/' . $f);
         }
-        rmdir($tempDir);
+        $this->cleanupTempDir($tempDir);
 
         if (empty($fileList)) {
             return $this->fail('No files uploaded');
@@ -173,7 +185,7 @@ class TransferController extends BaseController
             'is_transfer' => true,
             'source' => 'transfer', // explicit flag for ShareController
             'recipients' => $recipients,
-            'sender_email' => session('email') ?? 'user@local', // Need to get email from profile if available
+            'sender_email' => $this->getSenderEmail(),
             'subject' => $subject,
             'message' => $message,
             'notify_download' => $notifyDownload,
@@ -191,7 +203,7 @@ class TransferController extends BaseController
         $link = site_url('s/' . $share['hash']);
         foreach ($recipients as $email) {
             $this->emailService->sendTransferNotification([
-                'sender_email' => session('username'), // Or email if we had it
+                'sender_email' => $this->getSenderEmail() ?? session('username'),
                 'recipient_email' => $email,
                 'subject' => $subject,
                 'message' => $message
@@ -220,7 +232,19 @@ class TransferController extends BaseController
         // Sort by date desc
         usort($transfers, fn($a, $b) => $b['created_at'] <=> $a['created_at']);
 
-        return $this->respond(array_values($transfers));
+        $now = time();
+        $items = array_map(function (array $t) use ($now): array {
+            $expiresAt = (int)($t['expires_at'] ?? 0);
+            $downloads = (int)($t['downloads'] ?? 0);
+            $expired = $expiresAt > 0 && $now > $expiresAt;
+            $status = $expired ? 'expired' : ($downloads > 0 ? 'downloaded' : 'active');
+            $t['status'] = $status;
+            $t['is_expired'] = $expired;
+            $t['expires_in'] = $expiresAt > 0 ? max(0, $expiresAt - $now) : null;
+            return $t;
+        }, array_values($transfers));
+
+        return $this->respond($items);
     }
 
     /**
@@ -259,5 +283,65 @@ class TransferController extends BaseController
             }
             rmdir($dir);
         }
+    }
+
+    private function normalizeSessionId(string $sessionId): string
+    {
+        return preg_replace('/[^a-zA-Z0-9]/', '', $sessionId) ?? '';
+    }
+
+    private function normalizeRecipients($recipients): array
+    {
+        if (!is_array($recipients)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($recipients as $recipient) {
+            $email = strtolower(trim((string)$recipient));
+            if ($email === '') {
+                continue;
+            }
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+            $normalized[$email] = true;
+            if (count($normalized) >= 25) {
+                break;
+            }
+        }
+
+        return array_keys($normalized);
+    }
+
+    private function clampExpiryDays(int $days): int
+    {
+        if ($days <= 0) {
+            return (int)$this->settingsService->get('default_transfer_expiry');
+        }
+        return max(1, min(30, $days));
+    }
+
+    private function getSenderEmail(): ?string
+    {
+        $email = session('email');
+        if (is_string($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $email;
+        }
+        return null;
+    }
+
+    private function cleanupTempDir(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+        foreach (scandir($dir) as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            @unlink($dir . DIRECTORY_SEPARATOR . $entry);
+        }
+        @rmdir($dir);
     }
 }

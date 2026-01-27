@@ -176,8 +176,14 @@ const TransferModal = {
 
                     <!-- History Tab -->
                     <div v-if="tab === 'history'">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <button class="btn btn-sm" :class="historyFilter === 'all' ? 'btn-primary' : 'btn-outline-primary'" @click="setHistoryFilter('all')">All</button>
+                            <button class="btn btn-sm" :class="historyFilter === 'active' ? 'btn-primary' : 'btn-outline-primary'" @click="setHistoryFilter('active')">Active</button>
+                            <button class="btn btn-sm" :class="historyFilter === 'downloaded' ? 'btn-primary' : 'btn-outline-primary'" @click="setHistoryFilter('downloaded')">Downloaded</button>
+                            <button class="btn btn-sm" :class="historyFilter === 'expired' ? 'btn-primary' : 'btn-outline-primary'" @click="setHistoryFilter('expired')">Expired</button>
+                        </div>
                         <div v-if="loadingHistory" class="text-center p-3"><div class="spinner-border text-primary"></div></div>
-                        <div v-else-if="history.length === 0" class="text-center text-muted p-5">
+                        <div v-else-if="filteredHistory.length === 0" class="text-center text-muted p-5">
                             <i class="ri-history-line display-4 opacity-50"></i>
                             <p class="mt-2">No transfers sent yet.</p>
                         </div>
@@ -185,6 +191,7 @@ const TransferModal = {
                             <table class="table table-hover table-sm small align-middle">
                                 <thead class="table-light">
                                     <tr>
+                                        <th>Status</th>
                                         <th>Subject</th>
                                         <th>To</th>
                                         <th>Date</th>
@@ -195,7 +202,10 @@ const TransferModal = {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="item in history" :key="item.hash">
+                                    <tr v-for="item in filteredHistory" :key="item.hash">
+                                        <td>
+                                            <span class="badge" :class="statusBadgeClass(item.status)">{{ statusLabel(item.status) }}</span>
+                                        </td>
                                         <td class="fw-bold">{{ item.subject || '(No Subject)' }}</td>
                                         <td class="text-truncate transfer-recipient" :title="item.recipients?.join(', ')">
                                             {{ item.recipients ? item.recipients[0] + (item.recipients.length > 1 ? ' +' + (item.recipients.length-1) : '') : '-' }}
@@ -206,9 +216,12 @@ const TransferModal = {
                                             <span class="badge" :class="item.downloads > 0 ? 'bg-success' : 'bg-secondary'">{{ item.downloads }}</span>
                                         </td>
                                         <td>
-                                            <span :class="{'text-danger': isExpired(item.expires_at)}">
-                                                {{ isExpired(item.expires_at) ? 'Expired' : formatDate(item.expires_at) }}
+                                            <span :class="{'text-danger': item.is_expired}">
+                                                {{ item.is_expired ? 'Expired' : formatDate(item.expires_at) }}
                                             </span>
+                                            <div v-if="item.expires_in && !item.is_expired" class="text-muted small">
+                                                {{ expiryCountdown(item.expires_in) }}
+                                            </div>
                                         </td>
                                         <td class="text-end">
                                             <button class="btn btn-link p-0 me-2" @click="copyItemLink(item.hash)" title="Copy Link"><i class="ri-links-line"></i></button>
@@ -248,12 +261,17 @@ const TransferModal = {
             
             history: [],
             loadingHistory: false,
+            historyFilter: 'all',
             modal: null
         };
     },
     computed: {
         totalSize() {
             return this.files.reduce((acc, f) => acc + f.size, 0);
+        },
+        filteredHistory() {
+            if (this.historyFilter === 'all') return this.history;
+            return this.history.filter(item => item.status === this.historyFilter);
         }
     },
     mounted() {
@@ -456,6 +474,7 @@ const TransferModal = {
                         fd.append('chunkIndex', i);
                         fd.append('totalChunks', totalChunks);
                         fd.append('fileOffset', startByte);
+                        fd.append('fileSize', file.size);
                         
                         await this.uploadChunk(fd);
                         
@@ -531,6 +550,19 @@ const TransferModal = {
         goHistory() {
             this.loadHistory();
         },
+        setHistoryFilter(filter) {
+            this.historyFilter = filter;
+        },
+        statusBadgeClass(status) {
+            if (status === 'downloaded') return 'bg-success';
+            if (status === 'expired') return 'bg-danger';
+            return 'bg-primary';
+        },
+        statusLabel(status) {
+            if (status === 'downloaded') return 'Downloaded';
+            if (status === 'expired') return 'Expired';
+            return 'Active';
+        },
         copyItemLink(hash) {
             const link = window.baseUrl + 's/' + hash;
             navigator.clipboard.writeText(link);
@@ -540,6 +572,7 @@ const TransferModal = {
             this.loadingHistory = true;
             try {
                 this.history = await Api.get('transfer/history');
+                this.historyFilter = 'all';
             } catch (e) { console.error(e); }
             finally { this.loadingHistory = false; }
         },
@@ -566,6 +599,14 @@ const TransferModal = {
         isExpired(ts) {
             if (!ts) return false;
             return Date.now() / 1000 > ts;
+        },
+        expiryCountdown(seconds) {
+            const days = Math.ceil(seconds / 86400);
+            if (days <= 1) return 'expires within 1 day';
+            if (days < 7) return `expires in ${days} days`;
+            const weeks = Math.ceil(days / 7);
+            if (weeks === 1) return 'expires in 1 week';
+            return `expires in ${weeks} weeks`;
         },
         getIcon(name) { return 'ri-file-line'; }
     }
