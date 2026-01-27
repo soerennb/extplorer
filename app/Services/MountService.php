@@ -56,6 +56,27 @@ class MountService
         return $this->stripMountSecrets($filtered);
     }
 
+    public function getMountForUser(string $id, string $username, bool $includeSecrets = false): array
+    {
+        $mounts = $this->getMounts();
+        if (!isset($mounts[$id])) {
+            throw new \Exception("Mount not found.");
+        }
+
+        $mount = $mounts[$id];
+        if ($mount['user'] !== $username && !can('admin_users')) {
+            throw new \Exception("Permission denied.");
+        }
+
+        if ($includeSecrets) {
+            $decrypted = $this->decryptMountSecrets([$id => $mount]);
+            return $decrypted[$id];
+        }
+
+        $stripped = $this->stripMountSecrets([$id => $mount]);
+        return $stripped[$id];
+    }
+
     public function addMount(string $username, string $name, string $type, array $config): string
     {
         // Permission Check
@@ -63,88 +84,9 @@ class MountService
             throw new \Exception("Permission denied: Cannot mount external paths.");
         }
 
-        // Sanitize Name
-        $name = preg_replace('/[^a-zA-Z0-9 _-]/', '', $name);
-        if (empty($name)) throw new \Exception("Invalid mount name.");
-
-        // Type Validation
-        $type = strtolower($type);
-        if ($type === 'local') {
-            $path = trim($config['path'] ?? '');
-            if ($path === '') {
-                throw new \Exception("Local path is required.");
-            }
-
-            // Auto-convert WSL paths if running on Windows
-            if (DIRECTORY_SEPARATOR === '\\' && preg_match('|^/mnt/([a-z])/(.*)|i', $path, $matches)) {
-                $path = strtoupper($matches[1]) . ':/' . $matches[2];
-                $config['path'] = $path;
-            }
-
-            error_log("Checking local mount path: '$path'");
-            $realPath = realpath($path);
-            if (!$realPath || !is_dir($realPath)) {
-                // Should we allow mounting non-existent paths? Maybe creation later? 
-                // For now, strict validation.
-                throw new \Exception("Local path does not exist or is not readable: $path");
-            }
-
-            $settingsService = new SettingsService();
-            $allowedRoots = array_merge(
-                config('App')->mountRootAllowlist ?? [],
-                $settingsService->get('mount_root_allowlist', [])
-            );
-            $allowedRoots = array_values(array_filter($allowedRoots, static fn($root) => is_string($root) && $root !== ''));
-            if (empty($allowedRoots)) {
-                throw new \Exception("External mounts are disabled. Configure mountRootAllowlist.");
-            }
-
-            $isAllowed = false;
-            foreach ($allowedRoots as $root) {
-                $rootReal = realpath($root);
-                if (!$rootReal) {
-                    continue;
-                }
-                $rootReal = rtrim($rootReal, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-                if (str_starts_with($realPath . DIRECTORY_SEPARATOR, $rootReal)) {
-                    $isAllowed = true;
-                    break;
-                }
-            }
-
-            if (!$isAllowed) {
-                throw new \Exception("Local path is not within an allowlisted mount root.");
-            }
-        } elseif ($type === 'ftp' || $type === 'sftp') {
-            $host = trim((string)($config['host'] ?? ''));
-            $user = trim((string)($config['user'] ?? ''));
-            $pass = (string)($config['pass'] ?? '');
-            $port = (int)($config['port'] ?? ($type === 'sftp' ? 22 : 21));
-            $root = trim((string)($config['root'] ?? '/'));
-
-            if ($host === '') throw new \Exception("Remote host is required.");
-            if ($user === '') throw new \Exception("Remote username is required.");
-            if ($pass === '') throw new \Exception("Remote password is required.");
-            if ($port < 1 || $port > 65535) throw new \Exception("Remote port is invalid.");
-            if (!$this->canEncrypt()) {
-                throw new \Exception("Encryption key not configured. Set Config\\Encryption::\$key before adding remote mounts.");
-            }
-
-            $config['host'] = $host;
-            $config['user'] = $user;
-            $config['pass'] = $this->encryptSecret($pass);
-            $config['port'] = $port;
-            $config['root'] = $root === '' ? '/' : $root;
-
-            // Validate connectivity/auth
-            if ($type === 'ftp') {
-                new FtpAdapter($host, $user, $pass, $port, $config['root']);
-            } else {
-                new Ssh2Adapter($host, $user, $pass, $port, $config['root']);
-            }
-        } else {
-            throw new \Exception("Unknown mount type.");
-        }
+        $name = $this->sanitizeMountName($name);
+        [$type, $config] = $this->validateAndNormalizeMount($type, $config);
+        $this->validateConnectivity($type, $config);
 
         $id = uniqid('mnt_');
         $mounts = $this->getMounts();
@@ -160,6 +102,71 @@ class MountService
 
         $this->saveMounts($mounts);
         return $id;
+    }
+
+    public function updateMount(string $id, string $username, string $name, string $type, array $config): array
+    {
+        if (!can('mount_external') && !can('admin_users')) {
+            throw new \Exception("Permission denied: Cannot mount external paths.");
+        }
+
+        $mounts = $this->getMounts();
+        if (!isset($mounts[$id])) {
+            throw new \Exception("Mount not found.");
+        }
+
+        $existing = $mounts[$id];
+        if ($existing['user'] !== $username && !can('admin_users')) {
+            throw new \Exception("Permission denied.");
+        }
+
+        $name = $this->sanitizeMountName($name);
+        $existingEncryptedPass = (string)($existing['config']['pass'] ?? '');
+        [$type, $config] = $this->validateAndNormalizeMount($type, $config, $existingEncryptedPass, true);
+        $this->validateConnectivity($type, $config);
+
+        $mounts[$id] = [
+            'id' => $id,
+            'user' => $existing['user'],
+            'name' => $name,
+            'type' => $type,
+            'config' => $config,
+            'created_at' => $existing['created_at'] ?? time(),
+            'updated_at' => time(),
+        ];
+
+        $this->saveMounts($mounts);
+        $stripped = $this->stripMountSecrets([$id => $mounts[$id]]);
+        return $stripped[$id];
+    }
+
+    public function testMount(string $username, ?string $id, string $name, string $type, array $config): array
+    {
+        if (!can('mount_external') && !can('admin_users')) {
+            throw new \Exception("Permission denied: Cannot mount external paths.");
+        }
+
+        $existingEncryptedPass = '';
+        if ($id) {
+            $existing = $this->getMountForUser($id, $username, true);
+            $existingEncryptedPass = (string)($existing['config']['pass'] ?? '');
+        }
+
+        $name = $this->sanitizeMountName($name);
+        [$type, $config] = $this->validateAndNormalizeMount($type, $config, $existingEncryptedPass, true);
+        $this->validateConnectivity($type, $config);
+
+        $configForResponse = $config;
+        if (isset($configForResponse['pass'])) {
+            unset($configForResponse['pass']);
+        }
+
+        return [
+            'status' => 'success',
+            'name' => $name,
+            'type' => $type,
+            'config' => $configForResponse,
+        ];
     }
 
     public function removeMount(string $id, string $username): bool
@@ -270,12 +277,150 @@ class MountService
     private function stripMountSecrets(array $mounts): array
     {
         foreach ($mounts as $id => $mount) {
-            $type = strtolower((string)($mount['type'] ?? ''));
-            if (!in_array($type, ['ftp', 'sftp', 'ssh2'], true)) continue;
-            if (isset($mounts[$id]['config']['pass'])) {
+            $hasPass = isset($mounts[$id]['config']['pass']) && (string)$mounts[$id]['config']['pass'] !== '';
+            $mounts[$id]['has_pass'] = $hasPass;
+            if ($hasPass) {
                 unset($mounts[$id]['config']['pass']);
             }
         }
         return $mounts;
+    }
+
+    private function sanitizeMountName(string $name): string
+    {
+        $name = preg_replace('/[^a-zA-Z0-9 _-]/', '', $name);
+        if (empty($name)) {
+            throw new \Exception("Invalid mount name.");
+        }
+        return $name;
+    }
+
+    private function validateAndNormalizeMount(
+        string $type,
+        array $config,
+        string $existingEncryptedPass = '',
+        bool $allowExistingPass = false
+    ): array {
+        $type = strtolower($type);
+
+        if ($type === 'local') {
+            $path = trim((string)($config['path'] ?? ''));
+            if ($path === '') {
+                throw new \Exception("Local path is required.");
+            }
+
+            if (DIRECTORY_SEPARATOR === '\\' && preg_match('|^/mnt/([a-z])/(.*)|i', $path, $matches)) {
+                $path = strtoupper($matches[1]) . ':/' . $matches[2];
+            }
+
+            $realPath = realpath($path);
+            if (!$realPath || !is_dir($realPath)) {
+                throw new \Exception("Local path does not exist or is not readable: $path");
+            }
+
+            $this->assertLocalPathAllowlisted($realPath);
+            $config['path'] = $realPath;
+            return [$type, $config];
+        }
+
+        if ($type === 'ftp' || $type === 'sftp') {
+            $host = trim((string)($config['host'] ?? ''));
+            $user = trim((string)($config['user'] ?? ''));
+            $passInput = (string)($config['pass'] ?? '');
+            $portDefault = $type === 'sftp' ? 22 : 21;
+            $port = (int)($config['port'] ?? $portDefault);
+            $root = trim((string)($config['root'] ?? '/'));
+
+            if ($host === '') {
+                throw new \Exception("Remote host is required.");
+            }
+            if ($user === '') {
+                throw new \Exception("Remote username is required.");
+            }
+            if ($port < 1 || $port > 65535) {
+                throw new \Exception("Remote port is invalid.");
+            }
+            if (!$this->canEncrypt()) {
+                throw new \Exception("Encryption key not configured. Set Config\\Encryption::\$key before adding remote mounts.");
+            }
+
+            $plainPass = $passInput;
+            $encryptedPass = '';
+            if ($plainPass !== '') {
+                $encryptedPass = $this->encryptSecret($plainPass);
+            } elseif ($allowExistingPass && $existingEncryptedPass !== '') {
+                $plainPass = $this->decryptSecret($existingEncryptedPass);
+                $encryptedPass = $existingEncryptedPass;
+            }
+
+            if ($plainPass === '') {
+                throw new \Exception("Remote password is required.");
+            }
+
+            $config['host'] = $host;
+            $config['user'] = $user;
+            $config['port'] = $port;
+            $config['root'] = $root === '' ? '/' : $root;
+            $config['pass'] = $encryptedPass;
+            $config['__plain_pass'] = $plainPass;
+            return [$type, $config];
+        }
+
+        throw new \Exception("Unknown mount type.");
+    }
+
+    private function assertLocalPathAllowlisted(string $realPath): void
+    {
+        $settingsService = new SettingsService();
+        $allowedRoots = array_merge(
+            config('App')->mountRootAllowlist ?? [],
+            $settingsService->get('mount_root_allowlist', [])
+        );
+        $allowedRoots = array_values(array_filter(
+            $allowedRoots,
+            static fn($root) => is_string($root) && $root !== ''
+        ));
+        if (empty($allowedRoots)) {
+            throw new \Exception("External mounts are disabled. Configure mountRootAllowlist.");
+        }
+
+        $isAllowed = false;
+        foreach ($allowedRoots as $root) {
+            $rootReal = realpath($root);
+            if (!$rootReal) {
+                continue;
+            }
+            $rootReal = rtrim($rootReal, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+            if (str_starts_with($realPath . DIRECTORY_SEPARATOR, $rootReal)) {
+                $isAllowed = true;
+                break;
+            }
+        }
+
+        if (!$isAllowed) {
+            throw new \Exception("Local path is not within an allowlisted mount root.");
+        }
+    }
+
+    private function validateConnectivity(string $type, array &$config): void
+    {
+        if ($type === 'local') {
+            return;
+        }
+
+        $plainPass = (string)($config['__plain_pass'] ?? '');
+        unset($config['__plain_pass']);
+
+        $host = (string)($config['host'] ?? '');
+        $user = (string)($config['user'] ?? '');
+        $port = (int)($config['port'] ?? ($type === 'sftp' ? 22 : 21));
+        $root = (string)($config['root'] ?? '/');
+
+        if ($type === 'ftp') {
+            new FtpAdapter($host, $user, $plainPass, $port, $root);
+            return;
+        }
+
+        new Ssh2Adapter($host, $user, $plainPass, $port, $root);
     }
 }

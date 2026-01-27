@@ -230,6 +230,93 @@
         .progress-w-90 { width: 90%; }
         .progress-w-95 { width: 95%; }
         .progress-w-100 { width: 100%; }
+
+        /* Profile Modal Enhancements */
+        .profile-password-hints {
+            padding-left: 1rem;
+            font-size: 0.82rem;
+        }
+        .profile-strength-bar {
+            height: 6px;
+        }
+        .strength-score-0 { width: 0%; }
+        .strength-score-1 { width: 25%; }
+        .strength-score-2 { width: 50%; }
+        .strength-score-3 { width: 75%; }
+        .strength-score-4 { width: 100%; }
+
+        .profile-stepper {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .profile-step {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--bs-secondary-color);
+        }
+        .profile-step-index {
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            border: 1px solid var(--bs-border-color);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            background: var(--bs-body-bg);
+        }
+        .profile-step.is-active .profile-step-index {
+            border-color: var(--bs-primary);
+            background: var(--bs-primary);
+            color: #fff;
+        }
+        .profile-step.is-complete .profile-step-index {
+            border-color: var(--bs-success);
+            background: var(--bs-success);
+            color: #fff;
+        }
+        .profile-step.is-active .profile-step-label {
+            color: var(--bs-primary-text-emphasis);
+            font-weight: 600;
+        }
+        .profile-step.is-complete .profile-step-label {
+            color: var(--bs-success-text-emphasis);
+            font-weight: 600;
+        }
+
+        .profile-qr-wrap {
+            display: inline-block;
+            padding: 0.6rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--bs-border-color);
+            background: #fff;
+        }
+        [data-bs-theme="dark"] .profile-qr-wrap {
+            background: #fff;
+        }
+        .qr-image {
+            max-width: 200px;
+            height: auto;
+        }
+        .profile-secret-block {
+            padding: 0.6rem;
+            border: 1px dashed var(--bs-border-color);
+            border-radius: 0.5rem;
+            background: var(--bs-tertiary-bg);
+        }
+        .profile-recovery-list {
+            padding: 0.75rem;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0.5rem;
+            background: #fff;
+            max-height: 180px;
+            overflow: auto;
+        }
+        [data-bs-theme="dark"] .profile-recovery-list {
+            background: var(--bs-body-bg);
+        }
     </style>
     <style <?= csp_style_nonce() ?> id="context-menu-style"></style>
 </head>

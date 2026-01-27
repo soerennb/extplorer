@@ -59,7 +59,10 @@ $routes->group('api', function($routes) {
 
     // Mounts
     $routes->get('mounts', 'MountController::index');
+    $routes->get('mounts/(:segment)', 'MountController::show/$1');
     $routes->post('mounts', 'MountController::create');
+    $routes->post('mounts/test', 'MountController::test');
+    $routes->put('mounts/(:segment)', 'MountController::update/$1');
     $routes->delete('mounts/(:segment)', 'MountController::delete/$1');
 
     $routes->get('users', 'UserAdminController::index');

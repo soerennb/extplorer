@@ -81,10 +81,35 @@ class ProfileController extends BaseController
     {
         $username = session('username');
         if (!$username) return $this->failForbidden('Not logged in');
-        
-        // In a real app, require password re-verification here
-        
+
+        $json = $this->request->getJSON();
+        $password = (string)($json->password ?? '');
+        $code = trim((string)($json->code ?? ''));
+
+        if ($password === '' && $code === '') {
+            return $this->fail('Password or authenticator code is required');
+        }
+
         $userModel = new UserModel();
+        $reauthenticated = false;
+
+        if ($password !== '') {
+            $reauthenticated = (bool)$userModel->verifyUser($username, $password);
+        }
+
+        if (!$reauthenticated && $code !== '') {
+            $secret = $userModel->get2faSecret($username);
+            if (!$secret) {
+                return $this->fail('Two-factor authentication is not enabled');
+            }
+            $service = new \App\Services\TwoFactorService();
+            $reauthenticated = $service->verifyCode($secret, $code);
+        }
+
+        if (!$reauthenticated) {
+            return $this->fail('Re-authentication failed');
+        }
+
         $userModel->updateUser($username, [
             '2fa_secret' => null,
             '2fa_enabled' => false,
