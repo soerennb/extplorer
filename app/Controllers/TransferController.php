@@ -25,6 +25,10 @@ class TransferController extends BaseController
 
     public function status()
     {
+        if (!can('read')) {
+            return $this->failForbidden();
+        }
+
         $sessionId = $this->normalizeSessionId((string)$this->request->getGet('sessionId'));
         $fileName = $this->request->getGet('fileName');
 
@@ -62,6 +66,10 @@ class TransferController extends BaseController
      */
     public function upload()
     {
+        if (!can('read')) {
+            return $this->failForbidden();
+        }
+
         $file = $this->request->getFile('file');
         $sessionId = $this->normalizeSessionId((string)$this->request->getPost('sessionId'));
         $fileName = $this->request->getPost('fileName');
@@ -72,6 +80,11 @@ class TransferController extends BaseController
 
         if (!$file || !$sessionId || !$fileName) {
             return $this->fail('Missing parameters');
+        }
+
+        $maxFileBytes = $this->getMaxUploadBytes();
+        if ($maxFileBytes > 0 && $fileSize > $maxFileBytes) {
+            return $this->fail('File exceeds the configured upload size limit.');
         }
 
         // Sanitize Filename
@@ -130,6 +143,10 @@ class TransferController extends BaseController
      */
     public function send()
     {
+        if (!can('read')) {
+            return $this->failForbidden();
+        }
+
         $json = $this->request->getJSON();
         $sessionId = $this->normalizeSessionId((string)($json->sessionId ?? ''));
         $recipients = $this->normalizeRecipients($json->recipients ?? []); // Array of emails
@@ -178,7 +195,30 @@ class TransferController extends BaseController
         $this->cleanupTempDir($tempDir);
 
         if (empty($fileList)) {
+            $this->rrmdir($absPath);
             return $this->fail('No files uploaded');
+        }
+
+        // Enforce upload size limits.
+        $maxFileBytes = $this->getMaxUploadBytes();
+        if ($maxFileBytes > 0) {
+            foreach ($fileList as $name) {
+                $size = (int)filesize($absPath . '/' . $name);
+                if ($size > $maxFileBytes) {
+                    $this->rrmdir($absPath);
+                    return $this->fail('One or more files exceed the configured upload size limit.');
+                }
+            }
+        }
+
+        // Enforce per-user transfer quota if configured.
+        $quotaBytes = $this->getUserQuotaBytes();
+        if ($quotaBytes > 0) {
+            $currentUsage = $this->getUserTransferUsageBytes(session('username'));
+            if (($currentUsage + $totalSize) > $quotaBytes) {
+                $this->rrmdir($absPath);
+                return $this->fail('Transfer would exceed your configured storage quota.');
+            }
         }
 
         // Create Share Record
@@ -202,20 +242,25 @@ class TransferController extends BaseController
 
         // Send Emails
         $link = site_url('s/' . $share['hash']);
+        $emailFailures = [];
         foreach ($recipients as $email) {
-            $this->emailService->sendTransferNotification([
+            $ok = $this->emailService->sendTransferNotification([
                 'sender_email' => $this->getSenderEmail() ?? session('username'),
                 'recipient_email' => $email,
                 'subject' => $subject,
                 'message' => $message
             ], $link);
+            if (!$ok) {
+                $emailFailures[] = $email;
+            }
         }
 
         LogService::log('Transfer Sent', "Hash: {$share['hash']}, Files: " . count($fileList));
 
         return $this->respond([
             'status' => 'success',
-            'link' => $link
+            'link' => $link,
+            'email_failures' => $emailFailures,
         ]);
     }
 
@@ -224,6 +269,10 @@ class TransferController extends BaseController
      */
     public function history()
     {
+        if (!can('read')) {
+            return $this->failForbidden();
+        }
+
         $user = session('username');
         $shares = $this->shareService->listUserShares($user);
         
@@ -253,6 +302,10 @@ class TransferController extends BaseController
      */
     public function delete($hash)
     {
+        if (!can('read')) {
+            return $this->failForbidden();
+        }
+
         $share = $this->shareService->getShareRaw($hash);
         if (!$share) return $this->failNotFound();
 
@@ -356,5 +409,55 @@ class TransferController extends BaseController
             @unlink($dir . DIRECTORY_SEPARATOR . $entry);
         }
         @rmdir($dir);
+    }
+
+    private function getMaxUploadBytes(): int
+    {
+        $maxMb = (int)$this->settingsService->get('upload_max_file_mb', 0);
+        if ($maxMb <= 0) {
+            return 0;
+        }
+        // Cap to a sane upper bound to avoid overflow surprises.
+        if ($maxMb > 10240) {
+            $maxMb = 10240;
+        }
+        return $maxMb * 1024 * 1024;
+    }
+
+    private function getUserQuotaBytes(): int
+    {
+        $quotaMb = (int)$this->settingsService->get('quota_per_user_mb', 0);
+        if ($quotaMb <= 0) {
+            return 0;
+        }
+        if ($quotaMb > 102400) {
+            $quotaMb = 102400;
+        }
+        return $quotaMb * 1024 * 1024;
+    }
+
+    private function getUserTransferUsageBytes(string $user): int
+    {
+        if ($user === '') {
+            return 0;
+        }
+
+        $now = time();
+        $usage = 0;
+        foreach ($this->shareService->getAllShares() as $share) {
+            if (($share['created_by'] ?? '') !== $user) {
+                continue;
+            }
+            if (empty($share['is_transfer'])) {
+                continue;
+            }
+            $expiresAt = (int)($share['expires_at'] ?? 0);
+            if ($expiresAt > 0 && $now > $expiresAt) {
+                continue;
+            }
+            $usage += (int)($share['total_size'] ?? 0);
+        }
+
+        return $usage;
     }
 }

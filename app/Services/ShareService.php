@@ -37,7 +37,10 @@ class ShareService
     private function saveShares(array $shares): void
     {
         $content = '<?php die("Access denied"); ?>' . PHP_EOL . json_encode($shares, JSON_PRETTY_PRINT);
-        file_put_contents($this->sharesFile, $content);
+        $result = file_put_contents($this->sharesFile, $content, LOCK_EX);
+        if ($result === false) {
+            throw new Exception('Unable to persist share state.');
+        }
     }
 
     /**
@@ -53,10 +56,17 @@ class ShareService
             $hash = bin2hex(random_bytes(8));
         }
 
+        $baseRoot = WRITEPATH . 'file_manager_root/';
+        if (($meta['source'] ?? '') === 'transfer') {
+            $baseRoot = WRITEPATH . 'uploads/shares/';
+        }
+        $targetPath = $baseRoot . $path;
+        $type = is_dir($targetPath) ? 'dir' : (is_file($targetPath) ? 'file' : 'dir');
+
         $share = [
             'hash' => $hash,
             'path' => $path,
-            'type' => is_dir(WRITEPATH . 'file_manager_root/' . $path) ? 'dir' : 'file', // Assuming root logic
+            'type' => $type,
             'created_by' => $user,
             'created_at' => time(),
             'expires_at' => $expiresAt,

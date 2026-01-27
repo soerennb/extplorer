@@ -521,6 +521,19 @@ const TransferModal = {
                 this.isUploading = false;
                 localStorage.removeItem('extplorer_transfer_resume'); // Clear resume state
 
+                const failures = Array.isArray(res.email_failures) ? res.email_failures : [];
+                if (failures.length > 0) {
+                    const msg = this.t(
+                        'transfer_email_failures_prefix',
+                        'The transfer link was created, but some emails failed: '
+                    ) + failures.join(', ');
+                    if (window.Swal) {
+                        Swal.fire(this.t('warning', 'Warning'), msg, 'warning');
+                    } else {
+                        alert(msg);
+                    }
+                }
+
             } catch (e) {
                 alert(this.t('transfer_failed_prefix', 'Transfer failed: ') + e.message);
                 this.isUploading = false;
