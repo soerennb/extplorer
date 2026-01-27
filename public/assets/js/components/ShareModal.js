@@ -35,6 +35,13 @@ const ShareModal = {
 
                     <div v-else>
                         <p class="small text-muted">{{ t('share_desc') || 'Create a public link for this item.' }}</p>
+                        
+                        <div v-if="!isDirectory" class="d-grid mb-3">
+                            <button class="btn btn-outline-primary btn-sm" @click="sendCopy">
+                                <i class="ri-send-plane-fill me-2"></i> {{ t('send_files') || 'Send a Copy' }}
+                            </button>
+                        </div>
+
                         <div v-if="policyLoaded" class="alert alert-light border small">
                             <div v-if="policy.require_password">
                                 <strong>Password is required by policy.</strong>
@@ -121,10 +128,11 @@ const ShareModal = {
         </div>
     </div>
     `,
-    setup() {
+    setup(props, context) {
         const { ref, reactive, computed } = Vue;
         const t = (k) => i18n.t(k);
         const loading = ref(false);
+        const currentFile = ref(null);
         const currentShare = ref(null);
         const targetPath = ref('');
         const isDirectory = ref(false);
@@ -202,6 +210,7 @@ const ShareModal = {
         };
 
         const open = async (file) => {
+            currentFile.value = file;
             targetPath.value = file.path;
             isDirectory.value = file.type === 'dir';
             form.password = '';
@@ -311,9 +320,15 @@ const ShareModal = {
             window.open(shareUrl.value, '_blank', 'noopener');
         };
 
+        const sendCopy = () => {
+            if (!currentFile.value) return;
+            if (modalInstance) modalInstance.hide();
+            context.emit('transfer', currentFile.value);
+        };
+
         return {
             open, loading, currentShare, form, createShare, deleteShare, shareUrl, copyLink, openLink, formatDate, expiryHuman, expiryPreview, expiryOptions, policy, policyLoaded,
-            uploadPolicy, modeOptions, isDirectory, modeLabel,
+            uploadPolicy, modeOptions, isDirectory, modeLabel, sendCopy,
             t
         };
     }

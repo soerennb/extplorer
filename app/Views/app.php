@@ -411,7 +411,7 @@
         <!-- Components -->
         <user-admin ref="userAdmin"></user-admin>
         <user-profile ref="userProfile"></user-profile>
-        <share-modal ref="shareModal"></share-modal>
+        <share-modal ref="shareModal" @transfer="openTransferWithFile"></share-modal>
         <upload-modal ref="uploadModal"></upload-modal>
         <file-history-modal ref="fileHistoryModal"></file-history-modal>
         <transfer-modal ref="transferModal"></transfer-modal>
@@ -516,7 +516,7 @@
                          <button class="btn btn-primary btn-sm flex-fill" @click="openTransfer">
                              <i class="ri-send-plane-fill me-1"></i> {{ t('send_files') || 'Send Files' }}
                          </button>
-                         <button class="btn btn-outline-primary btn-sm" @click="showWebDav" title="WebDAV Connect">
+                         <button v-if="webdavEnabled" class="btn btn-outline-primary btn-sm" @click="showWebDav" title="WebDAV Connect">
                              <i class="ri-link"></i>
                          </button>
                      </div>
@@ -938,6 +938,7 @@
         window.forcePasswordChange = <?= session('force_password_change') ? 'true' : 'false' ?>;
         window.csrfTokenName = "<?= csrf_token() ?>";
         window.csrfHash = "<?= csrf_hash() ?>";
+        window.webdavEnabled = <?= json_encode($webdavEnabled) ?>;
         window.cspStyleNonce = "<?= service('csp')->getStyleNonce() ?>";
     </script>
     <script src="<?= base_url('assets/js/vue.global.js') ?>"></script>

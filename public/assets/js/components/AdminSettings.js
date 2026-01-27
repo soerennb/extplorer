@@ -239,6 +239,17 @@ const AdminSettings = {
                             <div class="form-text">{{ t('admin_settings_security_idle_timeout_hint', '0 disables idle timeout. Applies to API and UI sessions.') }}</div>
                         </div>
                     </div>
+
+                    <h6 class="border-bottom pb-2 mb-3 mt-4">{{ t('admin_settings_dav_heading', 'WebDAV') }}</h6>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="adminDavEnabled" v-model="settings.webdav_enabled">
+                                <label class="form-check-label small fw-bold" for="adminDavEnabled">{{ t('admin_settings_dav_enabled', 'Enable WebDAV') }}</label>
+                            </div>
+                            <div class="form-text mt-1">{{ t('admin_settings_dav_enabled_hint', 'Allow users to access files via WebDAV.') }}</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-4 pt-3 border-top text-end">
@@ -355,6 +366,9 @@ const AdminSettings = {
             }
             if (typeof this.settings.allow_public_uploads !== 'boolean') {
                 this.settings.allow_public_uploads = false;
+            }
+            if (typeof this.settings.webdav_enabled !== 'boolean') {
+                this.settings.webdav_enabled = true;
             }
             if (typeof this.settings.share_upload_quota_mb !== 'number' || Number.isNaN(this.settings.share_upload_quota_mb)) {
                 this.settings.share_upload_quota_mb = 0;

@@ -169,6 +169,10 @@ class SettingsController extends BaseController
             $json['allow_public_uploads'] = (bool)$json['allow_public_uploads'];
         }
 
+        if (array_key_exists('webdav_enabled', $json)) {
+            $json['webdav_enabled'] = (bool)$json['webdav_enabled'];
+        }
+
         if (isset($json['share_upload_quota_mb'])) {
             $quotaMb = (int)$json['share_upload_quota_mb'];
             if ($quotaMb < 0 || $quotaMb > 1024000) {

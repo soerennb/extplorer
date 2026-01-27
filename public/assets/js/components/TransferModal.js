@@ -66,7 +66,7 @@ const TransferModal = {
                                          :class="{'bg-primary-subtle border-primary': isDragOver}"
                                     >
                                         
-                                        <div v-if="files.length === 0">
+                                        <div v-if="allFiles.length === 0">
                                             <i class="ri-upload-cloud-2-line display-4 text-muted mb-2"></i>
                                             <p class="mb-2">{{ t('transfer_drop_hint', 'Drag & Drop files or folders here') }}</p>
                                             <button class="btn btn-sm btn-outline-primary position-relative overflow-hidden">
@@ -82,18 +82,20 @@ const TransferModal = {
                                         
                                         <div v-else class="text-start w-100">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-bold">{{ files.length }} {{ t('transfer_files_badge', 'Files') }}</span>
+                                                <span class="fw-bold">{{ allFiles.length }} {{ t('transfer_files_badge', 'Files') }}</span>
                                                 <span class="badge bg-secondary">{{ formatSize(totalSize) }}</span>
                                             </div>
                                             <div class="list-group list-group-flush overflow-auto transfer-files-list">
-                                                <div v-for="(f, idx) in files" :key="idx" class="list-group-item d-flex justify-content-between align-items-center p-2 small">
+                                                <div v-for="(f, idx) in allFiles" :key="idx" class="list-group-item d-flex justify-content-between align-items-center p-2 small">
                                                     <div class="text-truncate me-2" :title="f.name">
-                                                        <i :class="getIcon(f.name)" class="me-1"></i> {{ f.name }}
+                                                        <i :class="getIcon(f.name)" class="me-1"></i>
+                                                        <span v-if="f.path" class="badge bg-info-subtle text-info-emphasis me-1" title="From Server">Internal</span>
+                                                        {{ f.name }}
                                                     </div>
                                                     <i class="ri-close-line text-danger cursor-pointer" @click="removeFile(idx)"></i>
                                                 </div>
                                             </div>
-                                            <button class="btn btn-sm btn-outline-danger w-100 mt-2" @click="files = []">{{ t('transfer_clear_all', 'Clear All') }}</button>
+                                            <button class="btn btn-sm btn-outline-danger w-100 mt-2" @click="resetForm">{{ t('transfer_clear_all', 'Clear All') }}</button>
                                         </div>
                                     </div>
                                 </div>
@@ -163,7 +165,7 @@ const TransferModal = {
                                         </div>
                                     </div>
 
-                                    <button class="btn btn-primary w-100" @click="sendTransfer()" :disabled="isUploading || files.length === 0">
+                                    <button class="btn btn-primary w-100" @click="sendTransfer()" :disabled="isUploading || allFiles.length === 0">
                                         <span v-if="isUploading">
                                             <span class="spinner-border spinner-border-sm me-1"></span> {{ t('transfer_sending', 'Sending...') }} {{ uploadProgress }}%
                                         </span>
@@ -244,7 +246,8 @@ const TransferModal = {
     data() {
         return {
             tab: 'new',
-            files: [],
+            files: [], // Browser File objects
+            internalFiles: [], // Internal file objects {name, path, size}
             recipients: [],
             recipientInput: '',
             recipientError: '',
@@ -269,8 +272,11 @@ const TransferModal = {
         };
     },
     computed: {
+        allFiles() {
+            return [...this.internalFiles, ...this.files];
+        },
         totalSize() {
-            return this.files.reduce((acc, f) => acc + f.size, 0);
+            return this.allFiles.reduce((acc, f) => acc + f.size, 0);
         },
         filteredHistory() {
             if (this.historyFilter === 'all') return this.history;
@@ -310,12 +316,25 @@ const TransferModal = {
         },
         open() {
             this.modal.show();
-            if (!this.files.length && !this.successLink) {
+            if (!this.allFiles.length && !this.successLink) {
                  this.tab = 'new';
             }
         },
+        openWithFiles(files) {
+            this.resetForm();
+            // Filter for files only
+            this.internalFiles = files.filter(f => f.type !== 'dir').map(f => ({
+                name: f.name,
+                path: f.path,
+                size: f.size,
+                type: 'internal'
+            }));
+            this.tab = 'new';
+            this.modal.show();
+        },
         resetForm() {
             this.files = [];
+            this.internalFiles = [];
             this.recipients = [];
             this.recipientInput = '';
             this.recipientError = '';
@@ -380,7 +399,12 @@ const TransferModal = {
             [...e.target.files].forEach(f => this.files.push(f));
         },
         removeFile(idx) {
-            this.files.splice(idx, 1);
+            // idx is index in allFiles (internalFiles + files)
+            if (idx < this.internalFiles.length) {
+                this.internalFiles.splice(idx, 1);
+            } else {
+                this.files.splice(idx - this.internalFiles.length, 1);
+            }
         },
         isValidEmail(email) {
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -437,19 +461,37 @@ const TransferModal = {
             
             const sessionId = existingSessionId || (Date.now().toString(36) + Math.random().toString(36).substr(2));
             
-            // Save state for resume
-            localStorage.setItem('extplorer_transfer_resume', JSON.stringify({
-                sessionId,
-                recipients: validRecipients,
-                form: this.form,
-                fileNames: this.files.map(f => f.name),
-                timestamp: Date.now()
-            }));
+            // Save state for resume (only for browser files)
+            if (this.files.length > 0) {
+                localStorage.setItem('extplorer_transfer_resume', JSON.stringify({
+                    sessionId,
+                    recipients: validRecipients,
+                    form: this.form,
+                    fileNames: this.files.map(f => f.name),
+                    timestamp: Date.now()
+                }));
+            }
 
             try {
-                // 1. Upload Files
+                // 1. Stage Internal Files
+                if (this.internalFiles.length > 0) {
+                     await Api.post('transfer/stage', {
+                         sessionId,
+                         paths: this.internalFiles.map(f => f.path)
+                     });
+                     // Assume partial progress for staging
+                     this.uploadProgress = 10;
+                }
+
+                // 2. Upload Files
                 const totalBytes = this.totalSize;
                 let uploadedBytes = 0; // Local counter for progress
+                
+                // Adjust total bytes calculation to include internal files if we want weighted progress
+                // For simplicity, we just base progress on the "uploading" part of browser files, 
+                // but if we have internal files, they are "instant", so we should count them as done.
+                const internalSize = this.internalFiles.reduce((acc, f) => acc + f.size, 0);
+                uploadedBytes += internalSize;
 
                 for (let file of this.files) {
                     const CHUNK_SIZE = 1024 * 1024; // 1MB
@@ -501,7 +543,7 @@ const TransferModal = {
                 
                 this.uploadProgress = 98;
 
-                // 2. Finalize Send
+                // 3. Finalize Send
                 const res = await Api.post('transfer/send', {
                     sessionId,
                     recipients: validRecipients,
@@ -514,7 +556,7 @@ const TransferModal = {
                 this.uploadProgress = 100;
                 this.successLink = res.link;
                 this.lastTransfer = {
-                    fileCount: this.files.length,
+                    fileCount: this.allFiles.length,
                     totalSize: this.totalSize,
                     recipients: [...validRecipients],
                     expiresAt: (Number(this.form.expiresIn) || 0) > 0

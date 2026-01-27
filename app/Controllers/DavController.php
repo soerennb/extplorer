@@ -13,6 +13,14 @@ class DavController extends BaseController
 {
     public function index(...$path)
     {
+        // 0. Global Switch
+        $settings = new \App\Services\SettingsService();
+        if (!$settings->get('webdav_enabled', true)) {
+            header('HTTP/1.1 403 Forbidden');
+            echo 'WebDAV Access is disabled by the administrator.';
+            exit;
+        }
+
         // 1. Security Check: Rate Limiting
         $throttler = \Config\Services::throttler();
         if ($throttler->check('dav-' . $this->request->getIPAddress(), 120, MINUTE) === false) {

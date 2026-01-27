@@ -521,6 +521,7 @@ const app = createApp({
         const openAdmin = () => { if (userAdmin.value) userAdmin.value.open(); };
         const openProfile = (tab = null) => { if (userProfile.value) userProfile.value.open(tab); };
         const openTransfer = () => { if (transferModal.value) transferModal.value.open(); };
+        const openTransferWithFile = (file) => { if (transferModal.value) transferModal.value.openWithFiles([file]); };
         const showWebDav = () => webdavModal.show();
         const copyWebDavUrl = () => {
             const i = document.getElementById('webdav_url_input'); i.select(); document.execCommand('copy');
@@ -777,7 +778,7 @@ const app = createApp({
             store, i18n, t: (k, p) => i18n.t(k, p),
             goUp, goToPath, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, goToPage, setPageSize, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles, breadcrumbs,
             emptyStateIcon, emptyStateTitle, emptyStateDescription,
-            isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer,
+            isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer, openTransferWithFile,
             contextMenu, showContextMenu, hideContextMenu, cmAction,
             previewState, nextPreview, prevPreview, showWebDav, copyWebDavUrl, webDavUrl,
             onDragStart, onDragOver, onDragLeave, onDrop,
@@ -789,6 +790,7 @@ const app = createApp({
             username: window.username,
             connectionMode: window.connectionMode,
             appVersion: window.appVersion,
+            webdavEnabled: window.webdavEnabled,
             paginationPages, totalPages
         };
     }

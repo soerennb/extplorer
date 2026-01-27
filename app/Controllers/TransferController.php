@@ -7,6 +7,7 @@ use App\Services\ShareService;
 use App\Services\EmailService;
 use App\Services\SettingsService;
 use App\Services\LogService;
+use App\Services\VFS\VfsFactory;
 
 class TransferController extends BaseController
 {
@@ -58,6 +59,73 @@ class TransferController extends BaseController
         return $this->respond([
             'status' => 'new',
             'uploaded' => 0
+        ]);
+    }
+
+    /**
+     * Stage internal files for transfer.
+     */
+    public function stage()
+    {
+        if (!can('read')) {
+            return $this->failForbidden();
+        }
+
+        $json = $this->request->getJSON();
+        $sessionId = $this->normalizeSessionId((string)($json->sessionId ?? ''));
+        $paths = $json->paths ?? [];
+
+        if (!$sessionId || empty($paths) || !is_array($paths)) {
+            return $this->fail('Missing parameters');
+        }
+
+        $tempDir = WRITEPATH . 'uploads/temp/' . $sessionId;
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0777, true);
+        }
+
+        $vfs = VfsFactory::getVfs();
+        $stagedCount = 0;
+        $totalBytes = 0;
+
+        foreach ($paths as $path) {
+            if (!$vfs->exists($path) || $vfs->isDir($path)) {
+                continue; // Skip directories or non-existent files for now
+            }
+            
+            // Validate size limits
+            $size = $vfs->size($path);
+            $maxFileBytes = $this->getMaxUploadBytes();
+            if ($maxFileBytes > 0 && $size > $maxFileBytes) {
+                return $this->fail("File '$path' exceeds the configured size limit.");
+            }
+            
+            // Read stream from VFS and write to temp dir
+            $fileName = basename($path);
+            $destPath = $tempDir . '/' . $fileName;
+            
+            // Use stream copy
+            $srcStream = $vfs->fopen($path, 'rb');
+            if (!$srcStream) continue;
+            
+            $destStream = fopen($destPath, 'wb');
+            if (!$destStream) {
+                fclose($srcStream);
+                return $this->fail('Server Error: Cannot write to temp storage');
+            }
+            
+            stream_copy_to_stream($srcStream, $destStream);
+            fclose($srcStream);
+            fclose($destStream);
+            
+            $stagedCount++;
+            $totalBytes += $size;
+        }
+
+        return $this->respond([
+            'status' => 'success',
+            'count' => $stagedCount,
+            'bytes' => $totalBytes
         ]);
     }
 

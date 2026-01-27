@@ -78,6 +78,7 @@ class SettingsService
             'share_upload_max_files' => 0,
             'quota_per_user_mb' => 0,
             'allow_public_uploads' => false,
+            'webdav_enabled' => true,
             'mount_root_allowlist' => [],
         ];
     }

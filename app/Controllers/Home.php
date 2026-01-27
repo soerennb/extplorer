@@ -6,7 +6,11 @@ class Home extends BaseController
 {
     public function index(): string
     {
-        return view('app');
+        $settingsService = new \App\Services\SettingsService();
+        $data = [
+            'webdavEnabled' => $settingsService->get('webdav_enabled', true)
+        ];
+        return view('app', $data);
     }
 
     public function admin()

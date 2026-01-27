@@ -97,6 +97,7 @@ $routes->group('api', function($routes) {
 
     // Transfer
     $routes->get('transfer/status', 'TransferController::status');
+    $routes->post('transfer/stage', 'TransferController::stage');
     $routes->post('transfer/upload', 'TransferController::upload');
     $routes->post('transfer/send', 'TransferController::send');
     $routes->get('transfer/history', 'TransferController::history');
