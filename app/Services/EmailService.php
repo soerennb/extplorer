@@ -49,6 +49,11 @@ class EmailService
 
     public function sendTestEmail(string $recipient): bool
     {
+        if (!$this->isConfigured($this->settingsService->getSettings())) {
+            log_message('warning', 'Email send skipped: email settings are not configured.');
+            return false;
+        }
+
         $this->email->setFrom($this->settingsService->get('email_from'), $this->settingsService->get('email_from_name'));
         $this->email->setTo($recipient);
         $this->email->setSubject('eXtplorer Test Email');
@@ -65,6 +70,11 @@ class EmailService
 
     public function sendTransferNotification(array $transfer, string $link): bool
     {
+        if (!$this->isConfigured($this->settingsService->getSettings())) {
+            log_message('warning', 'Transfer email skipped: email settings are not configured.');
+            return false;
+        }
+
         $sender = $transfer['sender_email'] ?? 'Unknown';
         $message = $transfer['message'] ?? '';
         $subject = $transfer['subject'] ?? 'Files shared with you';
@@ -92,6 +102,11 @@ class EmailService
         $recipient = $share['sender_email'] ?? null;
         if (!$recipient) return false;
 
+        if (!$this->isConfigured($this->settingsService->getSettings())) {
+            log_message('warning', 'Download notification skipped: email settings are not configured.');
+            return false;
+        }
+
         $subject = 'Your files were downloaded';
         $body = "
             <h2>Download Confirmation</h2>
@@ -113,6 +128,13 @@ class EmailService
 
     public function sendTestEmailWithConfig(string $recipient, array $settings): array
     {
+        if (!$this->isConfigured($settings)) {
+            return [
+                'ok' => false,
+                'debug' => 'Email settings are not configured.',
+            ];
+        }
+
         $email = Services::email();
         $email->initialize($this->buildConfig($settings));
         $email->setFrom($settings['email_from'] ?? 'noreply@example.com', $settings['email_from_name'] ?? 'eXtplorer');
@@ -129,6 +151,10 @@ class EmailService
 
     public function validateConfig(array $settings): array
     {
+        if (!$this->isConfigured($settings)) {
+            return ['ok' => false, 'message' => 'Email settings are not configured.'];
+        }
+
         $protocol = $settings['email_protocol'] ?? 'smtp';
         if ($protocol === 'sendmail') {
             $path = $settings['sendmail_path'] ?? '/usr/sbin/sendmail';
@@ -174,5 +200,28 @@ class EmailService
         } catch (\Throwable $e) {
             return ['ok' => false, 'message' => $e->getMessage()];
         }
+    }
+
+    public function isConfigured(array $settings): bool
+    {
+        $from = trim((string)($settings['email_from'] ?? ''));
+        if ($from === '' || !filter_var($from, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        $protocol = strtolower(trim((string)($settings['email_protocol'] ?? 'smtp')));
+        if ($protocol === 'sendmail') {
+            $path = trim((string)($settings['sendmail_path'] ?? '/usr/sbin/sendmail'));
+            return $path !== '' && is_file($path) && is_executable($path);
+        }
+
+        if ($protocol === 'mail') {
+            return true;
+        }
+
+        // Default to SMTP requirements.
+        $host = trim((string)($settings['smtp_host'] ?? ''));
+        $port = (int)($settings['smtp_port'] ?? 0);
+        return $host !== '' && $port > 0;
     }
 }

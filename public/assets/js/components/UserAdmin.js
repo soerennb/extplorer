@@ -59,6 +59,9 @@ const UserAdmin = {
                             <form @submit.prevent="saveSettings">
                                 <div v-if="settingsTab === 'email'">
                                     <h6 class="border-bottom pb-2 mb-3">Email Configuration</h6>
+                                    <div v-if="settings && settings.email_configured === false" class="alert alert-warning small">
+                                        Email sending is currently disabled because the configuration is incomplete.
+                                    </div>
                                     <div v-if="emailValidation.message" class="alert small" :class="emailValidation.ok ? 'alert-success' : 'alert-danger'">
                                         {{ emailValidation.message }}
                                     </div>

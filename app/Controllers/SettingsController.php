@@ -32,6 +32,8 @@ class SettingsController extends BaseController
         if (($check = $this->checkAdmin()) !== true) return $check;
 
         $settings = $this->settingsService->getSettings();
+        $emailService = new EmailService();
+        $settings['email_configured'] = $emailService->isConfigured($settings);
         
         // Mask password
         if (!empty($settings['smtp_pass'])) {
@@ -51,6 +53,9 @@ class SettingsController extends BaseController
         if (!$json) return $this->fail('Invalid JSON');
 
         $currentSettings = $this->settingsService->getSettings();
+
+        // Derived flags should not be persisted.
+        unset($json['email_configured']);
 
         if (isset($json['mount_root_allowlist_text'])) {
             $lines = preg_split('/\r\n|\r|\n/', (string) $json['mount_root_allowlist_text']);
