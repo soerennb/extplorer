@@ -4,25 +4,25 @@ const UserAdmin = {
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Admin Panel</h5>
+                    <h5 class="modal-title">{{ t('admin_panel', 'Admin Panel') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div v-if="quickAdmin" class="alert alert-light border small d-flex align-items-center justify-content-between">
                         <div>
-                            <strong>Quick Admin</strong>
-                            <div class="text-muted">For full settings, logs, and system tools, use the admin console.</div>
+                            <strong>{{ t('quick_admin', 'Quick Admin') }}</strong>
+                            <div class="text-muted">{{ t('quick_admin_desc', 'For full settings, logs, and system tools, use the admin console.') }}</div>
                         </div>
                         <a class="btn btn-sm btn-primary" :href="adminConsoleUrl">
-                            <i class="ri-external-link-line me-1"></i> Open Admin Console
+                            <i class="ri-external-link-line me-1"></i> {{ t('admin_open_console', 'Open Admin Console') }}
                         </a>
                     </div>
                     <ul class="nav nav-tabs mb-3">
                         <li class="nav-item">
-                            <a class="nav-link" :class="{active: tab === 'users'}" href="#" @click.prevent="tab = 'users'">Users</a>
+                            <a class="nav-link" :class="{active: tab === 'users'}" href="#" @click.prevent="tab = 'users'">{{ t('admin_nav_users', 'Users') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" :class="{active: tab === 'logs'}" href="#" @click.prevent="loadLogsTab">Logs</a>
+                            <a class="nav-link" :class="{active: tab === 'logs'}" href="#" @click.prevent="loadLogsTab">{{ t('admin_nav_logs', 'Logs') }}</a>
                         </li>
                     </ul>
 
@@ -609,6 +609,13 @@ const UserAdmin = {
         }
     },
     methods: {
+        t(key, fallback = '', params = {}) {
+            const value = i18n.t(key, params);
+            if (value === key) {
+                return fallback || key;
+            }
+            return value;
+        },
         open() {
             this.modal.show();
         },

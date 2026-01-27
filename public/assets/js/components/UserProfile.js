@@ -564,6 +564,7 @@ const UserProfile = {
         });
 
         const forcePasswordChange = ref(!!window.forcePasswordChange);
+        const profileTabKey = 'extplorer_profile_tab';
         let modalInstance = null;
         let modalEl = null;
         let lastActiveElement = null;
@@ -572,6 +573,27 @@ const UserProfile = {
             const perms = window.userPermissions || [];
             return perms.includes('*') || perms.includes('mount_external');
         });
+
+        const validTabs = computed(() => (canMount.value ? ['general', 'security', 'mounts'] : ['general', 'security']));
+        const normalizeTab = (tab) => (validTabs.value.includes(tab) ? tab : 'general');
+        const readStoredTab = () => {
+            try {
+                const stored = localStorage.getItem(profileTabKey);
+                if (stored) {
+                    return normalizeTab(stored);
+                }
+            } catch (e) {
+                // Ignore storage failures
+            }
+            return 'general';
+        };
+        const persistTab = (tab) => {
+            try {
+                localStorage.setItem(profileTabKey, tab);
+            } catch (e) {
+                // Ignore storage failures
+            }
+        };
 
         const passwordChecks = computed(() => {
             const value = passwordForm.new || '';
@@ -706,9 +728,14 @@ const UserProfile = {
             }
         };
 
-        const setTab = async (tab) => {
-            activeTab.value = tab;
-            if (tab === 'mounts') {
+        const setTab = async (tab, options = {}) => {
+            const { persist = true } = options;
+            const nextTab = normalizeTab(tab);
+            activeTab.value = nextTab;
+            if (persist && !forcePasswordChange.value) {
+                persistTab(nextTab);
+            }
+            if (nextTab === 'mounts') {
                 resetMountMessages();
                 await loadMounts();
             }
@@ -1042,6 +1069,12 @@ const UserProfile = {
             }
         });
 
+        watch(canMount, (allowed) => {
+            if (!allowed && activeTab.value === 'mounts') {
+                setTab('general', { persist: false });
+            }
+        });
+
         watch(() => mountForm.type, (val, prev) => {
             resetMountMessages();
             clearMountErrors();
@@ -1059,10 +1092,11 @@ const UserProfile = {
             lastActiveElement = document.activeElement;
             await loadDetails();
             if (forcePasswordChange.value) {
-                await setTab('security');
-            }
-            if (tab) {
+                await setTab('security', { persist: false });
+            } else if (tab) {
                 await setTab(tab);
+            } else {
+                await setTab(readStoredTab(), { persist: false });
             }
             if (!modalInstance) {
                 modalInstance = new bootstrap.Modal(modalEl, {

@@ -2,9 +2,9 @@ const AdminRoles = {
     template: `
     <div>
         <div class="d-flex align-items-end justify-content-between gap-2 mb-3">
-            <div class="small text-muted">Roles define permission sets that can be assigned directly or via groups.</div>
+            <div class="small text-muted">{{ t('admin_roles_desc', 'Roles define permission sets that can be assigned directly or via groups.') }}</div>
             <button class="btn btn-success btn-sm" @click="showAddRoleForm">
-                <i class="ri-add-line me-1"></i> Add Role
+                <i class="ri-add-line me-1"></i> {{ t('admin_roles_add', 'Add Role') }}
             </button>
         </div>
 
@@ -14,10 +14,10 @@ const AdminRoles = {
             <table class="table table-striped table-hover small align-middle">
                 <thead class="sticky-top bg-body">
                     <tr>
-                        <th>Role Name</th>
-                        <th>Usage</th>
-                        <th>Permissions</th>
-                        <th class="text-end">Actions</th>
+                        <th>{{ t('admin_roles_col_name', 'Role Name') }}</th>
+                        <th>{{ t('admin_roles_col_usage', 'Usage') }}</th>
+                        <th>{{ t('admin_roles_col_permissions', 'Permissions') }}</th>
+                        <th class="text-end">{{ t('admin_actions', 'Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -28,29 +28,29 @@ const AdminRoles = {
                                 <span
                                     v-if="roleUsage(name).protected"
                                     class="badge text-bg-warning"
-                                    title="System role"
+                                    :title="t('admin_roles_system_role_title', 'System role')"
                                 >
-                                    System
+                                    {{ t('admin_roles_system_role_badge', 'System') }}
                                 </span>
-                                <span class="badge text-bg-secondary" :title="'Direct users: ' + roleUsage(name).direct_users_count">
-                                    Users {{ roleUsage(name).direct_users_count }}
+                                <span class="badge text-bg-secondary" :title="t('admin_roles_direct_users_title', 'Direct users: ') + roleUsage(name).direct_users_count">
+                                    {{ t('admin_roles_users_badge', 'Users') }} {{ roleUsage(name).direct_users_count }}
                                 </span>
-                                <span class="badge text-bg-info" :title="'Groups: ' + roleUsage(name).groups_count">
-                                    Groups {{ roleUsage(name).groups_count }}
+                                <span class="badge text-bg-info" :title="t('admin_roles_groups_title', 'Groups: ') + roleUsage(name).groups_count">
+                                    {{ t('admin_roles_groups_badge', 'Groups') }} {{ roleUsage(name).groups_count }}
                                 </span>
                                 <span
                                     v-if="roleUsage(name).users_via_groups_count"
                                     class="badge text-bg-light border"
-                                    :title="'Users via groups: ' + roleUsage(name).users_via_groups_count"
+                                    :title="t('admin_roles_via_groups_title', 'Users via groups: ') + roleUsage(name).users_via_groups_count"
                                 >
-                                    Via Groups {{ roleUsage(name).users_via_groups_count }}
+                                    {{ t('admin_roles_via_groups_badge', 'Via Groups') }} {{ roleUsage(name).users_via_groups_count }}
                                 </span>
                             </div>
                             <div
                                 v-if="roleUsage(name).direct_users_count || roleUsage(name).groups_count"
                                 class="small text-muted mt-1"
                             >
-                                Remove assignments before deleting.
+                                {{ t('admin_roles_remove_assignments_hint', 'Remove assignments before deleting.') }}
                             </div>
                         </td>
                         <td>
@@ -71,7 +71,7 @@ const AdminRoles = {
                         </td>
                     </tr>
                     <tr v-if="Object.keys(rolesList).length === 0">
-                        <td colspan="4" class="text-center text-muted py-4">No roles defined.</td>
+                        <td colspan="4" class="text-center text-muted py-4">{{ t('admin_roles_empty', 'No roles defined.') }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -79,18 +79,24 @@ const AdminRoles = {
 
         <div v-if="editingRole" class="card mt-3 bg-body-tertiary border">
             <div class="card-body">
-                <h6>Role: {{ editingRole.name || 'New' }}</h6>
-                <input v-if="!editingRole.isEdit" type="text" class="form-control form-control-sm mb-2" placeholder="Role Name" v-model="editingRole.name">
-                <label class="small d-block mb-1">Permissions (comma separated or *)</label>
+                <h6>{{ t('admin_roles_role_label', 'Role: ') }}{{ editingRole.name || t('admin_new', 'New') }}</h6>
+                <input
+                    v-if="!editingRole.isEdit"
+                    type="text"
+                    class="form-control form-control-sm mb-2"
+                    :placeholder="t('admin_roles_col_name', 'Role Name')"
+                    v-model="editingRole.name"
+                >
+                <label class="small d-block mb-1">{{ t('admin_roles_permissions_label', 'Permissions (comma separated or *)') }}</label>
                 <input type="text" class="form-control form-control-sm" v-model="editingRole.permsString">
                 <div v-if="permissionCatalog.length" class="mt-2">
-                    <span class="small text-muted d-block admin-note">Known permissions:</span>
+                    <span class="small text-muted d-block admin-note">{{ t('admin_roles_known_perms', 'Known permissions:') }}</span>
                     <span v-for="perm in permissionCatalog" :key="perm" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1 admin-badge">{{ perm }}</span>
                 </div>
                 <div class="mt-3 text-end">
-                    <button class="btn btn-secondary btn-sm me-2" @click="editingRole = null" :disabled="isSavingRole">Cancel</button>
+                    <button class="btn btn-secondary btn-sm me-2" @click="editingRole = null" :disabled="isSavingRole">{{ t('cancel', 'Cancel') }}</button>
                     <button class="btn btn-primary btn-sm" @click="saveRole" :disabled="isSavingRole">
-                        {{ isSavingRole ? 'Saving…' : 'Save' }}
+                        {{ isSavingRole ? t('admin_saving', 'Saving…') : t('save', 'Save') }}
                     </button>
                 </div>
             </div>
@@ -112,6 +118,13 @@ const AdminRoles = {
         this.init();
     },
     methods: {
+        t(key, fallback = '') {
+            const value = i18n.t(key);
+            if (value === key) {
+                return fallback || key;
+            }
+            return value;
+        },
         async init() {
             await Promise.all([this.loadRoles(), this.loadPermissionsCatalog()]);
         },
@@ -160,11 +173,11 @@ const AdminRoles = {
         },
         deleteDisabledReason(roleName) {
             const usage = this.roleUsage(roleName);
-            if (usage.protected) return 'System roles cannot be deleted';
+            if (usage.protected) return this.t('admin_roles_delete_protected', 'System roles cannot be deleted');
             if (usage.direct_users_count > 0 || usage.groups_count > 0) {
-                return 'Role is still assigned to users or groups';
+                return this.t('admin_roles_delete_blocked', 'Role is still assigned to users or groups');
             }
-            return 'Delete role';
+            return this.t('admin_roles_delete', 'Delete role');
         },
         async loadPermissionsCatalog() {
             try {
@@ -190,10 +203,10 @@ const AdminRoles = {
                 await Api.post('roles', { name: this.editingRole.name, permissions: perms });
                 await this.loadRoles();
                 this.editingRole = null;
-                this.toastSuccess('Role saved.');
+                this.toastSuccess(this.t('admin_roles_saved', 'Role saved.'));
             } catch (e) {
                 this.error = e.message;
-                this.toastError('Failed to save role.');
+                this.toastError(this.t('admin_roles_save_failed', 'Failed to save role.'));
             } finally {
                 this.isSavingRole = false;
             }
@@ -206,9 +219,9 @@ const AdminRoles = {
                 if (usage.protected) {
                     await Swal.fire({
                         icon: 'info',
-                        title: 'System role',
-                        text: `${name} is a protected system role and cannot be deleted.`,
-                        confirmButtonText: 'OK'
+                        title: this.t('admin_roles_system_role_title', 'System role'),
+                        text: name + ' ' + this.t('admin_roles_system_role_text', 'is a protected system role and cannot be deleted.'),
+                        confirmButtonText: this.t('admin_ok', 'OK')
                     });
                     return;
                 }
@@ -218,31 +231,34 @@ const AdminRoles = {
                     const groupsPreview = (usage.groups || []).slice(0, 5).join(', ');
                     const details = [
                         usage.direct_users_count
-                            ? `Direct users (${usage.direct_users_count}): ${directUsersPreview}${usage.direct_users_count > 5 ? ', …' : ''}`
+                            ? `${this.t('admin_roles_direct_users_label', 'Direct users')} (${usage.direct_users_count}): ${directUsersPreview}${usage.direct_users_count > 5 ? ', …' : ''}`
                             : null,
                         usage.groups_count
-                            ? `Groups (${usage.groups_count}): ${groupsPreview}${usage.groups_count > 5 ? ', …' : ''}`
+                            ? `${this.t('admin_roles_groups_badge', 'Groups')} (${usage.groups_count}): ${groupsPreview}${usage.groups_count > 5 ? ', …' : ''}`
                             : null,
                     ].filter(Boolean).join('\n');
 
                     await Swal.fire({
                         icon: 'warning',
-                        title: 'Role still in use',
-                        text: details || 'This role is still assigned.',
-                        confirmButtonText: 'OK'
+                        title: this.t('admin_roles_in_use_title', 'Role still in use'),
+                        text: details || this.t('admin_roles_in_use_text', 'This role is still assigned.'),
+                        confirmButtonText: this.t('admin_ok', 'OK')
                     });
                     return;
                 }
 
-                const confirmed = await this.confirmDanger('Delete role?', `This will delete the role ${name}.`);
+                const confirmed = await this.confirmDanger(
+                    this.t('admin_roles_delete_title', 'Delete role?'),
+                    this.t('admin_roles_delete_text_prefix', 'This will delete the role ') + name + '.'
+                );
                 if (!confirmed) return;
 
                 await Api.delete('roles/' + name);
                 await this.loadRoles();
-                this.toastSuccess('Role deleted.');
+                this.toastSuccess(this.t('admin_roles_deleted', 'Role deleted.'));
             } catch (e) {
                 this.error = e.message;
-                this.toastError('Failed to delete role.');
+                this.toastError(this.t('admin_roles_delete_failed', 'Failed to delete role.'));
             }
         },
         toastBase() {
@@ -266,8 +282,8 @@ const AdminRoles = {
                 title,
                 text,
                 showCancelButton: true,
-                confirmButtonText: 'Yes, continue',
-                cancelButtonText: 'Cancel',
+                confirmButtonText: this.t('admin_confirm_yes', 'Yes, continue'),
+                cancelButtonText: this.t('cancel', 'Cancel'),
                 confirmButtonColor: '#dc3545'
             });
             return Boolean(result.isConfirmed);

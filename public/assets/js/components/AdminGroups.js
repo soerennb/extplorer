@@ -3,10 +3,10 @@ const AdminGroups = {
     <div>
         <div class="d-flex align-items-end justify-content-between gap-2 mb-3">
             <div>
-                <div class="small text-muted">Groups bundle roles for easier assignment.</div>
+                <div class="small text-muted">{{ t('admin_groups_desc', 'Groups bundle roles for easier assignment.') }}</div>
             </div>
             <button class="btn btn-success btn-sm" @click="showAddGroupForm">
-                <i class="ri-add-line me-1"></i> Add Group
+                <i class="ri-add-line me-1"></i> {{ t('admin_groups_add', 'Add Group') }}
             </button>
         </div>
 
@@ -16,10 +16,10 @@ const AdminGroups = {
             <table class="table table-striped table-hover small align-middle">
                 <thead class="sticky-top bg-body">
                     <tr>
-                        <th>Group Name</th>
-                        <th>Usage</th>
-                        <th>Assigned Roles</th>
-                        <th class="text-end">Actions</th>
+                        <th>{{ t('admin_groups_col_name', 'Group Name') }}</th>
+                        <th>{{ t('admin_groups_col_usage', 'Usage') }}</th>
+                        <th>{{ t('admin_groups_col_roles', 'Assigned Roles') }}</th>
+                        <th class="text-end">{{ t('admin_actions', 'Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -27,15 +27,15 @@ const AdminGroups = {
                         <td class="fw-semibold">{{ name }}</td>
                         <td>
                             <div class="d-flex flex-wrap gap-1 align-items-center">
-                                <span class="badge text-bg-secondary" :title="'Assigned users: ' + groupUsage(name).assigned_users_count">
-                                    Users {{ groupUsage(name).assigned_users_count }}
+                                <span class="badge text-bg-secondary" :title="t('admin_groups_assigned_users_title', 'Assigned users: ') + groupUsage(name).assigned_users_count">
+                                    {{ t('admin_groups_users_badge', 'Users') }} {{ groupUsage(name).assigned_users_count }}
                                 </span>
-                                <span class="badge text-bg-info" :title="'Roles granted: ' + groupUsage(name).roles_count">
-                                    Roles {{ groupUsage(name).roles_count }}
+                                <span class="badge text-bg-info" :title="t('admin_groups_roles_granted_title', 'Roles granted: ') + groupUsage(name).roles_count">
+                                    {{ t('admin_groups_roles_badge', 'Roles') }} {{ groupUsage(name).roles_count }}
                                 </span>
                             </div>
                             <div v-if="groupUsage(name).assigned_users_count" class="small text-muted mt-1">
-                                Unassign users before deleting.
+                                {{ t('admin_groups_unassign_hint', 'Unassign users before deleting.') }}
                             </div>
                         </td>
                         <td>
@@ -56,7 +56,7 @@ const AdminGroups = {
                         </td>
                     </tr>
                     <tr v-if="Object.keys(groupsList).length === 0">
-                        <td colspan="4" class="text-center text-muted py-4">No groups defined.</td>
+                        <td colspan="4" class="text-center text-muted py-4">{{ t('admin_groups_empty', 'No groups defined.') }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -64,9 +64,15 @@ const AdminGroups = {
 
         <div v-if="editingGroup" class="card mt-3 bg-body-tertiary border">
             <div class="card-body">
-                <h6>Group: {{ editingGroup.name || 'New' }}</h6>
-                <input v-if="!editingGroup.isEdit" type="text" class="form-control form-control-sm mb-2" placeholder="Group Name" v-model="editingGroup.name">
-                <label class="small d-block mb-1">Roles</label>
+                <h6>{{ t('admin_groups_group_label', 'Group: ') }}{{ editingGroup.name || t('admin_new', 'New') }}</h6>
+                <input
+                    v-if="!editingGroup.isEdit"
+                    type="text"
+                    class="form-control form-control-sm mb-2"
+                    :placeholder="t('admin_groups_col_name', 'Group Name')"
+                    v-model="editingGroup.name"
+                >
+                <label class="small d-block mb-1">{{ t('admin_groups_roles_label', 'Roles') }}</label>
                 <div class="d-flex flex-wrap gap-2">
                     <div v-for="(perms, rname) in rolesList" :key="rname" class="form-check small">
                         <input class="form-check-input" type="checkbox" :id="'admin_group_chk_r_'+rname" :value="rname" v-model="editingGroup.roles">
@@ -74,9 +80,9 @@ const AdminGroups = {
                     </div>
                 </div>
                 <div class="mt-3 text-end">
-                    <button class="btn btn-secondary btn-sm me-2" @click="editingGroup = null" :disabled="isSavingGroup">Cancel</button>
+                    <button class="btn btn-secondary btn-sm me-2" @click="editingGroup = null" :disabled="isSavingGroup">{{ t('cancel', 'Cancel') }}</button>
                     <button class="btn btn-primary btn-sm" @click="saveGroup" :disabled="isSavingGroup">
-                        {{ isSavingGroup ? 'Saving…' : 'Save' }}
+                        {{ isSavingGroup ? t('admin_saving', 'Saving…') : t('save', 'Save') }}
                     </button>
                 </div>
             </div>
@@ -97,6 +103,13 @@ const AdminGroups = {
         this.init();
     },
     methods: {
+        t(key, fallback = '') {
+            const value = i18n.t(key);
+            if (value === key) {
+                return fallback || key;
+            }
+            return value;
+        },
         async init() {
             await Promise.all([this.loadGroups(), this.loadRoles()]);
         },
@@ -142,9 +155,9 @@ const AdminGroups = {
         deleteDisabledReason(groupName) {
             const usage = this.groupUsage(groupName);
             if ((usage.assigned_users_count ?? 0) > 0) {
-                return 'Group is still assigned to users';
+                return this.t('admin_groups_delete_blocked', 'Group is still assigned to users');
             }
-            return 'Delete group';
+            return this.t('admin_groups_delete', 'Delete group');
         },
         async loadRoles() {
             try {
@@ -166,10 +179,10 @@ const AdminGroups = {
                 await Api.post('groups', { name: this.editingGroup.name, roles: this.editingGroup.roles });
                 await this.loadGroups();
                 this.editingGroup = null;
-                this.toastSuccess('Group saved.');
+                this.toastSuccess(this.t('admin_groups_saved', 'Group saved.'));
             } catch (e) {
                 this.error = e.message;
-                this.toastError('Failed to save group.');
+                this.toastError(this.t('admin_groups_save_failed', 'Failed to save group.'));
             } finally {
                 this.isSavingGroup = false;
             }
@@ -183,22 +196,25 @@ const AdminGroups = {
                     const usersPreview = (usage.assigned_users || []).slice(0, 6).join(', ');
                     await Swal.fire({
                         icon: 'warning',
-                        title: 'Group still assigned',
-                        text: `Users (${usage.assigned_users_count}): ${usersPreview}${usage.assigned_users_count > 6 ? ', …' : ''}`,
-                        confirmButtonText: 'OK'
+                        title: this.t('admin_groups_in_use_title', 'Group still assigned'),
+                        text: `${this.t('admin_groups_users_badge', 'Users')} (${usage.assigned_users_count}): ${usersPreview}${usage.assigned_users_count > 6 ? ', …' : ''}`,
+                        confirmButtonText: this.t('admin_ok', 'OK')
                     });
                     return;
                 }
 
-                const confirmed = await this.confirmDanger('Delete group?', `This will delete the group ${name}.`);
+                const confirmed = await this.confirmDanger(
+                    this.t('admin_groups_delete_title', 'Delete group?'),
+                    this.t('admin_groups_delete_text_prefix', 'This will delete the group ') + name + '.'
+                );
                 if (!confirmed) return;
 
                 await Api.delete('groups/' + name);
                 await this.loadGroups();
-                this.toastSuccess('Group deleted.');
+                this.toastSuccess(this.t('admin_groups_deleted', 'Group deleted.'));
             } catch (e) {
                 this.error = e.message;
-                this.toastError('Failed to delete group.');
+                this.toastError(this.t('admin_groups_delete_failed', 'Failed to delete group.'));
             }
         },
         toastBase() {
@@ -222,8 +238,8 @@ const AdminGroups = {
                 title,
                 text,
                 showCancelButton: true,
-                confirmButtonText: 'Yes, continue',
-                cancelButtonText: 'Cancel',
+                confirmButtonText: this.t('admin_confirm_yes', 'Yes, continue'),
+                cancelButtonText: this.t('cancel', 'Cancel'),
                 confirmButtonColor: '#dc3545'
             });
             return Boolean(result.isConfirmed);

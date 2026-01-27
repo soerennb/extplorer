@@ -4,50 +4,50 @@ const AdminLogs = {
         <div class="border rounded p-2 mb-2 bg-body-tertiary">
             <div class="row g-2 align-items-end">
                 <div class="col-md-2">
-                    <label class="form-label small mb-1">User</label>
-                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.user" placeholder="username">
+                    <label class="form-label small mb-1">{{ t('admin_logs_filter_user', 'User') }}</label>
+                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.user" :placeholder="t('admin_logs_filter_user_placeholder', 'username')">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small mb-1">Action</label>
-                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.action" placeholder="action">
+                    <label class="form-label small mb-1">{{ t('admin_logs_filter_action', 'Action') }}</label>
+                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.action" :placeholder="t('admin_logs_filter_action_placeholder', 'action')">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small mb-1">Path contains</label>
-                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.path_contains" placeholder="/path">
+                    <label class="form-label small mb-1">{{ t('admin_logs_filter_path', 'Path contains') }}</label>
+                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.path_contains" :placeholder="t('admin_logs_filter_path_placeholder', '/path')">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small mb-1">From</label>
+                    <label class="form-label small mb-1">{{ t('admin_logs_filter_from', 'From') }}</label>
                     <input type="date" class="form-control form-control-sm" v-model="logFilters.date_from">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small mb-1">To</label>
+                    <label class="form-label small mb-1">{{ t('admin_logs_filter_to', 'To') }}</label>
                     <input type="date" class="form-control form-control-sm" v-model="logFilters.date_to">
                 </div>
                 <div class="col-md-1 d-grid">
                     <button class="btn btn-primary btn-sm" @click="applyLogFilters" :disabled="isLoadingLogs">
-                        {{ isLoadingLogs ? '…' : 'Apply' }}
+                        {{ isLoadingLogs ? '…' : t('admin_logs_apply', 'Apply') }}
                     </button>
                 </div>
             </div>
             <div class="mt-2 d-flex flex-wrap gap-2">
-                <button class="btn btn-outline-secondary btn-sm" @click="resetLogFilters" :disabled="isLoadingLogs">Reset</button>
-                <button class="btn btn-outline-secondary btn-sm" @click="exportLogs('json')" :disabled="isLoadingLogs || logs.length === 0">Export JSON</button>
-                <button class="btn btn-outline-secondary btn-sm" @click="exportLogs('csv')" :disabled="isLoadingLogs || logs.length === 0">Export CSV</button>
+                <button class="btn btn-outline-secondary btn-sm" @click="resetLogFilters" :disabled="isLoadingLogs">{{ t('admin_logs_reset', 'Reset') }}</button>
+                <button class="btn btn-outline-secondary btn-sm" @click="exportLogs('json')" :disabled="isLoadingLogs || logs.length === 0">{{ t('admin_logs_export_json', 'Export JSON') }}</button>
+                <button class="btn btn-outline-secondary btn-sm" @click="exportLogs('csv')" :disabled="isLoadingLogs || logs.length === 0">{{ t('admin_logs_export_csv', 'Export CSV') }}</button>
             </div>
         </div>
 
         <div v-if="error" class="alert alert-danger small">{{ error }}</div>
-        <div v-if="isLoadingLogs" class="text-muted small mb-2">Loading logs…</div>
+        <div v-if="isLoadingLogs" class="text-muted small mb-2">{{ t('admin_logs_loading', 'Loading logs…') }}</div>
 
         <div class="table-responsive admin-table-scroll">
             <table class="table table-sm table-striped table-hover small align-middle">
                 <thead class="sticky-top bg-body">
                     <tr>
-                        <th>Date</th>
-                        <th>User</th>
-                        <th>Action</th>
-                        <th>Path</th>
-                        <th>IP</th>
+                        <th>{{ t('admin_logs_col_date', 'Date') }}</th>
+                        <th>{{ t('admin_logs_col_user', 'User') }}</th>
+                        <th>{{ t('admin_logs_col_action', 'Action') }}</th>
+                        <th>{{ t('admin_logs_col_path', 'Path') }}</th>
+                        <th>{{ t('admin_logs_col_ip', 'IP') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -59,7 +59,7 @@ const AdminLogs = {
                         <td>{{ log.ip }}</td>
                     </tr>
                     <tr v-if="logs.length === 0 && !isLoadingLogs">
-                        <td colspan="5" class="text-center text-muted py-4">No log entries match your filters.</td>
+                        <td colspan="5" class="text-center text-muted py-4">{{ t('admin_logs_empty', 'No log entries match your filters.') }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -67,15 +67,15 @@ const AdminLogs = {
 
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 small">
             <div class="text-muted">
-                Showing page {{ logsMeta.page }} of {{ logsMeta.totalPages }} ({{ logsMeta.total }} total)
+                {{ t('admin_logs_paging', 'Showing page {page} of {totalPages} ({total} total)', { page: logsMeta.page, totalPages: logsMeta.totalPages, total: logsMeta.total }) }}
             </div>
             <div class="d-flex align-items-center gap-2">
-                <label class="mb-0">Page size</label>
+                <label class="mb-0">{{ t('admin_logs_page_size', 'Page size') }}</label>
                 <select class="form-select form-select-sm select-auto-width" v-model.number="logsMeta.pageSize" @change="changeLogsPageSize">
                     <option v-for="size in logPageSizeOptions" :key="size" :value="size">{{ size }}</option>
                 </select>
-                <button class="btn btn-outline-secondary btn-sm" @click="changeLogsPage(-1)" :disabled="isLoadingLogs || logsMeta.page <= 1">Prev</button>
-                <button class="btn btn-outline-secondary btn-sm" @click="changeLogsPage(1)" :disabled="isLoadingLogs || logsMeta.page >= logsMeta.totalPages">Next</button>
+                <button class="btn btn-outline-secondary btn-sm" @click="changeLogsPage(-1)" :disabled="isLoadingLogs || logsMeta.page <= 1">{{ t('prev', 'Prev') }}</button>
+                <button class="btn btn-outline-secondary btn-sm" @click="changeLogsPage(1)" :disabled="isLoadingLogs || logsMeta.page >= logsMeta.totalPages">{{ t('next', 'Next') }}</button>
             </div>
         </div>
     </div>
@@ -94,6 +94,23 @@ const AdminLogs = {
         this.loadLogs();
     },
     methods: {
+        t(key, fallback = '', params = {}) {
+            const value = i18n.t(key, params);
+            if (value === key) {
+                if (fallback && Object.keys(params).length) {
+                    return this.interpolate(fallback, params);
+                }
+                return fallback || key;
+            }
+            return value;
+        },
+        interpolate(template, params) {
+            let str = template;
+            Object.keys(params).forEach((k) => {
+                str = str.replace(`{${k}}`, params[k]);
+            });
+            return str;
+        },
         async loadLogs() {
             this.isLoadingLogs = true;
             this.error = null;
@@ -178,7 +195,7 @@ const AdminLogs = {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-            this.toastSuccess('Export started.');
+            this.toastSuccess(this.t('admin_logs_export_started', 'Export started.'));
         },
         toastBase() {
             return Swal.mixin({
@@ -197,4 +214,3 @@ const AdminLogs = {
         }
     }
 };
-

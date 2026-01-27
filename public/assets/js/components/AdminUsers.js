@@ -3,12 +3,17 @@ const AdminUsers = {
     <div>
         <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
             <div class="flex-grow-1">
-                <label class="form-label small fw-bold mb-1">Search Users</label>
-                <input type="text" class="form-control form-control-sm" v-model.trim="searchQuery" placeholder="Filter by username or home directory">
+                <label class="form-label small fw-bold mb-1">{{ t('admin_users_search_label', 'Search Users') }}</label>
+                <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    v-model.trim="searchQuery"
+                    :placeholder="t('admin_users_search_placeholder', 'Filter by username or home directory')"
+                >
             </div>
             <div>
                 <button class="btn btn-success btn-sm" @click="showAddForm">
-                    <i class="ri-user-add-line me-1"></i> Add User
+                    <i class="ri-user-add-line me-1"></i> {{ t('admin_users_add', 'Add User') }}
                 </button>
             </div>
         </div>
@@ -19,10 +24,10 @@ const AdminUsers = {
             <table class="table table-striped table-hover small align-middle">
                 <thead class="sticky-top bg-body">
                     <tr>
-                        <th>Username</th>
-                        <th>Groups</th>
-                        <th>Home Dir</th>
-                        <th class="text-end">Actions</th>
+                        <th>{{ t('admin_users_col_username', 'Username') }}</th>
+                        <th>{{ t('admin_users_col_groups', 'Groups') }}</th>
+                        <th>{{ t('admin_users_col_home', 'Home Dir') }}</th>
+                        <th class="text-end">{{ t('admin_actions', 'Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -42,7 +47,7 @@ const AdminUsers = {
                         </td>
                     </tr>
                     <tr v-if="filteredUsers.length === 0">
-                        <td colspan="4" class="text-center text-muted py-4">No users match your filter.</td>
+                        <td colspan="4" class="text-center text-muted py-4">{{ t('admin_users_empty', 'No users match your filter.') }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -51,36 +56,49 @@ const AdminUsers = {
         <div v-if="editingUser" class="card mt-3 bg-body-tertiary border">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h6 class="mb-0">{{ isNew ? 'Add User' : 'Edit User: ' + editingUser.username }}</h6>
-                    <div class="small text-muted">Changes apply immediately on save.</div>
+                    <h6 class="mb-0">{{ isNew ? t('admin_users_add', 'Add User') : t('admin_users_edit_prefix', 'Edit User: ') + editingUser.username }}</h6>
+                    <div class="small text-muted">{{ t('admin_users_changes_apply', 'Changes apply immediately on save.') }}</div>
                 </div>
                 <div class="row g-2">
                     <div class="col-md-6" v-if="isNew">
-                        <label class="form-label small">Username</label>
+                        <label class="form-label small">{{ t('admin_users_field_username', 'Username') }}</label>
                         <input type="text" class="form-control form-control-sm" v-model="editingUser.username">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small">Password {{ !isNew ? '(Leave blank to keep)' : '' }}</label>
+                        <label class="form-label small">
+                            {{ t('admin_users_field_password', 'Password') }}
+                            {{ !isNew ? t('admin_users_leave_blank', '(Leave blank to keep)') : '' }}
+                        </label>
                         <input type="password" class="form-control form-control-sm" v-model="editingUser.password">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small">Home Dir</label>
+                        <label class="form-label small">{{ t('admin_users_field_home', 'Home Dir') }}</label>
                         <input type="text" class="form-control form-control-sm" v-model="editingUser.home_dir">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small">Allowed Extensions (csv)</label>
-                        <input type="text" class="form-control form-control-sm" v-model="editingUser.allowed_extensions" placeholder="e.g. jpg,png,pdf">
+                        <label class="form-label small">{{ t('admin_users_field_allowed_ext', 'Allowed Extensions (csv)') }}</label>
+                        <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            v-model="editingUser.allowed_extensions"
+                            :placeholder="t('admin_users_allowed_ext_placeholder', 'e.g. jpg,png,pdf')"
+                        >
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small">Blocked Extensions (csv)</label>
-                        <input type="text" class="form-control form-control-sm" v-model="editingUser.blocked_extensions" placeholder="e.g. php,exe">
+                        <label class="form-label small">{{ t('admin_users_field_blocked_ext', 'Blocked Extensions (csv)') }}</label>
+                        <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            v-model="editingUser.blocked_extensions"
+                            :placeholder="t('admin_users_blocked_ext_placeholder', 'e.g. php,exe')"
+                        >
                         <div v-if="systemBlocklist.length" class="mt-1">
-                            <span class="small text-muted d-block admin-note">System Blocklist (Always Applied):</span>
+                            <span class="small text-muted d-block admin-note">{{ t('admin_users_system_blocklist', 'System Blocklist (Always Applied):') }}</span>
                             <span v-for="ext in systemBlocklist" :key="ext" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1 admin-badge">{{ ext }}</span>
                         </div>
                     </div>
                     <div class="col-md-12">
-                        <label class="form-label small d-block">Groups</label>
+                        <label class="form-label small d-block">{{ t('admin_users_field_groups', 'Groups') }}</label>
                         <div class="d-flex flex-wrap gap-2">
                             <div v-for="(roles, gname) in groupsList" :key="gname" class="form-check small">
                                 <input class="form-check-input" type="checkbox" :id="'admin_chk_g_'+gname" :value="gname" v-model="editingUser.groups">
@@ -90,22 +108,22 @@ const AdminUsers = {
                     </div>
                     <div class="col-md-12" v-if="!isNew">
                         <div class="d-flex align-items-center justify-content-between">
-                            <label class="form-label small fw-bold mb-1">Effective Permissions</label>
+                            <label class="form-label small fw-bold mb-1">{{ t('admin_users_effective_perms', 'Effective Permissions') }}</label>
                             <button class="btn btn-outline-secondary btn-sm py-0 px-2" @click="loadEffectivePermissions(editingUser.username)" :disabled="effectivePermissions.loading">
-                                {{ effectivePermissions.loading ? '…' : 'Refresh' }}
+                                {{ effectivePermissions.loading ? '…' : t('admin_users_refresh', 'Refresh') }}
                             </button>
                         </div>
-                        <div v-if="effectivePermissions.loading" class="text-muted small">Loading permissions…</div>
-                        <div v-else-if="effectivePermissions.perms.length === 0" class="text-muted small">No permissions resolved.</div>
+                        <div v-if="effectivePermissions.loading" class="text-muted small">{{ t('admin_users_loading_perms', 'Loading permissions…') }}</div>
+                        <div v-else-if="effectivePermissions.perms.length === 0" class="text-muted small">{{ t('admin_users_no_perms', 'No permissions resolved.') }}</div>
                         <div v-else class="d-flex flex-wrap gap-1">
                             <span v-for="perm in effectivePermissions.perms" :key="perm" class="badge bg-primary-subtle text-primary border border-primary-subtle admin-badge">{{ perm }}</span>
                         </div>
                     </div>
                 </div>
                 <div class="mt-3 text-end">
-                    <button class="btn btn-secondary btn-sm me-2" @click="cancelEdit" :disabled="isSavingUser">Cancel</button>
+                    <button class="btn btn-secondary btn-sm me-2" @click="cancelEdit" :disabled="isSavingUser">{{ t('cancel', 'Cancel') }}</button>
                     <button class="btn btn-primary btn-sm" @click="saveUser" :disabled="isSavingUser">
-                        {{ isSavingUser ? 'Saving…' : 'Save' }}
+                        {{ isSavingUser ? t('admin_saving', 'Saving…') : t('save', 'Save') }}
                     </button>
                 </div>
             </div>
@@ -142,6 +160,13 @@ const AdminUsers = {
         this.init();
     },
     methods: {
+        t(key, fallback = '') {
+            const value = i18n.t(key);
+            if (value === key) {
+                return fallback || key;
+            }
+            return value;
+        },
         async init() {
             await Promise.all([this.loadUsers(), this.loadGroups(), this.loadSystemInfo(), this.loadPermissionsCatalog()]);
         },
@@ -216,25 +241,28 @@ const AdminUsers = {
                     await Api.put('users/' + this.editingUser.username, this.editingUser);
                 }
                 await this.loadUsers();
-                this.toastSuccess('User saved.');
+                this.toastSuccess(this.t('admin_users_saved', 'User saved.'));
                 this.editingUser = null;
             } catch (e) {
                 this.error = e.message;
-                this.toastError('Failed to save user.');
+                this.toastError(this.t('admin_users_save_failed', 'Failed to save user.'));
             } finally {
                 this.isSavingUser = false;
             }
         },
         async deleteUser(user) {
-            const confirmed = await this.confirmDanger('Delete user?', `This will delete ${user.username}.`);
+            const confirmed = await this.confirmDanger(
+                this.t('admin_users_delete_title', 'Delete user?'),
+                this.t('admin_users_delete_text_prefix', 'This will delete ') + user.username + '.'
+            );
             if (!confirmed) return;
             try {
                 await Api.delete('users/' + user.username);
                 await this.loadUsers();
-                this.toastSuccess('User deleted.');
+                this.toastSuccess(this.t('admin_users_deleted', 'User deleted.'));
             } catch (e) {
                 this.error = e.message;
-                this.toastError('Failed to delete user.');
+                this.toastError(this.t('admin_users_delete_failed', 'Failed to delete user.'));
             }
         },
         async loadEffectivePermissions(username) {
@@ -284,12 +312,11 @@ const AdminUsers = {
                 title,
                 text,
                 showCancelButton: true,
-                confirmButtonText: 'Yes, continue',
-                cancelButtonText: 'Cancel',
+                confirmButtonText: this.t('admin_confirm_yes', 'Yes, continue'),
+                cancelButtonText: this.t('cancel', 'Cancel'),
                 confirmButtonColor: '#dc3545'
             });
             return Boolean(result.isConfirmed);
         }
     }
 };
-
