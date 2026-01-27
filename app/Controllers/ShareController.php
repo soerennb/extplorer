@@ -14,6 +14,9 @@ class ShareController extends BaseController
     {
         $service = new ShareService();
         $share = $service->getShare($hash);
+        $supportedLocales = ['en', 'de', 'fr'];
+        $locale = $this->detectLocale($supportedLocales);
+        $translations = $this->loadTranslations($locale);
 
         if (!$share) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Link expired or invalid.");
@@ -48,7 +51,9 @@ class ShareController extends BaseController
                 'is_file' => true,
                 'filename' => basename($share['path']),
                 'size' => filesize($root),
-                'hash' => $hash
+                'hash' => $hash,
+                'locale' => $locale,
+                'translations' => $translations,
             ]);
         }
 
@@ -60,8 +65,64 @@ class ShareController extends BaseController
         return view('shared', [
             'share' => $share, 
             'is_file' => false,
-            'hash' => $hash
+            'hash' => $hash,
+            'locale' => $locale,
+            'translations' => $translations,
         ]);
+    }
+
+    /**
+     * Detects the best-fit locale from the Accept-Language header.
+     *
+     * Falls back to English when negotiation fails.
+     *
+     * @param array<int, string> $supportedLocales
+     */
+    private function detectLocale(array $supportedLocales): string
+    {
+        try {
+            $negotiated = $this->request->negotiateLanguage($supportedLocales);
+            if (is_string($negotiated) && in_array($negotiated, $supportedLocales, true)) {
+                return $negotiated;
+            }
+        } catch (\Throwable $e) {
+            // Ignore negotiation errors and fall back to English.
+        }
+
+        return 'en';
+    }
+
+    /**
+     * Loads translations from the public i18n JSON files.
+     *
+     * @return array<string, string>
+     */
+    private function loadTranslations(string $locale): array
+    {
+        $localesToTry = array_values(array_unique(['en', $locale]));
+        $translations = [];
+
+        foreach ($localesToTry as $loc) {
+            $path = FCPATH . 'assets/i18n/' . $loc . '.json';
+            if (!is_file($path)) {
+                continue;
+            }
+
+            $raw = file_get_contents($path);
+            if ($raw === false) {
+                continue;
+            }
+
+            $decoded = json_decode($raw, true);
+            if (!is_array($decoded)) {
+                continue;
+            }
+
+            // Later locales win, detected locale overrides English.
+            $translations = array_merge($translations, $decoded);
+        }
+
+        return $translations;
     }
 
     public function auth(string $hash)

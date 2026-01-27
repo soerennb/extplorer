@@ -3,16 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shared - eXtplorer</title>
+    <?php
+        $translations = is_array($translations ?? null) ? $translations : [];
+        $sharedPageTitle = $translations['shared_page_title'] ?? 'Shared - eXtplorer';
+    ?>
+    <title><?= esc($sharedPageTitle) ?></title>
     <link rel="icon" type="image/svg+xml" href="<?= base_url('favicon.svg') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/remixicon.css') ?>">
     <?php
-        $shareTitle = $share['subject'] ?? ($is_file ? ($filename ?? basename($share['path'] ?? 'Shared Item')) : basename($share['path'] ?? 'Shared Content'));
+        $translations = is_array($translations ?? null) ? $translations : [];
+        $locale = is_string($locale ?? null) && $locale !== '' ? $locale : 'en';
+        $st = static function (string $key, string $fallback = '') use ($translations): string {
+            $value = $translations[$key] ?? null;
+            if (is_string($value) && $value !== '') {
+                return $value;
+            }
+            return $fallback !== '' ? $fallback : $key;
+        };
+
+        $shareTitle = $share['subject'] ?? (
+            $is_file
+                ? ($filename ?? basename($share['path'] ?? $st('shared_item', 'Shared Item')))
+                : basename($share['path'] ?? $st('shared_content', 'Shared Content'))
+        );
         if (($share['source'] ?? '') === 'transfer' && empty($share['subject'])) {
-            $shareTitle = 'File Transfer';
+            $shareTitle = $st('shared_file_transfer', 'File Transfer');
         }
         $shareMode = $share['mode'] ?? 'read';
+        $shareModeLabels = [
+            'read' => $st('shared_mode_read', 'Read'),
+            'upload' => $st('shared_mode_upload', 'Upload'),
+            'write' => $st('shared_mode_write', 'Write'),
+        ];
+        $shareModeLabel = $shareModeLabels[$shareMode] ?? ucfirst($shareMode);
         $shareExpiresAt = $share['expires_at'] ?? null;
         $shareCreatedBy = $share['created_by'] ?? null;
         $shareSender = $share['sender_email'] ?? null;
@@ -69,20 +93,20 @@
                     <img src="<?= base_url('logo-dark.svg') ?>" height="32" alt="eXtplorer logo">
                     <div>
                         <h5 class="shared-title"><?= esc($shareTitle) ?></h5>
-                        <p class="shared-subtitle text-muted small">Shared via eXtplorer</p>
+                        <p class="shared-subtitle text-muted small"><?= esc($st('shared_via', 'Shared via eXtplorer')) ?></p>
                     </div>
                 </div>
                 <div class="shared-meta">
                     <span class="badge shared-meta-pill">
-                        <i class="ri-shield-check-line me-1"></i><?= esc(ucfirst($shareMode)) ?>
+                        <i class="ri-shield-check-line me-1"></i><?= esc($shareModeLabel) ?>
                     </span>
                     <?php if ($shareExpiresAt): ?>
                         <span class="badge shared-meta-pill">
-                            <i class="ri-timer-line me-1"></i>Expires <?= esc(date('Y-m-d', (int)$shareExpiresAt)) ?>
+                            <i class="ri-timer-line me-1"></i><?= esc($st('shared_expires', 'Expires')) ?> <?= esc(date('Y-m-d', (int)$shareExpiresAt)) ?>
                         </span>
                     <?php else: ?>
                         <span class="badge shared-meta-pill">
-                            <i class="ri-infinity-line me-1"></i>No expiry
+                            <i class="ri-infinity-line me-1"></i><?= esc($st('shared_no_expiry', 'No expiry')) ?>
                         </span>
                     <?php endif; ?>
                     <?php if ($shareSender): ?>
@@ -104,13 +128,13 @@
             <div class="shared-actions">
                 <?php if ($is_file): ?>
                 <a href="<?= site_url('s/' . $hash . '/download') ?>" class="btn btn-primary btn-sm">
-                    <i class="ri-download-line me-1"></i> Download
+                    <i class="ri-download-line me-1"></i><?= esc($st('shared_download', 'Download')) ?>
                 </a>
                 <?php elseif (isset($share['mode']) && $share['mode'] === 'upload'): ?>
-                    <span class="badge bg-warning text-dark">Upload Only</span>
+                    <span class="badge bg-warning text-dark"><?= esc($st('shared_upload_only', 'Upload Only')) ?></span>
                 <?php else: ?>
                     <a href="<?= site_url('s/' . $hash . '/download') ?>" class="btn btn-primary btn-sm">
-                        <i class="ri-download-2-line me-1"></i> Download All
+                        <i class="ri-download-2-line me-1"></i><?= esc($st('shared_download_all', 'Download All')) ?>
                     </a>
                 <?php endif; ?>
             </div>
@@ -122,7 +146,7 @@
                     <i class="ri-file-text-line preview-icon"></i>
                     <h4 class="mt-3"><?= esc($filename) ?></h4>
                     <p class="text-muted"><?= number_format($size / 1024, 2) ?> KB</p>
-                    <a href="<?= site_url('s/' . $hash . '/download') ?>" class="btn btn-primary mt-3">Download File</a>
+                    <a href="<?= site_url('s/' . $hash . '/download') ?>" class="btn btn-primary mt-3"><?= esc($st('shared_download_file', 'Download File')) ?></a>
                 </div>
             <?php else: ?>
                 <div v-if="loading" class="text-center mt-5"><div class="spinner-border text-primary"></div></div>
@@ -144,22 +168,22 @@
                                     v-model.trim="searchQuery"
                                     type="search"
                                     class="form-control"
-                                    placeholder="Search files"
-                                    aria-label="Search files"
+                                    :placeholder="t('shared_search_placeholder', 'Search files')"
+                                    :aria-label="t('shared_search_placeholder', 'Search files')"
                                 >
                             </div>
                         </div>
                         <div class="shared-toolbar-right">
-                            <label class="small text-muted">Sort</label>
-                            <select v-model="sortKey" class="form-select form-select-sm select-auto-width" aria-label="Sort files">
-                                <option value="type_name">Type + Name</option>
-                                <option value="name">Name</option>
-                                <option value="mtime_desc">Newest</option>
-                                <option value="mtime_asc">Oldest</option>
-                                <option value="size_desc">Largest</option>
-                                <option value="size_asc">Smallest</option>
+                            <label class="small text-muted">{{ t('shared_sort_label', 'Sort') }}</label>
+                            <select v-model="sortKey" class="form-select form-select-sm select-auto-width" :aria-label="t('shared_sort_aria', 'Sort files')">
+                                <option value="type_name">{{ t('shared_sort_type_name', 'Type + Name') }}</option>
+                                <option value="name">{{ t('shared_sort_name', 'Name') }}</option>
+                                <option value="mtime_desc">{{ t('shared_sort_newest', 'Newest') }}</option>
+                                <option value="mtime_asc">{{ t('shared_sort_oldest', 'Oldest') }}</option>
+                                <option value="size_desc">{{ t('shared_sort_largest', 'Largest') }}</option>
+                                <option value="size_asc">{{ t('shared_sort_smallest', 'Smallest') }}</option>
                             </select>
-                            <span class="small text-muted">{{ filteredFiles.length }} items</span>
+                            <span class="small text-muted">{{ t('shared_items_count', '{count} items', { count: filteredFiles.length }) }}</span>
                         </div>
                     </div>
 
@@ -167,7 +191,7 @@
                         <i :class="getIcon(file)" class="file-icon"></i>
                         <div class="file-item-name">
                             <div class="file-name">{{ file.name }}</div>
-                            <div class="file-submeta">{{ file.type === 'dir' ? 'Folder' : fileExtLabel(file.name) }}</div>
+                            <div class="file-submeta">{{ file.type === 'dir' ? t('shared_folder', 'Folder') : fileExtLabel(file.name) }}</div>
                         </div>
                         <div class="file-meta me-3">{{ formatSize(file.size) }}</div>
                         <div class="file-meta" :title="formatDate(file.mtime)">{{ formatRelativeDate(file.mtime) }}</div>
@@ -177,8 +201,8 @@
                                 type="button"
                                 class="btn btn-link btn-sm p-0"
                                 @click.stop="previewItem(file)"
-                                title="Preview"
-                                aria-label="Preview file"
+                                :title="t('shared_preview', 'Preview')"
+                                :aria-label="t('shared_preview_file', 'Preview file')"
                             >
                                 <i class="ri-eye-line"></i>
                             </button>
@@ -187,8 +211,8 @@
                                 type="button"
                                 class="btn btn-link btn-sm p-0"
                                 @click.stop="downloadItem(file)"
-                                title="Download"
-                                aria-label="Download file"
+                                :title="t('shared_download', 'Download')"
+                                :aria-label="t('shared_download_file', 'Download file')"
                             >
                                 <i class="ri-download-line"></i>
                             </button>
@@ -197,9 +221,9 @@
                     
                     <div v-if="filteredFiles.length === 0" class="shared-empty">
                         <i class="ri-folder-open-line"></i>
-                        <p class="mb-1">No files match your view.</p>
-                        <p class="small text-muted mb-0" v-if="files.length > 0">Try clearing the search or changing the sort.</p>
-                        <p class="small text-muted mb-0" v-else>This folder is empty.</p>
+                        <p class="mb-1">{{ t('shared_empty_no_match', 'No files match your view.') }}</p>
+                        <p class="small text-muted mb-0" v-if="files.length > 0">{{ t('shared_empty_try_clear', 'Try clearing the search or changing the sort.') }}</p>
+                        <p class="small text-muted mb-0" v-else>{{ t('shared_empty_folder_empty', 'This folder is empty.') }}</p>
                     </div>
                 </div>
             <?php endif; ?>
@@ -236,6 +260,21 @@
         const baseUrl = "<?= base_url() ?>";
         const isFile = <?= $is_file ? 'true' : 'false' ?>;
         const share = <?= json_encode($share, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+        const locale = "<?= esc($locale) ?>";
+        const translations = <?= json_encode($translations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+
+        const t = (key, fallback = '', params = null) => {
+            let value = translations[key];
+            if (typeof value !== 'string' || value.length === 0) {
+                value = fallback || key;
+            }
+            if (params && typeof params === 'object') {
+                for (const [paramKey, paramValue] of Object.entries(params)) {
+                    value = value.replaceAll(`{${paramKey}}`, String(paramValue));
+                }
+            }
+            return value;
+        };
 
         createApp({
             setup() {
@@ -321,10 +360,10 @@
 
                 const breadcrumbs = computed(() => {
                     if (!currentPath.value) {
-                        return [{ label: 'Root', path: '' }];
+                        return [{ label: t('shared_root', 'Root'), path: '' }];
                     }
                     const parts = currentPath.value.split('/').filter(Boolean);
-                    const crumbs = [{ label: 'Root', path: '' }];
+                    const crumbs = [{ label: t('shared_root', 'Root'), path: '' }];
                     let acc = '';
                     for (const part of parts) {
                         acc = acc ? `${acc}/${part}` : part;
@@ -376,31 +415,37 @@
                     if (isFile) return '';
                     const count = filteredFiles.value.length;
                     const size = filteredFiles.value.reduce((acc, f) => acc + (f.type === 'dir' ? 0 : (Number(f.size) || 0)), 0);
-                    const countLabel = count === 1 ? 'item' : 'items';
+                    const countLabel = count === 1
+                        ? t('shared_item_singular', 'item')
+                        : t('shared_item_plural', 'items');
                     return `${count} ${countLabel} · ${formatSize(size)}`;
                 });
 
                 const fileExtLabel = (name) => {
                     const ext = (name.split('.').pop() || '').toUpperCase();
-                    return ext ? `${ext} file` : 'File';
+                    if (!ext) return t('shared_file', 'File');
+                    return t('shared_file_ext', '{ext} file', { ext });
                 };
 
                 const formatRelativeDate = (t) => {
                     const ts = Number(t) || 0;
-                    if (!ts) return '—';
+                    if (!ts) return t('shared_none', '—');
                     const diffSec = Math.max(0, Math.floor(Date.now() / 1000) - ts);
                     const day = 86400;
                     const hour = 3600;
+                    if (diffSec < 60) {
+                        return t('shared_just_now', 'just now');
+                    }
                     if (diffSec < hour) {
                         const mins = Math.max(1, Math.floor(diffSec / 60));
-                        return `${mins}m ago`;
+                        return t('shared_minutes_ago', '{count}m ago', { count: mins });
                     }
                     if (diffSec < day) {
                         const hours = Math.floor(diffSec / hour);
-                        return `${hours}h ago`;
+                        return t('shared_hours_ago', '{count}h ago', { count: hours });
                     }
                     const days = Math.floor(diffSec / day);
-                    if (days < 30) return `${days}d ago`;
+                    if (days < 30) return t('shared_days_ago', '{count}d ago', { count: days });
                     return formatDate(ts);
                 };
 
@@ -414,7 +459,7 @@
                 };
                 
                 const formatSize = (b) => {
-                    if (b === 0 || !b) return '-';
+                    if (b === 0 || !b) return t('shared_none', '-');
                     const k = 1024, sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
                     const i = Math.floor(Math.log(b) / Math.log(k));
                     return parseFloat((b / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
@@ -428,6 +473,8 @@
 
                 return {
                     share,
+                    locale,
+                    t,
                     files,
                     filteredFiles,
                     loading,
