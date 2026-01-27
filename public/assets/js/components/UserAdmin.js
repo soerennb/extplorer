@@ -52,6 +52,9 @@ const UserAdmin = {
                                     <a class="nav-link" :class="{active: settingsTab === 'logging'}" href="#" @click.prevent="settingsTab = 'logging'">Logging</a>
                                 </li>
                                 <li class="nav-item">
+                                    <a class="nav-link" :class="{active: settingsTab === 'governance'}" href="#" @click.prevent="settingsTab = 'governance'">Governance</a>
+                                </li>
+                                <li class="nav-item">
                                     <a class="nav-link" :class="{active: settingsTab === 'security'}" href="#" @click.prevent="settingsTab = 'security'">Security</a>
                                 </li>
                             </ul>
@@ -192,6 +195,22 @@ const UserAdmin = {
                                             <label class="form-label small fw-bold">Retention Count</label>
                                             <input type="number" min="100" max="20000" step="100" class="form-control form-control-sm" v-model.number="settings.log_retention_count">
                                             <div class="form-text">How many recent audit log entries to keep (100-20000).</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div v-if="settingsTab === 'governance'">
+                                    <h6 class="border-bottom pb-2 mb-3">Uploads & Quotas</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Max Upload Size (MB)</label>
+                                            <input type="number" min="0" max="10240" class="form-control form-control-sm" v-model.number="settings.upload_max_file_mb">
+                                            <div class="form-text">0 disables the limit. Applies to single and chunked uploads.</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Per-User Quota (MB)</label>
+                                            <input type="number" min="0" max="102400" class="form-control form-control-sm" v-model.number="settings.quota_per_user_mb">
+                                            <div class="form-text">0 disables the quota. Applies to the user home directory.</div>
                                         </div>
                                     </div>
                                 </div>
@@ -685,6 +704,12 @@ const UserAdmin = {
                 }
                 if (typeof this.settings.session_idle_timeout_minutes !== 'number' || Number.isNaN(this.settings.session_idle_timeout_minutes)) {
                     this.settings.session_idle_timeout_minutes = 120;
+                }
+                if (typeof this.settings.upload_max_file_mb !== 'number' || Number.isNaN(this.settings.upload_max_file_mb)) {
+                    this.settings.upload_max_file_mb = 0;
+                }
+                if (typeof this.settings.quota_per_user_mb !== 'number' || Number.isNaN(this.settings.quota_per_user_mb)) {
+                    this.settings.quota_per_user_mb = 0;
                 }
                 this.settingsOriginal = JSON.parse(JSON.stringify(this.settings));
                 this.clearEmailValidation();

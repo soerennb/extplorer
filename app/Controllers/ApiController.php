@@ -342,6 +342,19 @@ class ApiController extends BaseController
         }
 
         try {
+            $settingsService = new \App\Services\SettingsService();
+            $settings = $settingsService->getSettings();
+
+            $fileSize = (int)$file->getSize();
+            if ($this->exceedsMaxUploadSize($fileSize, $settings)) {
+                $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
+                return $this->fail("File exceeds the maximum allowed upload size of {$maxMb} MB.");
+            }
+
+            if ($this->wouldExceedUserQuota($fileSize, $settings)) {
+                return $this->fail('Upload would exceed the configured per-user storage quota.');
+            }
+
             $targetDir = $this->fs->resolvePath($path);
             
             if (!is_dir($targetDir)) {
@@ -372,6 +385,14 @@ class ApiController extends BaseController
             return $this->fail("Uploading files with this extension is not allowed.");
         }
 
+        $settingsService = new \App\Services\SettingsService();
+        $settings = $settingsService->getSettings();
+        $chunkSize = (int)$file->getSize();
+        if ($this->exceedsMaxUploadSize($chunkSize, $settings)) {
+            $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
+            return $this->fail("Chunk exceeds the maximum allowed upload size of {$maxMb} MB.");
+        }
+
         $tempDir = WRITEPATH . 'uploads/chunks/' . md5(session_id() . $filename);
         if (!is_dir($tempDir)) mkdir($tempDir, 0755, true);
 
@@ -380,6 +401,18 @@ class ApiController extends BaseController
         if ($chunkIndex === $totalChunks - 1) {
             // Last chunk, assemble
             try {
+                $assembledSize = $this->calculateDirectorySize($tempDir);
+                if ($this->exceedsMaxUploadSize($assembledSize, $settings)) {
+                    $this->rrmdir($tempDir);
+                    $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
+                    return $this->fail("File exceeds the maximum allowed upload size of {$maxMb} MB.");
+                }
+
+                if ($this->wouldExceedUserQuota($assembledSize, $settings)) {
+                    $this->rrmdir($tempDir);
+                    return $this->fail('Upload would exceed the configured per-user storage quota.');
+                }
+
                 $finalPath = $this->fs->resolvePath($targetPath) . DIRECTORY_SEPARATOR . $filename;
                 $out = fopen($finalPath, 'wb');
                 for ($i = 0; $i < $totalChunks; $i++) {
@@ -815,5 +848,75 @@ class ApiController extends BaseController
         }
 
         @rmdir($dir);
+    }
+
+    private function exceedsMaxUploadSize(int $bytes, array $settings): bool
+    {
+        $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
+        if ($maxMb <= 0) {
+            return false;
+        }
+        $maxBytes = $maxMb * 1024 * 1024;
+        return $bytes > $maxBytes;
+    }
+
+    private function wouldExceedUserQuota(int $incomingBytes, array $settings): bool
+    {
+        $quotaMb = (int)($settings['quota_per_user_mb'] ?? 0);
+        if ($quotaMb <= 0) {
+            return false;
+        }
+
+        $quotaBytes = $quotaMb * 1024 * 1024;
+        $homePath = $this->getUserHomePath();
+        $limit = $quotaBytes - $incomingBytes;
+        if ($limit <= 0) {
+            return true;
+        }
+
+        $currentUsage = $this->calculateDirectorySize($homePath, $limit + 1);
+        return ($currentUsage + $incomingBytes) > $quotaBytes;
+    }
+
+    private function getUserHomePath(): string
+    {
+        $baseRoot = WRITEPATH . 'file_manager_root';
+        $homeDir = (string)(session('home_dir') ?? '/');
+        $homeDir = str_replace('..', '', $homeDir);
+        $homeDir = trim($homeDir, "/\\");
+
+        if ($homeDir === '') {
+            return $baseRoot;
+        }
+
+        return $baseRoot . DIRECTORY_SEPARATOR . $homeDir;
+    }
+
+    private function calculateDirectorySize(string $path, ?int $stopAtBytes = null): int
+    {
+        if (!is_dir($path)) {
+            return 0;
+        }
+
+        $total = 0;
+        try {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)
+            );
+
+            foreach ($iterator as $file) {
+                if ($file instanceof \SplFileInfo && $file->isFile()) {
+                    $total += (int)$file->getSize();
+                    if ($stopAtBytes !== null && $total >= $stopAtBytes) {
+                        return $total;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // On traversal errors, fall back to the current total.
+            return $total;
+        }
+
+        return $total;
     }
 }

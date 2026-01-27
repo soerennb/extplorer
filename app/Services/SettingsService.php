@@ -72,6 +72,8 @@ class SettingsService
             'share_require_expiry' => false,
             'share_max_expiry_days' => 30,
             'share_require_password' => false,
+            'upload_max_file_mb' => 0,
+            'quota_per_user_mb' => 0,
             'allow_public_uploads' => false,
             'mount_root_allowlist' => [],
         ];

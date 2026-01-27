@@ -154,6 +154,22 @@ class SettingsController extends BaseController
             $json['share_default_expiry_days'] = $defaultShareExpiry;
         }
 
+        if (isset($json['upload_max_file_mb'])) {
+            $maxFileMb = (int)$json['upload_max_file_mb'];
+            if ($maxFileMb < 0 || $maxFileMb > 10240) {
+                return $this->fail('Upload max file size must be between 0 and 10240 MB');
+            }
+            $json['upload_max_file_mb'] = $maxFileMb;
+        }
+
+        if (isset($json['quota_per_user_mb'])) {
+            $quotaMb = (int)$json['quota_per_user_mb'];
+            if ($quotaMb < 0 || $quotaMb > 102400) {
+                return $this->fail('Per-user quota must be between 0 and 102400 MB');
+            }
+            $json['quota_per_user_mb'] = $quotaMb;
+        }
+
         // If password is mask, don't update it (keep existing)
         if (isset($json['smtp_pass']) && $json['smtp_pass'] === '********') {
             unset($json['smtp_pass']);
