@@ -31,7 +31,7 @@ const AdminApp = {
                 </div>
                 <div class="d-flex gap-2">
                     <a class="btn btn-primary admin-back-button" :href="baseUrl">
-                        <i class="ri-arrow-left-line me-2"></i> Back to File Manager
+                        <i class="ri-arrow-left-line me-2"></i> {{ t('admin_back_to_file_manager', 'Back to File Manager') }}
                     </a>
                 </div>
             </div>

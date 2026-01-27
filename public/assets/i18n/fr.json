@@ -219,6 +219,7 @@
     "admin_console": "Console d'administration",
     "admin_signed_in_as": "Connecté en tant que",
     "admin_files": "Fichiers",
+    "admin_back_to_file_manager": "Retour au gestionnaire de fichiers",
     "admin_nav_users": "Utilisateurs",
     "admin_nav_groups": "Groupes",
     "admin_nav_roles": "Rôles",

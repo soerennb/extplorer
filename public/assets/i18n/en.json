@@ -223,6 +223,7 @@
     "admin_console": "Admin Console",
     "admin_signed_in_as": "Signed in as",
     "admin_files": "Files",
+    "admin_back_to_file_manager": "Back to File Manager",
     "admin_nav_users": "Users",
     "admin_nav_groups": "Groups",
     "admin_nav_roles": "Roles",
