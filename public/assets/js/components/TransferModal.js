@@ -4,16 +4,16 @@ const TransferModal = {
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="ri-send-plane-fill me-2"></i>Send Files</h5>
+                    <h5 class="modal-title"><i class="ri-send-plane-fill me-2"></i>{{ t('transfer_title', 'Send Files') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <ul class="nav nav-tabs mb-3">
                         <li class="nav-item">
-                            <a class="nav-link" :class="{active: tab === 'new'}" href="#" @click.prevent="tab = 'new'">New Transfer</a>
+                            <a class="nav-link" :class="{active: tab === 'new'}" href="#" @click.prevent="tab = 'new'">{{ t('transfer_new', 'New Transfer') }}</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" :class="{active: tab === 'history'}" href="#" @click.prevent="loadHistory">History</a>
+                            <a class="nav-link" :class="{active: tab === 'history'}" href="#" @click.prevent="loadHistory">{{ t('transfer_history', 'History') }}</a>
                         </li>
                     </ul>
 
@@ -21,38 +21,38 @@ const TransferModal = {
                     <div v-if="tab === 'new'">
                         <div v-if="successLink" class="text-center py-5">
                             <div class="mb-4 text-success display-1"><i class="ri-checkbox-circle-line"></i></div>
-                            <h3>Transfer Sent!</h3>
-                            <p class="text-muted">Your files have been uploaded and the link is ready.</p>
+                            <h3>{{ t('transfer_sent', 'Transfer Sent!') }}</h3>
+                            <p class="text-muted">{{ t('transfer_sent_desc', 'Your files have been uploaded and the link is ready.') }}</p>
 
                             <div v-if="lastTransfer" class="alert alert-light border text-start small mx-auto mb-3" role="alert">
                                 <div class="d-flex flex-wrap gap-3 justify-content-between">
-                                    <div><strong>Files:</strong> {{ lastTransfer.fileCount }}</div>
-                                    <div><strong>Total size:</strong> {{ formatSize(lastTransfer.totalSize) }}</div>
-                                    <div><strong>Recipients:</strong> {{ lastTransfer.recipients.length }}</div>
-                                    <div><strong>Expires:</strong> {{ formatDate(lastTransfer.expiresAt) }}</div>
+                                    <div><strong>{{ t('transfer_files', 'Files:') }}</strong> {{ lastTransfer.fileCount }}</div>
+                                    <div><strong>{{ t('transfer_total_size', 'Total size:') }}</strong> {{ formatSize(lastTransfer.totalSize) }}</div>
+                                    <div><strong>{{ t('transfer_recipients', 'Recipients:') }}</strong> {{ lastTransfer.recipients.length }}</div>
+                                    <div><strong>{{ t('transfer_expires', 'Expires:') }}</strong> {{ formatDate(lastTransfer.expiresAt) }}</div>
                                 </div>
                             </div>
 
                             <div class="input-group mb-3 w-75 mx-auto">
                                 <input type="text" class="form-control" :value="successLink" readonly id="transferLink">
-                                <button class="btn btn-outline-primary" @click="copyLink">Copy</button>
+                                <button class="btn btn-outline-primary" @click="copyLink">{{ t('transfer_copy', 'Copy') }}</button>
                             </div>
                             <div class="d-flex flex-wrap justify-content-center gap-2">
-                                <button class="btn btn-primary" @click="copyLink"><i class="ri-file-copy-line me-1"></i>Copy Link</button>
-                                <button class="btn btn-outline-primary" @click="openLink"><i class="ri-external-link-line me-1"></i>Open Link</button>
-                                <button class="btn btn-outline-secondary" @click="goHistory"><i class="ri-history-line me-1"></i>View History</button>
-                                <button class="btn btn-light border" @click="resetForm">Send Another</button>
+                                <button class="btn btn-primary" @click="copyLink"><i class="ri-file-copy-line me-1"></i>{{ t('transfer_copy_link', 'Copy Link') }}</button>
+                                <button class="btn btn-outline-primary" @click="openLink"><i class="ri-external-link-line me-1"></i>{{ t('transfer_open_link', 'Open Link') }}</button>
+                                <button class="btn btn-outline-secondary" @click="goHistory"><i class="ri-history-line me-1"></i>{{ t('transfer_view_history', 'View History') }}</button>
+                                <button class="btn btn-light border" @click="resetForm">{{ t('transfer_send_another', 'Send Another') }}</button>
                             </div>
                         </div>
 
                         <div v-else>
                             <div v-if="resumeState" class="alert alert-info d-flex align-items-center justify-content-between mb-3">
                                 <div>
-                                    <i class="ri-history-line me-2"></i> Unfinished transfer found ({{ resumeState.fileNames.length }} files).
+                                    <i class="ri-history-line me-2"></i> {{ t('transfer_resume_found_prefix', 'Unfinished transfer found') }} ({{ resumeState.fileNames.length }} {{ t('transfer_files_lower', 'files') }}).
                                 </div>
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-outline-danger" @click="resetForm">Discard</button>
-                                    <button class="btn btn-sm btn-primary" @click="resumeUpload">Resume</button>
+                                    <button class="btn btn-sm btn-outline-danger" @click="resetForm">{{ t('transfer_discard', 'Discard') }}</button>
+                                    <button class="btn btn-sm btn-primary" @click="resumeUpload">{{ t('transfer_resume', 'Resume') }}</button>
                                 </div>
                             </div>
 
@@ -68,21 +68,21 @@ const TransferModal = {
                                         
                                         <div v-if="files.length === 0">
                                             <i class="ri-upload-cloud-2-line display-4 text-muted mb-2"></i>
-                                            <p class="mb-2">Drag & Drop files or folders here</p>
+                                            <p class="mb-2">{{ t('transfer_drop_hint', 'Drag & Drop files or folders here') }}</p>
                                             <button class="btn btn-sm btn-outline-primary position-relative overflow-hidden">
-                                                Browse Files
+                                                {{ t('transfer_browse_files', 'Browse Files') }}
                                                 <input type="file" multiple class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" @change="handleFileSelect">
                                             </button>
-                                            <div class="mt-2 text-muted small">or</div>
+                                            <div class="mt-2 text-muted small">{{ t('transfer_or', 'or') }}</div>
                                             <button class="btn btn-sm btn-link position-relative overflow-hidden text-decoration-none">
-                                                Browse Folder
+                                                {{ t('transfer_browse_folder', 'Browse Folder') }}
                                                 <input type="file" multiple webkitdirectory class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" @change="handleFileSelect">
                                             </button>
                                         </div>
                                         
                                         <div v-else class="text-start w-100">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-bold">{{ files.length }} Files</span>
+                                                <span class="fw-bold">{{ files.length }} {{ t('transfer_files_badge', 'Files') }}</span>
                                                 <span class="badge bg-secondary">{{ formatSize(totalSize) }}</span>
                                             </div>
                                             <div class="list-group list-group-flush overflow-auto transfer-files-list">
@@ -93,7 +93,7 @@ const TransferModal = {
                                                     <i class="ri-close-line text-danger cursor-pointer" @click="removeFile(idx)"></i>
                                                 </div>
                                             </div>
-                                            <button class="btn btn-sm btn-outline-danger w-100 mt-2" @click="files = []">Clear All</button>
+                                            <button class="btn btn-sm btn-outline-danger w-100 mt-2" @click="files = []">{{ t('transfer_clear_all', 'Clear All') }}</button>
                                         </div>
                                     </div>
                                 </div>
@@ -101,12 +101,12 @@ const TransferModal = {
                                 <!-- Right: Form -->
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label small fw-bold">Send To (Email)</label>
+                                        <label class="form-label small fw-bold">{{ t('transfer_send_to', 'Send To (Email)') }}</label>
                                         <div class="border rounded p-2 bg-light-subtle">
                                             <div v-if="recipients.length" class="d-flex flex-wrap gap-1 mb-2">
                                                 <span v-for="email in recipients" :key="email" class="badge text-bg-primary d-inline-flex align-items-center">
                                                     <span class="me-1">{{ email }}</span>
-                                                    <button type="button" class="btn btn-sm btn-link text-white text-decoration-none p-0" @click="removeRecipient(email)" aria-label="Remove recipient">
+                                                    <button type="button" class="btn btn-sm btn-link text-white text-decoration-none p-0" @click="removeRecipient(email)" :aria-label="t('transfer_remove_recipient', 'Remove recipient')">
                                                         <i class="ri-close-line"></i>
                                                     </button>
                                                 </span>
@@ -117,57 +117,57 @@ const TransferModal = {
                                                     type="email"
                                                     class="form-control"
                                                     v-model.trim="recipientInput"
-                                                    placeholder="Type email and press Enter"
+                                                    :placeholder="t('transfer_recipient_placeholder', 'Type email and press Enter')"
                                                     @keydown.enter.prevent="addRecipientFromInput"
                                                     @keydown="handleRecipientKeydown"
                                                     @blur="addRecipientFromInput"
                                                     list="transferRecipientHints"
                                                 >
-                                                <button class="btn btn-outline-primary" type="button" @click="addRecipientFromInput">Add</button>
+                                                <button class="btn btn-outline-primary" type="button" @click="addRecipientFromInput">{{ t('transfer_add_recipient', 'Add') }}</button>
                                             </div>
                                         </div>
                                         <datalist id="transferRecipientHints">
                                             <option value="user@example.com"></option>
                                         </datalist>
                                         <div v-if="recipientError" class="text-danger small mt-1">{{ recipientError }}</div>
-                                        <div v-else class="text-muted small mt-1">Press Enter or click Add to create recipient chips.</div>
+                                        <div v-else class="text-muted small mt-1">{{ t('transfer_recipient_hint', 'Press Enter or click Add to create recipient chips.') }}</div>
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label small fw-bold">Subject</label>
-                                        <input type="text" class="form-control form-control-sm" v-model="form.subject" placeholder="Files for you">
+                                        <label class="form-label small fw-bold">{{ t('transfer_subject', 'Subject') }}</label>
+                                        <input type="text" class="form-control form-control-sm" v-model="form.subject" :placeholder="t('transfer_subject_placeholder', 'Files for you')">
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label small fw-bold">Message</label>
-                                        <textarea class="form-control form-control-sm" rows="3" v-model="form.message" placeholder="Here are the files..."></textarea>
+                                        <label class="form-label small fw-bold">{{ t('transfer_message', 'Message') }}</label>
+                                        <textarea class="form-control form-control-sm" rows="3" v-model="form.message" :placeholder="t('transfer_message_placeholder', 'Here are the files...')"></textarea>
                                     </div>
 
                                     <div class="row g-2 mb-3">
                                         <div class="col-6">
-                                            <label class="form-label small fw-bold">Expires In</label>
+                                            <label class="form-label small fw-bold">{{ t('transfer_expires_in', 'Expires In') }}</label>
                                             <select class="form-select form-select-sm" v-model="form.expiresIn">
-                                                <option value="1">1 Day</option>
-                                                <option value="3">3 Days</option>
-                                                <option value="7">7 Days</option>
-                                                <option value="14">14 Days</option>
-                                                <option value="30">30 Days</option>
+                                                <option value="1">{{ t('transfer_expires_1', '1 Day') }}</option>
+                                                <option value="3">{{ t('transfer_expires_3', '3 Days') }}</option>
+                                                <option value="7">{{ t('transfer_expires_7', '7 Days') }}</option>
+                                                <option value="14">{{ t('transfer_expires_14', '14 Days') }}</option>
+                                                <option value="30">{{ t('transfer_expires_30', '30 Days') }}</option>
                                             </select>
                                         </div>
                                         <div class="col-6">
                                             <label class="form-label small fw-bold">&nbsp;</label>
                                             <div class="form-check form-check-sm">
                                                 <input class="form-check-input" type="checkbox" id="notifyDown" v-model="form.notifyDownload">
-                                                <label class="form-check-label" for="notifyDown">Notify on Download</label>
+                                                <label class="form-check-label" for="notifyDown">{{ t('transfer_notify_download', 'Notify on Download') }}</label>
                                             </div>
                                         </div>
                                     </div>
 
                                     <button class="btn btn-primary w-100" @click="sendTransfer" :disabled="isUploading || files.length === 0">
                                         <span v-if="isUploading">
-                                            <span class="spinner-border spinner-border-sm me-1"></span> Sending... {{ uploadProgress }}%
+                                            <span class="spinner-border spinner-border-sm me-1"></span> {{ t('transfer_sending', 'Sending...') }} {{ uploadProgress }}%
                                         </span>
-                                        <span v-else>Transfer</span>
+                                        <span v-else>{{ t('transfer_button', 'Transfer') }}</span>
                                     </button>
                                 </div>
                             </div>
@@ -177,28 +177,28 @@ const TransferModal = {
                     <!-- History Tab -->
                     <div v-if="tab === 'history'">
                         <div class="d-flex flex-wrap gap-2 mb-3">
-                            <button class="btn btn-sm" :class="historyFilter === 'all' ? 'btn-primary' : 'btn-outline-primary'" @click="setHistoryFilter('all')">All</button>
-                            <button class="btn btn-sm" :class="historyFilter === 'active' ? 'btn-primary' : 'btn-outline-primary'" @click="setHistoryFilter('active')">Active</button>
-                            <button class="btn btn-sm" :class="historyFilter === 'downloaded' ? 'btn-primary' : 'btn-outline-primary'" @click="setHistoryFilter('downloaded')">Downloaded</button>
-                            <button class="btn btn-sm" :class="historyFilter === 'expired' ? 'btn-primary' : 'btn-outline-primary'" @click="setHistoryFilter('expired')">Expired</button>
+                            <button class="btn btn-sm" :class="historyFilter === 'all' ? 'btn-primary' : 'btn-outline-primary'" @click="setHistoryFilter('all')">{{ t('transfer_filter_all', 'All') }}</button>
+                            <button class="btn btn-sm" :class="historyFilter === 'active' ? 'btn-primary' : 'btn-outline-primary'" @click="setHistoryFilter('active')">{{ t('transfer_filter_active', 'Active') }}</button>
+                            <button class="btn btn-sm" :class="historyFilter === 'downloaded' ? 'btn-primary' : 'btn-outline-primary'" @click="setHistoryFilter('downloaded')">{{ t('transfer_filter_downloaded', 'Downloaded') }}</button>
+                            <button class="btn btn-sm" :class="historyFilter === 'expired' ? 'btn-primary' : 'btn-outline-primary'" @click="setHistoryFilter('expired')">{{ t('transfer_filter_expired', 'Expired') }}</button>
                         </div>
                         <div v-if="loadingHistory" class="text-center p-3"><div class="spinner-border text-primary"></div></div>
                         <div v-else-if="filteredHistory.length === 0" class="text-center text-muted p-5">
                             <i class="ri-history-line display-4 opacity-50"></i>
-                            <p class="mt-2">No transfers sent yet.</p>
+                            <p class="mt-2">{{ t('transfer_no_history', 'No transfers sent yet.') }}</p>
                         </div>
                         <div v-else class="table-responsive">
                             <table class="table table-hover table-sm small align-middle">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Status</th>
-                                        <th>Subject</th>
-                                        <th>To</th>
-                                        <th>Date</th>
-                                        <th>Size</th>
-                                        <th>Downloads</th>
-                                        <th>Expires</th>
-                                        <th class="text-end">Actions</th>
+                                        <th>{{ t('transfer_col_status', 'Status') }}</th>
+                                        <th>{{ t('transfer_col_subject', 'Subject') }}</th>
+                                        <th>{{ t('transfer_col_to', 'To') }}</th>
+                                        <th>{{ t('transfer_col_date', 'Date') }}</th>
+                                        <th>{{ t('transfer_col_size', 'Size') }}</th>
+                                        <th>{{ t('transfer_col_downloads', 'Downloads') }}</th>
+                                        <th>{{ t('transfer_col_expires', 'Expires') }}</th>
+                                        <th class="text-end">{{ t('admin_actions', 'Actions') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -206,7 +206,7 @@ const TransferModal = {
                                         <td>
                                             <span class="badge" :class="statusBadgeClass(item.status)">{{ statusLabel(item.status) }}</span>
                                         </td>
-                                        <td class="fw-bold">{{ item.subject || '(No Subject)' }}</td>
+                                        <td class="fw-bold">{{ item.subject || t('transfer_no_subject', '(No Subject)') }}</td>
                                         <td class="text-truncate transfer-recipient" :title="item.recipients?.join(', ')">
                                             {{ item.recipients ? item.recipients[0] + (item.recipients.length > 1 ? ' +' + (item.recipients.length-1) : '') : '-' }}
                                         </td>
@@ -217,15 +217,15 @@ const TransferModal = {
                                         </td>
                                         <td>
                                             <span :class="{'text-danger': item.is_expired}">
-                                                {{ item.is_expired ? 'Expired' : formatDate(item.expires_at) }}
+                                                {{ item.is_expired ? t('transfer_filter_expired', 'Expired') : formatDate(item.expires_at) }}
                                             </span>
                                             <div v-if="item.expires_in && !item.is_expired" class="text-muted small">
                                                 {{ expiryCountdown(item.expires_in) }}
                                             </div>
                                         </td>
                                         <td class="text-end">
-                                            <button class="btn btn-link p-0 me-2" @click="copyItemLink(item.hash)" title="Copy Link"><i class="ri-links-line"></i></button>
-                                            <button class="btn btn-link p-0 text-danger" @click="deleteItem(item.hash)" title="Delete"><i class="ri-delete-bin-line"></i></button>
+                                            <button class="btn btn-link p-0 me-2" @click="copyItemLink(item.hash)" :title="t('transfer_copy_link', 'Copy Link')"><i class="ri-links-line"></i></button>
+                                            <button class="btn btn-link p-0 text-danger" @click="deleteItem(item.hash)" :title="t('delete', 'Delete')"><i class="ri-delete-bin-line"></i></button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -279,6 +279,18 @@ const TransferModal = {
         document.getElementById('transferModal').addEventListener('show.bs.modal', this.checkResume);
     },
     methods: {
+        t(key, fallback = '', params = {}) {
+            const value = i18n.t(key, params);
+            if (value === key) {
+                if (!fallback) return key;
+                let str = fallback;
+                Object.keys(params).forEach((k) => {
+                    str = str.replace(`{${k}}`, params[k]);
+                });
+                return str;
+            }
+            return value;
+        },
         checkResume() {
             const saved = localStorage.getItem('extplorer_transfer_resume');
             if (saved) {
@@ -326,8 +338,8 @@ const TransferModal = {
             
             // Ask user to re-select files (security restriction: can't restore File objects)
             const { value: fileList } = await Swal.fire({
-                title: 'Resume Upload',
-                text: `Please re-select the following files to resume: ${fileNames.join(', ')}`,
+                title: this.t('transfer_resume_title', 'Resume Upload'),
+                text: this.t('transfer_resume_text_prefix', 'Please re-select the following files to resume: ') + fileNames.join(', '),
                 input: 'file',
                 inputAttributes: { multiple: 'multiple' },
                 showCancelButton: true
@@ -340,7 +352,7 @@ const TransferModal = {
                 
                 // Simple name check
                 if (JSON.stringify(selectedNames) !== JSON.stringify(savedNames)) {
-                    return Swal.fire('Error', 'Selected files do not match the pending upload.', 'error');
+                    return Swal.fire(this.t('error', 'Error'), this.t('transfer_resume_mismatch', 'Selected files do not match the pending upload.'), 'error');
                 }
                 
                 this.files = Array.from(fileList);
@@ -377,11 +389,11 @@ const TransferModal = {
             const normalized = this.normalizeEmail(email);
             if (!normalized) return false;
             if (!this.isValidEmail(normalized)) {
-                this.recipientError = 'Please enter a valid email address.';
+                this.recipientError = this.t('transfer_invalid_email', 'Please enter a valid email address.');
                 return false;
             }
             if (this.recipients.includes(normalized)) {
-                this.recipientError = 'Recipient already added.';
+                this.recipientError = this.t('transfer_recipient_exists', 'Recipient already added.');
                 return false;
             }
             this.recipients.push(normalized);
@@ -510,7 +522,7 @@ const TransferModal = {
                 localStorage.removeItem('extplorer_transfer_resume'); // Clear resume state
 
             } catch (e) {
-                alert('Transfer failed: ' + e.message);
+                alert(this.t('transfer_failed_prefix', 'Transfer failed: ') + e.message);
                 this.isUploading = false;
             }
         },
@@ -523,7 +535,7 @@ const TransferModal = {
              while (retries > 0) {
                  try {
                      const res = await fetch(window.baseUrl + 'api/transfer/upload', { method: 'POST', headers, body: formData });
-                     if (!res.ok) throw new Error('Upload failed');
+                     if (!res.ok) throw new Error(this.t('transfer_upload_failed', 'Upload failed'));
                      return;
                  } catch(e) {
                      retries--;
@@ -559,9 +571,9 @@ const TransferModal = {
             return 'bg-primary';
         },
         statusLabel(status) {
-            if (status === 'downloaded') return 'Downloaded';
-            if (status === 'expired') return 'Expired';
-            return 'Active';
+            if (status === 'downloaded') return this.t('transfer_filter_downloaded', 'Downloaded');
+            if (status === 'expired') return this.t('transfer_filter_expired', 'Expired');
+            return this.t('transfer_filter_active', 'Active');
         },
         copyItemLink(hash) {
             const link = window.baseUrl + 's/' + hash;
@@ -577,7 +589,7 @@ const TransferModal = {
             finally { this.loadingHistory = false; }
         },
         async deleteItem(hash) {
-            if (!confirm('Are you sure?')) return;
+            if (!confirm(this.t('confirm_title', 'Are you sure?'))) return;
             try {
                 await Api.delete('transfer/' + hash);
                 this.loadHistory();
@@ -593,7 +605,7 @@ const TransferModal = {
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         },
         formatDate(ts) {
-            if (!ts) return 'Never';
+            if (!ts) return this.t('never', 'Never');
             return new Date(ts * 1000).toLocaleDateString();
         },
         isExpired(ts) {
@@ -602,11 +614,11 @@ const TransferModal = {
         },
         expiryCountdown(seconds) {
             const days = Math.ceil(seconds / 86400);
-            if (days <= 1) return 'expires within 1 day';
-            if (days < 7) return `expires in ${days} days`;
+            if (days <= 1) return this.t('transfer_expires_within_day', 'expires within 1 day');
+            if (days < 7) return this.t('transfer_expires_in_days', 'expires in {days} days', { days });
             const weeks = Math.ceil(days / 7);
-            if (weeks === 1) return 'expires in 1 week';
-            return `expires in ${weeks} weeks`;
+            if (weeks === 1) return this.t('transfer_expires_in_week', 'expires in 1 week');
+            return this.t('transfer_expires_in_weeks', 'expires in {weeks} weeks', { weeks });
         },
         getIcon(name) { return 'ri-file-line'; }
     }
