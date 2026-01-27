@@ -382,8 +382,7 @@
                             <i class="ri-user-line"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow">
-                            <li><a class="dropdown-item" href="#" @click.prevent="openProfile">{{ t('profile_settings') || 'Profile & Settings' }}</a></li>
-                            <li v-if="isAdmin"><a class="dropdown-item" href="#" @click.prevent="openAdmin"><i class="ri-flashlight-line me-2"></i> Quick Admin</a></li>
+                            <li><a class="dropdown-item" href="#" @click.prevent="openProfile"><i class="ri-user-settings-line me-2"></i>{{ t('profile_settings') || 'Profile & Settings' }}</a></li>
                             <li v-if="isAdmin"><a class="dropdown-item" href="<?= base_url('admin') ?>"><i class="ri-settings-3-line me-2"></i> Admin Console</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><h6 class="dropdown-header">Appearance</h6></li>
@@ -397,12 +396,7 @@
                                 <i class="ri-computer-line me-2"></i> {{ t('theme_auto') }}
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header">Language</h6></li>
-                            <li><a class="dropdown-item" :class="{active: i18n.locale === 'en'}" href="#" @click.prevent="i18n.load('en')">English</a></li>
-                            <li><a class="dropdown-item" :class="{active: i18n.locale === 'de'}" href="#" @click.prevent="i18n.load('de')">Deutsch</a></li>
-                            <li><a class="dropdown-item" :class="{active: i18n.locale === 'fr'}" href="#" @click.prevent="i18n.load('fr')">Français</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="logout"><i class="ri-logout-box-r-line me-2"></i> Logout</a></li>
+                            <li><a class="dropdown-item text-danger" href="logout"><i class="ri-logout-box-r-line me-2"></i>{{ t('logout') || 'Logout' }}</a></li>
                         </ul>
                     </div>
 

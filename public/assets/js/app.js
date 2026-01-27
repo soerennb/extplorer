@@ -729,7 +729,7 @@ const app = createApp({
         onMounted(async () => {
             applyTheme();
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (theme.value === 'auto') applyTheme(); });
-            await i18n.load('en');
+            await i18n.init();
             
             const lastPath = localStorage.getItem('extplorer_last_path') || '';
             store.loadPath(lastPath);

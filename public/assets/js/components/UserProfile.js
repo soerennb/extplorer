@@ -93,6 +93,26 @@ const UserProfile = {
                         </div>
 
                         <div class="mt-4 pt-3 border-top">
+                            <h6 class="mb-2">{{ t('language') || 'Language' }}</h6>
+                            <div class="small text-muted mb-2">{{ t('language_desc') || 'Choose the interface language for this browser.' }}</div>
+                            <div class="row g-2 align-items-center">
+                                <label class="col-sm-3 col-form-label fw-bold" for="profile-language-select">{{ t('language') || 'Language' }}</label>
+                                <div class="col-sm-9">
+                                    <select
+                                        id="profile-language-select"
+                                        class="form-select form-select-sm"
+                                        v-model="selectedLocale"
+                                        @change="updateLocale"
+                                    >
+                                        <option v-for="loc in availableLocales" :key="loc.code" :value="loc.code">
+                                            {{ t(loc.labelKey) || loc.labelFallback }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-top">
                             <h6 class="mb-3">{{ t('file_extensions') || 'File Extensions' }}</h6>
 
                             <div v-if="details.allowed_extensions" class="mb-2">
@@ -514,6 +534,12 @@ const UserProfile = {
         const passwordMessage = reactive({ type: '', text: '' });
         const twoFaMessage = reactive({ type: '', text: '' });
         const twoFaLoading = ref(false);
+        const availableLocales = ref([
+            { code: 'en', labelKey: 'language_english', labelFallback: 'English' },
+            { code: 'de', labelKey: 'language_german', labelFallback: 'Deutsch' },
+            { code: 'fr', labelKey: 'language_french', labelFallback: 'Français' }
+        ]);
+        const selectedLocale = ref(i18n.locale || (typeof i18n.preferredLocale === 'function' ? i18n.preferredLocale() : 'en'));
 
         const setup = reactive({ step: 0, qr: '', secret: '', code: '', recoveryCodes: [] });
         const disable2faState = reactive({ open: false, password: '', code: '', loading: false });
@@ -996,6 +1022,26 @@ const UserProfile = {
             return t('mount_type_local') || 'Local';
         };
 
+        const updateLocale = async () => {
+            const nextLocale = selectedLocale.value || 'en';
+            await i18n.setLocale(nextLocale);
+            selectedLocale.value = i18n.locale;
+            Swal.fire({
+                icon: 'success',
+                title: t('language_updated') || 'Language updated',
+                timer: 1200,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+        };
+
+        watch(() => i18n.locale, (val) => {
+            if (val && selectedLocale.value !== val) {
+                selectedLocale.value = val;
+            }
+        });
+
         watch(() => mountForm.type, (val, prev) => {
             resetMountMessages();
             clearMountErrors();
@@ -1050,6 +1096,9 @@ const UserProfile = {
 
         return {
             activeTab,
+            availableLocales,
+            selectedLocale,
+            updateLocale,
             details,
             loading,
             passwordForm,

@@ -3,8 +3,8 @@ const AdminApp = {
     <div class="admin-page">
         <aside class="admin-sidebar border-end">
             <div class="admin-sidebar-header">
-                <div class="fw-semibold">Admin Console</div>
-                <div class="small text-muted">eXtplorer</div>
+                <div class="fw-semibold">{{ t('admin_console', 'Admin Console') }}</div>
+                <div class="small text-muted">{{ t('app_name', 'eXtplorer 3') }}</div>
             </div>
             <nav class="nav flex-column admin-sidebar-nav">
                 <a v-for="item in navItems"
@@ -14,11 +14,11 @@ const AdminApp = {
                    :class="{ active: activeSection === item.section }"
                    @click.prevent="navigate(item.section, item.section === 'settings' ? activeSettingsTab : null)">
                     <i :class="item.icon"></i>
-                    <span>{{ item.label }}</span>
+                    <span>{{ t(item.labelKey, item.labelFallback) }}</span>
                 </a>
             </nav>
             <div class="admin-sidebar-footer small text-muted">
-                <div>Signed in as</div>
+                <div>{{ t('admin_signed_in_as', 'Signed in as') }}</div>
                 <div class="fw-semibold text-body">{{ currentUsername }}</div>
             </div>
         </aside>
@@ -31,10 +31,10 @@ const AdminApp = {
                 </div>
                 <div class="d-flex gap-2">
                     <a class="btn btn-outline-secondary btn-sm" :href="baseUrl">
-                        <i class="ri-folder-line me-1"></i> Files
+                        <i class="ri-folder-line me-1"></i> {{ t('admin_files', 'Files') }}
                     </a>
                     <a class="btn btn-outline-danger btn-sm" :href="baseUrl + 'logout'">
-                        <i class="ri-logout-box-r-line me-1"></i> Logout
+                        <i class="ri-logout-box-r-line me-1"></i> {{ t('logout', 'Logout') }}
                     </a>
                 </div>
             </div>
@@ -61,47 +61,63 @@ const AdminApp = {
             activeSection: 'users',
             activeSettingsTab: 'email',
             navItems: [
-                { section: 'users', label: 'Users', icon: 'ri-user-line' },
-                { section: 'groups', label: 'Groups', icon: 'ri-team-line' },
-                { section: 'roles', label: 'Roles', icon: 'ri-shield-user-line' },
-                { section: 'logs', label: 'Logs', icon: 'ri-file-list-3-line' },
-                { section: 'settings', label: 'Settings', icon: 'ri-settings-3-line' },
-                { section: 'system', label: 'System', icon: 'ri-information-line' }
+                { section: 'users', labelKey: 'admin_nav_users', labelFallback: 'Users', icon: 'ri-user-line' },
+                { section: 'groups', labelKey: 'admin_nav_groups', labelFallback: 'Groups', icon: 'ri-team-line' },
+                { section: 'roles', labelKey: 'admin_nav_roles', labelFallback: 'Roles', icon: 'ri-shield-user-line' },
+                { section: 'logs', labelKey: 'admin_nav_logs', labelFallback: 'Logs', icon: 'ri-file-list-3-line' },
+                { section: 'settings', labelKey: 'admin_nav_settings', labelFallback: 'Settings', icon: 'ri-settings-3-line' },
+                { section: 'system', labelKey: 'admin_nav_system', labelFallback: 'System', icon: 'ri-information-line' }
             ],
             sectionMeta: {
                 users: {
-                    label: 'Users',
-                    description: 'Create users, assign groups, and inspect effective permissions.'
+                    labelKey: 'admin_nav_users',
+                    labelFallback: 'Users',
+                    descriptionKey: 'admin_desc_users',
+                    descriptionFallback: 'Create users, assign groups, and inspect effective permissions.'
                 },
                 groups: {
-                    label: 'Groups',
-                    description: 'Bundle roles into reusable groups.'
+                    labelKey: 'admin_nav_groups',
+                    labelFallback: 'Groups',
+                    descriptionKey: 'admin_desc_groups',
+                    descriptionFallback: 'Bundle roles into reusable groups.'
                 },
                 roles: {
-                    label: 'Roles',
-                    description: 'Define role permission sets used across the system.'
+                    labelKey: 'admin_nav_roles',
+                    labelFallback: 'Roles',
+                    descriptionKey: 'admin_desc_roles',
+                    descriptionFallback: 'Define role permission sets used across the system.'
                 },
                 logs: {
-                    label: 'Audit Logs',
-                    description: 'Filter, paginate, and export activity logs.'
+                    labelKey: 'admin_nav_logs',
+                    labelFallback: 'Audit Logs',
+                    descriptionKey: 'admin_desc_logs',
+                    descriptionFallback: 'Filter, paginate, and export activity logs.'
                 },
                 settings: {
-                    label: 'Settings',
-                    description: 'Configure email, sharing, governance, and security controls.'
+                    labelKey: 'admin_nav_settings',
+                    labelFallback: 'Settings',
+                    descriptionKey: 'admin_desc_settings',
+                    descriptionFallback: 'Configure email, sharing, governance, and security controls.'
                 },
                 system: {
-                    label: 'System Info',
-                    description: 'Inspect runtime and environment details.'
+                    labelKey: 'admin_nav_system',
+                    labelFallback: 'System Info',
+                    descriptionKey: 'admin_desc_system',
+                    descriptionFallback: 'Inspect runtime and environment details.'
                 }
             }
         };
     },
     computed: {
         activeLabel() {
-            return this.sectionMeta[this.activeSection]?.label || 'Admin';
+            const meta = this.sectionMeta[this.activeSection];
+            if (!meta) return this.t('admin_console', 'Admin');
+            return this.t(meta.labelKey, meta.labelFallback);
         },
         activeDescription() {
-            return this.sectionMeta[this.activeSection]?.description || '';
+            const meta = this.sectionMeta[this.activeSection];
+            if (!meta) return '';
+            return this.t(meta.descriptionKey, meta.descriptionFallback);
         }
     },
     mounted() {
@@ -112,6 +128,13 @@ const AdminApp = {
         window.removeEventListener('hashchange', this.applyHash);
     },
     methods: {
+        t(key, fallback = '') {
+            const value = i18n.t(key);
+            if (value === key) {
+                return fallback || key;
+            }
+            return value;
+        },
         applyHash() {
             const raw = (window.location.hash || '').replace(/^#/, '');
             if (!raw) {
@@ -154,4 +177,3 @@ const AdminApp = {
         }
     }
 };
-
