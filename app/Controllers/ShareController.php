@@ -25,6 +25,8 @@ class ShareController extends BaseController
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Link expired or invalid.");
         }
 
+        [, $basePath] = $this->resolveSharePaths($share);
+
         // Password Protection Check
         if ($share['password_hash']) {
             // Check if verified in session
@@ -39,16 +41,14 @@ class ShareController extends BaseController
         }
 
         // Serve Content
-        $root = WRITEPATH . 'file_manager_root/' . $share['path'];
-        
-        // Handle Transfer Source
-        if (isset($share['source']) && $share['source'] === 'transfer') {
-            $root = WRITEPATH . 'uploads/shares/' . $share['path'];
-        }
+        $root = $basePath;
 
         if (!file_exists($root)) {
              throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Shared content missing.");
         }
+
+        $isUploadMode = ($share['mode'] ?? 'read') === 'upload';
+        $uploadPolicy = $isUploadMode ? $this->buildUploadPolicy($settings, $basePath, $share) : [];
 
         if (is_file($root)) {
             // Direct download/preview for single file share?
@@ -62,6 +62,7 @@ class ShareController extends BaseController
                 'locale' => $locale,
                 'translations' => $translations,
                 'uploadMaxFileMb' => $uploadMaxFileMb,
+                'uploadPolicy' => $uploadPolicy,
             ]);
         }
 
@@ -77,6 +78,7 @@ class ShareController extends BaseController
             'locale' => $locale,
             'translations' => $translations,
             'uploadMaxFileMb' => $uploadMaxFileMb,
+            'uploadPolicy' => $uploadPolicy,
         ]);
     }
 
@@ -162,12 +164,11 @@ class ShareController extends BaseController
             return $this->failForbidden();
         }
 
-        $rootBase = WRITEPATH . 'file_manager_root/';
-        if (isset($share['source']) && $share['source'] === 'transfer') {
-            $rootBase = WRITEPATH . 'uploads/shares/';
+        if (($share['mode'] ?? 'read') === 'upload') {
+            return $this->failForbidden('Downloads are not allowed for this share.');
         }
 
-        $basePath = $rootBase . $share['path'];
+        [, $basePath] = $this->resolveSharePaths($share);
         $inline = $this->request->getGet('inline');
 
         $subPath = $this->request->getGet('path');
@@ -242,12 +243,7 @@ class ShareController extends BaseController
             return $this->failForbidden();
         }
 
-        $rootBase = WRITEPATH . 'file_manager_root/';
-        if (isset($share['source']) && $share['source'] === 'transfer') {
-            $rootBase = WRITEPATH . 'uploads/shares/';
-        }
-
-        $basePath = $rootBase . $share['path'];
+        [, $basePath] = $this->resolveSharePaths($share);
         if (is_file($basePath)) {
             return $this->failForbidden();
         }
@@ -258,7 +254,16 @@ class ShareController extends BaseController
         try {
             $fs = new LocalAdapter($basePath);
             $items = $fs->listDirectory($subPath, false);
-            return $this->respond(['items' => $items]);
+            $policy = null;
+            if (($share['mode'] ?? 'read') === 'upload') {
+                $settingsService = new \App\Services\SettingsService();
+                $settings = $settingsService->getSettings();
+                $policy = $this->buildUploadPolicy($settings, $basePath, $share);
+            }
+            return $this->respond([
+                'items' => $items,
+                'upload_policy' => $policy,
+            ]);
         } catch (\Exception $e) {
             return $this->fail($e->getMessage());
         }
@@ -284,12 +289,7 @@ class ShareController extends BaseController
             return $this->failForbidden('Uploads are not allowed for this share.');
         }
 
-        $rootBase = WRITEPATH . 'file_manager_root/';
-        if (isset($share['source']) && $share['source'] === 'transfer') {
-            $rootBase = WRITEPATH . 'uploads/shares/';
-        }
-
-        $basePath = $rootBase . $share['path'];
+        [, $basePath] = $this->resolveSharePaths($share);
         if (!is_dir($basePath)) {
             return $this->failForbidden();
         }
@@ -305,6 +305,7 @@ class ShareController extends BaseController
         try {
             $settingsService = new \App\Services\SettingsService();
             $settings = $settingsService->getSettings();
+            $policy = $this->buildUploadPolicy($settings, $basePath, $share);
 
             $fileSize = (int)$file->getSize();
             $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
@@ -315,6 +316,33 @@ class ShareController extends BaseController
                 }
             }
 
+            $allowedExts = $policy['allowed_extensions'];
+            if (!empty($allowedExts)) {
+                $name = (string)$file->getClientName();
+                $ext = strtolower((string)pathinfo($name, PATHINFO_EXTENSION));
+                if ($ext === '' || !in_array($ext, $allowedExts, true)) {
+                    $allowedLabel = $policy['allowed_extensions_label'];
+                    return $this->fail(
+                        $allowedLabel !== ''
+                            ? "File type not allowed. Allowed types: {$allowedLabel}."
+                            : 'File type not allowed.',
+                        400
+                    );
+                }
+            }
+
+            $quotaBytes = (int)$policy['quota_bytes'];
+            $quotaUsed = (int)$policy['quota_used_bytes'];
+            if ($quotaBytes > 0 && ($quotaUsed + $fileSize) > $quotaBytes) {
+                return $this->fail('Upload would exceed the share quota.', 400);
+            }
+
+            $maxFiles = (int)$policy['max_files'];
+            $filesUsed = (int)$policy['files_used'];
+            if ($maxFiles > 0 && ($filesUsed + 1) > $maxFiles) {
+                return $this->fail('Upload would exceed the maximum number of files for this share.', 400);
+            }
+
             $fs = new LocalAdapter($basePath);
             $targetDir = $fs->resolvePath($subPath);
             if (!is_dir($targetDir)) {
@@ -323,15 +351,149 @@ class ShareController extends BaseController
 
             $name = $file->getClientName();
             $file->move($targetDir, $name);
+            $postPolicy = $this->buildUploadPolicy($settings, $basePath, $share);
 
             return $this->respond([
                 'status' => 'success',
                 'name' => $name,
                 'path' => $subPath,
+                'upload_policy' => $postPolicy,
             ]);
         } catch (\Exception $e) {
             return $this->fail($e->getMessage());
         }
+    }
+
+    /**
+     * Resolve root and absolute base path for a share.
+     *
+     * @return array{0: string, 1: string}
+     */
+    private function resolveSharePaths(array $share): array
+    {
+        $rootBase = WRITEPATH . 'file_manager_root/';
+        if (isset($share['source']) && $share['source'] === 'transfer') {
+            $rootBase = WRITEPATH . 'uploads/shares/';
+        }
+
+        return [$rootBase, $rootBase . ($share['path'] ?? '')];
+    }
+
+    /**
+     * Build the upload policy/limits payload for the shared page.
+     *
+     * @param array<string, mixed> $settings
+     * @param array<string, mixed> $share
+     * @return array<string, mixed>
+     */
+    private function buildUploadPolicy(array $settings, string $basePath, array $share): array
+    {
+        $maxFileMb = (int)($settings['upload_max_file_mb'] ?? 0);
+        $maxFileBytes = $maxFileMb > 0 ? $maxFileMb * 1024 * 1024 : 0;
+
+        $allowedExtensions = $this->normalizeAllowedExtensions($settings['share_upload_allowed_extensions'] ?? []);
+        $allowedLabel = '';
+        if (!empty($allowedExtensions)) {
+            $allowedLabel = implode(', ', array_map(static fn (string $ext): string => '.' . $ext, $allowedExtensions));
+        }
+
+        $quotaMb = (int)($settings['share_upload_quota_mb'] ?? 0);
+        $quotaBytes = $quotaMb > 0 ? $quotaMb * 1024 * 1024 : 0;
+
+        $maxFiles = (int)($settings['share_upload_max_files'] ?? 0);
+
+        $usage = $this->collectUsageStats($basePath);
+        $quotaRemaining = $quotaBytes > 0 ? max(0, $quotaBytes - $usage['bytes']) : null;
+        $filesRemaining = $maxFiles > 0 ? max(0, $maxFiles - $usage['files']) : null;
+
+        return [
+            'mode' => $share['mode'] ?? 'read',
+            'max_file_mb' => $maxFileMb,
+            'max_file_bytes' => $maxFileBytes,
+            'allowed_extensions' => $allowedExtensions,
+            'allowed_extensions_label' => $allowedLabel,
+            'quota_mb' => $quotaMb,
+            'quota_bytes' => $quotaBytes,
+            'quota_used_bytes' => $usage['bytes'],
+            'quota_remaining_bytes' => $quotaRemaining,
+            'max_files' => $maxFiles,
+            'files_used' => $usage['files'],
+            'files_remaining' => $filesRemaining,
+        ];
+    }
+
+    /**
+     * Normalize allowed extension configuration from settings.
+     *
+     * @param mixed $raw
+     * @return array<int, string>
+     */
+    private function normalizeAllowedExtensions($raw): array
+    {
+        $extensions = [];
+
+        if (is_string($raw)) {
+            $parts = preg_split('/[\s,;]+/', $raw) ?: [];
+            $extensions = $parts;
+        } elseif (is_array($raw)) {
+            $extensions = $raw;
+        }
+
+        $normalized = [];
+        foreach ($extensions as $ext) {
+            $ext = strtolower((string)$ext);
+            $ext = ltrim($ext, '.');
+            if ($ext === '') {
+                continue;
+            }
+            $normalized[] = $ext;
+        }
+
+        $normalized = array_values(array_unique($normalized));
+        sort($normalized);
+
+        return $normalized;
+    }
+
+    /**
+     * Collect recursive usage stats for a share directory.
+     *
+     * @return array{bytes: int, files: int}
+     */
+    private function collectUsageStats(string $basePath): array
+    {
+        if (!file_exists($basePath)) {
+            return ['bytes' => 0, 'files' => 0];
+        }
+
+        if (is_file($basePath)) {
+            return [
+                'bytes' => (int)@filesize($basePath),
+                'files' => 1,
+            ];
+        }
+
+        $bytes = 0;
+        $files = 0;
+
+        try {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($basePath, \FilesystemIterator::SKIP_DOTS)
+            );
+
+            foreach ($iterator as $item) {
+                if (!$item->isFile()) {
+                    continue;
+                }
+                $files++;
+                $bytes += (int)$item->getSize();
+            }
+        } catch (\Throwable $e) {
+            // If we cannot scan usage, fall back to zeros to avoid blocking uploads.
+            return ['bytes' => 0, 'files' => 0];
+        }
+
+        return ['bytes' => $bytes, 'files' => $files];
     }
 
     /**
