@@ -52,6 +52,11 @@
             z-index: 2;
             background: var(--bs-body-bg);
         }
+        .admin-back-button {
+            font-size: 1rem;
+            padding: 0.6rem 1rem;
+            font-weight: 600;
+        }
         .admin-main-body { padding: 1.25rem; }
 
         @media (max-width: 991.98px) {

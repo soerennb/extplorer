@@ -30,11 +30,8 @@ const AdminApp = {
                     <div class="small text-muted">{{ activeDescription }}</div>
                 </div>
                 <div class="d-flex gap-2">
-                    <a class="btn btn-outline-secondary btn-sm" :href="baseUrl">
-                        <i class="ri-folder-line me-1"></i> {{ t('admin_files', 'Files') }}
-                    </a>
-                    <a class="btn btn-outline-danger btn-sm" :href="baseUrl + 'logout'">
-                        <i class="ri-logout-box-r-line me-1"></i> {{ t('logout', 'Logout') }}
+                    <a class="btn btn-primary admin-back-button" :href="baseUrl">
+                        <i class="ri-arrow-left-line me-2"></i> Back to File Manager
                     </a>
                 </div>
             </div>
