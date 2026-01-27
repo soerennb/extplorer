@@ -32,6 +32,7 @@
         }
         $shareMode = $share['mode'] ?? 'read';
         $isUploadMode = $shareMode === 'upload';
+        $uploadMaxFileMb = (int)($uploadMaxFileMb ?? 0);
         $shareModeLabels = [
             'read' => $st('shared_mode_read', 'Read'),
             'upload' => $st('shared_mode_upload', 'Upload'),
@@ -65,6 +66,12 @@
         .shared-upload-panel-icon { font-size: 1.6rem; color: var(--bs-warning); line-height: 1; }
         .shared-upload-panel-title { font-weight: 600; margin-bottom: 0.15rem; }
         .shared-upload-panel-note { font-size: 0.85rem; color: var(--bs-secondary-color); margin-top: 0.35rem; }
+        .shared-dropzone { margin-top: 0.6rem; border: 1px dashed var(--bs-border-color); border-radius: 0.75rem; background: var(--bs-body-bg); padding: 1rem; text-align: center; transition: border-color 0.15s ease, background-color 0.15s ease; }
+        .shared-dropzone.active { border-color: var(--bs-primary); background: rgba(13, 110, 253, 0.05); }
+        .shared-dropzone-title { font-weight: 600; }
+        .shared-dropzone-subtitle { font-size: 0.9rem; color: var(--bs-secondary-color); margin-top: 0.15rem; }
+        .shared-upload-meta { font-size: 0.8rem; color: var(--bs-secondary-color); margin-top: 0.5rem; }
+        .shared-upload-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-top: 0.75rem; }
         .file-item { display: flex; align-items: center; padding: 0.75rem; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
         .file-item:hover { background-color: #f8f9fa; }
         .file-item-name { flex: 1; min-width: 0; }
@@ -164,7 +171,37 @@
                             <div>
                                 <div class="shared-upload-panel-title"><?= esc($st('shared_upload_panel_title', 'Upload-Only Share')) ?></div>
                                 <div class="small"><?= esc($st('shared_upload_panel_desc', 'You can upload files to this share. Files already here may not be downloadable.')) ?></div>
-                                <div class="shared-upload-panel-note"><?= esc($st('shared_upload_panel_note', 'Tip: drag and drop will be supported here.')) ?></div>
+                                <div class="shared-upload-panel-note"><?= esc($st('shared_upload_panel_note', 'You can drag and drop files here.')) ?></div>
+                                <div
+                                    class="shared-dropzone"
+                                    :class="{ active: dropzoneActive }"
+                                    @dragenter.prevent="onDragEnter"
+                                    @dragover.prevent="onDragOver"
+                                    @dragleave.prevent="onDragLeave"
+                                    @drop.prevent="onDrop"
+                                >
+                                    <div class="shared-dropzone-title">{{ t('shared_dropzone_title', 'Drop files to upload') }}</div>
+                                    <div class="shared-dropzone-subtitle">{{ t('shared_dropzone_subtitle', 'or choose files from your device') }}</div>
+                                    <div class="shared-upload-actions">
+                                        <button type="button" class="btn btn-primary btn-sm" @click="openFilePicker" :disabled="uploading">
+                                            <i class="ri-upload-2-line me-1"></i>{{ uploading ? t('shared_uploading', 'Uploading...') : t('shared_upload_button', 'Upload Files') }}
+                                        </button>
+                                        <button v-if="uploading" type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                                            {{ uploadProgress }}%
+                                        </button>
+                                    </div>
+                                    <div class="shared-upload-meta">
+                                        <span v-if="uploadMaxFileMb > 0">{{ t('shared_upload_limit', 'Max file size: {max} MB', { max: uploadMaxFileMb }) }}</span>
+                                        <span v-else>{{ t('shared_upload_limit_unlimited', 'No file size limit configured') }}</span>
+                                    </div>
+                                    <input ref="fileInput" type="file" class="d-none" multiple @change="onFileInputChange">
+                                </div>
+                                <div v-if="uploadMessage" class="alert alert-success small mt-2 mb-0 py-2">
+                                    {{ uploadMessage }}
+                                </div>
+                                <div v-if="uploadError" class="alert alert-danger small mt-2 mb-0 py-2">
+                                    {{ uploadError }}
+                                </div>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -279,6 +316,8 @@
         const share = <?= json_encode($share, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
         const locale = "<?= esc($locale) ?>";
         const translations = <?= json_encode($translations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+        const uploadMaxFileMb = <?= (int)$uploadMaxFileMb ?>;
+        const uploadMode = <?= $isUploadMode ? 'true' : 'false' ?>;
 
         const t = (key, fallback = '', params = null) => {
             let value = translations[key];
@@ -301,6 +340,13 @@
                 const searchQuery = ref('');
                 const sortKey = ref('type_name');
                 const previewState = reactive({ src: '', type: '', filename: '' });
+                const fileInput = ref(null);
+                const dropzoneActive = ref(false);
+                const dragDepth = ref(0);
+                const uploading = ref(false);
+                const uploadProgress = ref(0);
+                const uploadMessage = ref('');
+                const uploadError = ref('');
                 let previewModal = null;
 
                 const loadPath = async (path = '') => {
@@ -314,6 +360,112 @@
                         searchQuery.value = '';
                     } catch(e) { console.error(e); }
                     finally { loading.value = false; }
+                };
+
+                const resetUploadState = () => {
+                    uploadMessage.value = '';
+                    uploadError.value = '';
+                };
+
+                const openFilePicker = () => {
+                    if (!fileInput.value || uploading.value) return;
+                    fileInput.value.value = '';
+                    fileInput.value.click();
+                };
+
+                const onFileInputChange = (event) => {
+                    const input = event?.target;
+                    if (!input?.files?.length) return;
+                    handleFiles(input.files);
+                };
+
+                const onDragEnter = () => {
+                    if (!uploadMode || uploading.value) return;
+                    dragDepth.value += 1;
+                    dropzoneActive.value = true;
+                };
+
+                const onDragOver = () => {
+                    if (!uploadMode || uploading.value) return;
+                    dropzoneActive.value = true;
+                };
+
+                const onDragLeave = () => {
+                    if (!uploadMode || uploading.value) return;
+                    dragDepth.value = Math.max(0, dragDepth.value - 1);
+                    if (dragDepth.value === 0) {
+                        dropzoneActive.value = false;
+                    }
+                };
+
+                const onDrop = (event) => {
+                    if (!uploadMode || uploading.value) return;
+                    dragDepth.value = 0;
+                    dropzoneActive.value = false;
+                    const dt = event?.dataTransfer;
+                    if (!dt?.files?.length) return;
+                    handleFiles(dt.files);
+                };
+
+                const exceedsMaxSize = (file) => {
+                    if (!uploadMaxFileMb || uploadMaxFileMb <= 0) return false;
+                    const maxBytes = uploadMaxFileMb * 1024 * 1024;
+                    return (Number(file.size) || 0) > maxBytes;
+                };
+
+                const handleFiles = async (fileList) => {
+                    if (!uploadMode || !fileList?.length) return;
+                    resetUploadState();
+
+                    const filesArray = Array.from(fileList);
+                    const oversized = filesArray.filter(exceedsMaxSize);
+                    if (oversized.length > 0) {
+                        uploadError.value = t('shared_upload_error_too_large', 'Some files exceed the maximum size of {max} MB.', { max: uploadMaxFileMb });
+                        return;
+                    }
+
+                    uploading.value = true;
+                    uploadProgress.value = 0;
+
+                    try {
+                        let completed = 0;
+                        for (const f of filesArray) {
+                            // eslint-disable-next-line no-await-in-loop
+                            await uploadSingle(f);
+                            completed += 1;
+                            uploadProgress.value = Math.round((completed / filesArray.length) * 100);
+                        }
+
+                        uploadMessage.value = t('shared_upload_success', 'Upload complete.');
+                        await loadPath(currentPath.value);
+                    } catch (e) {
+                        console.error(e);
+                        uploadError.value = e?.message || t('shared_upload_error', 'Upload failed.');
+                    } finally {
+                        uploading.value = false;
+                        dropzoneActive.value = false;
+                        dragDepth.value = 0;
+                    }
+                };
+
+                const uploadSingle = async (file) => {
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    fd.append('path', currentPath.value || '');
+
+                    const res = await fetch(baseUrl + 's/' + hash + '/upload', {
+                        method: 'POST',
+                        body: fd,
+                        credentials: 'same-origin',
+                    });
+
+                    const json = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        const message = json?.messages?.error || json?.message || t('shared_upload_error', 'Upload failed.');
+                        throw new Error(message);
+                    }
+
+                    return json;
                 };
 
                 const previewableExts = new Set(['jpg','jpeg','png','gif','webp','svg','mp4','webm','ogv','mp3','wav','ogg','pdf']);
@@ -492,6 +644,20 @@
                     share,
                     locale,
                     t,
+                    uploadMode,
+                    uploadMaxFileMb,
+                    fileInput,
+                    dropzoneActive,
+                    uploading,
+                    uploadProgress,
+                    uploadMessage,
+                    uploadError,
+                    openFilePicker,
+                    onFileInputChange,
+                    onDragEnter,
+                    onDragOver,
+                    onDragLeave,
+                    onDrop,
                     files,
                     filteredFiles,
                     loading,

@@ -17,6 +17,9 @@ class ShareController extends BaseController
         $supportedLocales = ['en', 'de', 'fr'];
         $locale = $this->detectLocale($supportedLocales);
         $translations = $this->loadTranslations($locale);
+        $settingsService = new \App\Services\SettingsService();
+        $settings = $settingsService->getSettings();
+        $uploadMaxFileMb = (int)($settings['upload_max_file_mb'] ?? 0);
 
         if (!$share) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Link expired or invalid.");
@@ -58,6 +61,7 @@ class ShareController extends BaseController
                 'hash' => $hash,
                 'locale' => $locale,
                 'translations' => $translations,
+                'uploadMaxFileMb' => $uploadMaxFileMb,
             ]);
         }
 
@@ -72,6 +76,7 @@ class ShareController extends BaseController
             'hash' => $hash,
             'locale' => $locale,
             'translations' => $translations,
+            'uploadMaxFileMb' => $uploadMaxFileMb,
         ]);
     }
 
@@ -254,6 +259,76 @@ class ShareController extends BaseController
             $fs = new LocalAdapter($basePath);
             $items = $fs->listDirectory($subPath, false);
             return $this->respond(['items' => $items]);
+        } catch (\Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    /**
+     * Public upload endpoint for upload-mode shares.
+     */
+    public function upload(string $hash)
+    {
+        $service = new ShareService();
+        $share = $service->getShare($hash);
+        if (!$share) {
+            return $this->failNotFound();
+        }
+
+        // Password check
+        if ($share['password_hash'] && !session('share_verified_' . $hash)) {
+            return $this->failForbidden();
+        }
+
+        if (($share['mode'] ?? 'read') !== 'upload') {
+            return $this->failForbidden('Uploads are not allowed for this share.');
+        }
+
+        $rootBase = WRITEPATH . 'file_manager_root/';
+        if (isset($share['source']) && $share['source'] === 'transfer') {
+            $rootBase = WRITEPATH . 'uploads/shares/';
+        }
+
+        $basePath = $rootBase . $share['path'];
+        if (!is_dir($basePath)) {
+            return $this->failForbidden();
+        }
+
+        $subPath = (string)($this->request->getPost('path') ?? '');
+        $subPath = ltrim($subPath, '/');
+
+        $file = $this->request->getFile('file');
+        if (!$file || !$file->isValid()) {
+            return $this->fail($file ? $file->getErrorString() : 'No file uploaded');
+        }
+
+        try {
+            $settingsService = new \App\Services\SettingsService();
+            $settings = $settingsService->getSettings();
+
+            $fileSize = (int)$file->getSize();
+            $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
+            if ($maxMb > 0) {
+                $maxBytes = $maxMb * 1024 * 1024;
+                if ($fileSize > $maxBytes) {
+                    return $this->fail("File exceeds the maximum allowed upload size of {$maxMb} MB.");
+                }
+            }
+
+            $fs = new LocalAdapter($basePath);
+            $targetDir = $fs->resolvePath($subPath);
+            if (!is_dir($targetDir)) {
+                return $this->fail('Target directory does not exist.');
+            }
+
+            $name = $file->getClientName();
+            $file->move($targetDir, $name);
+
+            return $this->respond([
+                'status' => 'success',
+                'name' => $name,
+                'path' => $subPath,
+            ]);
         } catch (\Exception $e) {
             return $this->fail($e->getMessage());
         }
