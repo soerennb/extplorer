@@ -31,6 +31,7 @@
             $shareTitle = $st('shared_file_transfer', 'File Transfer');
         }
         $shareMode = $share['mode'] ?? 'read';
+        $isUploadMode = $shareMode === 'upload';
         $shareModeLabels = [
             'read' => $st('shared_mode_read', 'Read'),
             'upload' => $st('shared_mode_upload', 'Upload'),
@@ -60,6 +61,10 @@
         .select-auto-width { width: auto; }
         .shared-breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; padding: 0.25rem 0.25rem 0.5rem 0.25rem; }
         .shared-breadcrumbs .btn { padding: 0; }
+        .shared-upload-panel { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.85rem 1rem; border: 1px dashed var(--bs-warning); background: rgba(255, 193, 7, 0.08); border-radius: 0.75rem; margin: 0.25rem 0.25rem 0.75rem 0.25rem; }
+        .shared-upload-panel-icon { font-size: 1.6rem; color: var(--bs-warning); line-height: 1; }
+        .shared-upload-panel-title { font-weight: 600; margin-bottom: 0.15rem; }
+        .shared-upload-panel-note { font-size: 0.85rem; color: var(--bs-secondary-color); margin-top: 0.35rem; }
         .file-item { display: flex; align-items: center; padding: 0.75rem; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
         .file-item:hover { background-color: #f8f9fa; }
         .file-item-name { flex: 1; min-width: 0; }
@@ -151,6 +156,18 @@
             <?php else: ?>
                 <div v-if="loading" class="text-center mt-5"><div class="spinner-border text-primary"></div></div>
                 <div v-else>
+                    <?php if ($isUploadMode): ?>
+                        <div class="shared-upload-panel" role="status" aria-live="polite">
+                            <div class="shared-upload-panel-icon">
+                                <i class="ri-upload-cloud-2-line"></i>
+                            </div>
+                            <div>
+                                <div class="shared-upload-panel-title"><?= esc($st('shared_upload_panel_title', 'Upload-Only Share')) ?></div>
+                                <div class="small"><?= esc($st('shared_upload_panel_desc', 'You can upload files to this share. Files already here may not be downloadable.')) ?></div>
+                                <div class="shared-upload-panel-note"><?= esc($st('shared_upload_panel_note', 'Tip: drag and drop will be supported here.')) ?></div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                     <div class="shared-breadcrumbs">
                         <template v-for="(crumb, idx) in breadcrumbs" :key="crumb.path || 'root'">
                             <button type="button" class="btn btn-link btn-sm text-decoration-none" @click="navigateTo(crumb.path)">

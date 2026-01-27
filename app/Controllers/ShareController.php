@@ -27,7 +27,11 @@ class ShareController extends BaseController
             // Check if verified in session
             $sessionKey = 'share_verified_' . $hash;
             if (!session($sessionKey)) {
-                return view('shared_password', ['hash' => $hash]);
+                return view('shared_password', [
+                    'hash' => $hash,
+                    'locale' => $locale,
+                    'translations' => $translations,
+                ]);
             }
         }
 
@@ -129,13 +133,17 @@ class ShareController extends BaseController
     {
         $service = new ShareService();
         $password = $this->request->getPost('password');
+        $supportedLocales = ['en', 'de', 'fr'];
+        $locale = $this->detectLocale($supportedLocales);
+        $translations = $this->loadTranslations($locale);
+        $invalidPasswordMessage = $translations['shared_invalid_password'] ?? 'Invalid Password';
 
         if ($service->verifyPassword($hash, $password)) {
             session()->set('share_verified_' . $hash, true);
             return redirect()->to('/s/' . $hash);
         }
 
-        return redirect()->back()->with('error', 'Invalid Password');
+        return redirect()->back()->with('error', $invalidPasswordMessage);
     }
 
     public function download(string $hash)
