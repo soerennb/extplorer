@@ -75,10 +75,12 @@ $routes->group('api', function($routes) {
     
     $routes->get('roles', 'UserAdminController::getRoles');
     $routes->post('roles', 'UserAdminController::saveRole');
+    $routes->get('roles/(:segment)/usage', 'UserAdminController::roleUsage/$1');
     $routes->delete('roles/(:segment)', 'UserAdminController::deleteRole/$1');
 
     $routes->get('groups', 'UserAdminController::getGroups');
     $routes->post('groups', 'UserAdminController::saveGroup');
+    $routes->get('groups/(:segment)/usage', 'UserAdminController::groupUsage/$1');
     $routes->delete('groups/(:segment)', 'UserAdminController::deleteGroup/$1');
 
     $routes->get('permissions/catalog', 'UserAdminController::permissionsCatalog');

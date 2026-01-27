@@ -214,6 +214,53 @@ class UserModel
         $this->saveData($this->rolesFile, $roles);
     }
 
+    /**
+     * Returns dependency information for a role.
+     * Used to guard against deleting roles that are still in use.
+     */
+    public function getRoleUsage(string $roleName): array
+    {
+        $users = $this->getUsers();
+        $groups = $this->getGroups();
+
+        $directUsers = [];
+        foreach ($users as $user) {
+            if (($user['role'] ?? null) === $roleName) {
+                $directUsers[] = $user['username'];
+            }
+        }
+
+        $groupsUsingRole = [];
+        foreach ($groups as $groupName => $roleNames) {
+            if (is_array($roleNames) && in_array($roleName, $roleNames, true)) {
+                $groupsUsingRole[] = $groupName;
+            }
+        }
+
+        $usersViaGroups = [];
+        if (!empty($groupsUsingRole)) {
+            foreach ($users as $user) {
+                $userGroups = $user['groups'] ?? [];
+                if (!is_array($userGroups) || empty($userGroups)) {
+                    continue;
+                }
+                if (array_intersect($userGroups, $groupsUsingRole)) {
+                    $usersViaGroups[] = $user['username'];
+                }
+            }
+        }
+
+        return [
+            'role' => $roleName,
+            'direct_users' => $directUsers,
+            'direct_users_count' => count($directUsers),
+            'groups' => $groupsUsingRole,
+            'groups_count' => count($groupsUsingRole),
+            'users_via_groups' => array_values(array_unique($usersViaGroups)),
+            'users_via_groups_count' => count(array_unique($usersViaGroups)),
+        ];
+    }
+
     // --- Groups ---
 
     public function getGroups(): array
@@ -224,6 +271,40 @@ class UserModel
     public function saveGroups(array $groups): void
     {
         $this->saveData($this->groupsFile, $groups);
+    }
+
+    /**
+     * Returns dependency information for a group.
+     * Used to guard against deleting groups that are still assigned to users.
+     */
+    public function getGroupUsage(string $groupName): array
+    {
+        $users = $this->getUsers();
+        $groups = $this->getGroups();
+
+        $assignedUsers = [];
+        foreach ($users as $user) {
+            $userGroups = $user['groups'] ?? [];
+            if (!is_array($userGroups)) {
+                continue;
+            }
+            if (in_array($groupName, $userGroups, true)) {
+                $assignedUsers[] = $user['username'];
+            }
+        }
+
+        $rolesGranted = $groups[$groupName] ?? [];
+        if (!is_array($rolesGranted)) {
+            $rolesGranted = [];
+        }
+
+        return [
+            'group' => $groupName,
+            'assigned_users' => $assignedUsers,
+            'assigned_users_count' => count($assignedUsers),
+            'roles' => $rolesGranted,
+            'roles_count' => count($rolesGranted),
+        ];
     }
 
     // --- Resolution ---

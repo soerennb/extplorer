@@ -17,6 +17,7 @@ const AdminGroups = {
                 <thead class="sticky-top bg-body">
                     <tr>
                         <th>Group Name</th>
+                        <th>Usage</th>
                         <th>Assigned Roles</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -25,19 +26,37 @@ const AdminGroups = {
                     <tr v-for="(roles, name) in groupsList" :key="name">
                         <td class="fw-semibold">{{ name }}</td>
                         <td>
+                            <div class="d-flex flex-wrap gap-1 align-items-center">
+                                <span class="badge text-bg-secondary" :title="'Assigned users: ' + groupUsage(name).assigned_users_count">
+                                    Users {{ groupUsage(name).assigned_users_count }}
+                                </span>
+                                <span class="badge text-bg-info" :title="'Roles granted: ' + groupUsage(name).roles_count">
+                                    Roles {{ groupUsage(name).roles_count }}
+                                </span>
+                            </div>
+                            <div v-if="groupUsage(name).assigned_users_count" class="small text-muted mt-1">
+                                Unassign users before deleting.
+                            </div>
+                        </td>
+                        <td>
                             <span v-for="r in roles" :key="r" class="badge bg-info me-1">{{ r }}</span>
                         </td>
                         <td class="text-end">
                             <button class="btn btn-sm btn-outline-primary me-1" @click="editGroup(name, roles)">
                                 <i class="ri-edit-line"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" @click="deleteGroup(name)">
+                            <button
+                                class="btn btn-sm btn-outline-danger"
+                                @click="deleteGroup(name)"
+                                :disabled="!canDeleteGroup(name)"
+                                :title="deleteDisabledReason(name)"
+                            >
                                 <i class="ri-delete-bin-line"></i>
                             </button>
                         </td>
                     </tr>
                     <tr v-if="Object.keys(groupsList).length === 0">
-                        <td colspan="3" class="text-center text-muted py-4">No groups defined.</td>
+                        <td colspan="4" class="text-center text-muted py-4">No groups defined.</td>
                     </tr>
                 </tbody>
             </table>
@@ -68,6 +87,7 @@ const AdminGroups = {
         return {
             groupsList: {},
             rolesList: {},
+            usageByGroup: {},
             editingGroup: null,
             isSavingGroup: false,
             error: null
@@ -83,9 +103,48 @@ const AdminGroups = {
         async loadGroups() {
             try {
                 this.groupsList = await Api.get('groups');
+                await this.loadUsageForGroups(Object.keys(this.groupsList));
             } catch (e) {
                 this.error = e.message;
             }
+        },
+        async loadUsageForGroups(groupNames) {
+            const usageEntries = await Promise.all(groupNames.map(async (groupName) => {
+                try {
+                    const usage = await Api.get(`groups/${encodeURIComponent(groupName)}/usage`);
+                    return [groupName, usage];
+                } catch (e) {
+                    return [groupName, this.emptyUsage(groupName)];
+                }
+            }));
+
+            this.usageByGroup = usageEntries.reduce((acc, [groupName, usage]) => {
+                acc[groupName] = usage;
+                return acc;
+            }, {});
+        },
+        emptyUsage(groupName) {
+            return {
+                group: groupName,
+                assigned_users: [],
+                assigned_users_count: 0,
+                roles: this.groupsList[groupName] || [],
+                roles_count: Array.isArray(this.groupsList[groupName]) ? this.groupsList[groupName].length : 0
+            };
+        },
+        groupUsage(groupName) {
+            return this.usageByGroup[groupName] || this.emptyUsage(groupName);
+        },
+        canDeleteGroup(groupName) {
+            const usage = this.groupUsage(groupName);
+            return (usage.assigned_users_count ?? 0) === 0;
+        },
+        deleteDisabledReason(groupName) {
+            const usage = this.groupUsage(groupName);
+            if ((usage.assigned_users_count ?? 0) > 0) {
+                return 'Group is still assigned to users';
+            }
+            return 'Delete group';
         },
         async loadRoles() {
             try {
@@ -116,9 +175,24 @@ const AdminGroups = {
             }
         },
         async deleteGroup(name) {
-            const confirmed = await this.confirmDanger('Delete group?', `This will delete the group ${name}.`);
-            if (!confirmed) return;
             try {
+                const usage = await Api.get(`groups/${encodeURIComponent(name)}/usage`);
+                this.usageByGroup[name] = usage;
+
+                if ((usage.assigned_users_count ?? 0) > 0) {
+                    const usersPreview = (usage.assigned_users || []).slice(0, 6).join(', ');
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'Group still assigned',
+                        text: `Users (${usage.assigned_users_count}): ${usersPreview}${usage.assigned_users_count > 6 ? ', …' : ''}`,
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+
+                const confirmed = await this.confirmDanger('Delete group?', `This will delete the group ${name}.`);
+                if (!confirmed) return;
+
                 await Api.delete('groups/' + name);
                 await this.loadGroups();
                 this.toastSuccess('Group deleted.');
@@ -156,4 +230,3 @@ const AdminGroups = {
         }
     }
 };
-

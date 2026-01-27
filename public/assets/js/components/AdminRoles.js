@@ -15,6 +15,7 @@ const AdminRoles = {
                 <thead class="sticky-top bg-body">
                     <tr>
                         <th>Role Name</th>
+                        <th>Usage</th>
                         <th>Permissions</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -23,19 +24,54 @@ const AdminRoles = {
                     <tr v-for="(perms, name) in rolesList" :key="name">
                         <td class="fw-semibold">{{ name }}</td>
                         <td>
+                            <div class="d-flex flex-wrap gap-1 align-items-center">
+                                <span
+                                    v-if="roleUsage(name).protected"
+                                    class="badge text-bg-warning"
+                                    title="System role"
+                                >
+                                    System
+                                </span>
+                                <span class="badge text-bg-secondary" :title="'Direct users: ' + roleUsage(name).direct_users_count">
+                                    Users {{ roleUsage(name).direct_users_count }}
+                                </span>
+                                <span class="badge text-bg-info" :title="'Groups: ' + roleUsage(name).groups_count">
+                                    Groups {{ roleUsage(name).groups_count }}
+                                </span>
+                                <span
+                                    v-if="roleUsage(name).users_via_groups_count"
+                                    class="badge text-bg-light border"
+                                    :title="'Users via groups: ' + roleUsage(name).users_via_groups_count"
+                                >
+                                    Via Groups {{ roleUsage(name).users_via_groups_count }}
+                                </span>
+                            </div>
+                            <div
+                                v-if="roleUsage(name).direct_users_count || roleUsage(name).groups_count"
+                                class="small text-muted mt-1"
+                            >
+                                Remove assignments before deleting.
+                            </div>
+                        </td>
+                        <td>
                             <code class="small">{{ perms.join(', ') }}</code>
                         </td>
                         <td class="text-end">
                             <button class="btn btn-sm btn-outline-primary me-1" @click="editRole(name, perms)">
                                 <i class="ri-edit-line"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" @click="deleteRole(name)">
+                            <button
+                                class="btn btn-sm btn-outline-danger"
+                                @click="deleteRole(name)"
+                                :disabled="!canDeleteRole(name)"
+                                :title="deleteDisabledReason(name)"
+                            >
                                 <i class="ri-delete-bin-line"></i>
                             </button>
                         </td>
                     </tr>
                     <tr v-if="Object.keys(rolesList).length === 0">
-                        <td colspan="3" class="text-center text-muted py-4">No roles defined.</td>
+                        <td colspan="4" class="text-center text-muted py-4">No roles defined.</td>
                     </tr>
                 </tbody>
             </table>
@@ -65,6 +101,8 @@ const AdminRoles = {
         return {
             rolesList: {},
             permissionCatalog: [],
+            usageByRole: {},
+            protectedRoles: ['admin', 'user'],
             editingRole: null,
             isSavingRole: false,
             error: null
@@ -80,9 +118,53 @@ const AdminRoles = {
         async loadRoles() {
             try {
                 this.rolesList = await Api.get('roles');
+                await this.loadUsageForRoles(Object.keys(this.rolesList));
             } catch (e) {
                 this.error = e.message;
             }
+        },
+        async loadUsageForRoles(roleNames) {
+            const usageEntries = await Promise.all(roleNames.map(async (roleName) => {
+                try {
+                    const usage = await Api.get(`roles/${encodeURIComponent(roleName)}/usage`);
+                    return [roleName, usage];
+                } catch (e) {
+                    return [roleName, this.emptyUsage(roleName)];
+                }
+            }));
+
+            this.usageByRole = usageEntries.reduce((acc, [roleName, usage]) => {
+                acc[roleName] = usage;
+                return acc;
+            }, {});
+        },
+        emptyUsage(roleName) {
+            return {
+                role: roleName,
+                protected: this.protectedRoles.includes(roleName),
+                direct_users: [],
+                direct_users_count: 0,
+                groups: [],
+                groups_count: 0,
+                users_via_groups: [],
+                users_via_groups_count: 0
+            };
+        },
+        roleUsage(roleName) {
+            return this.usageByRole[roleName] || this.emptyUsage(roleName);
+        },
+        canDeleteRole(roleName) {
+            const usage = this.roleUsage(roleName);
+            if (usage.protected) return false;
+            return usage.direct_users_count === 0 && usage.groups_count === 0;
+        },
+        deleteDisabledReason(roleName) {
+            const usage = this.roleUsage(roleName);
+            if (usage.protected) return 'System roles cannot be deleted';
+            if (usage.direct_users_count > 0 || usage.groups_count > 0) {
+                return 'Role is still assigned to users or groups';
+            }
+            return 'Delete role';
         },
         async loadPermissionsCatalog() {
             try {
@@ -117,9 +199,44 @@ const AdminRoles = {
             }
         },
         async deleteRole(name) {
-            const confirmed = await this.confirmDanger('Delete role?', `This will delete the role ${name}.`);
-            if (!confirmed) return;
             try {
+                const usage = await Api.get(`roles/${encodeURIComponent(name)}/usage`);
+                this.usageByRole[name] = usage;
+
+                if (usage.protected) {
+                    await Swal.fire({
+                        icon: 'info',
+                        title: 'System role',
+                        text: `${name} is a protected system role and cannot be deleted.`,
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+
+                if ((usage.direct_users_count ?? 0) > 0 || (usage.groups_count ?? 0) > 0) {
+                    const directUsersPreview = (usage.direct_users || []).slice(0, 5).join(', ');
+                    const groupsPreview = (usage.groups || []).slice(0, 5).join(', ');
+                    const details = [
+                        usage.direct_users_count
+                            ? `Direct users (${usage.direct_users_count}): ${directUsersPreview}${usage.direct_users_count > 5 ? ', …' : ''}`
+                            : null,
+                        usage.groups_count
+                            ? `Groups (${usage.groups_count}): ${groupsPreview}${usage.groups_count > 5 ? ', …' : ''}`
+                            : null,
+                    ].filter(Boolean).join('\n');
+
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'Role still in use',
+                        text: details || 'This role is still assigned.',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+
+                const confirmed = await this.confirmDanger('Delete role?', `This will delete the role ${name}.`);
+                if (!confirmed) return;
+
                 await Api.delete('roles/' + name);
                 await this.loadRoles();
                 this.toastSuccess('Role deleted.');
@@ -157,4 +274,3 @@ const AdminRoles = {
         }
     }
 };
-

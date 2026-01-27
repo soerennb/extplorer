@@ -11,6 +11,10 @@ class UserAdminController extends BaseController
     use ResponseTrait;
 
     private UserModel $userModel;
+    /**
+     * System roles should not be removable via the UI/API.
+     */
+    private array $protectedRoles = ['admin', 'user'];
 
     public function __construct()
     {
@@ -55,13 +59,49 @@ class UserAdminController extends BaseController
         if (!$name) return $this->fail('Role name required');
 
         $roles = $this->userModel->getRoles();
-        if (isset($roles[$name])) {
-            unset($roles[$name]);
-            $this->userModel->saveRoles($roles);
-            LogService::log('Delete Role', $name);
-            return $this->respond(['status' => 'success']);
+        if (!isset($roles[$name])) {
+            return $this->failNotFound('Role not found');
         }
-        return $this->failNotFound('Role not found');
+
+        if (in_array($name, $this->protectedRoles, true)) {
+            return $this->fail([
+                'status' => 'blocked',
+                'message' => 'This system role cannot be deleted.',
+                'details' => [
+                    'role' => $name,
+                    'reason' => 'protected_role',
+                ],
+            ], 409);
+        }
+
+        $usage = $this->userModel->getRoleUsage($name);
+        if (($usage['direct_users_count'] ?? 0) > 0 || ($usage['groups_count'] ?? 0) > 0) {
+            return $this->fail([
+                'status' => 'blocked',
+                'message' => 'Role is still assigned to users or groups.',
+                'details' => $usage,
+            ], 409);
+        }
+
+        unset($roles[$name]);
+        $this->userModel->saveRoles($roles);
+        LogService::log('Delete Role', $name);
+        return $this->respond(['status' => 'success']);
+    }
+
+    public function roleUsage($name = null)
+    {
+        if (($check = $this->checkAdmin()) !== true) return $check;
+        if (!$name) return $this->fail('Role name required');
+
+        $roles = $this->userModel->getRoles();
+        if (!isset($roles[$name])) {
+            return $this->failNotFound('Role not found');
+        }
+
+        $usage = $this->userModel->getRoleUsage($name);
+        $usage['protected'] = in_array($name, $this->protectedRoles, true);
+        return $this->respond($usage);
     }
 
     // --- Groups ---
@@ -94,13 +134,36 @@ class UserAdminController extends BaseController
         if (!$name) return $this->fail('Group name required');
 
         $groups = $this->userModel->getGroups();
-        if (isset($groups[$name])) {
-            unset($groups[$name]);
-            $this->userModel->saveGroups($groups);
-            LogService::log('Delete Group', $name);
-            return $this->respond(['status' => 'success']);
+        if (!isset($groups[$name])) {
+            return $this->failNotFound('Group not found');
         }
-        return $this->failNotFound('Group not found');
+
+        $usage = $this->userModel->getGroupUsage($name);
+        if (($usage['assigned_users_count'] ?? 0) > 0) {
+            return $this->fail([
+                'status' => 'blocked',
+                'message' => 'Group is still assigned to users.',
+                'details' => $usage,
+            ], 409);
+        }
+
+        unset($groups[$name]);
+        $this->userModel->saveGroups($groups);
+        LogService::log('Delete Group', $name);
+        return $this->respond(['status' => 'success']);
+    }
+
+    public function groupUsage($name = null)
+    {
+        if (($check = $this->checkAdmin()) !== true) return $check;
+        if (!$name) return $this->fail('Group name required');
+
+        $groups = $this->userModel->getGroups();
+        if (!isset($groups[$name])) {
+            return $this->failNotFound('Group not found');
+        }
+
+        return $this->respond($this->userModel->getGroupUsage($name));
     }
 
     public function index()
