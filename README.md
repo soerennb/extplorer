@@ -51,11 +51,20 @@ Prebuilt images are published to GHCR and intended to run as a multi-container s
 
 ### Quick Start (Compose)
 
+**Important:** To deploy via Docker, you must have the full repository (including the `docker/` directory) because the `nginx` service mounts the local configuration file.
+
+**Command Line:**
 ```bash
+# 1. Clone the repository
+git clone https://github.com/soerennb/extplorer3.git
+cd extplorer3
+
+# 2. Start the stack
 docker compose up -d
 ```
 
-The default `docker-compose.yml` uses:
+**Note for Portainer Users:** Do **not** simply paste the `docker-compose.yml` into the Web Editor. Use the "Repository" method to ensure Portainer clones the configuration files along with the compose file.
+
 - `ghcr.io/soerennb/extplorer3:latest` for the app (php-fpm)
 - `nginx:alpine` for the web server
 - An `init` service that populates the shared code volume on first run and on image updates

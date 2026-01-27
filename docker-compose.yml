@@ -20,7 +20,6 @@ services:
     environment:
       # CI4 Configuration
       - CI_ENVIRONMENT=production
-      - app.baseURL=http://localhost:8080/
       - WRITEPATH=/var/www/html/writable
       
       # eXtplorer Configuration
@@ -38,7 +37,7 @@ services:
       init:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "php -r '$fp=@fsockopen(\"127.0.0.1\",9000); if($fp){fclose($fp); exit(0);} exit(1);'"]
+      test: ["CMD-SHELL", "php -r '$$fp=@fsockopen(\"127.0.0.1\",9000); if($$fp){fclose($$fp); exit(0);} exit(1);'"]
       interval: 30s
       timeout: 5s
       retries: 3

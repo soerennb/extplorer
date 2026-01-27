@@ -22,6 +22,17 @@ To avoid CSP warnings and regressions:
 - **Keep CSP strict**: do not add `unsafe-inline` back to `script-src` or `style-src`. If a new use case requires it, refactor instead.
 - **Before finishing**: scan `app/Views` for inline scripts/styles/handlers and ensure they follow the rules above.
 
+## Localization & Translations
+
+When adding new user-facing strings to the application:
+
+- **Check existing strings**: Before adding a new key, search `public/assets/i18n/en.json` (frontend) or `app/Language/en/` (backend) to see if an appropriate string or key already exists.
+- **Update all files**: New strings **MUST** be added to all available language files.
+    - Frontend: `public/assets/i18n/en.json`, `de.json`, and `fr.json`.
+    - Backend: `app/Language/en/` and any other locale directories present.
+- **Maintain Consistency**: Keep keys identical across all files. If a translation is unknown, use the English version as a temporary placeholder rather than leaving the key out.
+- **Verify JSON**: After editing, ensure the JSON files remain valid (no trailing commas, correct nesting).
+
 ## Docker Note
 
 - Docker uses an init container to populate the shared code volume; updates refresh automatically based on the image version marker.
