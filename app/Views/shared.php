@@ -444,8 +444,8 @@
                     return t('shared_file_ext', '{ext} file', { ext });
                 };
 
-                const formatRelativeDate = (t) => {
-                    const ts = Number(t) || 0;
+                const formatRelativeDate = (tsValue) => {
+                    const ts = Number(tsValue) || 0;
                     if (!ts) return t('shared_none', '—');
                     const diffSec = Math.max(0, Math.floor(Date.now() / 1000) - ts);
                     const day = 86400;
