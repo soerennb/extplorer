@@ -148,7 +148,9 @@ class TransferController extends BaseController
         }
 
         $json = $this->request->getJSON();
-        $sessionId = $this->normalizeSessionId((string)($json->sessionId ?? ''));
+        $sessionIdRaw = $json->sessionId ?? '';
+        // Guard against event objects or other non-scalar values being passed from the UI.
+        $sessionId = $this->normalizeSessionId(is_scalar($sessionIdRaw) ? (string)$sessionIdRaw : '');
         $recipients = $this->normalizeRecipients($json->recipients ?? []); // Array of emails
         $subject = trim((string)($json->subject ?? ''));
         $message = trim((string)($json->message ?? ''));

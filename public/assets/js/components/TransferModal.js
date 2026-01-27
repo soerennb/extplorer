@@ -163,7 +163,7 @@ const TransferModal = {
                                         </div>
                                     </div>
 
-                                    <button class="btn btn-primary w-100" @click="sendTransfer" :disabled="isUploading || files.length === 0">
+                                    <button class="btn btn-primary w-100" @click="sendTransfer()" :disabled="isUploading || files.length === 0">
                                         <span v-if="isUploading">
                                             <span class="spinner-border spinner-border-sm me-1"></span> {{ t('transfer_sending', 'Sending...') }} {{ uploadProgress }}%
                                         </span>
