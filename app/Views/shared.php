@@ -269,7 +269,7 @@
     </div>
 
     <?php if (!$is_file): ?>
-    <script src="<?= base_url('assets/js/vue.global.js') ?>"></script>
+    <script src="<?= base_url('assets/js/vue.global.prod.js') ?>"></script>
     <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
     <script <?= csp_script_nonce() ?>>
         const { createApp, ref, reactive, computed, onMounted } = Vue;

@@ -39,6 +39,12 @@ abstract class BaseController extends Controller
 
         // E.g.: $this->session = \Config\Services::session();
         helper('auth');
+
+        // Set a conservative Permissions-Policy header and avoid unsupported features.
+        $this->response->setHeader(
+            'Permissions-Policy',
+            'geolocation=(), microphone=(), camera=(), payment=(), usb=(), fullscreen=(self)'
+        );
         
         // --- Poor Man's Cron (Auto Cleanup) ---
         // Run once per hour on a random request
