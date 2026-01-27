@@ -525,8 +525,21 @@ const UserAdmin = {
         }
     },
     mounted() {
-        this.modal = new bootstrap.Modal(document.getElementById('userAdminModal'));
-        document.getElementById('userAdminModal').addEventListener('show.bs.modal', this.initAdmin);
+        const modalEl = document.getElementById('userAdminModal');
+        const embedMode = Boolean(window.adminEmbed);
+        const modalOptions = embedMode ? { backdrop: false, keyboard: false } : {};
+
+        this.modal = new bootstrap.Modal(modalEl, modalOptions);
+        modalEl.addEventListener('show.bs.modal', this.initAdmin);
+
+        if (embedMode) {
+            modalEl.classList.add('admin-embed');
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                window.location.href = window.baseUrl || '/';
+            });
+            this.initAdmin();
+            this.modal.show();
+        }
     },
     methods: {
         open() {

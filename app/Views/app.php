@@ -383,6 +383,7 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow">
                             <li><a class="dropdown-item" href="#" @click.prevent="openProfile">{{ t('profile_settings') || 'Profile & Settings' }}</a></li>
+                            <li v-if="isAdmin"><a class="dropdown-item" href="<?= base_url('admin') ?>"><i class="ri-settings-3-line me-2"></i> Admin Console</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><h6 class="dropdown-header">Appearance</h6></li>
                             <li><a class="dropdown-item" :class="{active: theme === 'light'}" href="#" @click.prevent="setTheme('light')">
