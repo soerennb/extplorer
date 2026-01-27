@@ -55,5 +55,20 @@ class ApiControllerSharePolicyTest extends CIUnitTestCase
         $this->expectException(\Exception::class);
         $this->callPrivate($controller, 'normalizeShareExpiry', [$tooFar, $settings]);
     }
-}
 
+    public function testBuildSharePolicyNormalizesDefaults(): void
+    {
+        $controller = new ApiController();
+        $policy = $this->callPrivate($controller, 'buildSharePolicy', [[
+            'share_require_password' => true,
+            'share_require_expiry' => true,
+            'share_default_expiry_days' => 999,
+            'share_max_expiry_days' => 30,
+        ]]);
+
+        $this->assertTrue($policy['require_password']);
+        $this->assertTrue($policy['require_expiry']);
+        $this->assertSame(30, $policy['default_expiry_days']);
+        $this->assertSame(30, $policy['max_expiry_days']);
+    }
+}

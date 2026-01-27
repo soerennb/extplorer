@@ -47,6 +47,7 @@ $routes->group('api', function($routes) {
     $routes->post('share/create', 'ApiController::shareCreate');
     $routes->post('share/delete', 'ApiController::shareDelete');
     $routes->get('share/list', 'ApiController::shareList');
+    $routes->get('share/policy', 'ApiController::sharePolicy');
 
     // Trash
     $routes->get('trash/list', 'ApiController::trashList');

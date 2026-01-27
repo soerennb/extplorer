@@ -695,6 +695,19 @@ class ApiController extends BaseController
 
     // --- Share API ---
 
+    public function sharePolicy()
+    {
+        if (!can('read')) return $this->failForbidden();
+
+        try {
+            $settingsService = new \App\Services\SettingsService();
+            $settings = $settingsService->getSettings();
+            return $this->respond($this->buildSharePolicy($settings));
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
     public function shareCreate()
     {
         if (!can('read')) return $this->failForbidden();
@@ -825,6 +838,32 @@ class ApiController extends BaseController
         }
 
         return $expiresAt;
+    }
+
+    private function buildSharePolicy(array $settings): array
+    {
+        $maxDays = (int)($settings['share_max_expiry_days'] ?? 30);
+        if ($maxDays < 1) {
+            $maxDays = 1;
+        }
+        if ($maxDays > 365) {
+            $maxDays = 365;
+        }
+
+        $defaultDays = (int)($settings['share_default_expiry_days'] ?? 7);
+        if ($defaultDays < 1) {
+            $defaultDays = 1;
+        }
+        if ($defaultDays > $maxDays) {
+            $defaultDays = $maxDays;
+        }
+
+        return [
+            'require_password' => !empty($settings['share_require_password']),
+            'require_expiry' => !empty($settings['share_require_expiry']),
+            'default_expiry_days' => $defaultDays,
+            'max_expiry_days' => $maxDays,
+        ];
     }
 
     private function rrmdir(string $dir): void
