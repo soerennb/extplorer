@@ -67,6 +67,11 @@ class SettingsService
             'transfer_max_expiry_days' => 30,
             'transfer_default_notify_download' => false,
             'log_retention_count' => 2000,
+            'session_idle_timeout_minutes' => 120,
+            'share_default_expiry_days' => 7,
+            'share_require_expiry' => false,
+            'share_max_expiry_days' => 30,
+            'share_require_password' => false,
             'allow_public_uploads' => false,
             'mount_root_allowlist' => [],
         ];

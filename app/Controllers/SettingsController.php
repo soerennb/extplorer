@@ -118,6 +118,42 @@ class SettingsController extends BaseController
             $json['allow_public_uploads'] = (bool)$json['allow_public_uploads'];
         }
 
+        if (isset($json['session_idle_timeout_minutes'])) {
+            $minutes = (int)$json['session_idle_timeout_minutes'];
+            if ($minutes < 0 || $minutes > 1440) {
+                return $this->fail('Session idle timeout must be between 0 and 1440 minutes');
+            }
+            $json['session_idle_timeout_minutes'] = $minutes;
+        }
+
+        if (array_key_exists('share_require_expiry', $json)) {
+            $json['share_require_expiry'] = (bool)$json['share_require_expiry'];
+        }
+
+        if (array_key_exists('share_require_password', $json)) {
+            $json['share_require_password'] = (bool)$json['share_require_password'];
+        }
+
+        if (isset($json['share_max_expiry_days'])) {
+            $maxShareExpiry = (int)$json['share_max_expiry_days'];
+            if ($maxShareExpiry < 1 || $maxShareExpiry > 365) {
+                return $this->fail('Share max expiry must be between 1 and 365 days');
+            }
+            $json['share_max_expiry_days'] = $maxShareExpiry;
+        }
+
+        if (isset($json['share_default_expiry_days'])) {
+            $defaultShareExpiry = (int)$json['share_default_expiry_days'];
+            if ($defaultShareExpiry < 1) {
+                return $this->fail('Share default expiry must be at least 1 day');
+            }
+            $maxShareExpiry = (int)($json['share_max_expiry_days'] ?? $currentSettings['share_max_expiry_days'] ?? 30);
+            if ($defaultShareExpiry > $maxShareExpiry) {
+                return $this->fail('Share default expiry cannot exceed the share max expiry');
+            }
+            $json['share_default_expiry_days'] = $defaultShareExpiry;
+        }
+
         // If password is mask, don't update it (keep existing)
         if (isset($json['smtp_pass']) && $json['smtp_pass'] === '********') {
             unset($json['smtp_pass']);

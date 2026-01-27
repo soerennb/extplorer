@@ -43,10 +43,16 @@ const UserAdmin = {
                                     <a class="nav-link" :class="{active: settingsTab === 'transfers'}" href="#" @click.prevent="settingsTab = 'transfers'">Transfers</a>
                                 </li>
                                 <li class="nav-item">
+                                    <a class="nav-link" :class="{active: settingsTab === 'sharing'}" href="#" @click.prevent="settingsTab = 'sharing'">Sharing</a>
+                                </li>
+                                <li class="nav-item">
                                     <a class="nav-link" :class="{active: settingsTab === 'mounts'}" href="#" @click.prevent="settingsTab = 'mounts'">Mounts</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" :class="{active: settingsTab === 'logging'}" href="#" @click.prevent="settingsTab = 'logging'">Logging</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" :class="{active: settingsTab === 'security'}" href="#" @click.prevent="settingsTab = 'security'">Security</a>
                                 </li>
                             </ul>
 
@@ -140,6 +146,34 @@ const UserAdmin = {
                                     </div>
                                 </div>
 
+                                <div v-if="settingsTab === 'sharing'">
+                                    <h6 class="border-bottom pb-2 mb-3">Share Links</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Default Expiry (Days)</label>
+                                            <input type="number" min="1" max="365" class="form-control form-control-sm" v-model.number="settings.share_default_expiry_days">
+                                            <div class="form-text">Used when expiry is required but not provided.</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Max Expiry (Days)</label>
+                                            <input type="number" min="1" max="365" class="form-control form-control-sm" v-model.number="settings.share_max_expiry_days">
+                                            <div class="form-text">Upper bound for all share links.</div>
+                                        </div>
+                                        <div class="col-md-4 d-flex align-items-end">
+                                            <div class="form-check form-switch mb-1">
+                                                <input class="form-check-input" type="checkbox" id="shareRequireExpiry" v-model="settings.share_require_expiry">
+                                                <label class="form-check-label small fw-bold" for="shareRequireExpiry">Require Expiry</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 d-flex align-items-end">
+                                            <div class="form-check form-switch mb-1">
+                                                <input class="form-check-input" type="checkbox" id="shareRequirePassword" v-model="settings.share_require_password">
+                                                <label class="form-check-label small fw-bold" for="shareRequirePassword">Require Password</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div v-if="settingsTab === 'mounts'">
                                     <h6 class="border-bottom pb-2 mb-3">External Mounts</h6>
                                     <div class="row g-3">
@@ -158,6 +192,17 @@ const UserAdmin = {
                                             <label class="form-label small fw-bold">Retention Count</label>
                                             <input type="number" min="100" max="20000" step="100" class="form-control form-control-sm" v-model.number="settings.log_retention_count">
                                             <div class="form-text">How many recent audit log entries to keep (100-20000).</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div v-if="settingsTab === 'security'">
+                                    <h6 class="border-bottom pb-2 mb-3">Session Security</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Idle Timeout (Minutes)</label>
+                                            <input type="number" min="0" max="1440" class="form-control form-control-sm" v-model.number="settings.session_idle_timeout_minutes">
+                                            <div class="form-text">0 disables idle timeout. Applies to API and UI sessions.</div>
                                         </div>
                                     </div>
                                 </div>
@@ -625,6 +670,21 @@ const UserAdmin = {
                 }
                 if (typeof this.settings.transfer_default_notify_download !== 'boolean') {
                     this.settings.transfer_default_notify_download = false;
+                }
+                if (typeof this.settings.share_default_expiry_days !== 'number' || Number.isNaN(this.settings.share_default_expiry_days)) {
+                    this.settings.share_default_expiry_days = 7;
+                }
+                if (typeof this.settings.share_max_expiry_days !== 'number' || Number.isNaN(this.settings.share_max_expiry_days)) {
+                    this.settings.share_max_expiry_days = 30;
+                }
+                if (typeof this.settings.share_require_expiry !== 'boolean') {
+                    this.settings.share_require_expiry = false;
+                }
+                if (typeof this.settings.share_require_password !== 'boolean') {
+                    this.settings.share_require_password = false;
+                }
+                if (typeof this.settings.session_idle_timeout_minutes !== 'number' || Number.isNaN(this.settings.session_idle_timeout_minutes)) {
+                    this.settings.session_idle_timeout_minutes = 120;
                 }
                 this.settingsOriginal = JSON.parse(JSON.stringify(this.settings));
                 this.clearEmailValidation();

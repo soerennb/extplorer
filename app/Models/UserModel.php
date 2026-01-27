@@ -201,7 +201,7 @@ class UserModel
         $roles = $this->loadData($this->rolesFile);
         if (empty($roles)) {
             $roles = [
-                'admin' => ['*'],
+                'admin' => ['*', 'admin_settings'],
                 'user'  => ['read', 'write', 'upload', 'delete', 'rename', 'archive', 'extract', 'chmod']
             ];
             $this->saveRoles($roles);

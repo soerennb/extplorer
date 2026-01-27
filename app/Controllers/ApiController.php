@@ -681,8 +681,16 @@ class ApiController extends BaseController
         }
 
         try {
+            $settingsService = new \App\Services\SettingsService();
+            $settings = $settingsService->getSettings();
+
+            if (!empty($settings['share_require_password']) && empty($password)) {
+                return $this->fail('A password is required by policy for shared links.');
+            }
+
+            $expiresAt = $this->normalizeShareExpiry($expires, $settings);
             $service = new \App\Services\ShareService();
-            $share = $service->createShare($path, session('username'), $password, $expires);
+            $share = $service->createShare($path, session('username'), $password, $expiresAt);
             LogService::log('Create Share', $path);
             return $this->respond(['status' => 'success', 'share' => $share]);
         } catch (Exception $e) {
@@ -726,6 +734,64 @@ class ApiController extends BaseController
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
         }
+    }
+
+    /**
+     * Normalizes and enforces share expiry policies.
+     *
+     * @param mixed $expires A timestamp or strtotime-compatible string.
+     * @param array $settings Settings array from SettingsService.
+     */
+    private function normalizeShareExpiry($expires, array $settings): ?int
+    {
+        $now = time();
+        $maxDays = (int)($settings['share_max_expiry_days'] ?? 30);
+        if ($maxDays < 1) {
+            $maxDays = 1;
+        }
+        if ($maxDays > 365) {
+            $maxDays = 365;
+        }
+
+        $defaultDays = (int)($settings['share_default_expiry_days'] ?? 7);
+        if ($defaultDays < 1) {
+            $defaultDays = 1;
+        }
+        if ($defaultDays > $maxDays) {
+            $defaultDays = $maxDays;
+        }
+
+        $requireExpiry = !empty($settings['share_require_expiry']);
+
+        $expiresAt = null;
+        if ($expires !== null && $expires !== '') {
+            if (is_numeric($expires)) {
+                $expiresAt = (int)$expires;
+            } else {
+                $ts = strtotime((string)$expires);
+                if ($ts === false) {
+                    throw new Exception('Share expiry is not a valid date.');
+                }
+                $expiresAt = $ts;
+            }
+        }
+
+        if ($expiresAt === null && $requireExpiry) {
+            $expiresAt = $now + ($defaultDays * 86400);
+        }
+
+        if ($expiresAt !== null && $expiresAt <= $now) {
+            throw new Exception('Share expiry must be in the future.');
+        }
+
+        if ($expiresAt !== null) {
+            $maxTimestamp = $now + ($maxDays * 86400);
+            if ($expiresAt > $maxTimestamp) {
+                throw new Exception("Share expiry exceeds the maximum allowed of {$maxDays} days.");
+            }
+        }
+
+        return $expiresAt;
     }
 
     private function rrmdir(string $dir): void
