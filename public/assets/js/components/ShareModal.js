@@ -13,13 +13,19 @@ const ShareModal = {
                     <div v-else-if="currentShare">
                         <div class="input-group mb-3">
                             <input type="text" class="form-control" :value="shareUrl" readonly id="shareUrlInput">
-                            <button class="btn btn-outline-primary" @click="copyLink"><i class="ri-file-copy-line"></i></button>
+                            <button class="btn btn-outline-primary" @click="copyLink" title="Copy link"><i class="ri-file-copy-line"></i></button>
+                            <button class="btn btn-outline-secondary" @click="openLink" title="Open link"><i class="ri-external-link-line"></i></button>
                         </div>
                         
                         <div class="alert alert-light border small">
                             <strong>{{ t('created') }}:</strong> {{ formatDate(currentShare.created_at) }}<br>
-                            <span v-if="currentShare.expires_at"><strong>{{ t('expires') }}:</strong> {{ formatDate(currentShare.expires_at) }}<br></span>
-                            <span v-if="currentShare.password_hash"><strong>{{ t('password_protected') || 'Password Protected' }}</strong><br></span>
+                            <span v-if="currentShare.expires_at">
+                                <strong>{{ t('expires') }}:</strong> {{ formatDate(currentShare.expires_at) }}
+                                <span class="text-muted">({{ expiryHuman(currentShare.expires_at) }})</span><br>
+                            </span>
+                            <span v-if="currentShare.password_hash">
+                                <strong>{{ t('password_protected') || 'Password Protected' }}</strong><br>
+                            </span>
                             <strong>{{ t('downloads') || 'Downloads' }}:</strong> {{ currentShare.downloads }}
                         </div>
 
@@ -53,6 +59,7 @@ const ShareModal = {
     `,
     setup() {
         const { ref, reactive, computed } = Vue;
+        const t = (k) => i18n.t(k);
         const loading = ref(false);
         const currentShare = ref(null);
         const targetPath = ref('');
@@ -65,6 +72,18 @@ const ShareModal = {
         });
 
         const formatDate = (ts) => new Date(ts * 1000).toLocaleString();
+        const expiryHuman = (ts) => {
+            if (!ts) return t('never') || 'Never';
+            const now = Math.floor(Date.now() / 1000);
+            const diff = ts - now;
+            if (diff <= 0) return t('expired') || 'Expired';
+            const days = Math.ceil(diff / 86400);
+            if (days === 1) return 'in 1 day';
+            if (days < 7) return `in ${days} days`;
+            const weeks = Math.ceil(days / 7);
+            if (weeks === 1) return 'in 1 week';
+            return `in ${weeks} weeks`;
+        };
 
         const open = async (file) => {
             targetPath.value = file.path;
@@ -115,14 +134,25 @@ const ShareModal = {
 
         const copyLink = () => {
             const i = document.getElementById('shareUrlInput');
-            i.select();
-            document.execCommand('copy');
+            if (!i) return;
+            const value = i.value || shareUrl.value;
+            if (navigator.clipboard && value) {
+                navigator.clipboard.writeText(value);
+            } else {
+                i.select();
+                document.execCommand('copy');
+            }
             Swal.fire({ title: 'Copied!', icon: 'success', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
         };
 
+        const openLink = () => {
+            if (!shareUrl.value) return;
+            window.open(shareUrl.value, '_blank', 'noopener');
+        };
+
         return {
-            open, loading, currentShare, form, createShare, deleteShare, shareUrl, copyLink, formatDate,
-            t: (k) => i18n.t(k)
+            open, loading, currentShare, form, createShare, deleteShare, shareUrl, copyLink, openLink, formatDate, expiryHuman,
+            t
         };
     }
 };

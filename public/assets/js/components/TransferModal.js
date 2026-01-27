@@ -22,12 +22,27 @@ const TransferModal = {
                         <div v-if="successLink" class="text-center py-5">
                             <div class="mb-4 text-success display-1"><i class="ri-checkbox-circle-line"></i></div>
                             <h3>Transfer Sent!</h3>
-                            <p class="text-muted">Your files have been sent and the link created.</p>
+                            <p class="text-muted">Your files have been uploaded and the link is ready.</p>
+
+                            <div v-if="lastTransfer" class="alert alert-light border text-start small mx-auto mb-3" role="alert">
+                                <div class="d-flex flex-wrap gap-3 justify-content-between">
+                                    <div><strong>Files:</strong> {{ lastTransfer.fileCount }}</div>
+                                    <div><strong>Total size:</strong> {{ formatSize(lastTransfer.totalSize) }}</div>
+                                    <div><strong>Recipients:</strong> {{ lastTransfer.recipients.length }}</div>
+                                    <div><strong>Expires:</strong> {{ formatDate(lastTransfer.expiresAt) }}</div>
+                                </div>
+                            </div>
+
                             <div class="input-group mb-3 w-75 mx-auto">
                                 <input type="text" class="form-control" :value="successLink" readonly id="transferLink">
                                 <button class="btn btn-outline-primary" @click="copyLink">Copy</button>
                             </div>
-                            <button class="btn btn-primary" @click="resetForm">Send Another</button>
+                            <div class="d-flex flex-wrap justify-content-center gap-2">
+                                <button class="btn btn-primary" @click="copyLink"><i class="ri-file-copy-line me-1"></i>Copy Link</button>
+                                <button class="btn btn-outline-primary" @click="openLink"><i class="ri-external-link-line me-1"></i>Open Link</button>
+                                <button class="btn btn-outline-secondary" @click="goHistory"><i class="ri-history-line me-1"></i>View History</button>
+                                <button class="btn btn-light border" @click="resetForm">Send Another</button>
+                            </div>
                         </div>
 
                         <div v-else>
@@ -87,11 +102,35 @@ const TransferModal = {
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold">Send To (Email)</label>
-                                        <div class="input-group input-group-sm mb-1" v-for="(email, idx) in recipients" :key="idx">
-                                            <input type="email" class="form-control" v-model="recipients[idx]" placeholder="recipient@example.com">
-                                            <button class="btn btn-outline-danger" @click="recipients.splice(idx, 1)" v-if="recipients.length > 1"><i class="ri-delete-bin-line"></i></button>
+                                        <div class="border rounded p-2 bg-light-subtle">
+                                            <div v-if="recipients.length" class="d-flex flex-wrap gap-1 mb-2">
+                                                <span v-for="email in recipients" :key="email" class="badge text-bg-primary d-inline-flex align-items-center">
+                                                    <span class="me-1">{{ email }}</span>
+                                                    <button type="button" class="btn btn-sm btn-link text-white text-decoration-none p-0" @click="removeRecipient(email)" aria-label="Remove recipient">
+                                                        <i class="ri-close-line"></i>
+                                                    </button>
+                                                </span>
+                                            </div>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text bg-white"><i class="ri-at-line"></i></span>
+                                                <input
+                                                    type="email"
+                                                    class="form-control"
+                                                    v-model.trim="recipientInput"
+                                                    placeholder="Type email and press Enter"
+                                                    @keydown.enter.prevent="addRecipientFromInput"
+                                                    @keydown="handleRecipientKeydown"
+                                                    @blur="addRecipientFromInput"
+                                                    list="transferRecipientHints"
+                                                >
+                                                <button class="btn btn-outline-primary" type="button" @click="addRecipientFromInput">Add</button>
+                                            </div>
                                         </div>
-                                        <button class="btn btn-link btn-sm p-0 text-decoration-none" @click="recipients.push('')">+ Add Recipient</button>
+                                        <datalist id="transferRecipientHints">
+                                            <option value="user@example.com"></option>
+                                        </datalist>
+                                        <div v-if="recipientError" class="text-danger small mt-1">{{ recipientError }}</div>
+                                        <div v-else class="text-muted small mt-1">Press Enter or click Add to create recipient chips.</div>
                                     </div>
 
                                     <div class="mb-3">
@@ -190,7 +229,9 @@ const TransferModal = {
         return {
             tab: 'new',
             files: [],
-            recipients: [''],
+            recipients: [],
+            recipientInput: '',
+            recipientError: '',
             form: {
                 subject: '',
                 message: '',
@@ -201,6 +242,7 @@ const TransferModal = {
             isUploading: false,
             uploadProgress: 0,
             successLink: null,
+            lastTransfer: null,
             
             resumeState: null,
             
@@ -241,9 +283,12 @@ const TransferModal = {
         },
         resetForm() {
             this.files = [];
-            this.recipients = [''];
+            this.recipients = [];
+            this.recipientInput = '';
+            this.recipientError = '';
             this.form = { subject: '', message: '', expiresIn: 7, notifyDownload: true };
             this.successLink = null;
+            this.lastTransfer = null;
             this.uploadProgress = 0;
             this.isUploading = false;
             this.resumeState = null;
@@ -255,7 +300,9 @@ const TransferModal = {
             const { sessionId, recipients, form, fileNames } = this.resumeState;
             
             // Restore Form
-            this.recipients = recipients;
+            this.recipients = recipients || [];
+            this.recipientInput = '';
+            this.recipientError = '';
             this.form = form;
             this.resumeState.isResuming = true;
             
@@ -302,8 +349,53 @@ const TransferModal = {
         removeFile(idx) {
             this.files.splice(idx, 1);
         },
+        isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        },
+        normalizeEmail(email) {
+            return (email || '').trim().toLowerCase();
+        },
+        addRecipient(email) {
+            const normalized = this.normalizeEmail(email);
+            if (!normalized) return false;
+            if (!this.isValidEmail(normalized)) {
+                this.recipientError = 'Please enter a valid email address.';
+                return false;
+            }
+            if (this.recipients.includes(normalized)) {
+                this.recipientError = 'Recipient already added.';
+                return false;
+            }
+            this.recipients.push(normalized);
+            this.recipientError = '';
+            return true;
+        },
+        addRecipientFromInput() {
+            const raw = this.recipientInput;
+            if (!raw) return;
+            const parts = raw.split(/[,\s;]+/).filter(Boolean);
+            let addedAny = false;
+            for (const part of parts) {
+                const added = this.addRecipient(part);
+                addedAny = addedAny || added;
+            }
+            if (addedAny) this.recipientInput = '';
+        },
+        removeRecipient(email) {
+            this.recipients = this.recipients.filter(e => e !== email);
+            if (!this.recipients.length) this.recipientError = '';
+        },
+        handleRecipientKeydown(e) {
+            if (e.key === ',' || e.key === ';') {
+                e.preventDefault();
+                this.addRecipientFromInput();
+            }
+        },
         async sendTransfer(existingSessionId = null) {
-            const validRecipients = this.recipients.filter(e => e && e.includes('@'));
+            // Try to commit any pending input before validation.
+            this.addRecipientFromInput();
+
+            const validRecipients = this.recipients.filter(e => this.isValidEmail(e));
             if (validRecipients.length === 0) return alert('Please enter at least one valid recipient email.');
 
             this.isUploading = true;
@@ -315,7 +407,7 @@ const TransferModal = {
             // Save state for resume
             localStorage.setItem('extplorer_transfer_resume', JSON.stringify({
                 sessionId,
-                recipients: this.recipients,
+                recipients: validRecipients,
                 form: this.form,
                 fileNames: this.files.map(f => f.name),
                 timestamp: Date.now()
@@ -387,6 +479,15 @@ const TransferModal = {
 
                 this.uploadProgress = 100;
                 this.successLink = res.link;
+                this.lastTransfer = {
+                    fileCount: this.files.length,
+                    totalSize: this.totalSize,
+                    recipients: [...validRecipients],
+                    expiresAt: (Number(this.form.expiresIn) || 0) > 0
+                        ? Math.floor(Date.now() / 1000) + (Number(this.form.expiresIn) * 86400)
+                        : null
+                };
+                this.isUploading = false;
                 localStorage.removeItem('extplorer_transfer_resume'); // Clear resume state
 
             } catch (e) {
@@ -414,8 +515,21 @@ const TransferModal = {
         },
         copyLink() {
             const el = document.getElementById('transferLink');
+            if (!el) return;
+            const value = el.value || this.successLink || '';
+            if (navigator.clipboard && value) {
+                navigator.clipboard.writeText(value);
+                return;
+            }
             el.select();
             document.execCommand('copy');
+        },
+        openLink() {
+            if (!this.successLink) return;
+            window.open(this.successLink, '_blank', 'noopener');
+        },
+        goHistory() {
+            this.loadHistory();
         },
         copyItemLink(hash) {
             const link = window.baseUrl + 's/' + hash;
@@ -445,8 +559,14 @@ const TransferModal = {
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         },
-        formatDate(ts) { return new Date(ts * 1000).toLocaleDateString(); },
-        isExpired(ts) { return Date.now()/1000 > ts; },
+        formatDate(ts) {
+            if (!ts) return 'Never';
+            return new Date(ts * 1000).toLocaleDateString();
+        },
+        isExpired(ts) {
+            if (!ts) return false;
+            return Date.now() / 1000 > ts;
+        },
         getIcon(name) { return 'ri-file-line'; }
     }
 };
