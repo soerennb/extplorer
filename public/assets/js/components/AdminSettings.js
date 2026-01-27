@@ -178,7 +178,7 @@ const AdminSettings = {
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label class="form-label small fw-bold">{{ t('admin_settings_mounts_allowlist', 'Allowlist (one path per line)') }}</label>
-                            <textarea class="form-control form-control-sm" rows="4" v-model="settings.mount_root_allowlist_text" :placeholder="t('admin_settings_mounts_allowlist_placeholder', '/srv/data&#10;/mnt/storage')"></textarea>
+                            <textarea class="form-control form-control-sm" rows="4" v-model="settings.mount_root_allowlist_text" :placeholder="t('admin_settings_mounts_allowlist_placeholder', '/srv/data\\n/mnt/storage')"></textarea>
                             <div class="form-text">{{ t('admin_settings_mounts_allowlist_hint', 'Only paths under these roots can be mounted. Leave empty to disable external mounts.') }}</div>
                         </div>
                     </div>
