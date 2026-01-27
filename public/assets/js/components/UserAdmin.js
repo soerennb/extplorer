@@ -40,7 +40,13 @@ const UserAdmin = {
                                     <a class="nav-link" :class="{active: settingsTab === 'email'}" href="#" @click.prevent="settingsTab = 'email'">Email</a>
                                 </li>
                                 <li class="nav-item">
+                                    <a class="nav-link" :class="{active: settingsTab === 'transfers'}" href="#" @click.prevent="settingsTab = 'transfers'">Transfers</a>
+                                </li>
+                                <li class="nav-item">
                                     <a class="nav-link" :class="{active: settingsTab === 'mounts'}" href="#" @click.prevent="settingsTab = 'mounts'">Mounts</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" :class="{active: settingsTab === 'logging'}" href="#" @click.prevent="settingsTab = 'logging'">Logging</a>
                                 </li>
                             </ul>
 
@@ -110,12 +116,26 @@ const UserAdmin = {
                                             <input type="text" class="form-control form-control-sm" v-model="settings.email_from_name">
                                         </div>
                                     </div>
+                                </div>
 
-                                    <h6 class="border-bottom pb-2 mb-3 mt-4">Transfers</h6>
+                                <div v-if="settingsTab === 'transfers'">
+                                    <h6 class="border-bottom pb-2 mb-3">Transfers</h6>
                                     <div class="row g-3">
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
                                             <label class="form-label small fw-bold">Default Expiry (Days)</label>
-                                            <input type="number" class="form-control form-control-sm" v-model="settings.default_transfer_expiry">
+                                            <input type="number" min="1" class="form-control form-control-sm" v-model.number="settings.default_transfer_expiry">
+                                            <div class="form-text">Used when no expiry is provided.</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Max Expiry (Days)</label>
+                                            <input type="number" min="1" max="365" class="form-control form-control-sm" v-model.number="settings.transfer_max_expiry_days">
+                                            <div class="form-text">Upper bound for all transfers.</div>
+                                        </div>
+                                        <div class="col-md-4 d-flex align-items-end">
+                                            <div class="form-check form-switch mb-1">
+                                                <input class="form-check-input" type="checkbox" id="transferNotifyDownload" v-model="settings.transfer_default_notify_download">
+                                                <label class="form-check-label small fw-bold" for="transferNotifyDownload">Notify On Download (Default)</label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -131,10 +151,30 @@ const UserAdmin = {
                                     </div>
                                 </div>
 
+                                <div v-if="settingsTab === 'logging'">
+                                    <h6 class="border-bottom pb-2 mb-3">Audit Logging</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold">Retention Count</label>
+                                            <input type="number" min="100" max="20000" step="100" class="form-control form-control-sm" v-model.number="settings.log_retention_count">
+                                            <div class="form-text">How many recent audit log entries to keep (100-20000).</div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="mt-4 pt-3 border-top text-end">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm me-2" @click="validateEmailSettings">Validate</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm me-2" @click="testEmail">Send Test Email</button>
-                                    <button type="submit" class="btn btn-primary btn-sm">Save Settings</button>
+                                    <div v-if="settingsDirty" class="text-warning small mb-2 text-start">
+                                        You have unsaved settings changes.
+                                    </div>
+                                    <button v-if="settingsTab === 'email'" type="button" class="btn btn-outline-secondary btn-sm me-2" @click="validateEmailSettings" :disabled="!settings || isValidatingEmail">
+                                        {{ isValidatingEmail ? 'Validating…' : 'Validate' }}
+                                    </button>
+                                    <button v-if="settingsTab === 'email'" type="button" class="btn btn-outline-secondary btn-sm me-2" @click="testEmail" :disabled="!settings || isTestingEmail">
+                                        {{ isTestingEmail ? 'Sending…' : 'Send Test Email' }}
+                                    </button>
+                                    <button type="submit" class="btn btn-primary btn-sm" :disabled="!settingsDirty || isSavingSettings">
+                                        {{ isSavingSettings ? 'Saving…' : 'Save Settings' }}
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -211,10 +251,25 @@ const UserAdmin = {
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="col-md-12" v-if="!isNew">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <label class="form-label small fw-bold mb-1">Effective Permissions</label>
+                                            <button class="btn btn-outline-secondary btn-sm py-0 px-2" @click="loadEffectivePermissions(editingUser.username)" :disabled="effectivePermissions.loading">
+                                                {{ effectivePermissions.loading ? '…' : 'Refresh' }}
+                                            </button>
+                                        </div>
+                                        <div v-if="effectivePermissions.loading" class="text-muted small">Loading permissions…</div>
+                                        <div v-else-if="effectivePermissions.perms.length === 0" class="text-muted small">No permissions resolved.</div>
+                                        <div v-else class="d-flex flex-wrap gap-1">
+                                            <span v-for="perm in effectivePermissions.perms" :key="perm" class="badge bg-primary-subtle text-primary border border-primary-subtle admin-badge">{{ perm }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mt-3 text-end">
-                                    <button class="btn btn-secondary btn-sm me-2" @click="cancelEdit">Cancel</button>
-                                    <button class="btn btn-primary btn-sm" @click="saveUser">Save</button>
+                                    <button class="btn btn-secondary btn-sm me-2" @click="cancelEdit" :disabled="isSavingUser">Cancel</button>
+                                    <button class="btn btn-primary btn-sm" @click="saveUser" :disabled="isSavingUser">
+                                        {{ isSavingUser ? 'Saving…' : 'Save' }}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -263,8 +318,10 @@ const UserAdmin = {
                                     </div>
                                 </div>
                                 <div class="mt-3 text-end">
-                                    <button class="btn btn-secondary btn-sm me-2" @click="editingGroup = null">Cancel</button>
-                                    <button class="btn btn-primary btn-sm" @click="saveGroup">Save</button>
+                                    <button class="btn btn-secondary btn-sm me-2" @click="editingGroup = null" :disabled="isSavingGroup">Cancel</button>
+                                    <button class="btn btn-primary btn-sm" @click="saveGroup" :disabled="isSavingGroup">
+                                        {{ isSavingGroup ? 'Saving…' : 'Save' }}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -307,9 +364,15 @@ const UserAdmin = {
                                 <input v-if="!editingRole.isEdit" type="text" class="form-control form-control-sm mb-2" placeholder="Role Name" v-model="editingRole.name">
                                 <label class="small d-block mb-1">Permissions (comma separated or *)</label>
                                 <input type="text" class="form-control form-control-sm" v-model="editingRole.permsString">
+                                <div v-if="permissionCatalog.length" class="mt-2">
+                                    <span class="small text-muted d-block admin-note">Known permissions:</span>
+                                    <span v-for="perm in permissionCatalog" :key="perm" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1 admin-badge">{{ perm }}</span>
+                                </div>
                                 <div class="mt-3 text-end">
-                                    <button class="btn btn-secondary btn-sm me-2" @click="editingRole = null">Cancel</button>
-                                    <button class="btn btn-primary btn-sm" @click="saveRole">Save</button>
+                                    <button class="btn btn-secondary btn-sm me-2" @click="editingRole = null" :disabled="isSavingRole">Cancel</button>
+                                    <button class="btn btn-primary btn-sm" @click="saveRole" :disabled="isSavingRole">
+                                        {{ isSavingRole ? 'Saving…' : 'Save' }}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -317,6 +380,41 @@ const UserAdmin = {
 
                     <!-- Logs Tab -->
                     <div v-if="tab === 'logs'">
+                        <div class="border rounded p-2 mb-2 bg-body-tertiary">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">User</label>
+                                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.user" placeholder="username">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">Action</label>
+                                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.action" placeholder="action">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small mb-1">Path contains</label>
+                                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.path_contains" placeholder="/path">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">From</label>
+                                    <input type="date" class="form-control form-control-sm" v-model="logFilters.date_from">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">To</label>
+                                    <input type="date" class="form-control form-control-sm" v-model="logFilters.date_to">
+                                </div>
+                                <div class="col-md-1 d-grid">
+                                    <button class="btn btn-primary btn-sm" @click="applyLogFilters" :disabled="isLoadingLogs">
+                                        {{ isLoadingLogs ? '…' : 'Apply' }}
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <button class="btn btn-outline-secondary btn-sm" @click="resetLogFilters" :disabled="isLoadingLogs">Reset</button>
+                                <button class="btn btn-outline-secondary btn-sm" @click="exportLogs('json')" :disabled="isLoadingLogs || logs.length === 0">Export JSON</button>
+                                <button class="btn btn-outline-secondary btn-sm" @click="exportLogs('csv')" :disabled="isLoadingLogs || logs.length === 0">Export CSV</button>
+                            </div>
+                        </div>
+                        <div v-if="isLoadingLogs" class="text-muted small mb-2">Loading logs…</div>
                         <div class="table-responsive admin-table-scroll">
                             <table class="table table-sm table-striped table-hover small">
                                 <thead class="sticky-top bg-body">
@@ -338,6 +436,19 @@ const UserAdmin = {
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 small">
+                            <div class="text-muted">
+                                Showing page {{ logsMeta.page }} of {{ logsMeta.totalPages }} ({{ logsMeta.total }} total)
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0">Page size</label>
+                                <select class="form-select form-select-sm select-auto-width" v-model.number="logsMeta.pageSize" @change="changeLogsPageSize">
+                                    <option v-for="size in logPageSizeOptions" :key="size" :value="size">{{ size }}</option>
+                                </select>
+                                <button class="btn btn-outline-secondary btn-sm" @click="changeLogsPage(-1)" :disabled="isLoadingLogs || logsMeta.page <= 1">Prev</button>
+                                <button class="btn btn-outline-secondary btn-sm" @click="changeLogsPage(1)" :disabled="isLoadingLogs || logsMeta.page >= logsMeta.totalPages">Next</button>
+                            </div>
                         </div>
                     </div>
 
@@ -377,11 +488,24 @@ const UserAdmin = {
             groupsList: {},
             rolesList: {},
             logs: [],
+            logsMeta: { total: 0, page: 1, pageSize: 50, totalPages: 1 },
+            logFilters: { user: '', action: '', path_contains: '', date_from: '', date_to: '' },
+            logPageSizeOptions: [25, 50, 100, 200],
+            isLoadingLogs: false,
+            permissionCatalog: [],
+            effectivePermissions: { username: null, perms: [], loading: false },
             system: null,
             settings: null,
+            settingsOriginal: null,
             settingsTab: 'email',
             emailValidation: { ok: null, message: '', timeoutId: null },
             error: null,
+            isSavingSettings: false,
+            isValidatingEmail: false,
+            isTestingEmail: false,
+            isSavingUser: false,
+            isSavingGroup: false,
+            isSavingRole: false,
             editingUser: null,
             editingGroup: null,
             editingRole: null,
@@ -389,6 +513,16 @@ const UserAdmin = {
             modal: null,
             currentUsername: username
         };
+    },
+    computed: {
+        settingsDirty() {
+            if (!this.settings || !this.settingsOriginal) return false;
+            try {
+                return JSON.stringify(this.settings) !== JSON.stringify(this.settingsOriginal);
+            } catch (e) {
+                return false;
+            }
+        }
     },
     mounted() {
         this.modal = new bootstrap.Modal(document.getElementById('userAdminModal'));
@@ -403,6 +537,7 @@ const UserAdmin = {
             await this.loadUsers();
             await this.loadGroups();
             await this.loadRoles();
+            this.loadPermissionsCatalog();
             this.loadSystemInfo(false);
         },
         async loadUsers() {
@@ -416,7 +551,37 @@ const UserAdmin = {
             try { this.rolesList = await Api.get('roles'); } catch (e) {}
         },
         async loadLogs() {
-            try { this.logs = await Api.get('logs'); } catch (e) {}
+            this.isLoadingLogs = true;
+            try {
+                const params = {
+                    ...this.logFilters,
+                    page: this.logsMeta.page,
+                    pageSize: this.logsMeta.pageSize
+                };
+                const res = await Api.get('logs/query', params);
+                this.logs = res.items || [];
+                this.logsMeta = {
+                    total: res.total ?? 0,
+                    page: res.page ?? 1,
+                    pageSize: res.pageSize ?? this.logsMeta.pageSize,
+                    totalPages: res.totalPages ?? 1
+                };
+            } catch (e) {
+                this.error = e.message;
+                this.toastError('Failed to load logs.');
+            } finally {
+                this.isLoadingLogs = false;
+            }
+        },
+        async loadPermissionsCatalog() {
+            try {
+                const catalog = await Api.get('permissions/catalog');
+                if (Array.isArray(catalog)) {
+                    this.permissionCatalog = catalog;
+                }
+            } catch (e) {
+                // Non-blocking: catalog is a helper, not required.
+            }
         },
         async loadSystemInfo(switchTab = true) {
             if (switchTab) this.tab = 'system';
@@ -436,32 +601,62 @@ const UserAdmin = {
                 if (!this.settings.sendmail_path) {
                     this.settings.sendmail_path = '/usr/sbin/sendmail';
                 }
+                if (typeof this.settings.log_retention_count !== 'number' || Number.isNaN(this.settings.log_retention_count)) {
+                    this.settings.log_retention_count = 2000;
+                }
+                if (typeof this.settings.transfer_max_expiry_days !== 'number' || Number.isNaN(this.settings.transfer_max_expiry_days)) {
+                    this.settings.transfer_max_expiry_days = 30;
+                }
+                if (typeof this.settings.default_transfer_expiry !== 'number' || Number.isNaN(this.settings.default_transfer_expiry)) {
+                    this.settings.default_transfer_expiry = 7;
+                }
+                if (typeof this.settings.transfer_default_notify_download !== 'boolean') {
+                    this.settings.transfer_default_notify_download = false;
+                }
+                this.settingsOriginal = JSON.parse(JSON.stringify(this.settings));
                 this.clearEmailValidation();
             } catch (e) { this.error = e.message; }
         },
         async saveSettings() {
+             if (!this.settingsDirty) return;
+             this.isSavingSettings = true;
              try {
                  await Api.post('settings', this.settings);
-                 alert('Settings Saved');
-             } catch(e) { this.error = e.message; }
+                 this.settingsOriginal = JSON.parse(JSON.stringify(this.settings));
+                 this.toastSuccess('Settings saved.');
+             } catch(e) {
+                 this.error = e.message;
+                 this.toastError('Failed to save settings.');
+             } finally {
+                 this.isSavingSettings = false;
+             }
         },
         async testEmail() {
-             const email = prompt("Enter email to send test to:");
-             if(email) {
-                 try {
-                     await Api.post('settings/test-email', {...this.settings, email});
-                     this.setEmailValidation(true, 'Test email sent successfully.');
-                 } catch(e) {
-                     this.setEmailValidation(false, 'Test failed: ' + e.message);
-                 }
+             if (!this.settings) return;
+             const email = await this.promptForEmail();
+             if (!email) return;
+             this.isTestingEmail = true;
+             try {
+                 await Api.post('settings/test-email', { ...this.settings, email });
+                 this.setEmailValidation(true, 'Test email sent successfully.');
+                 this.toastSuccess('Test email sent.');
+             } catch(e) {
+                 this.setEmailValidation(false, 'Test failed: ' + e.message);
+                 this.toastError('Test email failed.');
+             } finally {
+                 this.isTestingEmail = false;
              }
         },
         async validateEmailSettings() {
+             if (!this.settings) return;
+             this.isValidatingEmail = true;
              try {
                  const res = await Api.post('settings/validate-email', this.settings);
                  this.setEmailValidation(true, res.message || 'Validation successful');
              } catch(e) {
                  this.setEmailValidation(false, 'Validation failed: ' + e.message);
+             } finally {
+                 this.isValidatingEmail = false;
              }
         },
         setEmailValidation(ok, message) {
@@ -481,62 +676,251 @@ const UserAdmin = {
             this.emailValidation.timeoutId = null;
         },
         
-        loadLogsTab() { this.tab = 'logs'; this.loadLogs(); },
+        loadLogsTab() { this.tab = 'logs'; this.logsMeta.page = 1; this.loadLogs(); },
         loadGroupsTab() { this.tab = 'groups'; },
         loadRolesTab() { this.tab = 'roles'; },
+        applyLogFilters() {
+            this.logsMeta.page = 1;
+            this.loadLogs();
+        },
+        resetLogFilters() {
+            this.logFilters = { user: '', action: '', path_contains: '', date_from: '', date_to: '' };
+            this.logsMeta.page = 1;
+            this.loadLogs();
+        },
+        changeLogsPage(delta) {
+            const nextPage = this.logsMeta.page + delta;
+            if (nextPage < 1 || nextPage > this.logsMeta.totalPages) return;
+            this.logsMeta.page = nextPage;
+            this.loadLogs();
+        },
+        changeLogsPageSize() {
+            this.logsMeta.page = 1;
+            this.loadLogs();
+        },
+        exportLogs(format) {
+            if (!this.logs || this.logs.length === 0) return;
+            const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+            if (format === 'json') {
+                const json = JSON.stringify(this.logs, null, 2);
+                this.downloadBlob(json, `audit-logs-${stamp}.json`, 'application/json');
+                return;
+            }
+
+            const header = ['timestamp', 'date', 'user', 'action', 'path', 'ip'];
+            const rows = this.logs.map((log) => {
+                const ts = (log.timestamp ?? 0);
+                const date = this.formatDate(ts);
+                return [
+                    ts,
+                    date,
+                    log.user ?? '',
+                    log.action ?? '',
+                    log.path ?? '',
+                    log.ip ?? ''
+                ];
+            });
+            const csvLines = [header.join(',')].concat(rows.map((row) => row.map(this.csvEscape).join(',')));
+            this.downloadBlob(csvLines.join('\n'), `audit-logs-${stamp}.csv`, 'text/csv;charset=utf-8;');
+        },
+        csvEscape(value) {
+            const str = String(value ?? '');
+            if (/[",\n]/.test(str)) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        },
+        downloadBlob(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            this.toastSuccess('Export started.');
+        },
 
         // User Methods
         showAddForm() {
             this.isNew = true;
             this.editingUser = { username: '', password: '', role: 'user', home_dir: '/', groups: [], allowed_extensions: '', blocked_extensions: '' };
+            this.effectivePermissions = { username: null, perms: [], loading: false };
         },
         editUser(user) {
             this.isNew = false;
             this.editingUser = { ...user, password: '', groups: user.groups || [], allowed_extensions: user.allowed_extensions || '', blocked_extensions: user.blocked_extensions || '' };
+            this.loadEffectivePermissions(user.username);
         },
-        cancelEdit() { this.editingUser = null; },
+        cancelEdit() {
+            this.editingUser = null;
+            this.effectivePermissions = { username: null, perms: [], loading: false };
+        },
         async saveUser() {
+            if (!this.editingUser) return;
+            this.isSavingUser = true;
             try {
+                const savedUsername = this.editingUser.username;
                 if (this.isNew) await Api.post('users', this.editingUser);
                 else await Api.put('users/' + this.editingUser.username, this.editingUser);
                 await this.loadUsers();
                 this.editingUser = null;
-            } catch (e) { this.error = e.message; }
+                this.toastSuccess('User saved.');
+                if (!this.isNew && savedUsername) {
+                    this.loadEffectivePermissions(savedUsername);
+                }
+            } catch (e) {
+                this.error = e.message;
+                this.toastError('Failed to save user.');
+            } finally {
+                this.isSavingUser = false;
+            }
         },
         async deleteUser(user) {
-            if (!confirm('Are you sure?')) return;
-            try { await Api.delete('users/' + user.username); await this.loadUsers(); } catch (e) { this.error = e.message; }
+            const confirmed = await this.confirmDanger('Delete user?', `This will delete ${user.username}.`);
+            if (!confirmed) return;
+            try {
+                await Api.delete('users/' + user.username);
+                await this.loadUsers();
+                this.toastSuccess('User deleted.');
+            } catch (e) {
+                this.error = e.message;
+                this.toastError('Failed to delete user.');
+            }
+        },
+        async loadEffectivePermissions(username) {
+            if (!username) return;
+            const targetUsername = username;
+            this.effectivePermissions = { username: targetUsername, perms: [], loading: true };
+            try {
+                const res = await Api.get(`users/${targetUsername}/permissions`);
+                if (res && Array.isArray(res.permissions)) {
+                    const isStillEditingSameUser = this.editingUser && this.editingUser.username === targetUsername;
+                    if (isStillEditingSameUser) {
+                        this.effectivePermissions = {
+                            username: targetUsername,
+                            perms: res.permissions,
+                            loading: false
+                        };
+                    }
+                    if (Array.isArray(res.catalog) && res.catalog.length) {
+                        this.permissionCatalog = res.catalog;
+                    }
+                } else {
+                    this.effectivePermissions = { username: targetUsername, perms: [], loading: false };
+                }
+            } catch (e) {
+                this.effectivePermissions = { username: targetUsername, perms: [], loading: false };
+                this.error = e.message;
+            }
         },
 
         // Group Methods
         showAddGroupForm() { this.editingGroup = { name: '', roles: [], isEdit: false }; },
         editGroup(name, roles) { this.editingGroup = { name, roles: [...roles], isEdit: true }; },
         async saveGroup() {
+            if (!this.editingGroup) return;
+            this.isSavingGroup = true;
             try {
                 await Api.post('groups', { name: this.editingGroup.name, roles: this.editingGroup.roles });
                 await this.loadGroups();
                 this.editingGroup = null;
-            } catch (e) { this.error = e.message; }
+                this.toastSuccess('Group saved.');
+            } catch (e) {
+                this.error = e.message;
+                this.toastError('Failed to save group.');
+            } finally {
+                this.isSavingGroup = false;
+            }
         },
         async deleteGroup(name) {
-            if (!confirm('Are you sure?')) return;
-            try { await Api.delete('groups/' + name); await this.loadGroups(); } catch (e) { this.error = e.message; }
+            const confirmed = await this.confirmDanger('Delete group?', `This will delete the group ${name}.`);
+            if (!confirmed) return;
+            try {
+                await Api.delete('groups/' + name);
+                await this.loadGroups();
+                this.toastSuccess('Group deleted.');
+            } catch (e) {
+                this.error = e.message;
+                this.toastError('Failed to delete group.');
+            }
         },
 
         // Role Methods
         showAddRoleForm() { this.editingRole = { name: '', permsString: '', isEdit: false }; },
         editRole(name, perms) { this.editingRole = { name, permsString: perms.join(','), isEdit: true }; },
         async saveRole() {
+            if (!this.editingRole) return;
+            this.isSavingRole = true;
             try {
                 const perms = this.editingRole.permsString.split(',').map(p => p.trim()).filter(p => p);
                 await Api.post('roles', { name: this.editingRole.name, permissions: perms });
                 await this.loadRoles();
                 this.editingRole = null;
-            } catch (e) { this.error = e.message; }
+                this.toastSuccess('Role saved.');
+            } catch (e) {
+                this.error = e.message;
+                this.toastError('Failed to save role.');
+            } finally {
+                this.isSavingRole = false;
+            }
         },
         async deleteRole(name) {
-            if (!confirm('Are you sure?')) return;
-            try { await Api.delete('roles/' + name); await this.loadRoles(); } catch (e) { this.error = e.message; }
+            const confirmed = await this.confirmDanger('Delete role?', `This will delete the role ${name}.`);
+            if (!confirmed) return;
+            try {
+                await Api.delete('roles/' + name);
+                await this.loadRoles();
+                this.toastSuccess('Role deleted.');
+            } catch (e) {
+                this.error = e.message;
+                this.toastError('Failed to delete role.');
+            }
+        },
+        toastBase() {
+            return Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2500,
+                timerProgressBar: true
+            });
+        },
+        toastSuccess(message) {
+            this.toastBase().fire({ icon: 'success', title: message });
+        },
+        toastError(message) {
+            this.toastBase().fire({ icon: 'error', title: message });
+        },
+        async confirmDanger(title, text) {
+            const result = await Swal.fire({
+                icon: 'warning',
+                title,
+                text,
+                showCancelButton: true,
+                confirmButtonText: 'Yes, continue',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#dc3545'
+            });
+            return Boolean(result.isConfirmed);
+        },
+        async promptForEmail() {
+            const result = await Swal.fire({
+                title: 'Send test email',
+                input: 'email',
+                inputLabel: 'Recipient email',
+                inputPlaceholder: 'name@example.com',
+                showCancelButton: true,
+                confirmButtonText: 'Send',
+                inputValidator: (value) => {
+                    if (!value) return 'Email is required';
+                    return null;
+                }
+            });
+            if (!result.isConfirmed) return null;
+            return result.value;
         },
 
         formatSize(bytes) {

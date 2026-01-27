@@ -64,6 +64,9 @@ class SettingsService
             'email_from' => 'noreply@example.com',
             'email_from_name' => 'eXtplorer',
             'default_transfer_expiry' => 7,
+            'transfer_max_expiry_days' => 30,
+            'transfer_default_notify_download' => false,
+            'log_retention_count' => 2000,
             'allow_public_uploads' => false,
             'mount_root_allowlist' => [],
         ];

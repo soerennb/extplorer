@@ -136,7 +136,8 @@ class TransferController extends BaseController
         $subject = trim((string)($json->subject ?? ''));
         $message = trim((string)($json->message ?? ''));
         $expiryDays = $this->clampExpiryDays((int)($json->expiresIn ?? $this->settingsService->get('default_transfer_expiry')));
-        $notifyDownload = (bool)($json->notifyDownload ?? false);
+        $notifyDefault = (bool)$this->settingsService->get('transfer_default_notify_download', false);
+        $notifyDownload = (bool)($json->notifyDownload ?? $notifyDefault);
         
         if (!$sessionId || empty($recipients)) {
             return $this->fail('Missing parameters');
@@ -316,10 +317,22 @@ class TransferController extends BaseController
 
     private function clampExpiryDays(int $days): int
     {
-        if ($days <= 0) {
-            return (int)$this->settingsService->get('default_transfer_expiry');
+        $maxDays = (int)$this->settingsService->get('transfer_max_expiry_days', 30);
+        if ($maxDays < 1) {
+            $maxDays = 1;
         }
-        return max(1, min(30, $days));
+        if ($maxDays > 365) {
+            $maxDays = 365;
+        }
+
+        if ($days <= 0) {
+            $defaultDays = (int)$this->settingsService->get('default_transfer_expiry');
+            if ($defaultDays < 1) {
+                $defaultDays = 1;
+            }
+            return min($maxDays, $defaultDays);
+        }
+        return max(1, min($maxDays, $days));
     }
 
     private function getSenderEmail(): ?string

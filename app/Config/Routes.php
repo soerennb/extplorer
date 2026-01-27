@@ -69,6 +69,7 @@ $routes->group('api', function($routes) {
     $routes->post('users', 'UserAdminController::create');
     $routes->put('users/(:segment)', 'UserAdminController::update/$1');
     $routes->delete('users/(:segment)', 'UserAdminController::delete/$1');
+    $routes->get('users/(:segment)/permissions', 'UserAdminController::userPermissions/$1');
     
     $routes->get('roles', 'UserAdminController::getRoles');
     $routes->post('roles', 'UserAdminController::saveRole');
@@ -78,6 +79,8 @@ $routes->group('api', function($routes) {
     $routes->post('groups', 'UserAdminController::saveGroup');
     $routes->delete('groups/(:segment)', 'UserAdminController::deleteGroup/$1');
 
+    $routes->get('permissions/catalog', 'UserAdminController::permissionsCatalog');
+
     $routes->get('settings', 'SettingsController::index');
     $routes->post('settings', 'SettingsController::update');
     $routes->post('settings/test-email', 'SettingsController::testEmail');
@@ -85,6 +88,7 @@ $routes->group('api', function($routes) {
 
     $routes->get('system', 'UserAdminController::systemInfo');
     $routes->get('logs', 'UserAdminController::getLogs');
+    $routes->get('logs/query', 'UserAdminController::queryLogs');
 
     // Transfer
     $routes->get('transfer/status', 'TransferController::status');

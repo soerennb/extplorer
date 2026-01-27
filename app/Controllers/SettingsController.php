@@ -20,7 +20,8 @@ class SettingsController extends BaseController
 
     private function checkAdmin()
     {
-        if (!can('admin_users')) { // Re-using user admin permission for now
+        // Allow either the dedicated settings permission or the legacy admin_users permission.
+        if (!can('admin_settings') && !can('admin_users')) {
             return $this->failForbidden('Access denied');
         }
         return true;
@@ -49,6 +50,8 @@ class SettingsController extends BaseController
         $json = $this->request->getJSON(true);
         if (!$json) return $this->fail('Invalid JSON');
 
+        $currentSettings = $this->settingsService->getSettings();
+
         if (isset($json['mount_root_allowlist_text'])) {
             $lines = preg_split('/\r\n|\r|\n/', (string) $json['mount_root_allowlist_text']);
             $json['mount_root_allowlist'] = array_values(array_filter(array_map('trim', $lines)));
@@ -75,6 +78,44 @@ class SettingsController extends BaseController
                 return $this->fail('Invalid sendmail path');
             }
             $json['sendmail_path'] = $path;
+        }
+
+        if (isset($json['log_retention_count'])) {
+            $retention = (int)$json['log_retention_count'];
+            if ($retention < 100 || $retention > 20000) {
+                return $this->fail('Log retention count must be between 100 and 20000');
+            }
+            $json['log_retention_count'] = $retention;
+        }
+
+        if (isset($json['transfer_max_expiry_days'])) {
+            $maxExpiry = (int)$json['transfer_max_expiry_days'];
+            if ($maxExpiry < 1 || $maxExpiry > 365) {
+                return $this->fail('Transfer max expiry must be between 1 and 365 days');
+            }
+            $json['transfer_max_expiry_days'] = $maxExpiry;
+        }
+
+        if (isset($json['default_transfer_expiry'])) {
+            $defaultExpiry = (int)$json['default_transfer_expiry'];
+            if ($defaultExpiry < 1) {
+                return $this->fail('Default transfer expiry must be at least 1 day');
+            }
+
+            $maxExpiry = (int)($json['transfer_max_expiry_days'] ?? $currentSettings['transfer_max_expiry_days'] ?? 30);
+            if ($defaultExpiry > $maxExpiry) {
+                return $this->fail('Default transfer expiry cannot exceed the transfer max expiry');
+            }
+
+            $json['default_transfer_expiry'] = $defaultExpiry;
+        }
+
+        if (array_key_exists('transfer_default_notify_download', $json)) {
+            $json['transfer_default_notify_download'] = (bool)$json['transfer_default_notify_download'];
+        }
+
+        if (array_key_exists('allow_public_uploads', $json)) {
+            $json['allow_public_uploads'] = (bool)$json['allow_public_uploads'];
         }
 
         // If password is mask, don't update it (keep existing)

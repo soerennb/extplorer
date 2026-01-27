@@ -206,6 +206,7 @@
         .admin-log-path { max-width: 200px; }
         .admin-meta-label { width: 200px; }
         .admin-config-box { max-height: 150px; overflow-y: auto; }
+        .select-auto-width { width: auto; }
         .context-menu { position: fixed; z-index: 1050; }
         .path-breadcrumb .breadcrumb-item + .breadcrumb-item::before { color: rgba(255, 255, 255, 0.6); }
         [data-bs-theme="dark"] .file-tree-item .border-secondary-subtle { border-color: var(--bs-secondary-color) !important; }

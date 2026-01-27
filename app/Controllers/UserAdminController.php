@@ -200,4 +200,62 @@ class UserAdminController extends BaseController
         if (($check = $this->checkAdmin()) !== true) return $check;
         return $this->respond(LogService::getLogs());
     }
+
+    public function queryLogs()
+    {
+        if (($check = $this->checkAdmin()) !== true) return $check;
+
+        $page = (int)($this->request->getGet('page') ?? 1);
+        $pageSize = (int)($this->request->getGet('pageSize') ?? 50);
+
+        $filters = [
+            'user' => $this->request->getGet('user'),
+            'action' => $this->request->getGet('action'),
+            'path_contains' => $this->request->getGet('path_contains'),
+            'date_from' => $this->request->getGet('date_from'),
+            'date_to' => $this->request->getGet('date_to'),
+        ];
+
+        return $this->respond(LogService::queryLogs($filters, $page, $pageSize));
+    }
+
+    public function permissionsCatalog()
+    {
+        if (($check = $this->checkAdmin()) !== true) return $check;
+        return $this->respond($this->getPermissionCatalog());
+    }
+
+    public function userPermissions($username = null)
+    {
+        if (($check = $this->checkAdmin()) !== true) return $check;
+        if (!$username) return $this->fail('Username required');
+
+        $user = $this->userModel->getUser($username);
+        if (!$user) {
+            return $this->failNotFound('User not found');
+        }
+
+        return $this->respond([
+            'username' => $username,
+            'permissions' => $this->userModel->getPermissions($username),
+            'catalog' => $this->getPermissionCatalog(),
+        ]);
+    }
+
+    private function getPermissionCatalog(): array
+    {
+        return [
+            'read',
+            'write',
+            'upload',
+            'delete',
+            'rename',
+            'archive',
+            'extract',
+            'chmod',
+            'mount_external',
+            'admin_users',
+            'admin_settings',
+        ];
+    }
 }
