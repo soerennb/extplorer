@@ -129,7 +129,7 @@
     <script src="<?= base_url('assets/js/components/AdminApp.js?v=' . config('App')->version) ?>"></script>
     <script <?= csp_script_nonce() ?>>
         (async function() {
-            if (window.i18n && typeof i18n.init === 'function') {
+            if (typeof i18n !== 'undefined' && typeof i18n.init === 'function') {
                 await i18n.init();
             }
             const app = Vue.createApp({});

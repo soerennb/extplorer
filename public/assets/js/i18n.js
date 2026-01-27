@@ -52,3 +52,8 @@ const i18n = Vue.reactive({
         return str;
     }
 });
+
+// Make i18n accessible via window for pages that guard on window.i18n.
+if (typeof window !== 'undefined') {
+    window.i18n = i18n;
+}
