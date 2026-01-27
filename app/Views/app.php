@@ -383,6 +383,7 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow">
                             <li><a class="dropdown-item" href="#" @click.prevent="openProfile">{{ t('profile_settings') || 'Profile & Settings' }}</a></li>
+                            <li v-if="isAdmin"><a class="dropdown-item" href="#" @click.prevent="openAdmin"><i class="ri-flashlight-line me-2"></i> Quick Admin</a></li>
                             <li v-if="isAdmin"><a class="dropdown-item" href="<?= base_url('admin') ?>"><i class="ri-settings-3-line me-2"></i> Admin Console</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><h6 class="dropdown-header">Appearance</h6></li>
@@ -406,7 +407,8 @@
                     </div>
 
                     <button v-if="isAdmin" class="btn btn-outline-warning btn-sm ms-2" @click="openAdmin">
-                        <i class="ri-settings-3-line"></i>
+                        <i class="ri-flashlight-line me-1"></i>
+                        Quick Admin
                     </button>
                 </div>
             </div>
