@@ -8,24 +8,21 @@ const UserAdmin = {
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div v-if="quickAdmin" class="alert alert-light border small d-flex align-items-center justify-content-between">
+                        <div>
+                            <strong>Quick Admin</strong>
+                            <div class="text-muted">For full settings, logs, and system tools, use the admin console.</div>
+                        </div>
+                        <a class="btn btn-sm btn-primary" :href="adminConsoleUrl">
+                            <i class="ri-external-link-line me-1"></i> Open Admin Console
+                        </a>
+                    </div>
                     <ul class="nav nav-tabs mb-3">
                         <li class="nav-item">
                             <a class="nav-link" :class="{active: tab === 'users'}" href="#" @click.prevent="tab = 'users'">Users</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" :class="{active: tab === 'groups'}" href="#" @click.prevent="tab = 'groups'">Groups</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" :class="{active: tab === 'roles'}" href="#" @click.prevent="tab = 'roles'">Roles</a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link" :class="{active: tab === 'logs'}" href="#" @click.prevent="loadLogsTab">Logs</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" :class="{active: tab === 'system'}" href="#" @click.prevent="loadSystemInfo">System Info</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" :class="{active: tab === 'settings'}" href="#" @click.prevent="loadSettings">Settings</a>
                         </li>
                     </ul>
 
@@ -444,7 +441,7 @@ const UserAdmin = {
 
                     <!-- Logs Tab -->
                     <div v-if="tab === 'logs'">
-                        <div class="border rounded p-2 mb-2 bg-body-tertiary">
+                        <div v-if="!quickAdmin" class="border rounded p-2 mb-2 bg-body-tertiary">
                             <div class="row g-2 align-items-end">
                                 <div class="col-md-2">
                                     <label class="form-label small mb-1">User</label>
@@ -478,6 +475,9 @@ const UserAdmin = {
                                 <button class="btn btn-outline-secondary btn-sm" @click="exportLogs('csv')" :disabled="isLoadingLogs || logs.length === 0">Export CSV</button>
                             </div>
                         </div>
+                        <div v-else class="text-muted small mb-2">
+                            Showing the most recent activity. Use the admin console for full audit tools.
+                        </div>
                         <div v-if="isLoadingLogs" class="text-muted small mb-2">Loading logs…</div>
                         <div class="table-responsive admin-table-scroll">
                             <table class="table table-sm table-striped table-hover small">
@@ -501,7 +501,7 @@ const UserAdmin = {
                                 </tbody>
                             </table>
                         </div>
-                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 small">
+                        <div v-if="!quickAdmin" class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 small">
                             <div class="text-muted">
                                 Showing page {{ logsMeta.page }} of {{ logsMeta.totalPages }} ({{ logsMeta.total }} total)
                             </div>
@@ -548,6 +548,8 @@ const UserAdmin = {
     data() {
         return {
             tab: 'users',
+            quickAdmin: false,
+            adminConsoleUrl: (window.baseUrl || '/') + 'admin#users',
             users: [],
             groupsList: {},
             rolesList: {},
@@ -591,6 +593,7 @@ const UserAdmin = {
     mounted() {
         const modalEl = document.getElementById('userAdminModal');
         const embedMode = Boolean(window.adminEmbed);
+        this.quickAdmin = !embedMode && !window.adminPage;
         const modalOptions = embedMode ? { backdrop: false, keyboard: false } : {};
 
         this.modal = new bootstrap.Modal(modalEl, modalOptions);
@@ -613,9 +616,13 @@ const UserAdmin = {
             this.tab = 'users';
             await this.loadUsers();
             await this.loadGroups();
-            await this.loadRoles();
-            this.loadPermissionsCatalog();
-            this.loadSystemInfo(false);
+            if (!this.quickAdmin) {
+                await this.loadRoles();
+                this.loadPermissionsCatalog();
+                this.loadSystemInfo(false);
+            } else {
+                this.loadPermissionsCatalog();
+            }
         },
         async loadUsers() {
             this.error = null;
@@ -630,6 +637,17 @@ const UserAdmin = {
         async loadLogs() {
             this.isLoadingLogs = true;
             try {
+                if (this.quickAdmin) {
+                    const res = await Api.get('logs/query', { page: 1, pageSize: 20 });
+                    this.logs = res.items || [];
+                    this.logsMeta = {
+                        total: res.total ?? this.logs.length,
+                        page: 1,
+                        pageSize: 20,
+                        totalPages: 1
+                    };
+                    return;
+                }
                 const params = {
                     ...this.logFilters,
                     page: this.logsMeta.page,
