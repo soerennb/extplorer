@@ -41,6 +41,7 @@ class SettingsController extends BaseController
         }
 
         $settings['mount_root_allowlist_text'] = implode("\n", $settings['mount_root_allowlist'] ?? []);
+        $settings['share_upload_allowed_extensions_text'] = implode("\n", $settings['share_upload_allowed_extensions'] ?? []);
 
         return $this->respond($settings);
     }
@@ -66,6 +67,15 @@ class SettingsController extends BaseController
         if (isset($json['mount_root_allowlist']) && is_string($json['mount_root_allowlist'])) {
             $lines = preg_split('/\r\n|\r|\n/', $json['mount_root_allowlist']);
             $json['mount_root_allowlist'] = array_values(array_filter(array_map('trim', $lines)));
+        }
+
+        if (isset($json['share_upload_allowed_extensions_text'])) {
+            $json['share_upload_allowed_extensions'] = $this->parseExtensions($json['share_upload_allowed_extensions_text']);
+            unset($json['share_upload_allowed_extensions_text']);
+        }
+
+        if (isset($json['share_upload_allowed_extensions']) && is_string($json['share_upload_allowed_extensions'])) {
+            $json['share_upload_allowed_extensions'] = $this->parseExtensions($json['share_upload_allowed_extensions']);
         }
 
         if (isset($json['email_protocol'])) {
@@ -119,10 +129,6 @@ class SettingsController extends BaseController
             $json['transfer_default_notify_download'] = (bool)$json['transfer_default_notify_download'];
         }
 
-        if (array_key_exists('allow_public_uploads', $json)) {
-            $json['allow_public_uploads'] = (bool)$json['allow_public_uploads'];
-        }
-
         if (isset($json['session_idle_timeout_minutes'])) {
             $minutes = (int)$json['session_idle_timeout_minutes'];
             if ($minutes < 0 || $minutes > 1440) {
@@ -157,6 +163,30 @@ class SettingsController extends BaseController
                 return $this->fail('Share default expiry cannot exceed the share max expiry');
             }
             $json['share_default_expiry_days'] = $defaultShareExpiry;
+        }
+
+        if (array_key_exists('allow_public_uploads', $json)) {
+            $json['allow_public_uploads'] = (bool)$json['allow_public_uploads'];
+        }
+
+        if (isset($json['share_upload_quota_mb'])) {
+            $quotaMb = (int)$json['share_upload_quota_mb'];
+            if ($quotaMb < 0 || $quotaMb > 1024000) {
+                return $this->fail('Share upload quota must be between 0 and 1024000 MB');
+            }
+            $json['share_upload_quota_mb'] = $quotaMb;
+        }
+
+        if (isset($json['share_upload_max_files'])) {
+            $maxFiles = (int)$json['share_upload_max_files'];
+            if ($maxFiles < 0 || $maxFiles > 100000) {
+                return $this->fail('Share upload max files must be between 0 and 100000');
+            }
+            $json['share_upload_max_files'] = $maxFiles;
+        }
+
+        if (isset($json['share_upload_allowed_extensions']) && is_array($json['share_upload_allowed_extensions'])) {
+            $json['share_upload_allowed_extensions'] = $this->parseExtensions($json['share_upload_allowed_extensions']);
         }
 
         if (isset($json['upload_max_file_mb'])) {
@@ -227,5 +257,43 @@ class SettingsController extends BaseController
         }
 
         return $this->fail($result['message'] ?? 'Validation failed');
+    }
+
+    /**
+     * Parse and normalize an extension list from settings input.
+     *
+     * @param mixed $raw
+     * @return array<int, string>
+     */
+    private function parseExtensions($raw): array
+    {
+        $extensions = [];
+
+        if (is_string($raw)) {
+            $extensions = preg_split('/[\s,;]+/', $raw) ?: [];
+        } elseif (is_array($raw)) {
+            $extensions = $raw;
+        }
+
+        $normalized = [];
+        foreach ($extensions as $ext) {
+            $ext = strtolower(trim((string)$ext));
+            $ext = ltrim($ext, '.');
+            if ($ext === '') {
+                continue;
+            }
+
+            // Keep extensions reasonably strict and predictable.
+            if (!preg_match('/^[a-z0-9]+$/', $ext)) {
+                continue;
+            }
+
+            $normalized[] = $ext;
+        }
+
+        $normalized = array_values(array_unique($normalized));
+        sort($normalized);
+
+        return $normalized;
     }
 }

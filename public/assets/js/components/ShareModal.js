@@ -19,6 +19,7 @@ const ShareModal = {
                         
                         <div class="alert alert-light border small">
                             <strong>{{ t('created') }}:</strong> {{ formatDate(currentShare.created_at) }}<br>
+                            <strong>{{ t('share_mode_label') || 'Mode' }}:</strong> {{ modeLabel(currentShare.mode) }}<br>
                             <span v-if="currentShare.expires_at">
                                 <strong>{{ t('expires') }}:</strong> {{ formatDate(currentShare.expires_at) }}
                                 <span class="text-muted">({{ expiryHuman(currentShare.expires_at) }})</span><br>
@@ -43,6 +44,53 @@ const ShareModal = {
                             </div>
                             <div>
                                 Maximum expiry: {{ policy.max_expiry_days }} day<span v-if="policy.max_expiry_days !== 1">s</span>.
+                            </div>
+                            <div v-if="policy.allow_upload_mode">
+                                Upload-mode shares are allowed for folders.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ t('share_mode_label') || 'Share Mode' }}</label>
+                            <select class="form-select" v-model="form.mode">
+                                <option v-for="opt in modeOptions" :key="opt.value" :value="opt.value">
+                                    {{ opt.label }}
+                                </option>
+                            </select>
+                            <div v-if="policy.allow_upload_mode && !isDirectory" class="form-text">
+                                {{ t('share_mode_upload_folders_only', 'Upload mode is only available for folders.') }}
+                            </div>
+                        </div>
+
+                        <div v-if="form.mode === 'upload'" class="alert alert-warning small">
+                            <div class="fw-bold mb-1">{{ t('share_mode_upload_title', 'Upload-only share') }}</div>
+                            <div>{{ t('share_mode_upload_desc', 'Recipients can upload files but cannot download existing content.') }}</div>
+                            <div class="mt-1">
+                                <span v-if="uploadPolicy.max_file_mb > 0">
+                                    {{ t('share_mode_upload_max_file', 'Max file size: {max} MB', { max: uploadPolicy.max_file_mb }) }}
+                                </span>
+                                <span v-else>
+                                    {{ t('share_mode_upload_no_max_file', 'No max file size configured.') }}
+                                </span>
+                            </div>
+                            <div v-if="uploadPolicy.allowed_extensions_label" class="mt-1">
+                                {{ t('share_mode_upload_allowed_types', 'Allowed types: {types}', { types: uploadPolicy.allowed_extensions_label }) }}
+                            </div>
+                            <div class="mt-1">
+                                <span v-if="uploadPolicy.quota_mb > 0">
+                                    {{ t('share_mode_upload_quota', 'Total quota: {quota} MB', { quota: uploadPolicy.quota_mb }) }}
+                                </span>
+                                <span v-else>
+                                    {{ t('share_mode_upload_no_quota', 'No total quota configured.') }}
+                                </span>
+                            </div>
+                            <div class="mt-1">
+                                <span v-if="uploadPolicy.max_files > 0">
+                                    {{ t('share_mode_upload_max_files', 'Max files: {count}', { count: uploadPolicy.max_files }) }}
+                                </span>
+                                <span v-else>
+                                    {{ t('share_mode_upload_no_max_files', 'No max file count configured.') }}
+                                </span>
                             </div>
                         </div>
 
@@ -79,19 +127,39 @@ const ShareModal = {
         const loading = ref(false);
         const currentShare = ref(null);
         const targetPath = ref('');
-        const form = reactive({ password: '', expiryDays: 0 });
+        const isDirectory = ref(false);
+        const form = reactive({ password: '', expiryDays: 0, mode: 'read' });
         const policyLoaded = ref(false);
         const policy = reactive({
             require_password: false,
             require_expiry: false,
             default_expiry_days: 7,
-            max_expiry_days: 30
+            max_expiry_days: 30,
+            allow_upload_mode: false,
+            available_modes: ['read'],
+            upload_policy: {
+                max_file_mb: 0,
+                allowed_extensions: [],
+                allowed_extensions_label: '',
+                quota_mb: 0,
+                max_files: 0
+            }
         });
         let modalInstance = null;
 
         const shareUrl = computed(() => {
             if (!currentShare.value) return '';
             return window.baseUrl + 's/' + currentShare.value.hash;
+        });
+        const uploadPolicy = computed(() => policy.upload_policy || {});
+        const modeOptions = computed(() => {
+            const options = [
+                { value: 'read', label: t('share_mode_read') || 'Read-only (download)' }
+            ];
+            if (policy.allow_upload_mode && isDirectory.value) {
+                options.push({ value: 'upload', label: t('share_mode_upload') || 'Upload-only (no download)' });
+            }
+            return options;
         });
         const expiryOptions = computed(() => {
             const baseOptions = [1, 3, 7, 14, 30, 60, 90, 180, 365];
@@ -127,11 +195,18 @@ const ShareModal = {
             if (weeks === 1) return 'in 1 week';
             return `in ${weeks} weeks`;
         };
+        const modeLabel = (mode) => {
+            if (mode === 'upload') return t('share_mode_upload') || 'Upload-only';
+            if (mode === 'write') return t('share_mode_write') || 'Write';
+            return t('share_mode_read') || 'Read';
+        };
 
         const open = async (file) => {
             targetPath.value = file.path;
+            isDirectory.value = file.type === 'dir';
             form.password = '';
             form.expiryDays = 0;
+            form.mode = 'read';
             currentShare.value = null;
             policyLoaded.value = false;
             
@@ -146,6 +221,9 @@ const ShareModal = {
                 policy.require_expiry = Boolean(policyRes.require_expiry);
                 policy.default_expiry_days = Number(policyRes.default_expiry_days || 7);
                 policy.max_expiry_days = Number(policyRes.max_expiry_days || 30);
+                policy.allow_upload_mode = Boolean(policyRes.allow_upload_mode);
+                policy.available_modes = Array.isArray(policyRes.available_modes) ? policyRes.available_modes : ['read'];
+                policy.upload_policy = policyRes.upload_policy || policy.upload_policy;
                 policyLoaded.value = true;
 
                 if (policy.require_expiry) {
@@ -154,7 +232,10 @@ const ShareModal = {
 
                 const res = await Api.get('share/list');
                 const existing = res.items.find(s => s.path === file.path);
-                if (existing) currentShare.value = existing;
+                if (existing) {
+                    currentShare.value = existing;
+                    form.mode = existing.mode || 'read';
+                }
             } catch(e) { console.error(e); }
             finally { loading.value = false; }
         };
@@ -162,8 +243,17 @@ const ShareModal = {
         const createShare = async () => {
             loading.value = true;
             try {
+                if (form.mode === 'upload' && !isDirectory.value) {
+                    throw new Error(t('share_mode_upload_folders_only', 'Upload mode is only available for folders.'));
+                }
+
                 if (policy.require_password && !form.password) {
                     throw new Error('Password is required by policy.');
+                }
+
+                const allowedModes = Array.isArray(policy.available_modes) ? policy.available_modes : ['read'];
+                if (!allowedModes.includes(form.mode)) {
+                    throw new Error('Share mode is not allowed by policy.');
                 }
 
                 const maxDays = Number(policy.max_expiry_days || 30);
@@ -185,7 +275,8 @@ const ShareModal = {
                 const res = await Api.post('share/create', {
                     path: targetPath.value,
                     password: form.password,
-                    expires: expires
+                    expires: expires,
+                    mode: form.mode
                 });
                 currentShare.value = res.share;
             } catch(e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
@@ -222,6 +313,7 @@ const ShareModal = {
 
         return {
             open, loading, currentShare, form, createShare, deleteShare, shareUrl, copyLink, openLink, formatDate, expiryHuman, expiryPreview, expiryOptions, policy, policyLoaded,
+            uploadPolicy, modeOptions, isDirectory, modeLabel,
             t
         };
     }

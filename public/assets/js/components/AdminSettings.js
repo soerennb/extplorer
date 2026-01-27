@@ -155,6 +155,41 @@ const AdminSettings = {
                             </div>
                         </div>
                     </div>
+
+                    <h6 class="border-bottom pb-2 mb-3 mt-4">{{ t('admin_settings_sharing_upload_heading', 'Upload-Mode Policy') }}</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check form-switch mb-1">
+                                <input class="form-check-input" type="checkbox" id="adminAllowUploadMode" v-model="settings.allow_public_uploads">
+                                <label class="form-check-label small fw-bold" for="adminAllowUploadMode">{{ t('admin_settings_sharing_allow_upload_mode', 'Allow upload-mode shares') }}</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-text">
+                                {{ t('admin_settings_sharing_allow_upload_mode_hint', 'Upload-mode shares are folder-only and block downloads.') }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">{{ t('admin_settings_sharing_allowed_types', 'Allowed File Extensions') }}</label>
+                            <textarea
+                                class="form-control form-control-sm"
+                                rows="3"
+                                v-model="settings.share_upload_allowed_extensions_text"
+                                :placeholder="t('admin_settings_sharing_allowed_types_placeholder', 'pdf\\njpg\\npng')"
+                            ></textarea>
+                            <div class="form-text">{{ t('admin_settings_sharing_allowed_types_hint', 'Leave empty to allow all types. One extension per line, without dots.') }}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">{{ t('admin_settings_sharing_quota_mb', 'Total Quota (MB)') }}</label>
+                            <input type="number" min="0" max="1024000" class="form-control form-control-sm" v-model.number="settings.share_upload_quota_mb">
+                            <div class="form-text">{{ t('admin_settings_sharing_quota_mb_hint', '0 disables the quota.') }}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">{{ t('admin_settings_sharing_max_files', 'Max Files') }}</label>
+                            <input type="number" min="0" max="100000" class="form-control form-control-sm" v-model.number="settings.share_upload_max_files">
+                            <div class="form-text">{{ t('admin_settings_sharing_max_files_hint', '0 disables the file-count limit.') }}</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div v-if="settingsTab === 'governance'">
@@ -276,6 +311,9 @@ const AdminSettings = {
                 if (!this.settings.mount_root_allowlist_text && Array.isArray(this.settings.mount_root_allowlist)) {
                     this.settings.mount_root_allowlist_text = this.settings.mount_root_allowlist.join('\n');
                 }
+                if (!this.settings.share_upload_allowed_extensions_text && Array.isArray(this.settings.share_upload_allowed_extensions)) {
+                    this.settings.share_upload_allowed_extensions_text = this.settings.share_upload_allowed_extensions.join('\n');
+                }
                 if (!this.settings.email_protocol) {
                     this.settings.email_protocol = 'smtp';
                 }
@@ -314,6 +352,22 @@ const AdminSettings = {
             }
             if (typeof this.settings.share_require_password !== 'boolean') {
                 this.settings.share_require_password = false;
+            }
+            if (typeof this.settings.allow_public_uploads !== 'boolean') {
+                this.settings.allow_public_uploads = false;
+            }
+            if (typeof this.settings.share_upload_quota_mb !== 'number' || Number.isNaN(this.settings.share_upload_quota_mb)) {
+                this.settings.share_upload_quota_mb = 0;
+            }
+            if (typeof this.settings.share_upload_max_files !== 'number' || Number.isNaN(this.settings.share_upload_max_files)) {
+                this.settings.share_upload_max_files = 0;
+            }
+            if (typeof this.settings.share_upload_allowed_extensions_text !== 'string') {
+                if (Array.isArray(this.settings.share_upload_allowed_extensions)) {
+                    this.settings.share_upload_allowed_extensions_text = this.settings.share_upload_allowed_extensions.join('\n');
+                } else {
+                    this.settings.share_upload_allowed_extensions_text = '';
+                }
             }
             if (typeof this.settings.session_idle_timeout_minutes !== 'number' || Number.isNaN(this.settings.session_idle_timeout_minutes)) {
                 this.settings.session_idle_timeout_minutes = 120;

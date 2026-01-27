@@ -716,12 +716,13 @@ class ApiController extends BaseController
         $path = $json->path ?? null;
         $password = $json->password ?? null;
         $expires = $json->expires ?? null; // Timestamp or ISO string? Let's assume timestamp from frontend
+        $mode = strtolower(trim((string)($json->mode ?? 'read')));
         
         if (!$path) return $this->fail('Path required');
         
         // Verify existence within user jail
         try {
-            $this->fs->resolvePath($path); // Throws if invalid/traversal
+            $absolutePath = $this->fs->resolvePath($path); // Throws if invalid/traversal
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
         }
@@ -729,6 +730,16 @@ class ApiController extends BaseController
         try {
             $settingsService = new \App\Services\SettingsService();
             $settings = $settingsService->getSettings();
+            $policy = $this->buildSharePolicy($settings);
+
+            $allowedModes = $policy['available_modes'] ?? ['read'];
+            if (!in_array($mode, $allowedModes, true)) {
+                return $this->fail('Share mode is not allowed by policy.');
+            }
+
+            if ($mode === 'upload' && !empty($absolutePath) && !is_dir($absolutePath)) {
+                return $this->fail('Upload-mode shares must target a folder.');
+            }
 
             if (!empty($settings['share_require_password']) && empty($password)) {
                 return $this->fail('A password is required by policy for shared links.');
@@ -736,7 +747,7 @@ class ApiController extends BaseController
 
             $expiresAt = $this->normalizeShareExpiry($expires, $settings);
             $service = new \App\Services\ShareService();
-            $share = $service->createShare($path, session('username'), $password, $expiresAt);
+            $share = $service->createShare($path, session('username'), $password, $expiresAt, $mode);
             LogService::log('Create Share', $path);
             return $this->respond(['status' => 'success', 'share' => $share]);
         } catch (Exception $e) {
@@ -858,12 +869,68 @@ class ApiController extends BaseController
             $defaultDays = $maxDays;
         }
 
+        $allowUploadMode = !empty($settings['allow_public_uploads']);
+        $availableModes = ['read'];
+        if ($allowUploadMode) {
+            $availableModes[] = 'upload';
+        }
+
+        $allowedExtensions = $this->normalizeAllowedExtensions($settings['share_upload_allowed_extensions'] ?? []);
+        $allowedExtensionsLabel = '';
+        if (!empty($allowedExtensions)) {
+            $allowedExtensionsLabel = implode(', ', array_map(static fn (string $ext): string => '.' . $ext, $allowedExtensions));
+        }
+
         return [
             'require_password' => !empty($settings['share_require_password']),
             'require_expiry' => !empty($settings['share_require_expiry']),
             'default_expiry_days' => $defaultDays,
             'max_expiry_days' => $maxDays,
+            'allow_upload_mode' => $allowUploadMode,
+            'available_modes' => $availableModes,
+            'upload_policy' => [
+                'max_file_mb' => (int)($settings['upload_max_file_mb'] ?? 0),
+                'allowed_extensions' => $allowedExtensions,
+                'allowed_extensions_label' => $allowedExtensionsLabel,
+                'quota_mb' => (int)($settings['share_upload_quota_mb'] ?? 0),
+                'max_files' => (int)($settings['share_upload_max_files'] ?? 0),
+            ],
         ];
+    }
+
+    /**
+     * Normalize allowed extensions from settings input.
+     *
+     * @param mixed $raw
+     * @return array<int, string>
+     */
+    private function normalizeAllowedExtensions($raw): array
+    {
+        $extensions = [];
+
+        if (is_string($raw)) {
+            $extensions = preg_split('/[\s,;]+/', $raw) ?: [];
+        } elseif (is_array($raw)) {
+            $extensions = $raw;
+        }
+
+        $normalized = [];
+        foreach ($extensions as $ext) {
+            $ext = strtolower(trim((string)$ext));
+            $ext = ltrim($ext, '.');
+            if ($ext === '') {
+                continue;
+            }
+            if (!preg_match('/^[a-z0-9]+$/', $ext)) {
+                continue;
+            }
+            $normalized[] = $ext;
+        }
+
+        $normalized = array_values(array_unique($normalized));
+        sort($normalized);
+
+        return $normalized;
     }
 
     private function rrmdir(string $dir): void
