@@ -332,6 +332,7 @@ const TransferModal = {
                     
                     // Check status from server to skip chunks
                     let startChunk = 0;
+                    let startOffset = 0;
                     if (existingSessionId) {
                         try {
                             const status = await Api.get(`transfer/status?sessionId=${sessionId}&fileName=${encodeURIComponent(file.name)}`);
@@ -340,20 +341,29 @@ const TransferModal = {
                                 continue; // Skip file
                             }
                             if (status.status === 'partial') {
-                                startChunk = Math.floor(status.uploaded / CHUNK_SIZE);
-                                uploadedBytes += (startChunk * CHUNK_SIZE);
+                                const uploaded = Math.min(status.uploaded || 0, file.size);
+                                startChunk = Math.floor(uploaded / CHUNK_SIZE);
+                                startOffset = uploaded % CHUNK_SIZE;
+                                uploadedBytes += uploaded;
                             }
                         } catch(e) { console.warn("Status check failed", e); }
                     }
 
                     for (let i = startChunk; i < totalChunks; i++) {
-                        const chunk = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+                        let startByte = i * CHUNK_SIZE;
+                        if (i === startChunk && startOffset > 0) {
+                            startByte += startOffset;
+                        }
+                        const endByte = Math.min((i + 1) * CHUNK_SIZE, file.size);
+                        const chunk = file.slice(startByte, endByte);
+                        if (chunk.size === 0) continue;
                         const fd = new FormData();
                         fd.append('file', chunk);
                         fd.append('sessionId', sessionId);
                         fd.append('fileName', file.name);
                         fd.append('chunkIndex', i);
                         fd.append('totalChunks', totalChunks);
+                        fd.append('fileOffset', startByte);
                         
                         await this.uploadChunk(fd);
                         

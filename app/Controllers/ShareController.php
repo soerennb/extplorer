@@ -131,16 +131,17 @@ class ShareController extends BaseController
         }
 
         if (is_dir($fullPath)) {
-            // Zip directory
+            // Zip directory outside the share root to avoid path resolution issues.
             $zipName = basename($fullPath) . '.zip';
-            $tempZip = WRITEPATH . 'cache/' . uniqid('share_') . '.zip';
-            $fs->archive([$relPath], $tempZip);
-            
-            $this->response->setHeader('Content-Type', 'application/zip')
-                           ->setHeader('Content-Disposition', 'attachment; filename="'.$zipName.'"')
-                           ->setBody(file_get_contents($tempZip));
-            @unlink($tempZip);
-            return $this->response;
+            $tempZip = WRITEPATH . 'cache/' . uniqid('share_', true) . '.zip';
+            $this->zipDirectory($fullPath, $tempZip);
+
+            // Clean up after the response is sent.
+            register_shutdown_function(static function () use ($tempZip): void {
+                @unlink($tempZip);
+            });
+
+            return $this->response->download($tempZip, null)->setFileName($zipName);
         }
 
         if ($inline) {
@@ -187,5 +188,38 @@ class ShareController extends BaseController
         } catch (\Exception $e) {
             return $this->fail($e->getMessage());
         }
+    }
+
+    /**
+     * Create a zip archive for a directory using paths relative to the directory root.
+     */
+    private function zipDirectory(string $sourceDir, string $destinationZip): void
+    {
+        $zip = new \ZipArchive();
+        if ($zip->open($destinationZip, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            throw new \RuntimeException('Cannot create zip archive.');
+        }
+
+        $sourceDir = rtrim($sourceDir, DIRECTORY_SEPARATOR);
+        $baseLen = strlen($sourceDir) + 1;
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($sourceDir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            $full = $item->getPathname();
+            $relative = substr($full, $baseLen);
+
+            if ($item->isDir()) {
+                $zip->addEmptyDir(str_replace(DIRECTORY_SEPARATOR, '/', $relative));
+                continue;
+            }
+
+            $zip->addFile($full, str_replace(DIRECTORY_SEPARATOR, '/', $relative));
+        }
+
+        $zip->close();
     }
 }

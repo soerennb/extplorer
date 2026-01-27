@@ -67,6 +67,7 @@ class TransferController extends BaseController
         $fileName = $this->request->getPost('fileName');
         $chunkIndex = (int)$this->request->getPost('chunkIndex');
         $totalChunks = (int)$this->request->getPost('totalChunks');
+        $fileOffset = (int)($this->request->getPost('fileOffset') ?? 0);
 
         if (!$file || !$sessionId || !$fileName) {
             return $this->fail('Missing parameters');
@@ -82,11 +83,23 @@ class TransferController extends BaseController
 
         $tempPath = $tempDir . '/' . $fileName . '.part';
 
-        // Append chunk
+        // Write at the provided byte offset to make resume safe.
         $input = fopen($file->getTempName(), 'rb');
-        $output = fopen($tempPath, 'ab'); // Append binary
-        stream_copy_to_stream($input, $output);
+        $data = stream_get_contents($input);
         fclose($input);
+
+        $output = fopen($tempPath, 'c+b');
+        if ($output === false) {
+            return $this->fail('Server Error: Cannot write upload');
+        }
+
+        if (fseek($output, $fileOffset) !== 0) {
+            fclose($output);
+            return $this->fail('Server Error: Cannot seek upload');
+        }
+
+        fwrite($output, $data);
+        fflush($output);
         fclose($output);
 
         // Calculate size so far
@@ -215,7 +228,7 @@ class TransferController extends BaseController
      */
     public function delete($hash)
     {
-        $share = $this->shareService->getShare($hash);
+        $share = $this->shareService->getShareRaw($hash);
         if (!$share) return $this->failNotFound();
 
         if ($share['created_by'] !== session('username') && !can('admin_users')) {

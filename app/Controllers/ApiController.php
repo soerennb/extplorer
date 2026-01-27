@@ -698,10 +698,15 @@ class ApiController extends BaseController
 
         try {
             $service = new \App\Services\ShareService();
-            $share = $service->getShare($hash);
+            $share = $service->getShareRaw($hash);
             
             // Allow admin to delete any share, user only their own
             if ($share && ($share['created_by'] === session('username') || can('admin_users'))) {
+                // If it is a transfer, delete the physical directory as well.
+                if (isset($share['source']) && $share['source'] === 'transfer') {
+                    $dir = WRITEPATH . 'uploads/shares/' . $share['path'];
+                    $this->rrmdir($dir);
+                }
                 $service->deleteShare($hash);
                 LogService::log('Delete Share', $hash);
                 return $this->respond(['status' => 'success']);
@@ -721,5 +726,28 @@ class ApiController extends BaseController
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
         }
+    }
+
+    private function rrmdir(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        foreach (scandir($dir) as $object) {
+            if ($object === '.' || $object === '..') {
+                continue;
+            }
+
+            $path = $dir . DIRECTORY_SEPARATOR . $object;
+            if (is_dir($path) && !is_link($path)) {
+                $this->rrmdir($path);
+                continue;
+            }
+
+            @unlink($path);
+        }
+
+        @rmdir($dir);
     }
 }

@@ -43,6 +43,7 @@ class ShareServiceTest extends CIUnitTestCase
         // Past expiry
         $share2 = $service->createShare('B', 'admin', null, time() - 3600);
         $this->assertNull($service->getShare($share2['hash']));
+        $this->assertNotNull($service->getShareRaw($share2['hash']));
     }
 
     public function testPasswordProtection()
@@ -64,5 +65,11 @@ class ShareServiceTest extends CIUnitTestCase
         
         $this->assertTrue($service->deleteShare($share['hash']));
         $this->assertNull($service->getShare($share['hash']));
+    }
+
+    public function testVerifyPasswordMissingShareIsFalse()
+    {
+        $service = new ShareService($this->testFile);
+        $this->assertFalse($service->verifyPassword('missing-hash', 'anything'));
     }
 }

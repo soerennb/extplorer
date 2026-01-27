@@ -88,10 +88,10 @@ class ShareService
      */
     public function getShare(string $hash): ?array
     {
-        $shares = $this->getShares();
-        if (!isset($shares[$hash])) return null;
-
-        $share = $shares[$hash];
+        $share = $this->getShareRaw($hash);
+        if (!$share) {
+            return null;
+        }
 
         // Check Expiration
         if ($share['expires_at'] && time() > $share['expires_at']) {
@@ -99,6 +99,15 @@ class ShareService
         }
 
         return $share;
+    }
+
+    /**
+     * Retrieves a share by hash without expiration checks.
+     */
+    public function getShareRaw(string $hash): ?array
+    {
+        $shares = $this->getShares();
+        return $shares[$hash] ?? null;
     }
 
     /**
@@ -157,21 +166,33 @@ class ShareService
             }
 
             // 2. Check Warnings (If 50% of life passed and 0 downloads)
-            if (isset($share['created_at']) && isset($share['sender_email']) && !isset($share['warning_sent'])) {
-                $life = $share['expires_at'] - $share['created_at'];
-                $age = $now - $share['created_at'];
-                
-                if ($share['downloads'] == 0 && $age > ($life / 2)) {
-                    // Send Email
-                    // Ideally call EmailService, but for now reuse logic
+            if (
+                isset($share['created_at'], $share['expires_at'], $share['sender_email'])
+                && empty($share['warning_sent'])
+                && filter_var($share['sender_email'], FILTER_VALIDATE_EMAIL)
+            ) {
+                $life = (int)$share['expires_at'] - (int)$share['created_at'];
+                if ($life <= 0) {
+                    continue;
+                }
+
+                $age = $now - (int)$share['created_at'];
+                $downloads = (int)($share['downloads'] ?? 0);
+
+                if ($downloads === 0 && $age > ($life / 2)) {
                     $email = \Config\Services::email();
                     $settings = $settingsService->getSettings();
-                    
+                    $subject = (string)($share['subject'] ?? 'your transfer');
+
                     $email->setFrom($settings['email_from'], $settings['email_from_name']);
                     $email->setTo($share['sender_email']);
                     $email->setSubject("Your files haven't been downloaded yet");
-                    $email->setMessage("<h2>Reminder</h2><p>The files you sent '{$share['subject']}' have not been downloaded yet.</p>");
-                    
+                    $email->setMessage(
+                        '<h2>Reminder</h2><p>The files you sent with subject <strong>'
+                        . esc($subject)
+                        . '</strong> have not been downloaded yet.</p>'
+                    );
+
                     if ($email->send()) {
                         $shares[$hash]['warning_sent'] = true;
                         $warned++;
@@ -217,7 +238,12 @@ class ShareService
     public function verifyPassword(string $hash, string $password): bool
     {
         $share = $this->getShare($hash);
-        if (!$share || !$share['password_hash']) return true; // No password needed
+        if (!$share) {
+            return false;
+        }
+        if (!$share['password_hash']) {
+            return true; // No password needed
+        }
 
         return password_verify($password, $share['password_hash']);
     }
