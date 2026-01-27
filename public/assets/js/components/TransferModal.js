@@ -224,6 +224,9 @@ const TransferModal = {
                                             </div>
                                         </td>
                                         <td class="text-end">
+                                            <div class="small text-muted mb-1">
+                                                <a :href="transferLink(item.hash)" target="_blank" rel="noopener">{{ transferLink(item.hash) }}</a>
+                                            </div>
                                             <button class="btn btn-link p-0 me-2" @click="copyItemLink(item.hash)" :title="t('transfer_copy_link', 'Copy Link')"><i class="ri-links-line"></i></button>
                                             <button class="btn btn-link p-0 text-danger" @click="deleteItem(item.hash)" :title="t('delete', 'Delete')"><i class="ri-delete-bin-line"></i></button>
                                         </td>
@@ -557,16 +560,48 @@ const TransferModal = {
                  }
              }
         },
-        copyLink() {
+        async copyText(text) {
+            if (!text) return false;
+
+            try {
+                if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+            } catch (e) {
+                console.warn('Clipboard API failed, falling back to execCommand.', e);
+            }
+
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.setAttribute('readonly', 'readonly');
+                ta.style.position = 'fixed';
+                ta.style.top = '-1000px';
+                ta.style.left = '-1000px';
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                const ok = document.execCommand('copy');
+                document.body.removeChild(ta);
+                return !!ok;
+            } catch (e) {
+                console.error('Fallback clipboard copy failed.', e);
+                return false;
+            }
+        },
+        async copyLink() {
             const el = document.getElementById('transferLink');
             if (!el) return;
             const value = el.value || this.successLink || '';
-            if (navigator.clipboard && value) {
-                navigator.clipboard.writeText(value);
-                return;
+            const ok = await this.copyText(value);
+            if (!ok) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire(this.t('error', 'Error'), this.t('copy_failed', 'Copy failed.'), 'error');
+                } else {
+                    alert(this.t('copy_failed', 'Copy failed.'));
+                }
             }
-            el.select();
-            document.execCommand('copy');
         },
         openLink() {
             if (!this.successLink) return;
@@ -588,9 +623,19 @@ const TransferModal = {
             if (status === 'expired') return this.t('transfer_filter_expired', 'Expired');
             return this.t('transfer_filter_active', 'Active');
         },
-        copyItemLink(hash) {
-            const link = window.baseUrl + 's/' + hash;
-            navigator.clipboard.writeText(link);
+        transferLink(hash) {
+            return window.baseUrl + 's/' + hash;
+        },
+        async copyItemLink(hash) {
+            const link = this.transferLink(hash);
+            const ok = await this.copyText(link);
+            if (!ok) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire(this.t('error', 'Error'), this.t('copy_failed', 'Copy failed.'), 'error');
+                } else {
+                    alert(this.t('copy_failed', 'Copy failed.'));
+                }
+            }
         },
         async loadHistory() {
             this.tab = 'history';
