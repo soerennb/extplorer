@@ -1162,6 +1162,7 @@ const UserProfile = {
             mountMessage,
             mountTestResult,
             mountErrors,
+            canTestMount,
             setTab,
             loadMounts,
             saveMount,
