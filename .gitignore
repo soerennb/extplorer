@@ -50,6 +50,15 @@ Vagrantfile
 #-------------------------
 writable/cache/*
 !writable/cache/index.html
+!writable/cache/.gitkeep
+!writable/cache/thumbs/
+!writable/cache/thumbs/.gitkeep
+writable/cache/thumbs/*
+!writable/cache/thumbs/.gitkeep
+!writable/cache/dav/
+!writable/cache/dav/.gitkeep
+writable/cache/dav/*
+!writable/cache/dav/.gitkeep
 
 writable/logs/*
 !writable/logs/index.html
@@ -59,6 +68,18 @@ writable/session/*
 
 writable/uploads/*
 !writable/uploads/index.html
+!writable/uploads/temp/
+!writable/uploads/temp/.gitkeep
+writable/uploads/temp/*
+!writable/uploads/temp/.gitkeep
+!writable/uploads/shares/
+!writable/uploads/shares/.gitkeep
+writable/uploads/shares/*
+!writable/uploads/shares/.gitkeep
+!writable/uploads/chunks/
+!writable/uploads/chunks/.gitkeep
+writable/uploads/chunks/*
+!writable/uploads/chunks/.gitkeep
 
 writable/debugbar/*
 !writable/debugbar/index.html
@@ -130,13 +151,16 @@ _modules/*
 #-------------------------
 builds/
 writable/file_manager_root/*
+!writable/file_manager_root/.gitkeep
 writable/last_cleanup.txt
 writable/users.json
 writable/users.php
 writable/shares.json
 writable/shares.php
 writable/trash/*
+!writable/trash/.gitkeep
 writable/versions/*
+!writable/versions/.gitkeep
 writable/activity_logs.json
 writable/activity_logs.php
 writable/groups.json
