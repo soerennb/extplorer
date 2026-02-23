@@ -164,7 +164,7 @@ const UploadModal = {
                         if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
                         
                         const res = await fetch(window.baseUrl + 'api/upload', { method: 'POST', headers, body: fd });
-                        if (!res.ok) throw new Error((await res.json()).messages?.error || 'Failed');
+                        if (!res.ok) throw new Error(await Api.readErrorMessage(res, 'Upload failed'));
                         item.progress = 100;
                     } else {
                         const total = Math.ceil(file.size / CHUNK_SIZE);
@@ -176,7 +176,7 @@ const UploadModal = {
                             const headers = { 'X-Requested-With': 'XMLHttpRequest' };
                             if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
                             const res = await fetch(window.baseUrl + 'api/upload_chunk', { method: 'POST', headers, body: fd });
-                            if (!res.ok) throw new Error((await res.json()).messages?.error || 'Chunk failed');
+                            if (!res.ok) throw new Error(await Api.readErrorMessage(res, 'Upload chunk failed'));
                             
                             item.progress = Math.round(((i + 1) / total) * 100);
                         }

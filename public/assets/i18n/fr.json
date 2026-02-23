@@ -40,6 +40,8 @@
     "uploaded": "Téléchargé !",
     "saved": "Enregistré !",
     "error": "Erreur",
+    "unexpected_error_generic": "An unexpected server error occurred. Please try again.",
+    "network_error_generic": "Unable to reach the server. Please check your connection and try again.",
     "success": "Succès",
     "input_folder_name": "Nom du dossier",
     "input_archive_name": "Nom de l'archive",

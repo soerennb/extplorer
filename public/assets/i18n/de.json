@@ -45,6 +45,8 @@
     "uploaded": "Hochgeladen!",
     "saved": "Gespeichert!",
     "error": "Fehler",
+    "unexpected_error_generic": "An unexpected server error occurred. Please try again.",
+    "network_error_generic": "Unable to reach the server. Please check your connection and try again.",
     "success": "Erfolg",
     "input_folder_name": "Ordnername",
     "input_archive_name": "Archivname",

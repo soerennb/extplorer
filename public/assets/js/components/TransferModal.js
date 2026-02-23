@@ -453,7 +453,15 @@ const TransferModal = {
             this.addRecipientFromInput();
 
             const validRecipients = this.recipients.filter(e => this.isValidEmail(e));
-            if (validRecipients.length === 0) return alert('Please enter at least one valid recipient email.');
+            if (validRecipients.length === 0) {
+                const message = this.t('transfer_require_recipient', 'Please enter at least one valid recipient email.');
+                if (window.Swal) {
+                    await Swal.fire(this.t('error', 'Error'), message, 'error');
+                } else {
+                    alert(message);
+                }
+                return;
+            }
 
             this.isUploading = true;
             this.resumeState = null; // Hide resume UI
@@ -580,7 +588,12 @@ const TransferModal = {
                 }
 
             } catch (e) {
-                alert(this.t('transfer_failed_prefix', 'Transfer failed: ') + e.message);
+                const message = this.t('transfer_failed_prefix', 'Transfer failed: ') + e.message;
+                if (window.Swal) {
+                    await Swal.fire(this.t('error', 'Error'), message, 'error');
+                } else {
+                    alert(message);
+                }
                 this.isUploading = false;
             }
         },
@@ -593,7 +606,7 @@ const TransferModal = {
              while (retries > 0) {
                  try {
                      const res = await fetch(window.baseUrl + 'api/transfer/upload', { method: 'POST', headers, body: formData });
-                     if (!res.ok) throw new Error(this.t('transfer_upload_failed', 'Upload failed'));
+                     if (!res.ok) throw new Error(await Api.readErrorMessage(res, this.t('transfer_upload_failed', 'Upload failed')));
                      return;
                  } catch(e) {
                      retries--;

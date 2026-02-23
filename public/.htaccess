@@ -8,7 +8,9 @@ Options -Indexes
 # Turning on the rewrite engine is necessary for the following rules and features.
 # FollowSymLinks must be enabled for this to work.
 <IfModule mod_rewrite.c>
-	Options +FollowSymlinks
+	# Options +FollowSymlinks
+	# Keep this disabled in .htaccess for broader shared-host compatibility.
+	# If rewrites fail, enable FollowSymLinks (or SymLinksIfOwnerMatch) at vhost/server level.
 	RewriteEngine On
 
 	# If you installed CodeIgniter in a subfolder, you will need to

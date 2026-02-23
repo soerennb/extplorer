@@ -368,8 +368,7 @@ const app = createApp({
                         if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
                         const res = await fetch(window.baseUrl + 'api/upload', { method: 'POST', headers, body: fd });
                         if (!res.ok) {
-                            const json = await res.json();
-                            throw new Error(json.messages?.error || json.message || 'Upload failed');
+                            throw new Error(await Api.readErrorMessage(res, 'Upload failed'));
                         }
                         store.uploadProgress = 100;
                     } else {
@@ -382,8 +381,7 @@ const app = createApp({
                             if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
                             const res = await fetch(window.baseUrl + 'api/upload_chunk', { method: 'POST', headers, body: fd });
                             if (!res.ok) {
-                                const json = await res.json();
-                                throw new Error(json.messages?.error || json.message || 'Upload chunk failed');
+                                throw new Error(await Api.readErrorMessage(res, 'Upload chunk failed'));
                             }
                             store.uploadProgress = Math.round(((i + 1) / total) * 100);
                         }
