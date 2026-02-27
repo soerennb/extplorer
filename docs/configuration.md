@@ -31,6 +31,7 @@ The following controls are enabled in the application and should be considered p
 - Remote FTP/SFTP mounts support an allowlist (`mountRemoteHostAllowlist` / `mount_remote_host_allowlist`):
   - If configured, only listed hosts are allowed (hostname/IP/CIDR, plus `*.example.com` wildcard domains).
   - If empty, private/reserved targets (e.g. localhost, RFC1918, link-local, ULA) are blocked by default.
+- Direct FTP/SFTP login uses the same remote host policy as mounts.
 
 ## 2. Web Server Configuration
 

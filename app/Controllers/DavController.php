@@ -11,6 +11,13 @@ use Exception;
 
 class DavController extends BaseController
 {
+    /**
+     * Minimal permissions required for WebDAV to avoid bypassing UI/API permission controls.
+     *
+     * @var array<int, string>
+     */
+    private array $requiredDavPermissions = ['read', 'write', 'upload', 'delete', 'rename'];
+
     public function index(...$path)
     {
         // 0. Global Switch
@@ -45,8 +52,8 @@ class DavController extends BaseController
         $userData = null;
 
         if ($authHeader && stripos($authHeader, 'Basic ') === 0) {
-            $credentials = base64_decode(substr($authHeader, 6));
-            if (str_contains($credentials, ':')) {
+            $credentials = base64_decode(substr($authHeader, 6), true);
+            if (is_string($credentials) && str_contains($credentials, ':')) {
                 [$user, $pass] = explode(':', $credentials, 2);
                 $userModel = new UserModel();
                 $userData = $userModel->verifyUser($user, $pass);
@@ -54,6 +61,10 @@ class DavController extends BaseController
                 if (!$userData) {
                     \App\Services\LogService::log('WebDAV Auth Failed', 'dav', "Failed login attempt", $user);
                 } else {
+                    if (!$this->hasRequiredDavPermissions($userModel, (string)$userData['username'])) {
+                        \App\Services\LogService::log('WebDAV Access Forbidden', 'dav', "Insufficient permissions", (string)$userData['username']);
+                        $userData = null;
+                    }
                     // Optional: Log successful logins (might be noisy)
                     // \App\Services\LogService::log('WebDAV Login', 'dav', "Successful login", $user);
                 }
@@ -69,8 +80,7 @@ class DavController extends BaseController
 
         // 3. Determine Root Path
         $baseRoot = WRITEPATH . 'file_manager_root';
-        $userHome = trim($userData['home_dir'] ?? '', '/\\');
-        $rootPath = $baseRoot . ($userHome ? DIRECTORY_SEPARATOR . $userHome : '');
+        $rootPath = $this->resolveSafeDavRootPath($baseRoot, (string)($userData['home_dir'] ?? '/'));
 
         if (!is_dir($rootPath)) {
             mkdir($rootPath, 0755, true);
@@ -110,5 +120,50 @@ class DavController extends BaseController
         
         // Return empty response because SabreDAV already outputted everything
         return $this->response;
+    }
+
+    private function hasRequiredDavPermissions(UserModel $userModel, string $username): bool
+    {
+        $permissions = $userModel->getPermissions($username);
+        if (in_array('*', $permissions, true)) {
+            return true;
+        }
+
+        foreach ($this->requiredDavPermissions as $permission) {
+            if (!in_array($permission, $permissions, true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function resolveSafeDavRootPath(string $baseRoot, string $homeDir): string
+    {
+        $baseRoot = rtrim((string)realpath($baseRoot), DIRECTORY_SEPARATOR);
+        if ($baseRoot === '') {
+            throw new Exception('Invalid WebDAV base root.');
+        }
+
+        $home = str_replace('..', '', $homeDir);
+        $home = trim($home, "/\\");
+
+        $rootPath = $baseRoot;
+        if ($home !== '') {
+            $rootPath .= DIRECTORY_SEPARATOR . $home;
+        }
+
+        $rootReal = realpath($rootPath);
+        if ($rootReal === false) {
+            return $rootPath;
+        }
+
+        $basePrefix = $baseRoot . DIRECTORY_SEPARATOR;
+        $resolvedPrefix = rtrim($rootReal, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if ($rootReal !== $baseRoot && !str_starts_with($resolvedPrefix, $basePrefix)) {
+            throw new Exception('Invalid WebDAV home directory.');
+        }
+
+        return $rootReal;
     }
 }
