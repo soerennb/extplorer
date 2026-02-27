@@ -85,11 +85,12 @@ class MountService
         }
 
         $name = $this->sanitizeMountName($name);
+        $mounts = $this->getMounts();
+        $this->assertMountNameAvailable($mounts, $username, $name);
         [$type, $config] = $this->validateAndNormalizeMount($type, $config);
         $this->validateConnectivity($type, $config);
 
         $id = uniqid('mnt_');
-        $mounts = $this->getMounts();
         
         $mounts[$id] = [
             'id' => $id,
@@ -121,6 +122,7 @@ class MountService
         }
 
         $name = $this->sanitizeMountName($name);
+        $this->assertMountNameAvailable($mounts, $existing['user'], $name, $id);
         $existingEncryptedPass = (string)($existing['config']['pass'] ?? '');
         [$type, $config] = $this->validateAndNormalizeMount($type, $config, $existingEncryptedPass, true);
         $this->validateConnectivity($type, $config);
@@ -153,6 +155,8 @@ class MountService
         }
 
         $name = $this->sanitizeMountName($name);
+        $mounts = $this->getMounts();
+        $this->assertMountNameAvailable($mounts, $username, $name, $id);
         [$type, $config] = $this->validateAndNormalizeMount($type, $config, $existingEncryptedPass, true);
         $this->validateConnectivity($type, $config);
 
@@ -293,6 +297,36 @@ class MountService
             throw new \Exception("Invalid mount name.");
         }
         return $name;
+    }
+
+    private function isReservedMountName(string $name): bool
+    {
+        $reserved = ['Home', 'Shared', 'Public'];
+        foreach ($reserved as $item) {
+            if (strcasecmp($name, $item) === 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function assertMountNameAvailable(array $mounts, string $username, string $name, ?string $ignoreId = null): void
+    {
+        if ($this->isReservedMountName($name)) {
+            throw new \Exception("This mount name is reserved.");
+        }
+
+        foreach ($mounts as $id => $mount) {
+            if ($ignoreId !== null && $id === $ignoreId) {
+                continue;
+            }
+            if (($mount['user'] ?? '') !== $username) {
+                continue;
+            }
+            if (strcasecmp((string)($mount['name'] ?? ''), $name) === 0) {
+                throw new \Exception("A mount with this name already exists.");
+            }
+        }
     }
 
     private function validateAndNormalizeMount(
