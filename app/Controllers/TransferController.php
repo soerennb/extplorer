@@ -134,7 +134,7 @@ class TransferController extends BaseController
      */
     public function upload()
     {
-        if (!can('read')) {
+        if (!can('upload')) {
             return $this->failForbidden();
         }
 
@@ -213,6 +213,12 @@ class TransferController extends BaseController
     {
         if (!can('read')) {
             return $this->failForbidden();
+        }
+
+        $throttler = \Config\Services::throttler();
+        $sendThrottleKey = 'transfer-send-' . session('username') . '-' . $this->request->getIPAddress();
+        if ($throttler->check($sendThrottleKey, 15, MINUTE) === false) {
+            return $this->fail('Too many requests. Please slow down.', 429);
         }
 
         $json = $this->request->getJSON();
@@ -372,7 +378,7 @@ class TransferController extends BaseController
      */
     public function delete($hash)
     {
-        if (!can('read')) {
+        if (!can('delete') && !can('admin_users')) {
             return $this->failForbidden();
         }
 
