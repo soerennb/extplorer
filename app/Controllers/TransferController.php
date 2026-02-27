@@ -38,7 +38,7 @@ class TransferController extends BaseController
         }
 
         $fileName = basename($fileName);
-        $tempDir = WRITEPATH . 'uploads/temp/' . $sessionId;
+        $tempDir = $this->getTransferTempDir($sessionId);
         $tempPath = $tempDir . '/' . $fileName . '.part';
 
         // Check if full file already exists
@@ -79,9 +79,9 @@ class TransferController extends BaseController
             return $this->fail('Missing parameters');
         }
 
-        $tempDir = WRITEPATH . 'uploads/temp/' . $sessionId;
+        $tempDir = $this->getTransferTempDir($sessionId);
         if (!is_dir($tempDir)) {
-            mkdir($tempDir, 0777, true);
+            mkdir($tempDir, 0755, true);
         }
 
         $vfs = VfsFactory::getVfs();
@@ -158,10 +158,10 @@ class TransferController extends BaseController
 
         // Sanitize Filename
         $fileName = basename($fileName);
-        $tempDir = WRITEPATH . 'uploads/temp/' . $sessionId;
+        $tempDir = $this->getTransferTempDir($sessionId);
         
         if (!is_dir($tempDir)) {
-            mkdir($tempDir, 0777, true);
+            mkdir($tempDir, 0755, true);
         }
 
         $tempPath = $tempDir . '/' . $fileName . '.part';
@@ -239,7 +239,7 @@ class TransferController extends BaseController
             return $this->fail('Missing parameters');
         }
 
-        $tempDir = WRITEPATH . 'uploads/temp/' . $sessionId;
+        $tempDir = $this->getTransferTempDir($sessionId);
         if (!is_dir($tempDir)) {
             return $this->fail('Upload session expired or invalid');
         }
@@ -254,7 +254,7 @@ class TransferController extends BaseController
         $relPath = $hash; // For transfers, path is just the Hash folder name in uploads/shares
         $absPath = WRITEPATH . 'uploads/shares/' . $hash;
         
-        if (!mkdir($absPath, 0777, true)) {
+        if (!mkdir($absPath, 0755, true)) {
             return $this->fail('Server Error: Cannot create storage');
         }
 
@@ -422,6 +422,16 @@ class TransferController extends BaseController
     private function normalizeSessionId(string $sessionId): string
     {
         return preg_replace('/[^a-zA-Z0-9]/', '', $sessionId) ?? '';
+    }
+
+    private function getTransferTempDir(string $sessionId): string
+    {
+        $user = (string)(session('username') ?? '');
+        $userKey = preg_replace('/[^a-zA-Z0-9._-]/', '_', $user) ?? '';
+        if ($userKey === '') {
+            $userKey = 'anonymous';
+        }
+        return WRITEPATH . 'uploads/temp/' . $userKey . '/' . $sessionId;
     }
 
     private function normalizeRecipients($recipients): array
