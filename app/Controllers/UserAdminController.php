@@ -193,6 +193,9 @@ class UserAdminController extends BaseController
         if (!$username || !$password) {
             return $this->fail('Username and Password required');
         }
+        if (!$this->userModel->isValidUsername($username)) {
+            return $this->fail('Invalid username format');
+        }
 
         if (strlen($password) < 8) {
             return $this->fail('Password must be at least 8 characters long');
@@ -210,6 +213,7 @@ class UserAdminController extends BaseController
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
         if (!$username) return $this->fail('Username required');
+        if (!$this->userModel->isValidUsername($username)) return $this->fail('Invalid username format');
 
         $data = json_decode(json_encode($this->request->getJSON()), true);
 
@@ -225,6 +229,7 @@ class UserAdminController extends BaseController
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
         if (!$username) return $this->fail('Username required');
+        if (!$this->userModel->isValidUsername($username)) return $this->fail('Invalid username format');
 
         // Prevent deleting self
         if ($username === session('username')) {
@@ -292,6 +297,7 @@ class UserAdminController extends BaseController
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
         if (!$username) return $this->fail('Username required');
+        if (!$this->userModel->isValidUsername($username)) return $this->fail('Invalid username format');
 
         $user = $this->userModel->getUser($username);
         if (!$user) {

@@ -53,6 +53,13 @@ class UserModel
 
     // --- Users ---
 
+    public function isValidUsername(string $username): bool
+    {
+        $username = trim($username);
+        // Keep usernames path-safe and predictable for storage/logging contexts.
+        return (bool) preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9._-]{2,63}\z/', $username);
+    }
+
     public function getUsers(): array
     {
         return $this->loadData($this->usersFile);
@@ -86,6 +93,11 @@ class UserModel
 
     public function addUser(string $username, string $password, string $role = 'user', string $homeDir = '/', array $groups = [], string $allowedExt = '', string $blockedExt = ''): bool
     {
+        $username = trim($username);
+        if (!$this->isValidUsername($username)) {
+            return false;
+        }
+
         if ($this->getUser($username)) {
             return false;
         }

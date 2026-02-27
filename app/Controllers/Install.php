@@ -76,6 +76,13 @@ class Install extends BaseController
 
         $userModel = new UserModel();
 
+        if (!$userModel->isValidUsername($username)) {
+            return view('install/index', [
+                'checks' => $this->getChecks(),
+                'error' => 'Invalid username format. Use 3-64 characters: letters, numbers, dot, underscore, hyphen.'
+            ]);
+        }
+
         // 1. Initialize Roles if missing
         $roles = $userModel->getRoles();
         if (empty($roles)) {

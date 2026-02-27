@@ -36,6 +36,10 @@ class CreateUser extends BaseCommand
         $groups = $group ? [$group] : [];
 
         $userModel = new UserModel();
+        if (!$userModel->isValidUsername((string)$username)) {
+            CLI::error("Invalid username format. Use 3-64 chars: letters, numbers, dot, underscore, hyphen.");
+            return;
+        }
         
         // Ensure roles/groups exist
         $roles = $userModel->getRoles();
