@@ -16,6 +16,18 @@ cp env .env
 | `app.baseURL` | Full URL (with trailing slash). | `https://yourdomain.com/` |
 | `app.forceGlobalSecureRequests` | Force HTTPS redirection. | `true` |
 
+### Security Controls (Current Defaults)
+The following controls are enabled in the application and should be considered part of your operational baseline:
+
+- HTTPS and secure cookies are enforced in production mode.
+- CSRF token randomization and regeneration are enabled.
+- Public share endpoints have throttling:
+  - Share password auth: `10 requests/minute` per `share + IP`
+  - Share upload: `30 requests/minute` per `share + IP`
+- Transfer send endpoint has throttling:
+  - Transfer send: `15 requests/minute` per `user + IP`
+- Sensitive security denials and throttling events are written to activity logs.
+
 ## 2. Web Server Configuration
 
 ### Option A: Apache 2.4+

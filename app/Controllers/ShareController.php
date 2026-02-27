@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\ShareService;
+use App\Services\LogService;
 use App\Services\VFS\LocalAdapter;
 use CodeIgniter\API\ResponseTrait;
 
@@ -141,6 +142,7 @@ class ShareController extends BaseController
         $throttler = \Config\Services::throttler();
         $authThrottleKey = 'share-auth-' . $hash . '-' . $this->request->getIPAddress();
         if ($throttler->check($authThrottleKey, 10, MINUTE) === false) {
+            LogService::log('Share Auth Throttled', $hash, 'Public share auth rate limit exceeded', 'Public');
             return redirect()->back()->with('error', 'Too many requests. Please slow down.');
         }
 
@@ -156,6 +158,7 @@ class ShareController extends BaseController
             return redirect()->to('/s/' . $hash);
         }
 
+        LogService::log('Share Auth Failed', $hash, 'Invalid password attempt', 'Public');
         return redirect()->back()->with('error', $invalidPasswordMessage);
     }
 
@@ -283,6 +286,7 @@ class ShareController extends BaseController
         $throttler = \Config\Services::throttler();
         $uploadThrottleKey = 'share-upload-' . $hash . '-' . $this->request->getIPAddress();
         if ($throttler->check($uploadThrottleKey, 30, MINUTE) === false) {
+            LogService::log('Share Upload Throttled', $hash, 'Public share upload rate limit exceeded', 'Public');
             return $this->fail('Too many requests. Please slow down.', 429);
         }
 
@@ -294,10 +298,12 @@ class ShareController extends BaseController
 
         // Password check
         if ($share['password_hash'] && !session('share_verified_' . $hash)) {
+            LogService::log('Share Upload Forbidden', $hash, 'Upload blocked: password not verified', 'Public');
             return $this->failForbidden();
         }
 
         if (($share['mode'] ?? 'read') !== 'upload') {
+            LogService::log('Share Upload Forbidden', $hash, 'Upload blocked: share is not upload mode', 'Public');
             return $this->failForbidden('Uploads are not allowed for this share.');
         }
 

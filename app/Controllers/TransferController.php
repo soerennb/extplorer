@@ -135,6 +135,7 @@ class TransferController extends BaseController
     public function upload()
     {
         if (!can('upload')) {
+            LogService::log('Transfer Upload Forbidden', '', 'Blocked: missing upload permission');
             return $this->failForbidden();
         }
 
@@ -212,12 +213,14 @@ class TransferController extends BaseController
     public function send()
     {
         if (!can('read')) {
+            LogService::log('Transfer Send Forbidden', '', 'Blocked: missing read permission');
             return $this->failForbidden();
         }
 
         $throttler = \Config\Services::throttler();
         $sendThrottleKey = 'transfer-send-' . session('username') . '-' . $this->request->getIPAddress();
         if ($throttler->check($sendThrottleKey, 15, MINUTE) === false) {
+            LogService::log('Transfer Send Throttled', '', 'Rate limit exceeded for transfer send');
             return $this->fail('Too many requests. Please slow down.', 429);
         }
 
@@ -379,6 +382,7 @@ class TransferController extends BaseController
     public function delete($hash)
     {
         if (!can('delete') && !can('admin_users')) {
+            LogService::log('Transfer Delete Forbidden', (string)$hash, 'Blocked: missing delete/admin permission');
             return $this->failForbidden();
         }
 
