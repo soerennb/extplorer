@@ -84,39 +84,39 @@ class TransferController extends BaseController
             mkdir($tempDir, 0755, true);
         }
 
-        $vfs = VfsFactory::getVfs();
+        $vfs = VfsFactory::createFileSystem(
+            (string)(session('username') ?? ''),
+            (array)(session('connection') ?? ['mode' => 'local'])
+        );
         $stagedCount = 0;
         $totalBytes = 0;
 
         foreach ($paths as $path) {
-            if (!$vfs->exists($path) || $vfs->isDir($path)) {
+            $meta = $vfs->getMetadata((string)$path);
+            if (!$meta || (($meta['type'] ?? '') === 'dir')) {
                 continue; // Skip directories or non-existent files for now
             }
             
             // Validate size limits
-            $size = $vfs->size($path);
+            $size = (int)($meta['size'] ?? 0);
             $maxFileBytes = $this->getMaxUploadBytes();
             if ($maxFileBytes > 0 && $size > $maxFileBytes) {
                 return $this->fail("File '$path' exceeds the configured size limit.");
             }
             
-            // Read stream from VFS and write to temp dir
+            // Read content from VFS and write to temp dir
             $fileName = basename($path);
             $destPath = $tempDir . '/' . $fileName;
-            
-            // Use stream copy
-            $srcStream = $vfs->fopen($path, 'rb');
-            if (!$srcStream) continue;
-            
-            $destStream = fopen($destPath, 'wb');
-            if (!$destStream) {
-                fclose($srcStream);
+
+            try {
+                $content = $vfs->readFile((string)$path);
+            } catch (\Throwable $e) {
+                continue;
+            }
+
+            if (file_put_contents($destPath, $content, LOCK_EX) === false) {
                 return $this->fail('Server Error: Cannot write to temp storage');
             }
-            
-            stream_copy_to_stream($srcStream, $destStream);
-            fclose($srcStream);
-            fclose($destStream);
             
             $stagedCount++;
             $totalBytes += $size;
