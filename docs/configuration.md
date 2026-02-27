@@ -27,6 +27,10 @@ The following controls are enabled in the application and should be considered p
 - Transfer send endpoint has throttling:
   - Transfer send: `15 requests/minute` per `user + IP`
 - Sensitive security denials and throttling events are written to activity logs.
+- External local mounts require an explicit allowlist (`mountRootAllowlist` / `mount_root_allowlist`).
+- Remote FTP/SFTP mounts support an allowlist (`mountRemoteHostAllowlist` / `mount_remote_host_allowlist`):
+  - If configured, only listed hosts are allowed (hostname/IP/CIDR, plus `*.example.com` wildcard domains).
+  - If empty, private/reserved targets (e.g. localhost, RFC1918, link-local, ULA) are blocked by default.
 
 ## 2. Web Server Configuration
 

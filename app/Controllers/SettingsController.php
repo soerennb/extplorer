@@ -41,6 +41,7 @@ class SettingsController extends BaseController
         }
 
         $settings['mount_root_allowlist_text'] = implode("\n", $settings['mount_root_allowlist'] ?? []);
+        $settings['mount_remote_host_allowlist_text'] = implode("\n", $settings['mount_remote_host_allowlist'] ?? []);
         $settings['share_upload_allowed_extensions_text'] = implode("\n", $settings['share_upload_allowed_extensions'] ?? []);
 
         return $this->respond($settings);
@@ -59,14 +60,21 @@ class SettingsController extends BaseController
         unset($json['email_configured']);
 
         if (isset($json['mount_root_allowlist_text'])) {
-            $lines = preg_split('/\r\n|\r|\n/', (string) $json['mount_root_allowlist_text']);
-            $json['mount_root_allowlist'] = array_values(array_filter(array_map('trim', $lines)));
+            $json['mount_root_allowlist'] = $this->parseTextList($json['mount_root_allowlist_text']);
             unset($json['mount_root_allowlist_text']);
         }
 
         if (isset($json['mount_root_allowlist']) && is_string($json['mount_root_allowlist'])) {
-            $lines = preg_split('/\r\n|\r|\n/', $json['mount_root_allowlist']);
-            $json['mount_root_allowlist'] = array_values(array_filter(array_map('trim', $lines)));
+            $json['mount_root_allowlist'] = $this->parseTextList($json['mount_root_allowlist']);
+        }
+
+        if (isset($json['mount_remote_host_allowlist_text'])) {
+            $json['mount_remote_host_allowlist'] = $this->parseTextList($json['mount_remote_host_allowlist_text']);
+            unset($json['mount_remote_host_allowlist_text']);
+        }
+
+        if (isset($json['mount_remote_host_allowlist']) && is_string($json['mount_remote_host_allowlist'])) {
+            $json['mount_remote_host_allowlist'] = $this->parseTextList($json['mount_remote_host_allowlist']);
         }
 
         if (isset($json['share_upload_allowed_extensions_text'])) {
@@ -299,5 +307,21 @@ class SettingsController extends BaseController
         sort($normalized);
 
         return $normalized;
+    }
+
+    /**
+     * Parse newline separated lists from settings input.
+     *
+     * @param mixed $raw
+     * @return array<int, string>
+     */
+    private function parseTextList($raw): array
+    {
+        if (!is_string($raw)) {
+            return [];
+        }
+
+        $lines = preg_split('/\r\n|\r|\n/', $raw) ?: [];
+        return array_values(array_filter(array_map('trim', $lines)));
     }
 }

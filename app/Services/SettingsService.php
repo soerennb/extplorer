@@ -80,6 +80,7 @@ class SettingsService
             'allow_public_uploads' => false,
             'webdav_enabled' => true,
             'mount_root_allowlist' => [],
+            'mount_remote_host_allowlist' => [],
         ];
     }
 }

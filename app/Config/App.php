@@ -169,6 +169,15 @@ class App extends BaseConfig
     public array $mountRootAllowlist = [];
 
     /**
+     * Optional allowlist for remote mount hosts (FTP/SFTP).
+     * Supports hostnames/IPs, CIDR ranges, and wildcard domains (e.g. *.example.com).
+     * Empty list falls back to blocking private/reserved targets by default.
+     *
+     * @var list<string>
+     */
+    public array $mountRemoteHostAllowlist = [];
+
+    /**
      * --------------------------------------------------------------------------
      * Default Character Set
      * --------------------------------------------------------------------------

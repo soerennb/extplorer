@@ -211,10 +211,15 @@ const AdminSettings = {
                 <div v-if="settingsTab === 'mounts'">
                     <h6 class="border-bottom pb-2 mb-3">{{ t('admin_settings_mounts_heading', 'External Mounts') }}</h6>
                     <div class="row g-3">
-                        <div class="col-md-12">
+                        <div class="col-md-6">
                             <label class="form-label small fw-bold">{{ t('admin_settings_mounts_allowlist', 'Allowlist (one path per line)') }}</label>
                             <textarea class="form-control form-control-sm" rows="4" v-model="settings.mount_root_allowlist_text" :placeholder="t('admin_settings_mounts_allowlist_placeholder', '/srv/data\\n/mnt/storage')"></textarea>
                             <div class="form-text">{{ t('admin_settings_mounts_allowlist_hint', 'Only paths under these roots can be mounted. Leave empty to disable external mounts.') }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">{{ t('admin_settings_mounts_remote_allowlist', 'Remote Host Allowlist (one entry per line)') }}</label>
+                            <textarea class="form-control form-control-sm" rows="4" v-model="settings.mount_remote_host_allowlist_text" :placeholder="t('admin_settings_mounts_remote_allowlist_placeholder', 'files.example.com\\n10.0.0.0/8\\n*.corp.example')"></textarea>
+                            <div class="form-text">{{ t('admin_settings_mounts_remote_allowlist_hint', 'Allow hostnames, IPs, CIDR ranges, and wildcard domains. Leave empty to block private/reserved targets only.') }}</div>
                         </div>
                     </div>
                 </div>
@@ -322,6 +327,9 @@ const AdminSettings = {
                 if (!this.settings.mount_root_allowlist_text && Array.isArray(this.settings.mount_root_allowlist)) {
                     this.settings.mount_root_allowlist_text = this.settings.mount_root_allowlist.join('\n');
                 }
+                if (!this.settings.mount_remote_host_allowlist_text && Array.isArray(this.settings.mount_remote_host_allowlist)) {
+                    this.settings.mount_remote_host_allowlist_text = this.settings.mount_remote_host_allowlist.join('\n');
+                }
                 if (!this.settings.share_upload_allowed_extensions_text && Array.isArray(this.settings.share_upload_allowed_extensions)) {
                     this.settings.share_upload_allowed_extensions_text = this.settings.share_upload_allowed_extensions.join('\n');
                 }
@@ -391,6 +399,13 @@ const AdminSettings = {
             }
             if (typeof this.settings.quota_per_user_mb !== 'number' || Number.isNaN(this.settings.quota_per_user_mb)) {
                 this.settings.quota_per_user_mb = 0;
+            }
+            if (typeof this.settings.mount_remote_host_allowlist_text !== 'string') {
+                if (Array.isArray(this.settings.mount_remote_host_allowlist)) {
+                    this.settings.mount_remote_host_allowlist_text = this.settings.mount_remote_host_allowlist.join('\n');
+                } else {
+                    this.settings.mount_remote_host_allowlist_text = '';
+                }
             }
         },
         async saveSettings() {
