@@ -6,6 +6,23 @@ use App\Models\UserModel;
 
 class Login extends BaseController
 {
+    private function protectConnectionSecret(string $secret): string
+    {
+        if ($secret === '') {
+            return '';
+        }
+
+        try {
+            $ciphertext = \Config\Services::encrypter()->encrypt($secret);
+            if ((bool)config('Encryption')->rawData) {
+                $ciphertext = base64_encode($ciphertext);
+            }
+            return 'enc:' . $ciphertext;
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('Could not secure remote connection credentials.');
+        }
+    }
+
     public function index()
     {
         if (session()->get('isLoggedIn')) {
@@ -52,7 +69,7 @@ class Login extends BaseController
                         'host' => $host,
                         'port' => $port,
                         'user' => $username,
-                        'pass' => $password
+                        'pass' => $this->protectConnectionSecret($password)
                     ]
                 ]);
                 return redirect()->to('/');

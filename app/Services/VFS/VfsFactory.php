@@ -6,24 +6,52 @@ use App\Models\UserModel;
 
 class VfsFactory
 {
+    private static function revealConnectionSecret(string $secret): string
+    {
+        if ($secret === '') {
+            return '';
+        }
+
+        if (!str_starts_with($secret, 'enc:')) {
+            return $secret;
+        }
+
+        $payload = substr($secret, 4);
+        if ((bool)config('Encryption')->rawData) {
+            $decoded = base64_decode($payload, true);
+            if ($decoded === false) {
+                return '';
+            }
+            $payload = $decoded;
+        }
+
+        try {
+            return (string)\Config\Services::encrypter()->decrypt($payload);
+        } catch (\Throwable $e) {
+            return '';
+        }
+    }
+
     public static function createFileSystem(?string $username = null, array $connection = []): IFileSystem
     {
         $mode = $connection['mode'] ?? 'local';
 
         if ($mode === 'ftp') {
+            $password = self::revealConnectionSecret((string)($connection['pass'] ?? ''));
             return new FtpAdapter(
                 $connection['host'],
                 $connection['user'],
-                $connection['pass'],
+                $password,
                 $connection['port']
             );
         }
 
         if ($mode === 'sftp') {
+            $password = self::revealConnectionSecret((string)($connection['pass'] ?? ''));
             return new Ssh2Adapter(
                 $connection['host'],
                 $connection['user'],
-                $connection['pass'],
+                $password,
                 $connection['port']
             );
         }
