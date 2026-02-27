@@ -14,7 +14,7 @@
         "php": "^8.1",
         "bacon/bacon-qr-code": "^3.0",
         "codeigniter4/framework": "^4.0",
-        "sabre/dav": "~4.4.0",
+        "sabre/dav": "^4.7",
         "spomky-labs/otphp": "^11.4"
     },
     "require-dev": {

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bb9f78acef7fdcd433a937d53f4353c3",
+    "content-hash": "054652d41cc9bb878b33a1261cafde14",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -63,23 +63,23 @@
         },
         {
             "name": "codeigniter4/framework",
-            "version": "v4.6.4",
+            "version": "v4.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/codeigniter4/framework.git",
-                "reference": "e4d3702037a34549582453dbf59b7b67877ae82e"
+                "reference": "e7753bc03f8b74af428f46b5e2bb74925487c930"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/codeigniter4/framework/zipball/e4d3702037a34549582453dbf59b7b67877ae82e",
-                "reference": "e4d3702037a34549582453dbf59b7b67877ae82e",
+                "url": "https://api.github.com/repos/codeigniter4/framework/zipball/e7753bc03f8b74af428f46b5e2bb74925487c930",
+                "reference": "e7753bc03f8b74af428f46b5e2bb74925487c930",
                 "shasum": ""
             },
             "require": {
                 "ext-intl": "*",
                 "ext-mbstring": "*",
-                "laminas/laminas-escaper": "^2.17",
-                "php": "^8.1",
+                "laminas/laminas-escaper": "^2.18",
+                "php": "^8.2",
                 "psr/log": "^3.0"
             },
             "require-dev": {
@@ -93,6 +93,7 @@
                 "predis/predis": "^3.0"
             },
             "suggest": {
+                "ext-apcu": "If you use Cache class ApcuHandler",
                 "ext-curl": "If you use CURLRequest class",
                 "ext-dom": "If you use TestResponse",
                 "ext-exif": "If you run Image class tests",
@@ -104,7 +105,9 @@
                 "ext-memcached": "If you use Cache class MemcachedHandler with Memcached",
                 "ext-mysqli": "If you use MySQL",
                 "ext-oci8": "If you use Oracle Database",
+                "ext-pcntl": "If you use Signals",
                 "ext-pgsql": "If you use PostgreSQL",
+                "ext-posix": "If you use Signals",
                 "ext-readline": "Improves CLI::input() usability",
                 "ext-redis": "If you use Cache class RedisHandler",
                 "ext-simplexml": "If you format XML",
@@ -133,7 +136,7 @@
                 "slack": "https://codeigniterchat.slack.com",
                 "source": "https://github.com/codeigniter4/CodeIgniter4"
             },
-            "time": "2025-12-12T10:37:42+00:00"
+            "time": "2026-02-01T20:39:35+00:00"
         },
         {
             "name": "dasprid/enum",
@@ -415,16 +418,16 @@
         },
         {
             "name": "sabre/dav",
-            "version": "4.4.0",
+            "version": "4.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sabre-io/dav.git",
-                "reference": "b65362abc926520eda2c57e219f022a6c288069d"
+                "reference": "074373bcd689a30bcf5aaa6bbb20a3395964ce7a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sabre-io/dav/zipball/b65362abc926520eda2c57e219f022a6c288069d",
-                "reference": "b65362abc926520eda2c57e219f022a6c288069d",
+                "url": "https://api.github.com/repos/sabre-io/dav/zipball/074373bcd689a30bcf5aaa6bbb20a3395964ce7a",
+                "reference": "074373bcd689a30bcf5aaa6bbb20a3395964ce7a",
                 "shasum": ""
             },
             "require": {
@@ -447,11 +450,11 @@
                 "sabre/xml": "^2.0.1"
             },
             "require-dev": {
-                "evert/phpdoc-md": "~0.1.0",
-                "friendsofphp/php-cs-fixer": "^2.17.1",
-                "monolog/monolog": "^1.18",
-                "phpstan/phpstan": "^0.12",
-                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.0"
+                "friendsofphp/php-cs-fixer": "^2.19",
+                "monolog/monolog": "^1.27 || ^2.0",
+                "phpstan/phpstan": "^0.12 || ^1.0",
+                "phpstan/phpstan-phpunit": "^1.0",
+                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.6"
             },
             "suggest": {
                 "ext-curl": "*",
@@ -465,10 +468,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Sabre\\DAV\\": "lib/DAV/",
-                    "Sabre\\CalDAV\\": "lib/CalDAV/",
-                    "Sabre\\DAVACL\\": "lib/DAVACL/",
-                    "Sabre\\CardDAV\\": "lib/CardDAV/"
+                    "Sabre\\": "lib/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -497,7 +497,7 @@
                 "issues": "https://github.com/sabre-io/dav/issues",
                 "source": "https://github.com/fruux/sabre-dav"
             },
-            "time": "2022-06-27T09:07:55+00:00"
+            "time": "2024-10-29T11:46:02+00:00"
         },
         {
             "name": "sabre/event",
@@ -690,16 +690,16 @@
         },
         {
             "name": "sabre/vobject",
-            "version": "4.5.7",
+            "version": "4.5.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sabre-io/vobject.git",
-                "reference": "ff22611a53782e90c97be0d0bc4a5f98a5c0a12c"
+                "reference": "d554eb24d64232922e1eab5896cc2f84b3b9ffb1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sabre-io/vobject/zipball/ff22611a53782e90c97be0d0bc4a5f98a5c0a12c",
-                "reference": "ff22611a53782e90c97be0d0bc4a5f98a5c0a12c",
+                "url": "https://api.github.com/repos/sabre-io/vobject/zipball/d554eb24d64232922e1eab5896cc2f84b3b9ffb1",
+                "reference": "d554eb24d64232922e1eab5896cc2f84b3b9ffb1",
                 "shasum": ""
             },
             "require": {
@@ -790,7 +790,7 @@
                 "issues": "https://github.com/sabre-io/vobject/issues",
                 "source": "https://github.com/fruux/sabre-vobject"
             },
-            "time": "2025-04-17T09:22:48+00:00"
+            "time": "2026-01-12T10:45:19+00:00"
         },
         {
             "name": "sabre/xml",
@@ -863,16 +863,16 @@
         },
         {
             "name": "spomky-labs/otphp",
-            "version": "11.4.1",
+            "version": "11.4.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Spomky-Labs/otphp.git",
-                "reference": "126c99b6cbbc18992cf3fba3b87931ba4e312482"
+                "reference": "2a1b503fd1c1a5c751ab3c5cd37f2d2d26ab74ad"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Spomky-Labs/otphp/zipball/126c99b6cbbc18992cf3fba3b87931ba4e312482",
-                "reference": "126c99b6cbbc18992cf3fba3b87931ba4e312482",
+                "url": "https://api.github.com/repos/Spomky-Labs/otphp/zipball/2a1b503fd1c1a5c751ab3c5cd37f2d2d26ab74ad",
+                "reference": "2a1b503fd1c1a5c751ab3c5cd37f2d2d26ab74ad",
                 "shasum": ""
             },
             "require": {
@@ -917,7 +917,7 @@
             ],
             "support": {
                 "issues": "https://github.com/Spomky-Labs/otphp/issues",
-                "source": "https://github.com/Spomky-Labs/otphp/tree/11.4.1"
+                "source": "https://github.com/Spomky-Labs/otphp/tree/11.4.2"
             },
             "funding": [
                 {
@@ -929,7 +929,7 @@
                     "type": "patreon"
                 }
             ],
-            "time": "2026-01-05T13:20:36+00:00"
+            "time": "2026-01-23T10:53:01+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -1674,16 +1674,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "10.5.60",
+            "version": "10.5.63",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "f2e26f52f80ef77832e359205f216eeac00e320c"
+                "reference": "33198268dad71e926626b618f3ec3966661e4d90"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/f2e26f52f80ef77832e359205f216eeac00e320c",
-                "reference": "f2e26f52f80ef77832e359205f216eeac00e320c",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/33198268dad71e926626b618f3ec3966661e4d90",
+                "reference": "33198268dad71e926626b618f3ec3966661e4d90",
                 "shasum": ""
             },
             "require": {
@@ -1704,7 +1704,7 @@
                 "phpunit/php-timer": "^6.0.0",
                 "sebastian/cli-parser": "^2.0.1",
                 "sebastian/code-unit": "^2.0.0",
-                "sebastian/comparator": "^5.0.4",
+                "sebastian/comparator": "^5.0.5",
                 "sebastian/diff": "^5.1.1",
                 "sebastian/environment": "^6.1.0",
                 "sebastian/exporter": "^5.1.4",
@@ -1755,7 +1755,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/10.5.60"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/10.5.63"
             },
             "funding": [
                 {
@@ -1779,7 +1779,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-12-06T07:50:42+00:00"
+            "time": "2026-01-27T05:48:37+00:00"
         },
         {
             "name": "psr/container",
@@ -2004,16 +2004,16 @@
         },
         {
             "name": "sebastian/comparator",
-            "version": "5.0.4",
+            "version": "5.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/comparator.git",
-                "reference": "e8e53097718d2b53cfb2aa859b06a41abf58c62e"
+                "reference": "55dfef806eb7dfeb6e7a6935601fef866f8ca48d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/comparator/zipball/e8e53097718d2b53cfb2aa859b06a41abf58c62e",
-                "reference": "e8e53097718d2b53cfb2aa859b06a41abf58c62e",
+                "url": "https://api.github.com/repos/sebastianbergmann/comparator/zipball/55dfef806eb7dfeb6e7a6935601fef866f8ca48d",
+                "reference": "55dfef806eb7dfeb6e7a6935601fef866f8ca48d",
                 "shasum": ""
             },
             "require": {
@@ -2069,7 +2069,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/comparator/issues",
                 "security": "https://github.com/sebastianbergmann/comparator/security/policy",
-                "source": "https://github.com/sebastianbergmann/comparator/tree/5.0.4"
+                "source": "https://github.com/sebastianbergmann/comparator/tree/5.0.5"
             },
             "funding": [
                 {
@@ -2089,7 +2089,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-09-07T05:25:07+00:00"
+            "time": "2026-01-24T09:25:16+00:00"
         },
         {
             "name": "sebastian/complexity",
