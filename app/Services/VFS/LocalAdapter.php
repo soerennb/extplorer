@@ -265,16 +265,131 @@ class LocalAdapter implements IFileSystem
         if ($ext === 'zip') {
             $zip = new ZipArchive();
             if ($zip->open($fullArchive) === true) {
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    $entryName = (string)$zip->getNameIndex($i);
+                    $this->assertSafeArchiveEntryPath($entryName);
+                    $this->buildSafeExtractionPath($fullDest, $entryName);
+                }
+
                 $zip->extractTo($fullDest);
                 $zip->close();
                 return true;
             }
         } else if ($ext === 'tar' || $ext === 'tar.gz') {
             $phar = new PharData($fullArchive);
-            return $phar->extractTo($fullDest, null, true);
+            return $this->extractTarSafely($phar, $fullDest);
         }
 
         throw new Exception("Failed to open or unsupported archive: $archive");
+    }
+
+    private function extractTarSafely(PharData $phar, string $destination): bool
+    {
+        $iterator = new \RecursiveIteratorIterator($phar, \RecursiveIteratorIterator::SELF_FIRST);
+
+        foreach ($iterator as $internalPath => $entry) {
+            if (!$entry instanceof \PharFileInfo) {
+                continue;
+            }
+
+            $entryPath = (string)$internalPath;
+            $this->assertSafeArchiveEntryPath($entryPath);
+            $targetPath = $this->buildSafeExtractionPath($destination, $entryPath);
+
+            if ($entry->isDir()) {
+                if (!is_dir($targetPath) && !mkdir($targetPath, 0755, true) && !is_dir($targetPath)) {
+                    throw new Exception("Failed to create extraction directory: {$targetPath}");
+                }
+                continue;
+            }
+
+            // Skip links to avoid extracting pointers that can escape root on later operations.
+            if ($entry->isLink()) {
+                continue;
+            }
+
+            $parent = dirname($targetPath);
+            if (!is_dir($parent) && !mkdir($parent, 0755, true) && !is_dir($parent)) {
+                throw new Exception("Failed to create extraction directory: {$parent}");
+            }
+
+            $readStream = $entry->openFile('r');
+            $handle = fopen($targetPath, 'wb');
+            if ($handle === false) {
+                throw new Exception("Failed to write extracted file: {$targetPath}");
+            }
+
+            while (!$readStream->eof()) {
+                fwrite($handle, (string)$readStream->fread(8192));
+            }
+            fclose($handle);
+        }
+
+        return true;
+    }
+
+    private function assertSafeArchiveEntryPath(string $entryName): void
+    {
+        $entryName = str_replace('\\', '/', trim($entryName));
+        if ($entryName === '') {
+            throw new Exception('Archive contains an empty entry path.');
+        }
+
+        if ($entryName[0] === '/' || preg_match('/^[a-zA-Z]:\//', $entryName)) {
+            throw new Exception('Archive contains an absolute entry path.');
+        }
+
+        $parts = explode('/', $entryName);
+        foreach ($parts as $part) {
+            if ($part === '' || $part === '.') {
+                continue;
+            }
+            if ($part === '..') {
+                throw new Exception('Archive contains path traversal entries.');
+            }
+        }
+    }
+
+    private function buildSafeExtractionPath(string $destination, string $entryName): string
+    {
+        $normalized = trim(str_replace('\\', '/', $entryName), '/');
+        $parts = array_values(array_filter(
+            explode('/', $normalized),
+            static fn(string $part): bool => $part !== '' && $part !== '.'
+        ));
+
+        $candidate = rtrim($destination, DIRECTORY_SEPARATOR);
+        if (!empty($parts)) {
+            $candidate .= DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $parts);
+        }
+
+        $this->assertWithinDirectory($candidate, $destination);
+
+        return $candidate;
+    }
+
+    private function assertWithinDirectory(string $candidate, string $baseDir): void
+    {
+        $base = rtrim(realpath($baseDir) ?: $baseDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $check = $candidate;
+
+        while (!file_exists($check)) {
+            $parent = dirname($check);
+            if ($parent === $check) {
+                break;
+            }
+            $check = $parent;
+        }
+
+        $resolved = realpath($check);
+        if ($resolved === false) {
+            throw new Exception('Invalid extraction path.');
+        }
+
+        $resolved = rtrim($resolved, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (!str_starts_with($resolved, $base)) {
+            throw new Exception('Archive extraction path traversal blocked.');
+        }
     }
 
     public function getMetadata(string $path): ?array

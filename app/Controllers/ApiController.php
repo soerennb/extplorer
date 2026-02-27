@@ -757,6 +757,8 @@ class ApiController extends BaseController
 
     public function shareDelete()
     {
+        if (!can('read')) return $this->failForbidden();
+
         $json = $this->request->getJSON();
         $hash = $json->hash ?? null;
         if (!$hash) return $this->fail('Hash required');
@@ -784,6 +786,8 @@ class ApiController extends BaseController
 
     public function shareList()
     {
+        if (!can('read')) return $this->failForbidden();
+
         try {
             $service = new \App\Services\ShareService();
             $shares = $service->listUserShares(session('username'));
