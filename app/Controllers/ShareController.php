@@ -138,6 +138,12 @@ class ShareController extends BaseController
 
     public function auth(string $hash)
     {
+        $throttler = \Config\Services::throttler();
+        $authThrottleKey = 'share-auth-' . $hash . '-' . $this->request->getIPAddress();
+        if ($throttler->check($authThrottleKey, 10, MINUTE) === false) {
+            return redirect()->back()->with('error', 'Too many requests. Please slow down.');
+        }
+
         $service = new ShareService();
         $password = $this->request->getPost('password');
         $supportedLocales = ['en', 'de', 'fr'];
@@ -274,6 +280,12 @@ class ShareController extends BaseController
      */
     public function upload(string $hash)
     {
+        $throttler = \Config\Services::throttler();
+        $uploadThrottleKey = 'share-upload-' . $hash . '-' . $this->request->getIPAddress();
+        if ($throttler->check($uploadThrottleKey, 30, MINUTE) === false) {
+            return $this->fail('Too many requests. Please slow down.', 429);
+        }
+
         $service = new ShareService();
         $share = $service->getShare($hash);
         if (!$share) {
