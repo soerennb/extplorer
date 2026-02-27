@@ -137,10 +137,10 @@ class LocalAdapter implements IFileSystem
         foreach ($items as $item) {
             if ($item === '.' || $item === '..') continue;
             $path = $dir . DIRECTORY_SEPARATOR . $item;
-            if (is_dir($path)) {
-                $this->deleteDirectory($path);
-            } else {
+            if (is_link($path) || is_file($path)) {
                 unlink($path);
+            } elseif (is_dir($path)) {
+                $this->deleteDirectory($path);
             }
         }
         return rmdir($dir);
@@ -185,11 +185,18 @@ class LocalAdapter implements IFileSystem
         @mkdir($dst); 
         while(false !== ( $file = readdir($dir)) ) { 
             if (( $file != '.' ) && ( $file != '..' )) { 
-                if ( is_dir($src . '/' . $file) ) { 
-                    $this->recurseCopy($src . '/' . $file,$dst . '/' . $file); 
+                $srcPath = $src . '/' . $file;
+                $dstPath = $dst . '/' . $file;
+
+                if (is_link($srcPath)) {
+                    throw new Exception('Refusing to copy symbolic links.');
+                }
+
+                if (is_dir($srcPath)) { 
+                    $this->recurseCopy($srcPath, $dstPath); 
                 } 
                 else { 
-                    copy($src . '/' . $file,$dst . '/' . $file); 
+                    copy($srcPath, $dstPath); 
                 } 
             } 
         } 
@@ -244,6 +251,9 @@ class LocalAdapter implements IFileSystem
             if ($file === '.' || $file === '..') continue;
             $fullPath = $dir . DIRECTORY_SEPARATOR . $file;
             $newLocalPath = $localPath . '/' . $file;
+            if (is_link($fullPath)) {
+                throw new Exception('Refusing to archive symbolic links.');
+            }
             if (is_dir($fullPath)) {
                 $this->addDirToZip($zip, $fullPath, $newLocalPath);
             } else {
@@ -269,6 +279,9 @@ class LocalAdapter implements IFileSystem
                     $entryName = (string)$zip->getNameIndex($i);
                     $this->assertSafeArchiveEntryPath($entryName);
                     $this->buildSafeExtractionPath($fullDest, $entryName);
+                    if ($this->isZipEntrySymlink($zip, $i)) {
+                        throw new Exception('Archive contains symbolic link entries.');
+                    }
                 }
 
                 $zip->extractTo($fullDest);
@@ -305,7 +318,7 @@ class LocalAdapter implements IFileSystem
 
             // Skip links to avoid extracting pointers that can escape root on later operations.
             if ($entry->isLink()) {
-                continue;
+                throw new Exception('Archive contains symbolic link entries.');
             }
 
             $parent = dirname($targetPath);
@@ -326,6 +339,25 @@ class LocalAdapter implements IFileSystem
         }
 
         return true;
+    }
+
+    private function isZipEntrySymlink(ZipArchive $zip, int $index): bool
+    {
+        $stat = $zip->statIndex($index);
+        if (!is_array($stat)) {
+            return false;
+        }
+
+        $opsys = (int)($stat['opsys'] ?? 0);
+        $externalAttributes = (int)($stat['external_attributes'] ?? 0);
+
+        // Only Unix attributes reliably encode file type bits for symlinks.
+        if ($opsys !== ZipArchive::OPSYS_UNIX || $externalAttributes === 0) {
+            return false;
+        }
+
+        $mode = ($externalAttributes >> 16) & 0xF000;
+        return $mode === 0xA000;
     }
 
     private function assertSafeArchiveEntryPath(string $entryName): void

@@ -37,5 +37,34 @@ class LocalAdapterSecurityTest extends CIUnitTestCase
         @rmdir($extractDir);
         @rmdir($root);
     }
-}
 
+    public function testDeleteDoesNotFollowDirectorySymlinks(): void
+    {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->markTestSkipped('Symlink creation is not reliably available on Windows CI.');
+        }
+
+        $root = sys_get_temp_dir() . '/extplorer_symlink_' . uniqid('', true);
+        $victimDir = sys_get_temp_dir() . '/extplorer_victim_' . uniqid('', true);
+        $managedDir = $root . '/managed';
+        $linkPath = $managedDir . '/outside-link';
+        $victimFile = $victimDir . '/keep.txt';
+
+        mkdir($managedDir, 0755, true);
+        mkdir($victimDir, 0755, true);
+        file_put_contents($victimFile, 'must survive');
+
+        if (!@symlink($victimDir, $linkPath)) {
+            $this->markTestSkipped('Symlink creation is not permitted in this environment.');
+        }
+
+        $adapter = new LocalAdapter($root);
+        $this->assertTrue($adapter->delete('managed'));
+
+        $this->assertFileExists($victimFile);
+
+        @unlink($victimFile);
+        @rmdir($victimDir);
+        @rmdir($root);
+    }
+}
