@@ -6,6 +6,16 @@ use App\Models\UserModel;
 
 class Install extends BaseController
 {
+    private function isInstalled(): bool
+    {
+        try {
+            $userModel = new UserModel();
+            return count($userModel->getUsers()) > 0;
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
     private function getChecks(): array
     {
         return [
@@ -30,6 +40,10 @@ class Install extends BaseController
 
     public function index()
     {
+        if ($this->isInstalled()) {
+            return redirect()->to('/');
+        }
+
         $checks = $this->getChecks();
 
         // Check if writable is writable, if not, show error page only
@@ -44,6 +58,10 @@ class Install extends BaseController
     {
         if ($this->request->getMethod() !== 'POST') {
             return redirect()->to('install');
+        }
+
+        if ($this->isInstalled()) {
+            return redirect()->to('/')->with('error', 'Installation is already completed.');
         }
 
         $username = trim((string) $this->request->getPost('username'));
