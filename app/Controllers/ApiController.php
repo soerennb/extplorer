@@ -336,7 +336,11 @@ class ApiController extends BaseController
             return $this->fail($file ? $file->getErrorString() : 'No file uploaded');
         }
 
-        $name = $file->getClientName();
+        try {
+            $name = $this->sanitizeUploadFilename((string)$file->getClientName());
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
         if (!$this->isExtensionAllowed($name)) {
             return $this->fail("Uploading files with this extension is not allowed.");
         }
@@ -374,12 +378,22 @@ class ApiController extends BaseController
         if (!can('upload')) return $this->failForbidden();
         
         $file = $this->request->getFile('file');
-        $filename = $this->request->getPost('filename');
+        $filenameRaw = $this->request->getPost('filename');
         $chunkIndex = (int)$this->request->getPost('chunkIndex');
         $totalChunks = (int)$this->request->getPost('totalChunks');
         $targetPath = $this->request->getPost('path') ?? '';
 
         if (!$file || !$file->isValid()) return $this->fail('Invalid chunk');
+
+        try {
+            $filename = $this->sanitizeUploadFilename((string)$filenameRaw);
+        } catch (Exception $e) {
+            return $this->fail($e->getMessage());
+        }
+
+        if ($totalChunks < 1 || $chunkIndex < 0 || $chunkIndex >= $totalChunks) {
+            return $this->fail('Invalid chunk metadata.');
+        }
 
         if (!$this->isExtensionAllowed($filename)) {
             return $this->fail("Uploading files with this extension is not allowed.");
@@ -393,7 +407,7 @@ class ApiController extends BaseController
             return $this->fail("Chunk exceeds the maximum allowed upload size of {$maxMb} MB.");
         }
 
-        $tempDir = WRITEPATH . 'uploads/chunks/' . md5(session_id() . $filename);
+        $tempDir = WRITEPATH . 'uploads/chunks/' . md5(session_id() . $targetPath . '|' . $filename);
         if (!is_dir($tempDir)) mkdir($tempDir, 0755, true);
 
         $file->move($tempDir, $chunkIndex . '.part');
@@ -413,7 +427,13 @@ class ApiController extends BaseController
                     return $this->fail('Upload would exceed the configured per-user storage quota.');
                 }
 
-                $finalPath = $this->fs->resolvePath($targetPath) . DIRECTORY_SEPARATOR . $filename;
+                $targetDir = $this->fs->resolvePath($targetPath);
+                if (!is_dir($targetDir)) {
+                    $this->rrmdir($tempDir);
+                    return $this->fail("Target directory does not exist.");
+                }
+
+                $finalPath = $targetDir . DIRECTORY_SEPARATOR . $filename;
                 $out = fopen($finalPath, 'wb');
                 for ($i = 0; $i < $totalChunks; $i++) {
                     $chunkPath = $tempDir . DIRECTORY_SEPARATOR . $i . '.part';
@@ -1028,5 +1048,24 @@ class ApiController extends BaseController
         }
 
         return $total;
+    }
+
+    private function sanitizeUploadFilename(string $name): string
+    {
+        $name = trim($name);
+        if ($name === '') {
+            throw new Exception('Filename is required.');
+        }
+
+        $name = basename(str_replace('\\', '/', $name));
+        if ($name === '' || $name === '.' || $name === '..') {
+            throw new Exception('Invalid filename.');
+        }
+
+        if (preg_match('/[\/\\\\]/', $name)) {
+            throw new Exception('Invalid filename.');
+        }
+
+        return $name;
     }
 }

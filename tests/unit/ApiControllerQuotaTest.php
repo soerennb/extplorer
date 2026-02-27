@@ -72,6 +72,22 @@ class ApiControllerQuotaTest extends CIUnitTestCase
         $this->assertFalse($smallOk);
     }
 
+    public function testSanitizeUploadFilenameStripsPath(): void
+    {
+        $controller = new ApiController();
+        $safe = $this->callPrivate($controller, 'sanitizeUploadFilename', ['../../evil.txt']);
+        $this->assertSame('evil.txt', $safe);
+    }
+
+    public function testSanitizeUploadFilenameRejectsDotEntries(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Invalid filename');
+
+        $controller = new ApiController();
+        $this->callPrivate($controller, 'sanitizeUploadFilename', ['..']);
+    }
+
     private function writeBytes(string $path, int $bytes): void
     {
         $chunk = str_repeat('A', 1024);
@@ -106,4 +122,3 @@ class ApiControllerQuotaTest extends CIUnitTestCase
         @rmdir($dir);
     }
 }
-

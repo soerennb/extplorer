@@ -367,7 +367,10 @@ class ShareController extends BaseController
                 return $this->fail('Target directory does not exist.');
             }
 
-            $name = $file->getClientName();
+            $name = basename(str_replace('\\', '/', (string)$file->getClientName()));
+            if ($name === '' || $name === '.' || $name === '..') {
+                return $this->fail('Invalid filename.', 400);
+            }
             $file->move($targetDir, $name);
             $postPolicy = $this->buildUploadPolicy($settings, $basePath, $share);
 
