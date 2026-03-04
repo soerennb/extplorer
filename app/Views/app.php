@@ -30,6 +30,47 @@
         
         /* Main Container Drag Over */
         .main-container.drag-over { background-color: var(--bs-primary-bg-subtle); border: 2px dashed var(--bs-primary); }
+        .drag-operation-indicator {
+            position: absolute;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1045;
+            pointer-events: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid rgba(var(--bs-info-rgb), 0.35);
+            background: rgba(var(--bs-body-bg-rgb), 0.92);
+            box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12);
+            color: var(--bs-body-color);
+            font-size: 0.9rem;
+            font-weight: 600;
+            backdrop-filter: blur(8px);
+        }
+        .drag-operation-indicator-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.9rem;
+            height: 1.9rem;
+            border-radius: 50%;
+            background: rgba(var(--bs-info-rgb), 0.14);
+            color: var(--bs-info);
+            font-size: 1rem;
+        }
+        .drag-operation-indicator-copy {
+            border-color: rgba(var(--bs-success-rgb), 0.35);
+        }
+        .drag-operation-indicator-copy .drag-operation-indicator-icon {
+            background: rgba(var(--bs-success-rgb), 0.14);
+            color: var(--bs-success);
+        }
+        [data-bs-theme="dark"] .drag-operation-indicator {
+            background: rgba(33, 37, 41, 0.92);
+        }
         
         .navbar-logo { height: 48px; width: auto; margin-right: 10px; }
         
@@ -503,6 +544,13 @@
              @dragover.prevent="onDragOver($event, null)" 
              @dragleave="onDragLeave(null)"
              @drop.prevent="onDrop($event, null)">
+            <div v-if="dragIndicatorMode === 'copy'"
+                 class="drag-operation-indicator drag-operation-indicator-copy">
+                <span class="drag-operation-indicator-icon">
+                    <i class="ri-file-copy-line"></i>
+                </span>
+                <span>{{ t('copy') }}</span>
+            </div>
             
             <!-- Sidebar -->
             <div class="sidebar offcanvas-lg offcanvas-start p-2" id="sidebarOffcanvas" tabindex="-1">
@@ -630,6 +678,7 @@
                              :class="{'selected': store.isSelected(file), 'drag-over': file.isDragOver}"
                              draggable="true"
                              @dragstart="onDragStart($event, file)"
+                             @dragend="onDragEnd"
                              @dragover.prevent="file.type === 'dir' ? onDragOver($event, file) : null"
                              @dragleave="file.type === 'dir' ? onDragLeave(file) : null"
                              @drop.prevent="file.type === 'dir' ? onDrop($event, file) : null"

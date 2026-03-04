@@ -22,6 +22,7 @@ const app = createApp({
         const contextMenu = Vue.reactive({ visible: false, x: 0, y: 0, file: null });
         const previewState = Vue.reactive({ src: '', index: 0, list: [], type: '', filename: '' });
         const theme = ref(localStorage.getItem('extplorer_theme') || 'auto');
+        const dragIndicatorMode = ref(null);
         let aceEditor = null;
         let editorModal = null;
         let previewModal = null;
@@ -545,15 +546,28 @@ const app = createApp({
         const prevPreview = () => { if (previewState.index > 0) { previewState.index--; updatePreviewer(); } };
 
         // Drag & Drop
+        const getInternalDropOperation = (e) => (e.ctrlKey || e.metaKey ? 'copy' : 'move');
+        const isExternalFileDrag = (e) => {
+            const items = e.dataTransfer?.items;
+            return Boolean(items && items.length > 0 && items[0].kind === 'file');
+        };
+
         const onDragStart = (e, f) => {
             const items = store.isSelected(f) ? store.selectedItems : [f];
             e.dataTransfer.setData('text/plain', JSON.stringify(items));
-            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.effectAllowed = 'copyMove';
+        };
+
+        const onDragEnd = () => {
+            dragIndicatorMode.value = null;
+            store.isDraggingOver = false;
         };
 
         const onDragOver = (e, file = null) => {
             e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
+            const operation = isExternalFileDrag(e) ? 'copy' : getInternalDropOperation(e);
+            e.dataTransfer.dropEffect = operation === 'copy' ? 'copy' : 'move';
+            dragIndicatorMode.value = isExternalFileDrag(e) ? null : operation;
             if (file && file.type === 'dir') {
                 file.isDragOver = true;
             } else if (!file) {
@@ -563,7 +577,10 @@ const app = createApp({
 
         const onDragLeave = (file = null) => {
             if (file) file.isDragOver = false;
-            else store.isDraggingOver = false;
+            else {
+                store.isDraggingOver = false;
+                dragIndicatorMode.value = null;
+            }
         };
 
         const traverseFileTree = async (item, path) => {
@@ -596,6 +613,7 @@ const app = createApp({
         const onDrop = async (e, target) => {
             e.preventDefault();
             store.isDraggingOver = false;
+            dragIndicatorMode.value = null;
             if (target) target.isDragOver = false;
 
             // 1. External Files/Folders (Upload)
@@ -630,21 +648,23 @@ const app = createApp({
                 return;
             }
 
-            // 2. Internal Move
+            // 2. Internal Transfer
             try {
                 const s = e.dataTransfer.getData('text/plain');
                 if (!s) return;
                 const items = JSON.parse(s);
                 const list = Array.isArray(items) ? items : [items];
                 if (!target) return;
+                const operation = getInternalDropOperation(e);
 
                 for (let item of list) {
                     if (item.path === target.path) continue;
-                    await Api.post('mv', { from: item.path, to: target.path + '/' + item.name });
+                    await Api.post(operation === 'copy' ? 'cp' : 'mv', { from: item.path, to: target.path + '/' + item.name });
                 }
                 reload();
+                store.refreshTree();
                 store.selectedItems = [];
-            } catch (e) { console.error("Drop error", e); }
+            } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
         };
 
         const setSort = (k) => {
@@ -779,7 +799,7 @@ const app = createApp({
             isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer, openTransferWithFile,
             contextMenu, showContextMenu, hideContextMenu, cmAction,
             previewState, nextPreview, prevPreview, showWebDav, copyWebDavUrl, webDavUrl,
-            onDragStart, onDragOver, onDragLeave, onDrop,
+            dragIndicatorMode, onDragStart, onDragEnd, onDragOver, onDragLeave, onDrop,
             setSort, isImage, isArchive, getThumbUrl,
             createFolder, deleteSelected, renameSelected, uploadFile, downloadSelected, createArchive, extractArchive, chmodSelected,
             showProperties, diffSelected, copySelected, cutSelected, paste,

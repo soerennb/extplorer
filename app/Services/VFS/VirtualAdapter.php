@@ -180,16 +180,40 @@ class VirtualAdapter implements IFileSystem
             return $adapterFrom->copy($pathFrom, $pathTo);
         }
 
-        // Cross-mount copy
-         $meta = $adapterFrom->getMetadata($pathFrom);
-        if (!$meta) throw new Exception("Source not found");
-        
+        return $this->copyAcrossAdapters($adapterFrom, $pathFrom, $adapterTo, $pathTo);
+    }
+
+    private function copyAcrossAdapters(IFileSystem $adapterFrom, string $pathFrom, IFileSystem $adapterTo, string $pathTo): bool
+    {
+        $meta = $adapterFrom->getMetadata($pathFrom);
+        if (!$meta) {
+            throw new Exception("Source not found");
+        }
+
         if ($meta['type'] === 'dir') {
-            throw new Exception("Cross-mount directory copy not implemented yet");
+            if (!$adapterTo->createDirectory($pathTo)) {
+                $existing = $adapterTo->getMetadata($pathTo);
+                if (!$existing || $existing['type'] !== 'dir') {
+                    throw new Exception("Could not create destination directory: $pathTo");
+                }
+            }
+
+            foreach ($adapterFrom->listDirectory($pathFrom) as $item) {
+                $childTarget = $this->joinRelativePath($pathTo, $item['name']);
+                $this->copyAcrossAdapters($adapterFrom, $item['path'], $adapterTo, $childTarget);
+            }
+
+            return true;
         }
 
         $content = $adapterFrom->readFile($pathFrom);
         return $adapterTo->writeFile($pathTo, $content);
+    }
+
+    private function joinRelativePath(string $base, string $name): string
+    {
+        $base = trim($base, '/');
+        return $base === '' ? $name : $base . '/' . $name;
     }
 
     public function getMetadata(string $path): ?array

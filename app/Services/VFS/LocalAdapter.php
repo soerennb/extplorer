@@ -173,10 +173,36 @@ class LocalAdapter implements IFileSystem
         $fullTo = $this->resolvePath($to);
 
         if (is_dir($fullFrom)) {
+            $this->assertValidCopyTarget($fullFrom, $fullTo);
             return $this->recurseCopy($fullFrom, $fullTo);
         } else {
             return copy($fullFrom, $fullTo);
         }
+    }
+
+    private function assertValidCopyTarget(string $src, string $dst): void
+    {
+        $source = $this->normalizePathForComparison($src);
+        $target = $this->normalizePathForComparison($dst);
+
+        if ($source === $target) {
+            throw new Exception('Cannot copy a directory onto itself.');
+        }
+
+        if (str_starts_with($target, $source . '/')) {
+            throw new Exception('Cannot copy a directory into one of its descendants.');
+        }
+    }
+
+    private function normalizePathForComparison(string $path): string
+    {
+        $normalized = rtrim(str_replace('\\', '/', $path), '/');
+
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $normalized = strtolower($normalized);
+        }
+
+        return $normalized;
     }
 
     private function recurseCopy(string $src, string $dst): bool 

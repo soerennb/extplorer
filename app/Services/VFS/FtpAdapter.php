@@ -159,9 +159,69 @@ class FtpAdapter implements IFileSystem
 
     public function copy(string $from, string $to): bool
     {
+        $meta = $this->getMetadata($from);
+        if (!$meta) {
+            throw new Exception("Source not found: $from");
+        }
+
+        if ($meta['type'] === 'dir') {
+            $this->assertValidCopyTarget($from, $to);
+            return $this->copyDirectory($from, $to);
+        }
+
         // FTP doesn't have a native copy. Must download and re-upload.
         $content = $this->readFile($from);
         return $this->writeFile($to, $content);
+    }
+
+    private function copyDirectory(string $from, string $to): bool
+    {
+        if (!$this->createDirectory($to)) {
+            $existing = $this->getMetadata($to);
+            if (!$existing || $existing['type'] !== 'dir') {
+                throw new Exception("Could not create destination directory: $to");
+            }
+        }
+
+        foreach ($this->listDirectory($from) as $item) {
+            $targetPath = $this->joinRelativePath($to, $item['name']);
+            if ($item['type'] === 'dir') {
+                $this->copyDirectory($item['path'], $targetPath);
+                continue;
+            }
+
+            $content = $this->readFile($item['path']);
+            if (!$this->writeFile($targetPath, $content)) {
+                throw new Exception("Could not copy file to: $targetPath");
+            }
+        }
+
+        return true;
+    }
+
+    private function assertValidCopyTarget(string $from, string $to): void
+    {
+        $source = $this->normalizeRelativePath($from);
+        $target = $this->normalizeRelativePath($to);
+
+        if ($source === $target) {
+            throw new Exception('Cannot copy a directory onto itself.');
+        }
+
+        if ($source !== '' && str_starts_with($target, $source . '/')) {
+            throw new Exception('Cannot copy a directory into one of its descendants.');
+        }
+    }
+
+    private function joinRelativePath(string $base, string $name): string
+    {
+        $base = trim($base, '/');
+        return $base === '' ? $name : $base . '/' . $name;
+    }
+
+    private function normalizeRelativePath(string $path): string
+    {
+        return trim(str_replace('\\', '/', $path), '/');
     }
 
     public function getMetadata(string $path): ?array

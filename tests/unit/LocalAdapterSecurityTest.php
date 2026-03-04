@@ -67,4 +67,26 @@ class LocalAdapterSecurityTest extends CIUnitTestCase
         @rmdir($victimDir);
         @rmdir($root);
     }
+
+    public function testCopyBlocksNestedDirectoryTarget(): void
+    {
+        $root = sys_get_temp_dir() . '/extplorer_copy_guard_' . uniqid('', true);
+        $sourceDir = $root . '/folder';
+
+        mkdir($sourceDir, 0755, true);
+        file_put_contents($sourceDir . '/example.txt', 'data');
+
+        $adapter = new LocalAdapter($root);
+
+        try {
+            $adapter->copy('folder', 'folder/copy');
+            $this->fail('Expected nested directory copy to fail.');
+        } catch (\Exception $e) {
+            $this->assertStringContainsStringIgnoringCase('descendants', $e->getMessage());
+        }
+
+        @unlink($sourceDir . '/example.txt');
+        @rmdir($sourceDir);
+        @rmdir($root);
+    }
 }
