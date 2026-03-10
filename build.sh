@@ -28,6 +28,10 @@ else
     exit 1
 fi
 
+# 2.5 Ensure bundled frontend vendor assets exist
+echo "Ensuring Ace assets..."
+bash ./scripts/ensure-ace-assets.sh
+
 # 3. Copy files to build directory
 echo "Copying files..."
 cp -r app ${BUILD_DIR}/

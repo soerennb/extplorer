@@ -25,6 +25,9 @@ jobs:
           php composer-setup.php
           php composer.phar install --no-dev --optimize-autoloader
 
+      - name: Ensure Ace assets
+        run: bash ./scripts/ensure-ace-assets.sh
+
       - name: Create Archive
         run: |
           VERSION=$(grep 'public string $version' app/Config/App.php | sed -E "s/.*= '(.+)';/\1/")
