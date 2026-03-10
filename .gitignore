@@ -170,3 +170,7 @@ writable/roles.php
 writable/settings.php
 composer.phar
 temp_ci4/
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
