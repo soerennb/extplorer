@@ -60,3 +60,9 @@
 # - linear.api-key
 # - github.org
 # - github.repo
+
+dolt.database: "extplorer3"
+
+dolt.data-dir: "/home/soeren/.beads-dolt/extplorer3"
+
+dolt.port: 14233

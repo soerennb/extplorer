@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "${script_dir}/.." && pwd)"
+port_file="${repo_root}/.beads/dolt-server.port"
+
+export BEADS_DOLT_DATA_DIR="${BEADS_DOLT_DATA_DIR:-${HOME}/.beads-dolt/extplorer3}"
+if [[ -f "${port_file}" ]]; then
+  export BEADS_DOLT_PORT="${BEADS_DOLT_PORT:-$(<"${port_file}")}"
+else
+  export BEADS_DOLT_PORT="${BEADS_DOLT_PORT:-14233}"
+fi
+
+exec bd "$@"
