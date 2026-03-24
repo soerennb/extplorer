@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-ACE_VERSION="${ACE_VERSION:-1.43.3}"
+ACE_VERSION="${ACE_VERSION:-1.43.6}"
 ACE_TARGET_DIR="${ACE_TARGET_DIR:-public/assets/vendor/ace}"
 ACE_TARBALL_URL="https://registry.npmjs.org/ace-builds/-/ace-builds-${ACE_VERSION}.tgz"
 

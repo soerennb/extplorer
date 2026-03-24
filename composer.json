@@ -11,9 +11,9 @@
         "slack": "https://codeigniterchat.slack.com"
     },
     "require": {
-        "php": "^8.1",
+        "php": "^8.2",
         "bacon/bacon-qr-code": "^3.0",
-        "codeigniter4/framework": "^4.0",
+        "codeigniter4/framework": "^4.7",
         "sabre/dav": "^4.7",
         "spomky-labs/otphp": "^11.4"
     },

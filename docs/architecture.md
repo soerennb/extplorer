@@ -1,7 +1,7 @@
 # Architecture Overview
 
 ## 1. Technology Stack
-*   **Backend:** PHP 8.1+ with CodeIgniter 4 Framework.
+*   **Backend:** PHP 8.2+ with CodeIgniter 4 Framework.
 *   **Frontend:** Vue.js 3 (No-Build implementation) + Bootstrap 5.
 *   **Data Storage:** JSON Files (`writable/*.json`). No SQL database required.
 
@@ -28,4 +28,4 @@ The frontend is a Single Page Application (SPA).
 *   **Assets:** Located in `public/assets`.
 *   **Router:** Hash-based routing (e.g., `#/path/to/folder`).
 *   **State:** Uses Vue 3's Reactivity system to sync the file list and user state.
-*   **No Build Step:** Vue components are loaded directly or concatenated, allowing for easy modification without Node.js tools.
+*   **No Build Step:** Vue components are loaded directly or concatenated, allowing for easy modification without a mandatory Node.js build pipeline.
