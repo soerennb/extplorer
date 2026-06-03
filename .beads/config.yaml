@@ -66,3 +66,7 @@ dolt.database: "extplorer3"
 dolt.data-dir: "/home/soeren/.beads-dolt/extplorer3"
 
 dolt.port: 14233
+
+federation.remote: "git+ssh://git@github.com/soerennb/extplorer.git"
+
+sync.remote: "git+ssh://git@github.com/soerennb/extplorer.git"
