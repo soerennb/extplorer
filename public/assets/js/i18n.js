@@ -1,7 +1,7 @@
 const i18n = Vue.reactive({
     locale: 'en',
     messages: {},
-    availableLocales: ['en', 'de', 'fr'],
+    availableLocales: ['en', 'de', 'fr', 'sk'],
     storageKey: 'extplorer_locale',
     
     async load(locale) {

@@ -31,6 +31,10 @@
     "filter_placeholder": "Filtrer...",
     "items_count": "{count} éléments",
     "local_fs": "Système de fichiers local",
+    "webdav_connect": "Connect via WebDAV",
+    "webdav_url": "WebDAV URL",
+    "webdav_help": "Use this URL to mount your file manager as a network drive in your OS.",
+    "recent_files": "Recent Files",
     "confirm_title": "Êtes-vous sûr ?",
     "confirm_text": "Cette action est irréversible !",
     "confirm_yes": "Oui, supprimer !",
@@ -274,6 +278,7 @@
     "language_english": "Anglais",
     "language_german": "Allemand",
     "language_french": "Français",
+    "language_slovak": "Slovaque",
 
     "admin_console": "Console d'administration",
     "admin_signed_in_as": "Connecté en tant que",
