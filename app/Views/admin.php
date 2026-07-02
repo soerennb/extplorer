@@ -125,7 +125,7 @@
         })();
     </script>
     <script src="<?= base_url('assets/js/i18n.js') ?>"></script>
-    <script src="<?= base_url('assets/js/api.js') ?>"></script>
+    <script src="<?= base_url('assets/js/api.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/components/AdminUsers.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/components/AdminGroups.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/components/AdminRoles.js?v=' . config('App')->version) ?>"></script>

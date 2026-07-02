@@ -42,6 +42,8 @@
     "downloads": "Stiahnutia",
     "stop_sharing": "Zastaviť zdieľanie",
     "expires": "Vyprší",
+    "expired": "Platnosť vypršala",
+    "password": "Heslo",
     "send_files": "Odoslať súbory",
     "logout": "Odhlásiť sa",
     "quick_admin": "Rýchla správa",

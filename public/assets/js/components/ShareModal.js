@@ -11,26 +11,38 @@ const ShareModal = {
                     <div v-if="loading" class="text-center"><div class="spinner-border"></div></div>
                     
                     <div v-else-if="currentShare">
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" :value="shareUrl" readonly id="shareUrlInput" :aria-label="t('share_title') || 'Share link'">
-                            <button class="btn btn-outline-primary" @click="copyLink" :title="t('copy') || 'Copy link'" :aria-label="t('copy') || 'Copy link'"><i class="ri-file-copy-line" aria-hidden="true"></i></button>
-                            <button class="btn btn-outline-secondary" @click="openLink" title="Open link" aria-label="Open link"><i class="ri-external-link-line" aria-hidden="true"></i></button>
-                        </div>
-                        
-                        <div class="alert alert-light border small">
-                            <strong>{{ t('created') }}:</strong> {{ formatDate(currentShare.created_at) }}<br>
-                            <strong>{{ t('share_mode_label') || 'Mode' }}:</strong> {{ modeLabel(currentShare.mode) }}<br>
-                            <span v-if="currentShare.expires_at">
-                                <strong>{{ t('expires') }}:</strong> {{ formatDate(currentShare.expires_at) }}
-                                <span class="text-muted">({{ expiryHuman(currentShare.expires_at) }})</span><br>
-                            </span>
-                            <span v-if="currentShare.password_hash">
-                                <strong>{{ t('password_protected') || 'Password Protected' }}</strong><br>
-                            </span>
-                            <strong>{{ t('downloads') || 'Downloads' }}:</strong> {{ currentShare.downloads }}
+                        <div class="alert alert-success border small mb-3" role="status">
+                            <strong>{{ t('share_link_active', 'Public link active') }}</strong>
+                            <div>{{ t('share_link_active_desc', 'Anyone with access to this link can use it according to the settings below.') }}</div>
                         </div>
 
-                        <button class="btn btn-danger w-100" :disabled="loading" @click="deleteShare">{{ t('stop_sharing') || 'Stop Sharing' }}</button>
+                        <label class="form-label small fw-bold" for="shareUrlInput">{{ t('share_public_link', 'Public link') }}</label>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" :value="shareUrl" readonly id="shareUrlInput" :aria-label="t('share_public_link', 'Public link')">
+                            <button class="btn btn-outline-primary" @click="copyLink" :title="t('copy') || 'Copy link'" :aria-label="t('copy') || 'Copy link'"><i class="ri-file-copy-line" aria-hidden="true"></i></button>
+                            <button class="btn btn-outline-secondary" @click="openLink" :title="t('share_open_link', 'Open link')" :aria-label="t('share_open_link', 'Open link')"><i class="ri-external-link-line" aria-hidden="true"></i></button>
+                        </div>
+
+                        <div class="alert alert-light border small mb-3">
+                            <div><strong>{{ t('share_created_at', 'Created') }}:</strong> {{ formatDate(currentShare.created_at) }}</div>
+                            <div><strong>{{ t('share_mode_label') || 'Mode' }}:</strong> {{ modeLabel(currentShare.mode) }}</div>
+                            <div>
+                                <strong>{{ t('expires') }}:</strong>&nbsp;
+                                <span v-if="currentShare.expires_at">{{ formatDate(currentShare.expires_at) }} <span class="text-muted">({{ expiryHuman(currentShare.expires_at) }})</span></span>
+                                <span v-else>{{ t('share_no_expiry', 'No expiry') }}</span>
+                            </div>
+                            <div>
+                                <strong>{{ t('password') || 'Password' }}:</strong>&nbsp;
+                                <span>{{ currentShare.password_hash ? t('password_protected') : t('share_no_password', 'No password') }}</span>
+                            </div>
+                            <div><strong>{{ t('downloads') || 'Downloads' }}:</strong> {{ currentShare.downloads }}</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" @click="copyLink"><i class="ri-file-copy-line me-1" aria-hidden="true"></i>{{ t('copy') }}</button>
+                            <button class="btn btn-outline-secondary" @click="openLink"><i class="ri-external-link-line me-1" aria-hidden="true"></i>{{ t('share_open_link', 'Open link') }}</button>
+                            <button class="btn btn-danger" :disabled="loading" @click="deleteShare">{{ t('stop_sharing') || 'Stop Sharing' }}</button>
+                        </div>
                     </div>
 
                     <div v-else>
@@ -44,16 +56,16 @@ const ShareModal = {
 
                         <div v-if="policyLoaded" class="alert alert-light border small">
                             <div v-if="policy.require_password">
-                                <strong>Password is required by policy.</strong>
+                                <strong>{{ t('share_policy_password_required', 'Password is required by policy.') }}</strong>
                             </div>
                             <div v-if="policy.require_expiry">
-                                Expiry is required. Default: {{ policy.default_expiry_days }} day<span v-if="policy.default_expiry_days !== 1">s</span>.
+                                {{ t('share_policy_expiry_required', 'Expiry is required. Default: {days} days.', { days: policy.default_expiry_days }) }}
                             </div>
                             <div>
-                                Maximum expiry: {{ policy.max_expiry_days }} day<span v-if="policy.max_expiry_days !== 1">s</span>.
+                                {{ t('share_policy_max_expiry', 'Maximum expiry when set: {days} days.', { days: policy.max_expiry_days }) }}
                             </div>
                             <div v-if="policy.allow_upload_mode">
-                                Upload-mode shares are allowed for folders.
+                                {{ t('share_policy_upload_allowed', 'Upload-mode shares are allowed for folders.') }}
                             </div>
                         </div>
 
@@ -105,7 +117,10 @@ const ShareModal = {
                             <label class="form-label" for="sharePasswordInput">
                                 {{ policy.require_password ? (t('password') || 'Password') : (t('password_optional') || 'Password (Optional)') }}
                             </label>
-                            <input id="sharePasswordInput" type="password" class="form-control" v-model="form.password" :placeholder="policy.require_password ? '' : '***'" autocomplete="new-password">
+                            <input id="sharePasswordInput" type="password" class="form-control" v-model="form.password" :placeholder="policy.require_password ? t('share_password_required_placeholder', 'Enter a password') : t('share_password_optional_placeholder', 'Leave blank for no password')" autocomplete="new-password">
+                            <div class="form-text">
+                                {{ policy.require_password ? t('share_password_required_hint', 'A password must be set before the link can be created.') : t('share_password_optional_hint', 'Leave this empty to create a link without password protection.') }}
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -113,12 +128,13 @@ const ShareModal = {
                                 {{ policy.require_expiry ? (t('expiration') || 'Expiration') : (t('expiration_optional') || 'Expiration (Optional)') }}
                             </label>
                             <select id="shareExpirySelect" class="form-select" v-model="form.expiryDays">
-                                <option v-if="!policy.require_expiry" :value="0">{{ t('never') || 'Never' }}</option>
+                                <option v-if="!policy.require_expiry" :value="0">{{ t('share_no_expiry', 'No expiry') }}</option>
                                 <option v-for="days in expiryOptions" :key="days" :value="days">
                                     {{ days }} {{ days === 1 ? (t('day') || 'Day') : (t('days') || 'Days') }}
                                 </option>
                             </select>
-                            <div v-if="expiryPreview" class="form-text">Expires {{ expiryPreview }}</div>
+                            <div v-if="expiryPreview" class="form-text">{{ t('share_expires_preview', 'Expires {date}', { date: expiryPreview }) }}</div>
+                            <div v-else class="form-text">{{ t('share_no_expiry_hint', 'This link will not expire unless it is revoked.') }}</div>
                         </div>
 
                         <button class="btn btn-primary w-100" :disabled="loading" @click="createShare">{{ t('create_link') || 'Create Link' }}</button>
@@ -130,7 +146,13 @@ const ShareModal = {
     `,
     setup(props, context) {
         const { ref, reactive, computed } = Vue;
-        const t = (k) => i18n.t(k);
+        const t = (key, fallback = '', params = {}) => {
+            const value = i18n.t(key, params);
+            if (value === key) {
+                return fallback || key;
+            }
+            return value;
+        };
         const loading = ref(false);
         const currentFile = ref(null);
         const currentShare = ref(null);
@@ -192,16 +214,16 @@ const ShareModal = {
 
         const formatDate = (ts) => new Date(ts * 1000).toLocaleString();
         const expiryHuman = (ts) => {
-            if (!ts) return t('never') || 'Never';
+            if (!ts) return t('share_no_expiry', 'No expiry');
             const now = Math.floor(Date.now() / 1000);
             const diff = ts - now;
-            if (diff <= 0) return t('expired') || 'Expired';
+            if (diff <= 0) return t('expired', 'Expired');
             const days = Math.ceil(diff / 86400);
-            if (days === 1) return 'in 1 day';
-            if (days < 7) return `in ${days} days`;
+            if (days === 1) return t('share_expiry_in_day', 'in 1 day');
+            if (days < 7) return t('share_expiry_in_days', 'in {days} days', { days });
             const weeks = Math.ceil(days / 7);
-            if (weeks === 1) return 'in 1 week';
-            return `in ${weeks} weeks`;
+            if (weeks === 1) return t('share_expiry_in_week', 'in 1 week');
+            return t('share_expiry_in_weeks', 'in {weeks} weeks', { weeks });
         };
         const modeLabel = (mode) => {
             if (mode === 'upload') return t('share_mode_upload') || 'Upload-only';
@@ -257,12 +279,12 @@ const ShareModal = {
                 }
 
                 if (policy.require_password && !form.password) {
-                    throw new Error('Password is required by policy.');
+                    throw new Error(t('share_policy_password_required', 'Password is required by policy.'));
                 }
 
                 const allowedModes = Array.isArray(policy.available_modes) ? policy.available_modes : ['read'];
                 if (!allowedModes.includes(form.mode)) {
-                    throw new Error('Share mode is not allowed by policy.');
+                    throw new Error(t('share_mode_not_allowed', 'Share mode is not allowed by policy.'));
                 }
 
                 const maxDays = Number(policy.max_expiry_days || 30);

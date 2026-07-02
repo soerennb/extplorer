@@ -45,6 +45,16 @@ const Api = {
 
         return fallback || this.genericServerError();
     },
+    refreshCsrfToken(res) {
+        if (!res || !res.headers || typeof res.headers.get !== 'function') {
+            return;
+        }
+
+        const token = res.headers.get('X-CSRF-HASH');
+        if (token) {
+            window.csrfHash = token;
+        }
+    },
     async readErrorMessage(res, fallback = '') {
         const payload = await this.parseResponseBody(res);
         const statusFallback = fallback || (res.status ? `HTTP ${res.status}` : '');
@@ -61,6 +71,7 @@ const Api = {
             throw new Error(this.genericNetworkError());
         }
 
+        this.refreshCsrfToken(res);
         const payload = await this.parseResponseBody(res);
         if (!res.ok) {
             throw new Error(this.errorFromPayload(payload, res.statusText || this.genericServerError()));
@@ -99,6 +110,7 @@ const Api = {
             throw new Error(this.genericNetworkError());
         }
 
+        this.refreshCsrfToken(res);
         const payload = await this.parseResponseBody(res);
         if (!res.ok) {
             throw new Error(this.errorFromPayload(payload, res.statusText || this.genericServerError()));

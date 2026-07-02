@@ -1192,7 +1192,7 @@
     </script>
     <script src="<?= base_url('assets/js/diff.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/diff2html-ui.min.js') ?>"></script>
-    <script src="<?= base_url('assets/js/api.js') ?>"></script>
+    <script src="<?= base_url('assets/js/api.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/store.js') ?>"></script>
     <script src="<?= base_url('assets/js/i18n.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/FileTree.js?v=' . config('App')->version) ?>"></script>

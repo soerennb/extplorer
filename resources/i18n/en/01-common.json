@@ -42,6 +42,8 @@
     "downloads": "Downloads",
     "stop_sharing": "Stop Sharing",
     "expires": "Expires",
+    "expired": "Expired",
+    "password": "Password",
     "send_files": "Send Files",
     "logout": "Logout",
     "quick_admin": "Quick Admin",

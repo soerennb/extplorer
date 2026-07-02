@@ -42,6 +42,8 @@
     "downloads": "Téléchargements",
     "stop_sharing": "Arrêter le partage",
     "expires": "Expire",
+    "expired": "Expiré",
+    "password": "Mot de passe",
     "send_files": "Envoyer des fichiers",
     "logout": "Se déconnecter",
     "quick_admin": "Admin rapide",
