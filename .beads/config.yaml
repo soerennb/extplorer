@@ -63,7 +63,7 @@
 
 dolt.database: "extplorer3"
 
-dolt.data-dir: "/home/soeren/.beads-dolt/extplorer3"
+dolt.data-dir: "/home/soeren/.beads-dolt"
 
 dolt.port: 14233
 
