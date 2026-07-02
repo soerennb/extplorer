@@ -5,17 +5,15 @@
 This project uses **bd (beads)** for issue tracking.
 Run `bd prime` for workflow context, or install hooks with `bd hooks install` for auto-injection.
 
-In this repository, prefer `scripts/bd-local ...` over raw `bd ...` because it applies the working local Dolt settings on this machine.
-
 **Quick reference:**
 
 ```bash
-scripts/bd-local ready                         # Find unblocked work
-scripts/bd-local show <id>                     # View issue details
-scripts/bd-local update <id> --status in_progress  # Claim work
-scripts/bd-local create --title="Title" --type task --priority 2
-scripts/bd-local close <id>                    # Complete work
-scripts/bd-local dolt push                     # Push beads to Dolt remote
+bd ready                         # Find unblocked work
+bd show <id>                     # View issue details
+bd update <id> --status in_progress  # Claim work
+bd create --title="Title" --type task --priority 2
+bd close <id>                    # Complete work
+bd dolt push                     # Push beads to Dolt remote
 ```
 
 For full workflow details: `bd prime`
@@ -34,12 +32,12 @@ To avoid CSP warnings and regressions:
 
 When adding new user-facing strings to the application:
 
-- **Check existing strings**: Before adding a new key, search `public/assets/i18n/en.json` (frontend) or `app/Language/en/` (backend) to see if an appropriate string or key already exists.
+- **Check existing strings**: Before adding a new key, search `resources/i18n/en/` (frontend) or `app/Language/en/` (backend) to see if an appropriate string or key already exists.
 - **Update all files**: New strings **MUST** be added to all available language files.
-    - Frontend: `public/assets/i18n/en.json`, `de.json`, and `fr.json`.
+    - Frontend: matching domain files in `resources/i18n/en/`, `de/`, `fr/`, and `sk/`.
     - Backend: `app/Language/en/` and any other locale directories present.
 - **Maintain Consistency**: Keep keys identical across all files. If a translation is unknown, use the English version as a temporary placeholder rather than leaving the key out.
-- **Verify JSON**: After editing, ensure the JSON files remain valid (no trailing commas, correct nesting).
+- **Verify JSON**: After editing, run `composer i18n:build` and `composer i18n:check`.
 
 ## Docker Note
 
@@ -57,7 +55,7 @@ When adding new user-facing strings to the application:
 4. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
-   scripts/bd-local dolt push
+   bd dolt push
    git push
    git status  # MUST show "up to date with origin"
    ```

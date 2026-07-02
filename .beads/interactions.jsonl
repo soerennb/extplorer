@@ -1,0 +1,2 @@
+{"id":"int-57fde972eae2059f3820a969c7cddbbd","kind":"field_change","created_at":"2026-07-02T12:17:12.896073706Z","actor":"soeren","issue_id":"ex3-5xh","extra":{"field":"status","new_value":"in_progress","old_value":"open"}}
+{"id":"int-abb6357027496f15b19f6dbe743e7287","kind":"field_change","created_at":"2026-07-02T12:18:20.664983295Z","actor":"soeren","issue_id":"ex3-5xh","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Removed bd-local wrapper and updated repository guidance to use raw bd."}}

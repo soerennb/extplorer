@@ -1,4 +1,5 @@
 # Dolt database (managed by Dolt, not git)
+dolt
 dolt/
 embeddeddolt/
 proxieddb/
