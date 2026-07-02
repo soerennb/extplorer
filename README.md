@@ -113,6 +113,6 @@ If you are contributing to eXtplorer or building from source:
 
 1.  Clone the repository.
 2.  Use PHP 8.2+ and Composer 2.
-3.  Optional for frontend asset maintenance: use Node.js `24.14.0` LTS (`.nvmrc` / `.node-version`).
+3.  Optional for frontend asset maintenance: use Node.js `24.18.0` LTS (`.nvmrc` / `.node-version`).
 4.  Install development dependencies: `./composer install`.
 5.  To create a deployable archive, run: `./build.sh`.

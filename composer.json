@@ -15,12 +15,12 @@
         "bacon/bacon-qr-code": "^3.0",
         "codeigniter4/framework": "^4.7",
         "sabre/dav": "^4.7",
-        "spomky-labs/otphp": "^11.4"
+        "spomky-labs/otphp": "^11.5"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9",
         "mikey179/vfsstream": "^1.6",
-        "phpunit/phpunit": "^11.5"
+        "phpunit/phpunit": "^12.4"
     },
     "autoload": {
         "psr-4": {
@@ -42,6 +42,6 @@
         "sort-packages": true
     },
     "scripts": {
-        "test": "php -d opcache.enable_cli=0 vendor/bin/phpunit"
+        "test": "php -d opcache.enable_cli=0 vendor/bin/phpunit --no-coverage"
     }
 }

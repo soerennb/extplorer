@@ -507,7 +507,7 @@
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 2}" href="#" @click.prevent="diffSelected">
-                            <i class="ri-diff-line me-2"></i> Diff
+                            <i class="ri-git-merge-line me-2"></i> Diff
                         </a></li>
                         <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="createArchive">
                             <i class="ri-file-zip-line me-2"></i> {{ t('archive') }}
