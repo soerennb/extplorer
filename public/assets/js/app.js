@@ -794,7 +794,7 @@ const app = createApp({
             store, i18n, t: (k, p) => i18n.t(k, p),
             goUp, goToPath, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, goToPage, setPageSize, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles, breadcrumbs,
             emptyStateIcon, emptyStateTitle, emptyStateDescription,
-            isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer, openTransferWithFile,
+            isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer, openTransferWithFile, openShare, openHistory,
             contextMenu, showContextMenu, hideContextMenu, cmAction,
             previewState, nextPreview, prevPreview, showWebDav, copyWebDavUrl, webDavUrl,
             dragIndicatorMode, onDragStart, onDragEnd, onDragOver, onDragLeave, onDrop,

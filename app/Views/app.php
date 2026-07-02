@@ -71,7 +71,51 @@
         [data-bs-theme="dark"] .drag-operation-indicator {
             background: rgba(33, 37, 41, 0.92);
         }
-        
+
+        .selection-action-bar {
+            border-bottom: 1px solid var(--bs-border-color);
+            background: var(--bs-body-bg);
+            padding: 0.55rem 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .selection-action-bar-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            min-height: 31px;
+            margin-right: auto;
+            font-weight: 600;
+            color: var(--bs-body-color);
+        }
+        .selection-action-bar-count i {
+            color: var(--bs-primary);
+        }
+        .selection-action-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        @media (max-width: 575.98px) {
+            .selection-action-bar {
+                align-items: stretch;
+            }
+            .selection-action-bar-count {
+                width: 100%;
+            }
+            .selection-action-bar-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .selection-action-bar-actions .btn {
+                flex: 1 1 auto;
+            }
+        }
+
         .navbar-logo { height: 48px; width: auto; margin-right: 10px; }
         
         .file-item { 
@@ -537,8 +581,113 @@
             </template>
         </div>
 
+        <div v-if="store.selectedItems.length > 0"
+             class="selection-action-bar"
+             role="region"
+             :aria-label="t('selection_bar_label')">
+            <div class="selection-action-bar-count" aria-live="polite">
+                <i class="ri-checkbox-multiple-line" aria-hidden="true"></i>
+                <span>{{ t('selected_count', {count: store.selectedItems.length}) }}</span>
+            </div>
+
+            <div class="selection-action-bar-actions">
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        @click="store.clearSelection()"
+                        :aria-label="t('clear_selection')">
+                    <i class="ri-close-line" aria-hidden="true"></i>
+                    <span>{{ t('clear_selection') }}</span>
+                </button>
+
+                <template v-if="store.isTrashMode">
+                    <button type="button" class="btn btn-success btn-sm" @click="restoreSelected">
+                        <i class="ri-restart-line" aria-hidden="true"></i>
+                        <span>{{ t('restore') }}</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" @click="deletePermanent">
+                        <i class="ri-delete-bin-2-line" aria-hidden="true"></i>
+                        <span>{{ t('delete_perm') }}</span>
+                    </button>
+                </template>
+
+                <template v-else>
+                    <button v-if="store.selectedItems.length === 1"
+                            type="button"
+                            class="btn btn-primary btn-sm"
+                            @click="downloadSelected">
+                        <i class="ri-download-line" aria-hidden="true"></i>
+                        <span>{{ t('download') }}</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" @click="copySelected">
+                        <i class="ri-file-copy-line" aria-hidden="true"></i>
+                        <span>{{ t('copy') }}</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" @click="cutSelected">
+                        <i class="ri-scissors-cut-line" aria-hidden="true"></i>
+                        <span>{{ t('cut') }}</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" @click="deleteSelected">
+                        <i class="ri-delete-bin-line" aria-hidden="true"></i>
+                        <span>{{ t('delete') }}</span>
+                    </button>
+
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                :aria-label="t('selection_more_actions')">
+                            <i class="ri-more-2-fill" aria-hidden="true"></i>
+                            <span>{{ t('selection_more_actions') }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <li v-if="store.selectedItems.length === 1">
+                                <a class="dropdown-item" href="#" @click.prevent="renameSelected">
+                                    <i class="ri-edit-line me-2" aria-hidden="true"></i>{{ t('rename') }}
+                                </a>
+                            </li>
+                            <li v-if="store.selectedItems.length === 1">
+                                <a class="dropdown-item" href="#" @click.prevent="openShare">
+                                    <i class="ri-share-line me-2" aria-hidden="true"></i>{{ t('share_title') || 'Share' }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" @click.prevent="chmodSelected">
+                                    <i class="ri-lock-2-line me-2" aria-hidden="true"></i>{{ t('perms') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" @click.prevent="showProperties">
+                                    <i class="ri-information-line me-2" aria-hidden="true"></i>{{ t('properties') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" @click.prevent="createArchive">
+                                    <i class="ri-file-zip-line me-2" aria-hidden="true"></i>{{ t('archive') }}
+                                </a>
+                            </li>
+                            <li v-if="store.selectedItems.length === 1 && isArchive(store.selectedItems[0])">
+                                <a class="dropdown-item" href="#" @click.prevent="extractArchive">
+                                    <i class="ri-folder-zip-line me-2" aria-hidden="true"></i>{{ t('extract') }}
+                                </a>
+                            </li>
+                            <li v-if="store.selectedItems.length === 1 && store.selectedItems[0].type !== 'dir'">
+                                <a class="dropdown-item" href="#" @click.prevent="openHistory">
+                                    <i class="ri-history-line me-2" aria-hidden="true"></i>{{ t('version_history') }}
+                                </a>
+                            </li>
+                            <li v-if="store.selectedItems.length === 2">
+                                <a class="dropdown-item" href="#" @click.prevent="diffSelected">
+                                    <i class="ri-git-merge-line me-2" aria-hidden="true"></i>Diff
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </template>
+            </div>
+        </div>
+
         <!-- Main -->
-        <div class="main-container" 
+        <div class="main-container"
              :class="{'drag-over': store.isDraggingOver}"
              @click="store.clearSelection(); hideContextMenu()" 
              @contextmenu.prevent="hideContextMenu()"
