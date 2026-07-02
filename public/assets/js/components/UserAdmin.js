@@ -5,7 +5,7 @@ const UserAdmin = {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">{{ t('admin_panel', 'Admin Panel') }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div v-if="quickAdmin" class="alert alert-light border small d-flex align-items-center justify-content-between">
@@ -268,11 +268,11 @@ const UserAdmin = {
                                     </td>
                                     <td>{{ user.home_dir }}</td>
                                     <td class="text-end">
-                                        <button class="btn btn-sm btn-outline-primary me-1" @click="editUser(user)">
-                                            <i class="ri-edit-line"></i>
+                                        <button class="btn btn-sm btn-outline-primary me-1" @click="editUser(user)" :aria-label="'Edit User: ' + user.username">
+                                            <i class="ri-edit-line" aria-hidden="true"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger" @click="deleteUser(user)" :disabled="user.username === currentUsername">
-                                            <i class="ri-delete-bin-line"></i>
+                                        <button class="btn btn-sm btn-outline-danger" @click="deleteUser(user)" :disabled="user.username === currentUsername" :aria-label="'Delete: ' + user.username">
+                                            <i class="ri-delete-bin-line" aria-hidden="true"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -288,24 +288,24 @@ const UserAdmin = {
                                 <h6>{{ isNew ? 'Add User' : 'Edit User: ' + editingUser.username }}</h6>
                                 <div class="row g-2">
                                     <div class="col-md-6" v-if="isNew">
-                                        <label class="form-label small">Username</label>
-                                        <input type="text" class="form-control form-control-sm" v-model="editingUser.username">
+                                        <label class="form-label small" for="quickAdminUserUsername">Username</label>
+                                        <input id="quickAdminUserUsername" type="text" class="form-control form-control-sm" v-model="editingUser.username" autocomplete="username">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label small">Password {{ !isNew ? '(Leave blank to keep)' : '' }}</label>
-                                        <input type="password" class="form-control form-control-sm" v-model="editingUser.password">
+                                        <label class="form-label small" for="quickAdminUserPassword">Password {{ !isNew ? '(Leave blank to keep)' : '' }}</label>
+                                        <input id="quickAdminUserPassword" type="password" class="form-control form-control-sm" v-model="editingUser.password" autocomplete="new-password">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label small">Home Dir</label>
-                                        <input type="text" class="form-control form-control-sm" v-model="editingUser.home_dir">
+                                        <label class="form-label small" for="quickAdminUserHome">Home Dir</label>
+                                        <input id="quickAdminUserHome" type="text" class="form-control form-control-sm" v-model="editingUser.home_dir">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label small">Allowed Extensions (csv)</label>
-                                        <input type="text" class="form-control form-control-sm" v-model="editingUser.allowed_extensions" placeholder="e.g. jpg,png,pdf">
+                                        <label class="form-label small" for="quickAdminUserAllowed">Allowed Extensions (csv)</label>
+                                        <input id="quickAdminUserAllowed" type="text" class="form-control form-control-sm" v-model="editingUser.allowed_extensions" placeholder="e.g. jpg,png,pdf">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label small">Blocked Extensions (csv)</label>
-                                        <input type="text" class="form-control form-control-sm" v-model="editingUser.blocked_extensions" placeholder="e.g. php,exe">
+                                        <label class="form-label small" for="quickAdminUserBlocked">Blocked Extensions (csv)</label>
+                                        <input id="quickAdminUserBlocked" type="text" class="form-control form-control-sm" v-model="editingUser.blocked_extensions" placeholder="e.g. php,exe">
                                         <div v-if="system && system.system_blocklist" class="mt-1">
                                             <span class="small text-muted d-block admin-note">System Blocklist (Always Applied):</span>
                                             <span v-for="ext in system.system_blocklist" :key="ext" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1 admin-badge">{{ ext }}</span>
@@ -361,11 +361,11 @@ const UserAdmin = {
                                         <span v-for="r in roles" class="badge bg-info me-1">{{ r }}</span>
                                     </td>
                                     <td class="text-end">
-                                        <button class="btn btn-sm btn-outline-primary me-1" @click="editGroup(name, roles)">
-                                            <i class="ri-edit-line"></i>
+                                        <button class="btn btn-sm btn-outline-primary me-1" @click="editGroup(name, roles)" :aria-label="'Group: ' + name">
+                                            <i class="ri-edit-line" aria-hidden="true"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger" @click="deleteGroup(name)">
-                                            <i class="ri-delete-bin-line"></i>
+                                        <button class="btn btn-sm btn-outline-danger" @click="deleteGroup(name)" :aria-label="'Delete: ' + name">
+                                            <i class="ri-delete-bin-line" aria-hidden="true"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -378,7 +378,7 @@ const UserAdmin = {
                         <div v-if="editingGroup" class="card mt-3 bg-body-tertiary">
                             <div class="card-body">
                                 <h6>Group: {{ editingGroup.name || 'New' }}</h6>
-                                <input v-if="!editingGroup.isEdit" type="text" class="form-control form-control-sm mb-2" placeholder="Group Name" v-model="editingGroup.name">
+                                <input v-if="!editingGroup.isEdit" type="text" class="form-control form-control-sm mb-2" placeholder="Group Name" v-model="editingGroup.name" aria-label="Group Name">
                                 <label class="small d-block mb-1">Roles</label>
                                 <div class="d-flex flex-wrap gap-2">
                                     <div v-for="(perms, rname) in rolesList" :key="rname" class="form-check small">
@@ -413,11 +413,11 @@ const UserAdmin = {
                                         <code class="small">{{ perms.join(', ') }}</code>
                                     </td>
                                     <td class="text-end">
-                                        <button class="btn btn-sm btn-outline-primary me-1" @click="editRole(name, perms)">
-                                            <i class="ri-edit-line"></i>
+                                        <button class="btn btn-sm btn-outline-primary me-1" @click="editRole(name, perms)" :aria-label="'Role: ' + name">
+                                            <i class="ri-edit-line" aria-hidden="true"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger" @click="deleteRole(name)">
-                                            <i class="ri-delete-bin-line"></i>
+                                        <button class="btn btn-sm btn-outline-danger" @click="deleteRole(name)" :aria-label="'Delete: ' + name">
+                                            <i class="ri-delete-bin-line" aria-hidden="true"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -430,9 +430,9 @@ const UserAdmin = {
                         <div v-if="editingRole" class="card mt-3 bg-body-tertiary">
                             <div class="card-body">
                                 <h6>Role: {{ editingRole.name || 'New' }}</h6>
-                                <input v-if="!editingRole.isEdit" type="text" class="form-control form-control-sm mb-2" placeholder="Role Name" v-model="editingRole.name">
-                                <label class="small d-block mb-1">Permissions (comma separated or *)</label>
-                                <input type="text" class="form-control form-control-sm" v-model="editingRole.permsString">
+                                <input v-if="!editingRole.isEdit" type="text" class="form-control form-control-sm mb-2" placeholder="Role Name" v-model="editingRole.name" aria-label="Role Name">
+                                <label class="small d-block mb-1" for="quickAdminRolePerms">Permissions (comma separated or *)</label>
+                                <input id="quickAdminRolePerms" type="text" class="form-control form-control-sm" v-model="editingRole.permsString">
                                 <div v-if="permissionCatalog.length" class="mt-2">
                                     <span class="small text-muted d-block admin-note">Known permissions:</span>
                                     <span v-for="perm in permissionCatalog" :key="perm" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1 admin-badge">{{ perm }}</span>
@@ -452,24 +452,24 @@ const UserAdmin = {
                         <div v-if="!quickAdmin" class="border rounded p-2 mb-2 bg-body-tertiary">
                             <div class="row g-2 align-items-end">
                                 <div class="col-md-2">
-                                    <label class="form-label small mb-1">User</label>
-                                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.user" placeholder="username">
+                                    <label class="form-label small mb-1" for="quickAdminLogUser">User</label>
+                                    <input id="quickAdminLogUser" type="text" class="form-control form-control-sm" v-model.trim="logFilters.user" placeholder="username">
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label small mb-1">Action</label>
-                                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.action" placeholder="action">
+                                    <label class="form-label small mb-1" for="quickAdminLogAction">Action</label>
+                                    <input id="quickAdminLogAction" type="text" class="form-control form-control-sm" v-model.trim="logFilters.action" placeholder="action">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label small mb-1">Path contains</label>
-                                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.path_contains" placeholder="/path">
+                                    <label class="form-label small mb-1" for="quickAdminLogPath">Path contains</label>
+                                    <input id="quickAdminLogPath" type="text" class="form-control form-control-sm" v-model.trim="logFilters.path_contains" placeholder="/path">
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label small mb-1">From</label>
-                                    <input type="date" class="form-control form-control-sm" v-model="logFilters.date_from">
+                                    <label class="form-label small mb-1" for="quickAdminLogFrom">From</label>
+                                    <input id="quickAdminLogFrom" type="date" class="form-control form-control-sm" v-model="logFilters.date_from">
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label small mb-1">To</label>
-                                    <input type="date" class="form-control form-control-sm" v-model="logFilters.date_to">
+                                    <label class="form-label small mb-1" for="quickAdminLogTo">To</label>
+                                    <input id="quickAdminLogTo" type="date" class="form-control form-control-sm" v-model="logFilters.date_to">
                                 </div>
                                 <div class="col-md-1 d-grid">
                                     <button class="btn btn-primary btn-sm" @click="applyLogFilters" :disabled="isLoadingLogs">
@@ -514,8 +514,8 @@ const UserAdmin = {
                                 Showing page {{ logsMeta.page }} of {{ logsMeta.totalPages }} ({{ logsMeta.total }} total)
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <label class="mb-0">Page size</label>
-                                <select class="form-select form-select-sm select-auto-width" v-model.number="logsMeta.pageSize" @change="changeLogsPageSize">
+                                <label class="mb-0" for="quickAdminLogPageSize">Page size</label>
+                                <select id="quickAdminLogPageSize" class="form-select form-select-sm select-auto-width" v-model.number="logsMeta.pageSize" @change="changeLogsPageSize">
                                     <option v-for="size in logPageSizeOptions" :key="size" :value="size">{{ size }}</option>
                                 </select>
                                 <button class="btn btn-outline-secondary btn-sm" @click="changeLogsPage(-1)" :disabled="isLoadingLogs || logsMeta.page <= 1">Prev</button>

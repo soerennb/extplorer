@@ -5,7 +5,7 @@ const TransferModal = {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="ri-send-plane-fill me-2"></i>{{ t('transfer_title', 'Send Files') }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="t('close', 'Close')"></button>
                 </div>
                 <div class="modal-body">
                     <ul class="nav nav-tabs mb-3">
@@ -34,7 +34,7 @@ const TransferModal = {
                             </div>
 
                             <div class="input-group mb-3 w-75 mx-auto">
-                                <input type="text" class="form-control" :value="successLink" readonly id="transferLink">
+                                <input type="text" class="form-control" :value="successLink" readonly id="transferLink" :aria-label="t('transfer_copy_link', 'Transfer link')">
                                 <button class="btn btn-outline-primary" @click="copyLink">{{ t('transfer_copy', 'Copy') }}</button>
                             </div>
                             <div class="d-flex flex-wrap justify-content-center gap-2">
@@ -71,12 +71,12 @@ const TransferModal = {
                                             <p class="mb-2">{{ t('transfer_drop_hint', 'Drag & Drop files or folders here') }}</p>
                                             <button class="btn btn-sm btn-outline-primary position-relative overflow-hidden">
                                                 {{ t('transfer_browse_files', 'Browse Files') }}
-                                                <input type="file" multiple class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" @change="handleFileSelect">
+                                                <input id="transferFileInput" name="transfer_files" type="file" multiple class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" @change="handleFileSelect" :aria-label="t('transfer_browse_files', 'Browse Files')">
                                             </button>
                                             <div class="mt-2 text-muted small">{{ t('transfer_or', 'or') }}</div>
                                             <button class="btn btn-sm btn-link position-relative overflow-hidden text-decoration-none">
                                                 {{ t('transfer_browse_folder', 'Browse Folder') }}
-                                                <input type="file" multiple webkitdirectory class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" @change="handleFileSelect">
+                                                <input id="transferFolderInput" name="transfer_folder_files" type="file" multiple webkitdirectory class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" @change="handleFileSelect" :aria-label="t('transfer_browse_folder', 'Browse Folder')">
                                             </button>
                                         </div>
                                         
@@ -92,7 +92,9 @@ const TransferModal = {
                                                         <span v-if="f.path" class="badge bg-info-subtle text-info-emphasis me-1" title="From Server">Internal</span>
                                                         {{ f.name }}
                                                     </div>
-                                                    <i class="ri-close-line text-danger cursor-pointer" @click="removeFile(idx)"></i>
+                                                    <button type="button" class="btn btn-link btn-sm p-0 text-danger" @click="removeFile(idx)" :aria-label="'Remove file: ' + f.name">
+                                                        <i class="ri-close-line" aria-hidden="true"></i>
+                                                    </button>
                                                 </div>
                                             </div>
                                             <button class="btn btn-sm btn-outline-danger w-100 mt-2" @click="resetForm">{{ t('transfer_clear_all', 'Clear All') }}</button>
@@ -103,7 +105,7 @@ const TransferModal = {
                                 <!-- Right: Form -->
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label small fw-bold">{{ t('transfer_send_to', 'Send To (Email)') }}</label>
+                                        <label class="form-label small fw-bold" for="transferRecipientInput">{{ t('transfer_send_to', 'Send To (Email)') }}</label>
                                         <div class="border rounded p-2 bg-light-subtle">
                                             <div v-if="recipients.length" class="d-flex flex-wrap gap-1 mb-2">
                                                 <span v-for="email in recipients" :key="email" class="badge text-bg-primary d-inline-flex align-items-center">
@@ -117,6 +119,7 @@ const TransferModal = {
                                                 <span class="input-group-text bg-white"><i class="ri-at-line"></i></span>
                                                 <input
                                                     type="email"
+                                                    id="transferRecipientInput"
                                                     class="form-control"
                                                     v-model.trim="recipientInput"
                                                     :placeholder="t('transfer_recipient_placeholder', 'Type email and press Enter')"
@@ -136,19 +139,19 @@ const TransferModal = {
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label small fw-bold">{{ t('transfer_subject', 'Subject') }}</label>
-                                        <input type="text" class="form-control form-control-sm" v-model="form.subject" :placeholder="t('transfer_subject_placeholder', 'Files for you')">
+                                        <label class="form-label small fw-bold" for="transferSubjectInput">{{ t('transfer_subject', 'Subject') }}</label>
+                                        <input id="transferSubjectInput" type="text" class="form-control form-control-sm" v-model="form.subject" :placeholder="t('transfer_subject_placeholder', 'Files for you')">
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label small fw-bold">{{ t('transfer_message', 'Message') }}</label>
-                                        <textarea class="form-control form-control-sm" rows="3" v-model="form.message" :placeholder="t('transfer_message_placeholder', 'Here are the files...')"></textarea>
+                                        <label class="form-label small fw-bold" for="transferMessageInput">{{ t('transfer_message', 'Message') }}</label>
+                                        <textarea id="transferMessageInput" class="form-control form-control-sm" rows="3" v-model="form.message" :placeholder="t('transfer_message_placeholder', 'Here are the files...')"></textarea>
                                     </div>
 
                                     <div class="row g-2 mb-3">
                                         <div class="col-6">
-                                            <label class="form-label small fw-bold">{{ t('transfer_expires_in', 'Expires In') }}</label>
-                                            <select class="form-select form-select-sm" v-model="form.expiresIn">
+                                            <label class="form-label small fw-bold" for="transferExpiresSelect">{{ t('transfer_expires_in', 'Expires In') }}</label>
+                                            <select id="transferExpiresSelect" class="form-select form-select-sm" v-model="form.expiresIn">
                                                 <option value="1">{{ t('transfer_expires_1', '1 Day') }}</option>
                                                 <option value="3">{{ t('transfer_expires_3', '3 Days') }}</option>
                                                 <option value="7">{{ t('transfer_expires_7', '7 Days') }}</option>
@@ -229,8 +232,8 @@ const TransferModal = {
                                             <div class="small text-muted mb-1">
                                                 <a :href="transferLink(item.hash)" target="_blank" rel="noopener">{{ transferLink(item.hash) }}</a>
                                             </div>
-                                            <button class="btn btn-link p-0 me-2" @click="copyItemLink(item.hash)" :title="t('transfer_copy_link', 'Copy Link')"><i class="ri-links-line"></i></button>
-                                            <button class="btn btn-link p-0 text-danger" @click="deleteItem(item.hash)" :title="t('delete', 'Delete')"><i class="ri-delete-bin-line"></i></button>
+                                            <button class="btn btn-link p-0 me-2" @click="copyItemLink(item.hash)" :title="t('transfer_copy_link', 'Copy Link')" :aria-label="t('transfer_copy_link', 'Copy Link')"><i class="ri-links-line" aria-hidden="true"></i></button>
+                                            <button class="btn btn-link p-0 text-danger" @click="deleteItem(item.hash)" :title="t('delete', 'Delete')" :aria-label="t('delete', 'Delete')"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
                                         </td>
                                     </tr>
                                 </tbody>

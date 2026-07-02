@@ -5,16 +5,16 @@ const ShareModal = {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="ri-share-line me-2"></i> {{ t('share_title') || 'Share' }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="t('close') || 'Close'"></button>
                 </div>
                 <div class="modal-body">
                     <div v-if="loading" class="text-center"><div class="spinner-border"></div></div>
                     
                     <div v-else-if="currentShare">
                         <div class="input-group mb-3">
-                            <input type="text" class="form-control" :value="shareUrl" readonly id="shareUrlInput">
-                            <button class="btn btn-outline-primary" @click="copyLink" title="Copy link"><i class="ri-file-copy-line"></i></button>
-                            <button class="btn btn-outline-secondary" @click="openLink" title="Open link"><i class="ri-external-link-line"></i></button>
+                            <input type="text" class="form-control" :value="shareUrl" readonly id="shareUrlInput" :aria-label="t('share_title') || 'Share link'">
+                            <button class="btn btn-outline-primary" @click="copyLink" :title="t('copy') || 'Copy link'" :aria-label="t('copy') || 'Copy link'"><i class="ri-file-copy-line" aria-hidden="true"></i></button>
+                            <button class="btn btn-outline-secondary" @click="openLink" title="Open link" aria-label="Open link"><i class="ri-external-link-line" aria-hidden="true"></i></button>
                         </div>
                         
                         <div class="alert alert-light border small">
@@ -58,8 +58,8 @@ const ShareModal = {
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">{{ t('share_mode_label') || 'Share Mode' }}</label>
-                            <select class="form-select" v-model="form.mode">
+                            <label class="form-label" for="shareModeSelect">{{ t('share_mode_label') || 'Share Mode' }}</label>
+                            <select id="shareModeSelect" class="form-select" v-model="form.mode">
                                 <option v-for="opt in modeOptions" :key="opt.value" :value="opt.value">
                                     {{ opt.label }}
                                 </option>
@@ -102,17 +102,17 @@ const ShareModal = {
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">
+                            <label class="form-label" for="sharePasswordInput">
                                 {{ policy.require_password ? (t('password') || 'Password') : (t('password_optional') || 'Password (Optional)') }}
                             </label>
-                            <input type="password" class="form-control" v-model="form.password" :placeholder="policy.require_password ? '' : '***'">
+                            <input id="sharePasswordInput" type="password" class="form-control" v-model="form.password" :placeholder="policy.require_password ? '' : '***'" autocomplete="new-password">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">
+                            <label class="form-label" for="shareExpirySelect">
                                 {{ policy.require_expiry ? (t('expiration') || 'Expiration') : (t('expiration_optional') || 'Expiration (Optional)') }}
                             </label>
-                            <select class="form-select" v-model="form.expiryDays">
+                            <select id="shareExpirySelect" class="form-select" v-model="form.expiryDays">
                                 <option v-if="!policy.require_expiry" :value="0">{{ t('never') || 'Never' }}</option>
                                 <option v-for="days in expiryOptions" :key="days" :value="days">
                                     {{ days }} {{ days === 1 ? (t('day') || 'Day') : (t('days') || 'Days') }}

@@ -82,14 +82,14 @@ const UserProfile = {
                     >
                         <div v-if="loading" class="text-center py-4"><div class="spinner-border" role="status" :aria-label="t('loading') || 'Loading'"></div></div>
                         <div v-else class="row">
-                            <label class="col-sm-3 col-form-label fw-bold">{{ t('username') || 'Username' }}</label>
-                            <div class="col-sm-9"><input type="text" readonly class="form-control-plaintext" :value="details.username"></div>
+                            <label class="col-sm-3 col-form-label fw-bold" for="profile-username">{{ t('username') || 'Username' }}</label>
+                            <div class="col-sm-9"><input id="profile-username" type="text" readonly class="form-control-plaintext" :value="details.username"></div>
 
-                            <label class="col-sm-3 col-form-label fw-bold">{{ t('role') || 'Role' }}</label>
-                            <div class="col-sm-9"><input type="text" readonly class="form-control-plaintext" :value="details.role"></div>
+                            <label class="col-sm-3 col-form-label fw-bold" for="profile-role">{{ t('role') || 'Role' }}</label>
+                            <div class="col-sm-9"><input id="profile-role" type="text" readonly class="form-control-plaintext" :value="details.role"></div>
 
-                            <label class="col-sm-3 col-form-label fw-bold">{{ t('home_dir') || 'Home Directory' }}</label>
-                            <div class="col-sm-9"><input type="text" readonly class="form-control-plaintext" :value="details.home_dir"></div>
+                            <label class="col-sm-3 col-form-label fw-bold" for="profile-home-dir">{{ t('home_dir') || 'Home Directory' }}</label>
+                            <div class="col-sm-9"><input id="profile-home-dir" type="text" readonly class="form-control-plaintext" :value="details.home_dir"></div>
                         </div>
 
                         <div class="mt-4 pt-3 border-top">

@@ -87,17 +87,17 @@
                     <?= csrf_field() ?>
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label">Username</label>
+                            <label class="form-label" for="login_username">Username</label>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="ri-user-line"></i></span>
-                                <input type="text" name="username" class="form-control" required autofocus>
+                                <span class="input-group-text" aria-hidden="true"><i class="ri-user-line"></i></span>
+                                <input type="text" name="username" id="login_username" class="form-control" required autofocus autocomplete="username">
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Password</label>
+                            <label class="form-label" for="login_password">Password</label>
                             <div class="input-group">
-                                <span class="input-group-text"><i class="ri-lock-line"></i></span>
-                                <input type="password" name="password" class="form-control" required value="<?= old('password') ?>">
+                                <span class="input-group-text" aria-hidden="true"><i class="ri-lock-line"></i></span>
+                                <input type="password" name="password" id="login_password" class="form-control" required value="<?= old('password') ?>" autocomplete="current-password">
                             </div>
                         </div>
                     </div>
@@ -119,14 +119,14 @@
                         <div class="remote-card rounded-3 p-3 mb-4">
                             <div class="row g-3">
                                 <div class="col-md-8">
-                                    <label class="form-label">Host</label>
+                                    <label class="form-label" for="remote_host">Host</label>
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="ri-global-line"></i></span>
-                                        <input type="text" name="remote_host" class="form-control" placeholder="example.com">
+                                        <span class="input-group-text" aria-hidden="true"><i class="ri-global-line"></i></span>
+                                        <input type="text" name="remote_host" id="remote_host" class="form-control" placeholder="example.com" autocomplete="url">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Port</label>
+                                    <label class="form-label" for="remote_port">Port</label>
                                     <input type="number" name="remote_port" id="remote_port" class="form-control" value="21">
                                 </div>
                             </div>
@@ -135,8 +135,8 @@
 
                     <?php if (session()->getFlashdata('2fa_required')): ?>
                     <div class="mb-4">
-                        <label class="form-label text-primary fw-bold">Two-Factor Code</label>
-                        <input type="text" name="2fa_code" class="form-control" placeholder="000 000" autofocus autocomplete="off">
+                        <label class="form-label text-primary fw-bold" for="login_2fa_code">Two-Factor Code</label>
+                        <input type="text" name="2fa_code" id="login_2fa_code" class="form-control" placeholder="000 000" autofocus autocomplete="one-time-code" inputmode="numeric">
                         <div class="form-text">Enter the code from your authenticator app.</div>
                     </div>
                     <?php endif; ?>

@@ -748,8 +748,6 @@ const app = createApp({
         onMounted(async () => {
             applyTheme();
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (theme.value === 'auto') applyTheme(); });
-            await i18n.init();
-            
             const lastPath = localStorage.getItem('extplorer_last_path') || '';
             store.loadPath(lastPath);
             
@@ -814,4 +812,9 @@ const app = createApp({
     }
 });
 
-app.mount('#app');
+(async () => {
+    if (typeof i18n !== 'undefined' && typeof i18n.init === 'function') {
+        await i18n.init();
+    }
+    app.mount('#app');
+})();

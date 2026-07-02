@@ -368,8 +368,8 @@
         <nav class="navbar navbar-expand-lg navbar-dark">
             <div class="container-fluid">
                 <!-- Mobile Sidebar Toggle -->
-                <button class="btn btn-outline-light btn-sm d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas">
-                    <i class="ri-menu-line"></i>
+                <button class="btn btn-outline-light btn-sm d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-label="Menu">
+                    <i class="ri-menu-line" aria-hidden="true"></i>
                 </button>
 
                 <a class="navbar-brand d-flex align-items-center" href="#">
@@ -392,12 +392,13 @@
 
                 <div class="me-3">
                     <div class="input-group input-group-sm">
-                        <input type="text" class="form-control bg-body-tertiary text-body border-secondary-subtle" 
-                               :placeholder="t('filter_placeholder')" 
+                        <input id="navbarSearchInput" type="text" class="form-control bg-body-tertiary text-body border-secondary-subtle"
+                               :placeholder="t('filter_placeholder')"
+                               aria-label="Search files"
                                v-model="store.searchQuery"
                                @keyup.enter="store.performSearch(store.searchQuery)">
-                        <button class="btn btn-outline-secondary" type="button" @click="store.performSearch(store.searchQuery)">
-                            <i class="ri-search-line"></i>
+                        <button class="btn btn-outline-secondary" type="button" @click="store.performSearch(store.searchQuery)" aria-label="Search">
+                            <i class="ri-search-line" aria-hidden="true"></i>
                         </button>
                     </div>
                 </div>
@@ -406,21 +407,21 @@
                     <button class="btn btn-outline-light btn-sm" @click="goUp" :disabled="!store.cwd">
                         <i class="ri-arrow-up-line"></i> {{ t('up') }}
                     </button>
-                    <button class="btn btn-outline-light btn-sm" @click="reload">
-                        <i class="ri-refresh-line"></i>
+                    <button class="btn btn-outline-light btn-sm" @click="reload" aria-label="Refresh" title="Refresh">
+                        <i class="ri-refresh-line" aria-hidden="true"></i>
                     </button>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-light" :class="{active: store.viewMode === 'grid'}" @click="store.toggleViewMode('grid')">
-                            <i class="ri-grid-fill"></i>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="View mode">
+                        <button class="btn btn-outline-light" :class="{active: store.viewMode === 'grid'}" @click="store.toggleViewMode('grid')" aria-label="Grid view" :aria-pressed="store.viewMode === 'grid'">
+                            <i class="ri-grid-fill" aria-hidden="true"></i>
                         </button>
-                        <button class="btn btn-outline-light" :class="{active: store.viewMode === 'list'}" @click="store.toggleViewMode('list')">
-                            <i class="ri-list-check"></i>
+                        <button class="btn btn-outline-light" :class="{active: store.viewMode === 'list'}" @click="store.toggleViewMode('list')" aria-label="List view" :aria-pressed="store.viewMode === 'list'">
+                            <i class="ri-list-check" aria-hidden="true"></i>
                         </button>
                     </div>
-                    
+
                     <div class="dropdown">
-                        <button class="btn btn-outline-light btn-sm ms-2 dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="ri-user-line"></i>
+                        <button class="btn btn-outline-light btn-sm ms-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-label="User menu">
+                            <i class="ri-user-line" aria-hidden="true"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow">
                             <li><a class="dropdown-item" href="#" @click.prevent="openProfile"><i class="ri-user-settings-line me-2"></i>{{ t('profile_settings') || 'Profile & Settings' }}</a></li>
@@ -489,8 +490,8 @@
 
                 <!-- Overflow Menu -->
                 <div class="dropdown">
-                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="ri-more-2-fill"></i>
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-label="More actions">
+                        <i class="ri-more-2-fill" aria-hidden="true"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow">
                         <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 1}" href="#" @click.prevent="downloadSelected">
@@ -556,7 +557,7 @@
             <div class="sidebar offcanvas-lg offcanvas-start p-2" id="sidebarOffcanvas" tabindex="-1">
                  <div class="offcanvas-header d-lg-none">
                      <h5 class="offcanvas-title">Menu</h5>
-                     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarOffcanvas"></button>
+                     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarOffcanvas" :aria-label="t('close') || 'Close'"></button>
                  </div>
                  <div class="offcanvas-body d-flex flex-column p-0">
                      <!-- Connect -->
@@ -564,8 +565,8 @@
                          <button class="btn btn-primary btn-sm flex-fill" @click="openTransfer">
                              <i class="ri-send-plane-fill me-1"></i> {{ t('send_files') || 'Send Files' }}
                          </button>
-                         <button v-if="webdavEnabled" class="btn btn-outline-primary btn-sm" @click="showWebDav" title="WebDAV Connect">
-                             <i class="ri-link"></i>
+                         <button v-if="webdavEnabled" class="btn btn-outline-primary btn-sm" @click="showWebDav" title="WebDAV Connect" aria-label="WebDAV Connect">
+                             <i class="ri-link" aria-hidden="true"></i>
                          </button>
                      </div>
 
@@ -573,8 +574,8 @@
                      <div v-if="store.recentFiles.length > 0" class="mb-4">
                          <div class="d-flex justify-content-between align-items-center mb-2 px-2">
                              <h6 class="small fw-bold text-uppercase text-muted mb-0">{{ t('recent_files') }}</h6>
-                             <button class="btn btn-link btn-sm p-0 text-decoration-none" @click="store.clearRecent()">
-                                 <i class="ri-delete-bin-7-line"></i>
+                             <button class="btn btn-link btn-sm p-0 text-decoration-none" @click="store.clearRecent()" aria-label="Clear recent files" title="Clear recent files">
+                                 <i class="ri-delete-bin-7-line" aria-hidden="true"></i>
                              </button>
                          </div>
                          <div v-for="file in store.recentFiles" :key="file.path" 
@@ -653,8 +654,8 @@
                     </div>
 
                     <div v-else :class="containerClass" class="position-relative">
-                        <button v-if="store.cwd" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 shadow-sm" @click="goUp" :title="t('up_one_level') || 'Up one level'">
-                            <i class="ri-arrow-up-line"></i>
+                        <button v-if="store.cwd" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 shadow-sm" @click="goUp" :title="t('up_one_level') || 'Up one level'" :aria-label="t('up_one_level') || 'Up one level'">
+                            <i class="ri-arrow-up-line" aria-hidden="true"></i>
                         </button>
                         <!-- Header for List View -->
                         <div v-if="store.viewMode === 'list'" class="list-view-header text-muted border-bottom px-3 py-2 small fw-bold user-select-none w-100">
@@ -770,7 +771,7 @@
                 <div class="modal-content h-100">
                     <div class="modal-header py-2">
                         <h5 class="modal-title fs-6">{{ t('editing', {name: editorFile?.name}) }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="t('close') || 'Close'"></button>
                     </div>
                     <div class="modal-body p-0 overflow-hidden">
                         <div id="aceEditor" class="h-100 w-100"></div>
@@ -789,7 +790,7 @@
                 <div class="modal-content h-100">
                     <div class="modal-header py-2">
                         <h5 class="modal-title fs-6">Compare Files</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="t('close') || 'Close'"></button>
                     </div>
                     <div class="modal-body overflow-auto">
                         <div id="diffViewer"></div>
@@ -804,7 +805,7 @@
                 <div class="modal-content bg-dark border-0 shadow-lg">
                     <div class="modal-header border-0 py-2">
                         <h6 class="modal-title text-white">{{ previewState.filename }}</h6>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" :aria-label="t('close') || 'Close'"></button>
                     </div>
                     <div class="modal-body p-0 text-center position-relative d-flex align-items-center justify-content-center preview-modal-body">
                         
@@ -824,11 +825,11 @@
                         <iframe v-if="previewState.type === 'pdf'" :src="previewState.src" class="w-100 preview-pdf-frame"></iframe>
 
                         <!-- Controls -->
-                        <button v-if="previewState.list.length > 1" class="btn btn-dark bg-opacity-50 position-absolute start-0 m-3 rounded-circle" @click.stop="prevPreview" :disabled="previewState.index <= 0">
-                            <i class="ri-arrow-left-s-line fs-4"></i>
+                        <button v-if="previewState.list.length > 1" class="btn btn-dark bg-opacity-50 position-absolute start-0 m-3 rounded-circle" @click.stop="prevPreview" :disabled="previewState.index <= 0" :aria-label="t('prev') || 'Previous'">
+                            <i class="ri-arrow-left-s-line fs-4" aria-hidden="true"></i>
                         </button>
-                        <button v-if="previewState.list.length > 1" class="btn btn-dark bg-opacity-50 position-absolute end-0 m-3 rounded-circle" @click.stop="nextPreview" :disabled="previewState.index >= previewState.list.length - 1">
-                            <i class="ri-arrow-right-s-line fs-4"></i>
+                        <button v-if="previewState.list.length > 1" class="btn btn-dark bg-opacity-50 position-absolute end-0 m-3 rounded-circle" @click.stop="nextPreview" :disabled="previewState.index >= previewState.list.length - 1" :aria-label="t('next') || 'Next'">
+                            <i class="ri-arrow-right-s-line fs-4" aria-hidden="true"></i>
                         </button>
                     </div>
                 </div>
@@ -841,7 +842,7 @@
                 <div class="modal-content">
                     <div class="modal-header py-2">
                         <h5 class="modal-title fs-6">{{ t('properties') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="t('close') || 'Close'"></button>
                     </div>
                     <div v-if="propFile" class="modal-body">
                         <div class="text-center mb-3">
@@ -863,14 +864,14 @@
                                 <tr><th>{{ t('perms') }}</th><td>{{ propFile.perms }}</td></tr>
                                 <tr><th>{{ t('owner') }}</th><td>
                                     <div v-if="isAdmin" class="input-group input-group-sm">
-                                        <input type="text" class="form-control" v-model="propFile.owner">
+                                        <input type="text" class="form-control" v-model="propFile.owner" :aria-label="t('owner') || 'Owner'">
                                         <button class="btn btn-outline-secondary" @click="saveChown">Set</button>
                                     </div>
                                     <span v-else>{{ propFile.owner }}</span>
                                 </td></tr>
                                 <tr><th>{{ t('group') }}</th><td>
                                     <div v-if="isAdmin" class="input-group input-group-sm">
-                                        <input type="text" class="form-control" v-model="propFile.group">
+                                        <input type="text" class="form-control" v-model="propFile.group" :aria-label="t('group') || 'Group'">
                                         <button class="btn btn-outline-secondary" @click="saveChown">Set</button>
                                     </div>
                                     <span v-else>{{ propFile.group }}</span>
@@ -897,16 +898,16 @@
                 <div class="modal-content">
                     <div class="modal-header py-2">
                         <h5 class="modal-title fs-6">{{ t('webdav_connect') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="t('close') || 'Close'"></button>
                     </div>
                     <div class="modal-body">
                         <p class="small text-muted">{{ t('webdav_help') }}</p>
                         <div class="mb-3">
-                            <label class="form-label small fw-bold">{{ t('webdav_url') }}</label>
+                            <label class="form-label small fw-bold" for="webdav_url_input">{{ t('webdav_url') }}</label>
                             <div class="input-group input-group-sm">
                                 <input type="text" class="form-control" :value="webDavUrl" readonly id="webdav_url_input">
-                                <button class="btn btn-outline-secondary" @click="copyWebDavUrl">
-                                    <i class="ri-file-copy-line"></i>
+                                <button class="btn btn-outline-secondary" @click="copyWebDavUrl" :aria-label="t('copy') || 'Copy'" :title="t('copy') || 'Copy'">
+                                    <i class="ri-file-copy-line" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>

@@ -5,7 +5,7 @@ const FileHistoryModal = {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="ri-history-line me-2"></i> {{ t('version_history') || 'Version History' }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="t('close') || 'Close'"></button>
                 </div>
                 <div class="modal-body">
                     <div v-if="loading" class="text-center py-4"><div class="spinner-border"></div></div>

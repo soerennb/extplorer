@@ -42,16 +42,17 @@ const AdminGroups = {
                             <span v-for="r in roles" :key="r" class="badge bg-info me-1">{{ r }}</span>
                         </td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-outline-primary me-1" @click="editGroup(name, roles)">
-                                <i class="ri-edit-line"></i>
+                            <button class="btn btn-sm btn-outline-primary me-1" @click="editGroup(name, roles)" :aria-label="t('admin_groups_group_label', 'Group: ') + name">
+                                <i class="ri-edit-line" aria-hidden="true"></i>
                             </button>
                             <button
                                 class="btn btn-sm btn-outline-danger"
                                 @click="deleteGroup(name)"
                                 :disabled="!canDeleteGroup(name)"
                                 :title="deleteDisabledReason(name)"
+                                :aria-label="t('delete', 'Delete') + ': ' + name"
                             >
-                                <i class="ri-delete-bin-line"></i>
+                                <i class="ri-delete-bin-line" aria-hidden="true"></i>
                             </button>
                         </td>
                     </tr>
@@ -68,7 +69,9 @@ const AdminGroups = {
                 <input
                     v-if="!editingGroup.isEdit"
                     type="text"
+                    id="adminGroupName"
                     class="form-control form-control-sm mb-2"
+                    :aria-label="t('admin_groups_col_name', 'Group Name')"
                     :placeholder="t('admin_groups_col_name', 'Group Name')"
                     v-model="editingGroup.name"
                 >

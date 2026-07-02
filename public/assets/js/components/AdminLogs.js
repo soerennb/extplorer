@@ -4,24 +4,24 @@ const AdminLogs = {
         <div class="border rounded p-2 mb-2 bg-body-tertiary">
             <div class="row g-2 align-items-end">
                 <div class="col-md-2">
-                    <label class="form-label small mb-1">{{ t('admin_logs_filter_user', 'User') }}</label>
-                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.user" :placeholder="t('admin_logs_filter_user_placeholder', 'username')">
+                    <label class="form-label small mb-1" for="adminLogsUser">{{ t('admin_logs_filter_user', 'User') }}</label>
+                    <input id="adminLogsUser" type="text" class="form-control form-control-sm" v-model.trim="logFilters.user" :placeholder="t('admin_logs_filter_user_placeholder', 'username')">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small mb-1">{{ t('admin_logs_filter_action', 'Action') }}</label>
-                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.action" :placeholder="t('admin_logs_filter_action_placeholder', 'action')">
+                    <label class="form-label small mb-1" for="adminLogsAction">{{ t('admin_logs_filter_action', 'Action') }}</label>
+                    <input id="adminLogsAction" type="text" class="form-control form-control-sm" v-model.trim="logFilters.action" :placeholder="t('admin_logs_filter_action_placeholder', 'action')">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small mb-1">{{ t('admin_logs_filter_path', 'Path contains') }}</label>
-                    <input type="text" class="form-control form-control-sm" v-model.trim="logFilters.path_contains" :placeholder="t('admin_logs_filter_path_placeholder', '/path')">
+                    <label class="form-label small mb-1" for="adminLogsPath">{{ t('admin_logs_filter_path', 'Path contains') }}</label>
+                    <input id="adminLogsPath" type="text" class="form-control form-control-sm" v-model.trim="logFilters.path_contains" :placeholder="t('admin_logs_filter_path_placeholder', '/path')">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small mb-1">{{ t('admin_logs_filter_from', 'From') }}</label>
-                    <input type="date" class="form-control form-control-sm" v-model="logFilters.date_from">
+                    <label class="form-label small mb-1" for="adminLogsFrom">{{ t('admin_logs_filter_from', 'From') }}</label>
+                    <input id="adminLogsFrom" type="date" class="form-control form-control-sm" v-model="logFilters.date_from">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small mb-1">{{ t('admin_logs_filter_to', 'To') }}</label>
-                    <input type="date" class="form-control form-control-sm" v-model="logFilters.date_to">
+                    <label class="form-label small mb-1" for="adminLogsTo">{{ t('admin_logs_filter_to', 'To') }}</label>
+                    <input id="adminLogsTo" type="date" class="form-control form-control-sm" v-model="logFilters.date_to">
                 </div>
                 <div class="col-md-1 d-grid">
                     <button class="btn btn-primary btn-sm" @click="applyLogFilters" :disabled="isLoadingLogs">
@@ -70,8 +70,8 @@ const AdminLogs = {
                 {{ t('admin_logs_paging', 'Showing page {page} of {totalPages} ({total} total)', { page: logsMeta.page, totalPages: logsMeta.totalPages, total: logsMeta.total }) }}
             </div>
             <div class="d-flex align-items-center gap-2">
-                <label class="mb-0">{{ t('admin_logs_page_size', 'Page size') }}</label>
-                <select class="form-select form-select-sm select-auto-width" v-model.number="logsMeta.pageSize" @change="changeLogsPageSize">
+                <label class="mb-0" for="adminLogsPageSize">{{ t('admin_logs_page_size', 'Page size') }}</label>
+                <select id="adminLogsPageSize" class="form-select form-select-sm select-auto-width" v-model.number="logsMeta.pageSize" @change="changeLogsPageSize">
                     <option v-for="size in logPageSizeOptions" :key="size" :value="size">{{ size }}</option>
                 </select>
                 <button class="btn btn-outline-secondary btn-sm" @click="changeLogsPage(-1)" :disabled="isLoadingLogs || logsMeta.page <= 1">{{ t('prev', 'Prev') }}</button>

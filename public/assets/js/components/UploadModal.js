@@ -5,7 +5,7 @@ const UploadModal = {
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="ri-upload-cloud-2-line me-2"></i> {{ t('upload_files') || 'Upload Files' }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="t('close') || 'Close'"></button>
                 </div>
                 <div class="modal-body">
                     <!-- Drop Zone -->
@@ -16,7 +16,7 @@ const UploadModal = {
                          @click="triggerPicker"
                          :class="{'border-primary bg-primary-subtle': dragOver}">
                         
-                        <input type="file" ref="fileInput" multiple hidden @change="handleFileSelect">
+                        <input id="uploadFileInput" name="upload_files" type="file" ref="fileInput" multiple hidden @change="handleFileSelect" :aria-label="t('upload_files') || 'Upload Files'">
                         
                         <i class="ri-upload-2-line fs-1 text-muted"></i>
                         <p class="mb-0 text-muted">{{ t('drag_drop_desc') || 'Drag files here or click to browse' }}</p>
@@ -40,7 +40,9 @@ const UploadModal = {
                                 <span v-else class="badge bg-danger-subtle text-danger border border-danger-subtle" :title="f.error">
                                     <i class="ri-prohibited-line"></i> {{ t('blocked') || 'Blocked' }}
                                 </span>
-                                <button class="btn btn-link btn-sm text-secondary ms-2" @click="removeFile(i)"><i class="ri-close-line"></i></button>
+                                <button class="btn btn-link btn-sm text-secondary ms-2" @click="removeFile(i)" :aria-label="(t('delete') || 'Remove') + ': ' + f.file.name">
+                                    <i class="ri-close-line" aria-hidden="true"></i>
+                                </button>
                             </div>
                             
                             <div v-else-if="f.status === 'uploading'" class="d-flex align-items-center upload-status">

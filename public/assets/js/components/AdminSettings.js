@@ -47,7 +47,7 @@ const AdminSettings = {
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">{{ t('admin_settings_email_protocol', 'Protocol') }}</label>
-                            <select class="form-select form-select-sm" v-model="settings.email_protocol">
+                            <select class="form-select form-select-sm" v-model="settings.email_protocol" :aria-label="t('admin_settings_email_protocol', 'Protocol')">
                                 <option value="smtp">{{ t('admin_settings_email_protocol_smtp', 'SMTP') }}</option>
                                 <option value="sendmail">{{ t('admin_settings_email_protocol_sendmail', 'Sendmail') }}</option>
                                 <option value="mail">{{ t('admin_settings_email_protocol_mail', 'PHP mail()') }}</option>
@@ -55,31 +55,31 @@ const AdminSettings = {
                         </div>
                         <div class="col-md-8" v-if="settings.email_protocol === 'sendmail'">
                             <label class="form-label small fw-bold">{{ t('admin_settings_email_sendmail_path', 'Sendmail Path') }}</label>
-                            <input type="text" class="form-control form-control-sm" v-model="settings.sendmail_path" :placeholder="t('admin_settings_email_sendmail_placeholder', '/usr/sbin/sendmail')">
+                            <input type="text" class="form-control form-control-sm" v-model="settings.sendmail_path" :aria-label="t('admin_settings_email_sendmail_path', 'Sendmail Path')" :placeholder="t('admin_settings_email_sendmail_placeholder', '/usr/sbin/sendmail')">
                         </div>
                     </div>
 
                     <div v-if="settings.email_protocol === 'smtp'" class="row g-3 mt-1">
                         <div class="col-md-8">
                             <label class="form-label small fw-bold">{{ t('admin_settings_email_smtp_host', 'SMTP Host') }}</label>
-                            <input type="text" class="form-control form-control-sm" v-model="settings.smtp_host" :placeholder="t('admin_settings_email_smtp_host_placeholder', 'smtp.example.com')">
+                            <input type="text" class="form-control form-control-sm" v-model="settings.smtp_host" :aria-label="t('admin_settings_email_smtp_host', 'SMTP Host')" :placeholder="t('admin_settings_email_smtp_host_placeholder', 'smtp.example.com')">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">{{ t('admin_settings_email_port', 'Port') }}</label>
-                            <input type="number" class="form-control form-control-sm" v-model.number="settings.smtp_port" :placeholder="t('admin_settings_email_port_placeholder', '587')">
+                            <input type="number" class="form-control form-control-sm" v-model.number="settings.smtp_port" :aria-label="t('admin_settings_email_port', 'Port')" :placeholder="t('admin_settings_email_port_placeholder', '587')">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">{{ t('admin_settings_email_username', 'Username') }}</label>
-                            <input type="text" class="form-control form-control-sm" v-model="settings.smtp_user">
+                            <input type="text" class="form-control form-control-sm" v-model="settings.smtp_user" :aria-label="t('admin_settings_email_username', 'Username')" autocomplete="username">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">{{ t('admin_settings_email_password', 'Password') }}</label>
-                            <input type="password" class="form-control form-control-sm" v-model="settings.smtp_pass" :placeholder="t('admin_settings_email_password_placeholder', '********')">
+                            <input type="password" class="form-control form-control-sm" v-model="settings.smtp_pass" :aria-label="t('admin_settings_email_password', 'Password')" :placeholder="t('admin_settings_email_password_placeholder', '********')" autocomplete="new-password">
                             <div class="form-text">{{ t('admin_settings_email_password_hint', 'Leave masked to keep the existing password.') }}</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">{{ t('admin_settings_email_encryption', 'Encryption') }}</label>
-                            <select class="form-select form-select-sm" v-model="settings.smtp_crypto">
+                            <select class="form-select form-select-sm" v-model="settings.smtp_crypto" :aria-label="t('admin_settings_email_encryption', 'Encryption')">
                                 <option value="tls">{{ t('admin_settings_email_encryption_tls', 'TLS') }}</option>
                                 <option value="ssl">{{ t('admin_settings_email_encryption_ssl', 'SSL') }}</option>
                                 <option value="">{{ t('admin_settings_email_encryption_none', 'None') }}</option>
@@ -87,22 +87,22 @@ const AdminSettings = {
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">{{ t('admin_settings_email_from_email', 'From Email') }}</label>
-                            <input type="email" class="form-control form-control-sm" v-model="settings.email_from">
+                            <input type="email" class="form-control form-control-sm" v-model="settings.email_from" :aria-label="t('admin_settings_email_from_email', 'From Email')">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">{{ t('admin_settings_email_from_name', 'From Name') }}</label>
-                            <input type="text" class="form-control form-control-sm" v-model="settings.email_from_name">
+                            <input type="text" class="form-control form-control-sm" v-model="settings.email_from_name" :aria-label="t('admin_settings_email_from_name', 'From Name')">
                         </div>
                     </div>
 
                     <div v-if="settings.email_protocol !== 'smtp'" class="row g-3 mt-1">
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">{{ t('admin_settings_email_from_email', 'From Email') }}</label>
-                            <input type="email" class="form-control form-control-sm" v-model="settings.email_from">
+                            <input type="email" class="form-control form-control-sm" v-model="settings.email_from" :aria-label="t('admin_settings_email_from_email', 'From Email')">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">{{ t('admin_settings_email_from_name', 'From Name') }}</label>
-                            <input type="text" class="form-control form-control-sm" v-model="settings.email_from_name">
+                            <input type="text" class="form-control form-control-sm" v-model="settings.email_from_name" :aria-label="t('admin_settings_email_from_name', 'From Name')">
                         </div>
                     </div>
                 </div>
@@ -112,12 +112,12 @@ const AdminSettings = {
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">{{ t('admin_settings_transfers_default_expiry', 'Default Expiry (Days)') }}</label>
-                            <input type="number" min="1" class="form-control form-control-sm" v-model.number="settings.default_transfer_expiry">
+                            <input type="number" min="1" class="form-control form-control-sm" v-model.number="settings.default_transfer_expiry" :aria-label="t('admin_settings_transfers_default_expiry', 'Default Expiry (Days)')">
                             <div class="form-text">{{ t('admin_settings_transfers_default_expiry_hint', 'Used when no expiry is provided.') }}</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">{{ t('admin_settings_transfers_max_expiry', 'Max Expiry (Days)') }}</label>
-                            <input type="number" min="1" max="365" class="form-control form-control-sm" v-model.number="settings.transfer_max_expiry_days">
+                            <input type="number" min="1" max="365" class="form-control form-control-sm" v-model.number="settings.transfer_max_expiry_days" :aria-label="t('admin_settings_transfers_max_expiry', 'Max Expiry (Days)')">
                             <div class="form-text">{{ t('admin_settings_transfers_max_expiry_hint', 'Upper bound for all transfers.') }}</div>
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
@@ -134,12 +134,12 @@ const AdminSettings = {
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">{{ t('admin_settings_sharing_default_expiry', 'Default Expiry (Days)') }}</label>
-                            <input type="number" min="1" max="365" class="form-control form-control-sm" v-model.number="settings.share_default_expiry_days">
+                            <input type="number" min="1" max="365" class="form-control form-control-sm" v-model.number="settings.share_default_expiry_days" :aria-label="t('admin_settings_sharing_default_expiry', 'Default Expiry (Days)')">
                             <div class="form-text">{{ t('admin_settings_sharing_default_expiry_hint', 'Used when expiry is required but not provided.') }}</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">{{ t('admin_settings_sharing_max_expiry', 'Max Expiry (Days)') }}</label>
-                            <input type="number" min="1" max="365" class="form-control form-control-sm" v-model.number="settings.share_max_expiry_days">
+                            <input type="number" min="1" max="365" class="form-control form-control-sm" v-model.number="settings.share_max_expiry_days" :aria-label="t('admin_settings_sharing_max_expiry', 'Max Expiry (Days)')">
                             <div class="form-text">{{ t('admin_settings_sharing_max_expiry_hint', 'Upper bound for all share links.') }}</div>
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
@@ -173,6 +173,7 @@ const AdminSettings = {
                             <label class="form-label small fw-bold">{{ t('admin_settings_sharing_allowed_types', 'Allowed File Extensions') }}</label>
                             <textarea
                                 class="form-control form-control-sm"
+                                :aria-label="t('admin_settings_sharing_allowed_types', 'Allowed File Extensions')"
                                 rows="3"
                                 v-model="settings.share_upload_allowed_extensions_text"
                                 :placeholder="t('admin_settings_sharing_allowed_types_placeholder', 'pdf\\njpg\\npng')"
@@ -181,12 +182,12 @@ const AdminSettings = {
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">{{ t('admin_settings_sharing_quota_mb', 'Total Quota (MB)') }}</label>
-                            <input type="number" min="0" max="1024000" class="form-control form-control-sm" v-model.number="settings.share_upload_quota_mb">
+                            <input type="number" min="0" max="1024000" class="form-control form-control-sm" v-model.number="settings.share_upload_quota_mb" :aria-label="t('admin_settings_sharing_quota_mb', 'Total Quota (MB)')">
                             <div class="form-text">{{ t('admin_settings_sharing_quota_mb_hint', '0 disables the quota.') }}</div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small fw-bold">{{ t('admin_settings_sharing_max_files', 'Max Files') }}</label>
-                            <input type="number" min="0" max="100000" class="form-control form-control-sm" v-model.number="settings.share_upload_max_files">
+                            <input type="number" min="0" max="100000" class="form-control form-control-sm" v-model.number="settings.share_upload_max_files" :aria-label="t('admin_settings_sharing_max_files', 'Max Files')">
                             <div class="form-text">{{ t('admin_settings_sharing_max_files_hint', '0 disables the file-count limit.') }}</div>
                         </div>
                     </div>
@@ -197,12 +198,12 @@ const AdminSettings = {
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">{{ t('admin_settings_governance_max_upload', 'Max Upload Size (MB)') }}</label>
-                            <input type="number" min="0" max="10240" class="form-control form-control-sm" v-model.number="settings.upload_max_file_mb">
+                            <input type="number" min="0" max="10240" class="form-control form-control-sm" v-model.number="settings.upload_max_file_mb" :aria-label="t('admin_settings_governance_max_upload', 'Max Upload Size (MB)')">
                             <div class="form-text">{{ t('admin_settings_governance_max_upload_hint', '0 disables the limit. Applies to single and chunked uploads.') }}</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">{{ t('admin_settings_governance_quota', 'Per-User Quota (MB)') }}</label>
-                            <input type="number" min="0" max="102400" class="form-control form-control-sm" v-model.number="settings.quota_per_user_mb">
+                            <input type="number" min="0" max="102400" class="form-control form-control-sm" v-model.number="settings.quota_per_user_mb" :aria-label="t('admin_settings_governance_quota', 'Per-User Quota (MB)')">
                             <div class="form-text">{{ t('admin_settings_governance_quota_hint', '0 disables the quota. Applies to the user home directory.') }}</div>
                         </div>
                     </div>
@@ -213,12 +214,12 @@ const AdminSettings = {
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">{{ t('admin_settings_mounts_allowlist', 'Allowlist (one path per line)') }}</label>
-                            <textarea class="form-control form-control-sm" rows="4" v-model="settings.mount_root_allowlist_text" :placeholder="t('admin_settings_mounts_allowlist_placeholder', '/srv/data\\n/mnt/storage')"></textarea>
+                            <textarea class="form-control form-control-sm" rows="4" v-model="settings.mount_root_allowlist_text" :aria-label="t('admin_settings_mounts_allowlist', 'Allowlist (one path per line)')" :placeholder="t('admin_settings_mounts_allowlist_placeholder', '/srv/data\\n/mnt/storage')"></textarea>
                             <div class="form-text">{{ t('admin_settings_mounts_allowlist_hint', 'Only paths under these roots can be mounted. Leave empty to disable external mounts.') }}</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">{{ t('admin_settings_mounts_remote_allowlist', 'Remote Host Allowlist (one entry per line)') }}</label>
-                            <textarea class="form-control form-control-sm" rows="4" v-model="settings.mount_remote_host_allowlist_text" :placeholder="t('admin_settings_mounts_remote_allowlist_placeholder', 'files.example.com\\n10.0.0.0/8\\n*.corp.example')"></textarea>
+                            <textarea class="form-control form-control-sm" rows="4" v-model="settings.mount_remote_host_allowlist_text" :aria-label="t('admin_settings_mounts_remote_allowlist', 'Remote Host Allowlist (one entry per line)')" :placeholder="t('admin_settings_mounts_remote_allowlist_placeholder', 'files.example.com\\n10.0.0.0/8\\n*.corp.example')"></textarea>
                             <div class="form-text">{{ t('admin_settings_mounts_remote_allowlist_hint', 'Allow hostnames, IPs, CIDR ranges, and wildcard domains. Leave empty to block private/reserved targets only.') }}</div>
                         </div>
                     </div>
@@ -229,7 +230,7 @@ const AdminSettings = {
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">{{ t('admin_settings_logging_retention', 'Retention Count') }}</label>
-                            <input type="number" min="100" max="20000" step="100" class="form-control form-control-sm" v-model.number="settings.log_retention_count">
+                            <input type="number" min="100" max="20000" step="100" class="form-control form-control-sm" v-model.number="settings.log_retention_count" :aria-label="t('admin_settings_logging_retention', 'Retention Count')">
                             <div class="form-text">{{ t('admin_settings_logging_retention_hint', 'How many recent audit log entries to keep (100-20000).') }}</div>
                         </div>
                     </div>
@@ -240,7 +241,7 @@ const AdminSettings = {
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">{{ t('admin_settings_security_idle_timeout', 'Idle Timeout (Minutes)') }}</label>
-                            <input type="number" min="0" max="1440" class="form-control form-control-sm" v-model.number="settings.session_idle_timeout_minutes">
+                            <input type="number" min="0" max="1440" class="form-control form-control-sm" v-model.number="settings.session_idle_timeout_minutes" :aria-label="t('admin_settings_security_idle_timeout', 'Idle Timeout (Minutes)')">
                             <div class="form-text">{{ t('admin_settings_security_idle_timeout_hint', '0 disables idle timeout. Applies to API and UI sessions.') }}</div>
                         </div>
                     </div>

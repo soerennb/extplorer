@@ -57,16 +57,17 @@ const AdminRoles = {
                             <code class="small">{{ perms.join(', ') }}</code>
                         </td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-outline-primary me-1" @click="editRole(name, perms)">
-                                <i class="ri-edit-line"></i>
+                            <button class="btn btn-sm btn-outline-primary me-1" @click="editRole(name, perms)" :aria-label="t('admin_roles_role_label', 'Role: ') + name">
+                                <i class="ri-edit-line" aria-hidden="true"></i>
                             </button>
                             <button
                                 class="btn btn-sm btn-outline-danger"
                                 @click="deleteRole(name)"
                                 :disabled="!canDeleteRole(name)"
                                 :title="deleteDisabledReason(name)"
+                                :aria-label="t('delete', 'Delete') + ': ' + name"
                             >
-                                <i class="ri-delete-bin-line"></i>
+                                <i class="ri-delete-bin-line" aria-hidden="true"></i>
                             </button>
                         </td>
                     </tr>
@@ -83,12 +84,14 @@ const AdminRoles = {
                 <input
                     v-if="!editingRole.isEdit"
                     type="text"
+                    id="adminRoleName"
                     class="form-control form-control-sm mb-2"
+                    :aria-label="t('admin_roles_col_name', 'Role Name')"
                     :placeholder="t('admin_roles_col_name', 'Role Name')"
                     v-model="editingRole.name"
                 >
-                <label class="small d-block mb-1">{{ t('admin_roles_permissions_label', 'Permissions (comma separated or *)') }}</label>
-                <input type="text" class="form-control form-control-sm" v-model="editingRole.permsString">
+                <label class="small d-block mb-1" for="adminRolePermissions">{{ t('admin_roles_permissions_label', 'Permissions (comma separated or *)') }}</label>
+                <input id="adminRolePermissions" type="text" class="form-control form-control-sm" v-model="editingRole.permsString">
                 <div v-if="permissionCatalog.length" class="mt-2">
                     <span class="small text-muted d-block admin-note">{{ t('admin_roles_known_perms', 'Known permissions:') }}</span>
                     <span v-for="perm in permissionCatalog" :key="perm" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle me-1 admin-badge">{{ perm }}</span>

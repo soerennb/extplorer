@@ -3,9 +3,10 @@ const AdminUsers = {
     <div>
         <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
             <div class="flex-grow-1">
-                <label class="form-label small fw-bold mb-1">{{ t('admin_users_search_label', 'Search Users') }}</label>
+                <label class="form-label small fw-bold mb-1" for="adminUsersSearch">{{ t('admin_users_search_label', 'Search Users') }}</label>
                 <input
                     type="text"
+                    id="adminUsersSearch"
                     class="form-control form-control-sm"
                     v-model.trim="searchQuery"
                     :placeholder="t('admin_users_search_placeholder', 'Filter by username or home directory')"
@@ -38,11 +39,11 @@ const AdminUsers = {
                         </td>
                         <td class="text-muted small">{{ user.home_dir }}</td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-outline-primary me-1" @click="editUser(user)">
-                                <i class="ri-edit-line"></i>
+                            <button class="btn btn-sm btn-outline-primary me-1" @click="editUser(user)" :aria-label="t('admin_users_edit_prefix', 'Edit User: ') + user.username">
+                                <i class="ri-edit-line" aria-hidden="true"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" @click="deleteUser(user)" :disabled="user.username === currentUsername">
-                                <i class="ri-delete-bin-line"></i>
+                            <button class="btn btn-sm btn-outline-danger" @click="deleteUser(user)" :disabled="user.username === currentUsername" :aria-label="t('delete', 'Delete') + ': ' + user.username">
+                                <i class="ri-delete-bin-line" aria-hidden="true"></i>
                             </button>
                         </td>
                     </tr>
@@ -61,33 +62,35 @@ const AdminUsers = {
                 </div>
                 <div class="row g-2">
                     <div class="col-md-6" v-if="isNew">
-                        <label class="form-label small">{{ t('admin_users_field_username', 'Username') }}</label>
-                        <input type="text" class="form-control form-control-sm" v-model="editingUser.username">
+                        <label class="form-label small" for="adminUserUsername">{{ t('admin_users_field_username', 'Username') }}</label>
+                        <input id="adminUserUsername" type="text" class="form-control form-control-sm" v-model="editingUser.username" autocomplete="username">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small">
+                        <label class="form-label small" for="adminUserPassword">
                             {{ t('admin_users_field_password', 'Password') }}
                             {{ !isNew ? t('admin_users_leave_blank', '(Leave blank to keep)') : '' }}
                         </label>
-                        <input type="password" class="form-control form-control-sm" v-model="editingUser.password">
+                        <input id="adminUserPassword" type="password" class="form-control form-control-sm" v-model="editingUser.password" autocomplete="new-password">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small">{{ t('admin_users_field_home', 'Home Dir') }}</label>
-                        <input type="text" class="form-control form-control-sm" v-model="editingUser.home_dir">
+                        <label class="form-label small" for="adminUserHome">{{ t('admin_users_field_home', 'Home Dir') }}</label>
+                        <input id="adminUserHome" type="text" class="form-control form-control-sm" v-model="editingUser.home_dir">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small">{{ t('admin_users_field_allowed_ext', 'Allowed Extensions (csv)') }}</label>
+                        <label class="form-label small" for="adminUserAllowedExt">{{ t('admin_users_field_allowed_ext', 'Allowed Extensions (csv)') }}</label>
                         <input
                             type="text"
+                            id="adminUserAllowedExt"
                             class="form-control form-control-sm"
                             v-model="editingUser.allowed_extensions"
                             :placeholder="t('admin_users_allowed_ext_placeholder', 'e.g. jpg,png,pdf')"
                         >
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small">{{ t('admin_users_field_blocked_ext', 'Blocked Extensions (csv)') }}</label>
+                        <label class="form-label small" for="adminUserBlockedExt">{{ t('admin_users_field_blocked_ext', 'Blocked Extensions (csv)') }}</label>
                         <input
                             type="text"
+                            id="adminUserBlockedExt"
                             class="form-control form-control-sm"
                             v-model="editingUser.blocked_extensions"
                             :placeholder="t('admin_users_blocked_ext_placeholder', 'e.g. php,exe')"
