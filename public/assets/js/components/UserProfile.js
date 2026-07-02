@@ -534,12 +534,7 @@ const UserProfile = {
         const passwordMessage = reactive({ type: '', text: '' });
         const twoFaMessage = reactive({ type: '', text: '' });
         const twoFaLoading = ref(false);
-        const availableLocales = ref([
-            { code: 'en', labelKey: 'language_english', labelFallback: 'English' },
-            { code: 'de', labelKey: 'language_german', labelFallback: 'Deutsch' },
-            { code: 'fr', labelKey: 'language_french', labelFallback: 'Français' },
-            { code: 'sk', labelKey: 'language_slovak', labelFallback: 'Slovenčina' }
-        ]);
+        const availableLocales = computed(() => i18n.availableLocaleOptions || []);
         const selectedLocale = ref(i18n.locale || (typeof i18n.preferredLocale === 'function' ? i18n.preferredLocale() : 'en'));
 
         const setup = reactive({ step: 0, qr: '', secret: '', code: '', recoveryCodes: [] });

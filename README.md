@@ -15,7 +15,7 @@ eXtplorer 3 is a modern, web-based file manager built for speed, security, and e
 *   **Archives:** Create and extract ZIP, TAR, and TAR.GZ archives directly in the browser.
 *   **User Management:** Robust Role-Based Access Control (RBAC) with support for Groups and granular permissions.
 *   **Keyboard Friendly:** Desktop-like experience with keyboard shortcuts and right-click context menus.
-*   **Multilingual:** Full support for English, German, and French (i18n ready).
+*   **Multilingual:** Full support for English, German, French, and Slovak (i18n ready).
 *   **Appearance:** Dark Mode, Light Mode, and automatic System Theme detection.
 
 ## 📋 Server Requirements
@@ -115,4 +115,7 @@ If you are contributing to eXtplorer or building from source:
 2.  Use PHP 8.2+ and Composer 2.
 3.  Optional for frontend asset maintenance: use Node.js `24.18.0` LTS (`.nvmrc` / `.node-version`).
 4.  Install development dependencies: `./composer install`.
-5.  To create a deployable archive, run: `./build.sh`.
+5.  After changing translations, run `composer i18n:build` and `composer i18n:check`.
+6.  To create a deployable archive, run: `./build.sh`.
+
+Translation contribution details are documented in [docs/translations.md](docs/translations.md).

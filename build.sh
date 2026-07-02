@@ -32,10 +32,16 @@ fi
 echo "Ensuring Ace assets..."
 bash ./scripts/ensure-ace-assets.sh
 
+# 2.6 Generate and validate runtime translation bundles
+echo "Building translations..."
+node ./scripts/build-i18n.js
+node ./scripts/check-i18n.js
+
 # 3. Copy files to build directory
 echo "Copying files..."
 cp -r app ${BUILD_DIR}/
 cp -r public ${BUILD_DIR}/
+cp -r resources ${BUILD_DIR}/
 cp -r vendor ${BUILD_DIR}/
 cp LICENSE.md ${BUILD_DIR}/
 cp README.md ${BUILD_DIR}/

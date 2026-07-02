@@ -1,0 +1,13 @@
+{
+    "upload": "Nahrať",
+    "uploaded": "Nahrané!",
+    "upload_files": "Nahrať súbory",
+    "drag_drop_desc": "Presuňte súbory sem alebo kliknite pre prehliadanie",
+    "ready": "Pripravené",
+    "blocked": "Blokované",
+    "blocked_files_msg": "Niektoré súbory majú blokované prípony a budú preskočené.",
+    "file_extensions": "Prípony súborov",
+    "allowed": "Povolené",
+    "blocked_user": "Blokované (používateľ)",
+    "blocked_system": "Blokované (systém)"
+}

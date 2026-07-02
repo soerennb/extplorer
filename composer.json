@@ -42,6 +42,8 @@
         "sort-packages": true
     },
     "scripts": {
+        "i18n:build": "node scripts/build-i18n.js",
+        "i18n:check": "node scripts/check-i18n.js",
         "test": "php -d opcache.enable_cli=0 vendor/bin/phpunit --no-coverage"
     }
 }

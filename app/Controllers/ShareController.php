@@ -15,7 +15,7 @@ class ShareController extends BaseController
     {
         $service = new ShareService();
         $share = $service->getShare($hash);
-        $supportedLocales = ['en', 'de', 'fr'];
+        $supportedLocales = config('I18n')->supportedLocales();
         $locale = $this->detectLocale($supportedLocales);
         $translations = $this->loadTranslations($locale);
         $settingsService = new \App\Services\SettingsService();
@@ -111,7 +111,8 @@ class ShareController extends BaseController
      */
     private function loadTranslations(string $locale): array
     {
-        $localesToTry = array_values(array_unique(['en', $locale]));
+        $fallbackLocale = config('I18n')->fallbackLocale;
+        $localesToTry = array_values(array_unique([$fallbackLocale, $locale]));
         $translations = [];
 
         foreach ($localesToTry as $loc) {
@@ -148,7 +149,7 @@ class ShareController extends BaseController
 
         $service = new ShareService();
         $password = $this->request->getPost('password');
-        $supportedLocales = ['en', 'de', 'fr'];
+        $supportedLocales = config('I18n')->supportedLocales();
         $locale = $this->detectLocale($supportedLocales);
         $translations = $this->loadTranslations($locale);
         $invalidPasswordMessage = $translations['shared_invalid_password'] ?? 'Invalid Password';

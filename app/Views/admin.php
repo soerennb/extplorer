@@ -82,6 +82,7 @@
     <script <?= csp_script_nonce() ?>>
         window.baseUrl = "<?= base_url() ?>";
         window.appVersion = "<?= config('App')->version ?>";
+        window.appEnvironment = "<?= ENVIRONMENT ?>";
         window.userRole = "<?= session('role') ?>";
         window.username = "<?= session('username') ?>";
         window.userPermissions = <?= json_encode(session('permissions') ?? []) ?>;

@@ -1,0 +1,22 @@
+[
+    {
+        "code": "en",
+        "labelKey": "language_english",
+        "labelFallback": "English"
+    },
+    {
+        "code": "de",
+        "labelKey": "language_german",
+        "labelFallback": "Deutsch"
+    },
+    {
+        "code": "fr",
+        "labelKey": "language_french",
+        "labelFallback": "Français"
+    },
+    {
+        "code": "sk",
+        "labelKey": "language_slovak",
+        "labelFallback": "Slovenčina"
+    }
+]
