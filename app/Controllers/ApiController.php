@@ -329,8 +329,13 @@ class ApiController extends BaseController
     public function upload()
     {
         if (!can('upload')) return $this->failForbidden();
-        $path = $this->request->getPost('path') ?? '';
+        $path = $this->request->getPost('path') ?? '/';
+        if ($path === '') {
+            $path = '/';
+        }
         $file = $this->request->getFile('file');
+        $relativePath = $this->request->getPost('relativePath') ?? '';
+        $conflict = $this->normalizeUploadConflict($this->request->getPost('conflict') ?? 'replace');
 
         if (!$file || !$file->isValid()) {
             return $this->fail($file ? $file->getErrorString() : 'No file uploaded');
@@ -359,15 +364,22 @@ class ApiController extends BaseController
                 return $this->fail('Upload would exceed the configured per-user storage quota.');
             }
 
-            $targetDir = $this->fs->resolvePath($path);
-            
-            if (!is_dir($targetDir)) {
-                return $this->fail("Target directory does not exist.");
+            $target = $this->resolveUploadTarget($path, $name, (string)$relativePath, $conflict);
+            if ($target['skip']) {
+                return $this->respond([
+                    'status' => 'skipped',
+                    'filename' => $target['filename'],
+                    'path' => $target['relativePath'],
+                ]);
             }
-            
-            $file->move($targetDir, $name);
-            LogService::log('Upload', $path, 'File: ' . $name);
-            return $this->respond(['status' => 'success']);
+
+            $file->move($target['dir'], $target['filename'], true);
+            LogService::log('Upload', $path, 'File: ' . $target['relativePath']);
+            return $this->respond([
+                'status' => 'success',
+                'filename' => $target['filename'],
+                'path' => $target['relativePath'],
+            ]);
         } catch (Exception $e) {
             return $this->fail($e->getMessage());
         }
@@ -381,7 +393,12 @@ class ApiController extends BaseController
         $filenameRaw = $this->request->getPost('filename');
         $chunkIndex = (int)$this->request->getPost('chunkIndex');
         $totalChunks = (int)$this->request->getPost('totalChunks');
-        $targetPath = $this->request->getPost('path') ?? '';
+        $targetPath = $this->request->getPost('path') ?? '/';
+        if ($targetPath === '') {
+            $targetPath = '/';
+        }
+        $relativePath = $this->request->getPost('relativePath') ?? '';
+        $conflict = $this->normalizeUploadConflict($this->request->getPost('conflict') ?? 'replace');
 
         if (!$file || !$file->isValid()) return $this->fail('Invalid chunk');
 
@@ -407,7 +424,7 @@ class ApiController extends BaseController
             return $this->fail("Chunk exceeds the maximum allowed upload size of {$maxMb} MB.");
         }
 
-        $tempDir = WRITEPATH . 'uploads/chunks/' . md5(session_id() . $targetPath . '|' . $filename);
+        $tempDir = WRITEPATH . 'uploads/chunks/' . md5(session_id() . $targetPath . '|' . $relativePath . '|' . $filename);
         if (!is_dir($tempDir)) mkdir($tempDir, 0755, true);
 
         $file->move($tempDir, $chunkIndex . '.part');
@@ -427,13 +444,17 @@ class ApiController extends BaseController
                     return $this->fail('Upload would exceed the configured per-user storage quota.');
                 }
 
-                $targetDir = $this->fs->resolvePath($targetPath);
-                if (!is_dir($targetDir)) {
+                $target = $this->resolveUploadTarget($targetPath, $filename, (string)$relativePath, $conflict);
+                if ($target['skip']) {
                     $this->rrmdir($tempDir);
-                    return $this->fail("Target directory does not exist.");
+                    return $this->respond([
+                        'status' => 'skipped',
+                        'filename' => $target['filename'],
+                        'path' => $target['relativePath'],
+                    ]);
                 }
 
-                $finalPath = $targetDir . DIRECTORY_SEPARATOR . $filename;
+                $finalPath = $target['dir'] . DIRECTORY_SEPARATOR . $target['filename'];
                 $out = fopen($finalPath, 'wb');
                 for ($i = 0; $i < $totalChunks; $i++) {
                     $chunkPath = $tempDir . DIRECTORY_SEPARATOR . $i . '.part';
@@ -442,8 +463,12 @@ class ApiController extends BaseController
                 }
                 fclose($out);
                 rmdir($tempDir);
-                LogService::log('Upload (Chunked)', $targetPath, 'File: ' . $filename);
-                return $this->respond(['status' => 'assembled']);
+                LogService::log('Upload (Chunked)', $targetPath, 'File: ' . $target['relativePath']);
+                return $this->respond([
+                    'status' => 'assembled',
+                    'filename' => $target['filename'],
+                    'path' => $target['relativePath'],
+                ]);
             } catch (Exception $e) {
                 return $this->fail($e->getMessage());
             }
@@ -988,6 +1013,110 @@ class ApiController extends BaseController
         }
         $maxBytes = $maxMb * 1024 * 1024;
         return $bytes > $maxBytes;
+    }
+
+    private function normalizeUploadConflict(string $conflict): string
+    {
+        $conflict = strtolower(trim($conflict));
+        if (!in_array($conflict, ['replace', 'skip', 'keep_both'], true)) {
+            return 'replace';
+        }
+
+        return $conflict;
+    }
+
+    /**
+     * @return array{dir: string, filename: string, relativePath: string, skip: bool}
+     */
+    private function resolveUploadTarget(string $basePath, string $filename, string $relativePath, string $conflict): array
+    {
+        $targetDir = $this->fs->resolvePath($basePath);
+        if (!is_dir($targetDir)) {
+            throw new Exception('Target directory does not exist.');
+        }
+
+        $segments = $this->sanitizeUploadRelativeSegments($relativePath);
+        if ($segments !== []) {
+            $filename = array_pop($segments) ?: $filename;
+        }
+
+        if ($segments !== []) {
+            foreach ($segments as $segment) {
+                $targetDir .= DIRECTORY_SEPARATOR . $segment;
+                if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
+                    throw new Exception('Unable to create upload folder.');
+                }
+            }
+        }
+
+        $filename = $this->sanitizeUploadFilename($filename);
+        $targetPath = $targetDir . DIRECTORY_SEPARATOR . $filename;
+        if (is_file($targetPath)) {
+            if ($conflict === 'skip') {
+                return [
+                    'dir' => $targetDir,
+                    'filename' => $filename,
+                    'relativePath' => $this->joinUploadRelativePath($segments, $filename),
+                    'skip' => true,
+                ];
+            }
+
+            if ($conflict === 'keep_both') {
+                $filename = $this->nextUploadFilename($targetDir, $filename);
+            }
+        }
+
+        return [
+            'dir' => $targetDir,
+            'filename' => $filename,
+            'relativePath' => $this->joinUploadRelativePath($segments, $filename),
+            'skip' => false,
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function sanitizeUploadRelativeSegments(string $relativePath): array
+    {
+        $relativePath = str_replace('\\', '/', $relativePath);
+        if ($relativePath === '') {
+            return [];
+        }
+
+        $segments = [];
+        foreach (explode('/', $relativePath) as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                continue;
+            }
+            $segments[] = $this->sanitizeUploadFilename($segment);
+        }
+
+        return $segments;
+    }
+
+    /**
+     * @param array<int, string> $segments
+     */
+    private function joinUploadRelativePath(array $segments, string $filename): string
+    {
+        return implode('/', array_merge($segments, [$filename]));
+    }
+
+    private function nextUploadFilename(string $targetDir, string $filename): string
+    {
+        $info = pathinfo($filename);
+        $base = $info['filename'] ?? $filename;
+        $extension = isset($info['extension']) && $info['extension'] !== '' ? '.' . $info['extension'] : '';
+
+        for ($i = 1; $i < 1000; $i++) {
+            $candidate = $base . ' (' . $i . ')' . $extension;
+            if (!is_file($targetDir . DIRECTORY_SEPARATOR . $candidate)) {
+                return $candidate;
+            }
+        }
+
+        throw new Exception('Unable to create a non-conflicting filename.');
     }
 
     private function wouldExceedUserQuota(int $incomingBytes, array $settings): bool

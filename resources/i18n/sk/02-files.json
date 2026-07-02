@@ -1,6 +1,7 @@
 {
     "path": "Cesta:",
     "up": "Hore",
+    "up_one_level": "O úroveň vyššie",
     "open": "Otvoriť",
     "new_folder": "Nová zložka",
     "download": "Stiahnuť",

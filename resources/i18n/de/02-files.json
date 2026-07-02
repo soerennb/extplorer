@@ -1,6 +1,7 @@
 {
     "path": "Pfad:",
     "up": "Hoch",
+    "up_one_level": "Eine Ebene höher",
     "open": "Öffnen",
     "new_folder": "Neuer Ordner",
     "download": "Herunterladen",

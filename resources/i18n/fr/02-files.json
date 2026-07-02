@@ -1,6 +1,7 @@
 {
     "path": "Chemin:",
     "up": "Monter",
+    "up_one_level": "Remonter d’un niveau",
     "open": "Ouvrir",
     "new_folder": "Nouveau dossier",
     "download": "Télécharger",
