@@ -10,6 +10,7 @@ $routes->get('admin', 'Home::admin');
 $routes->get('health', 'Health::index');
 $routes->get('login', 'Login::index');
 $routes->post('login/auth', 'Login::auth');
+$routes->post('login/test-remote', 'Login::testRemote');
 $routes->get('logout', 'Login::logout');
 
 $routes->get('install', 'Install::index');

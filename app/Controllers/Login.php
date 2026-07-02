@@ -53,26 +53,15 @@ class Login extends BaseController
             $username = trim((string)$username);
             $password = (string)$password;
 
-            if ($host === '' || $username === '' || $password === '') {
-                return redirect()->back()->with('error', 'Remote host, username and password are required.');
-            }
-
-            if ($port < 1 || $port > 65535) {
-                return redirect()->back()->with('error', 'Invalid remote port.');
-            }
-
             try {
+                $this->validateRemoteConnectionInput($mode, $host, $port, $username, $password);
                 $this->assertRemoteHostAllowed($host);
             } catch (\Throwable $e) {
-                return redirect()->back()->with('error', $e->getMessage());
+                return redirect()->back()->withInput()->with('error', $this->remoteConnectionErrorMessage($e));
             }
             
             try {
-                if ($mode === 'ftp') {
-                    new \App\Services\VFS\FtpAdapter($host, $username, $password, $port);
-                } else {
-                    new \App\Services\VFS\Ssh2Adapter($host, $username, $password, $port);
-                }
+                $this->openRemoteConnection($mode, $host, $username, $password, $port);
                 
                 session()->regenerate();
                 session()->set([
@@ -91,7 +80,7 @@ class Login extends BaseController
                 ]);
                 return redirect()->to('/');
             } catch (\Exception $e) {
-                return redirect()->back()->with('error', $e->getMessage());
+                return redirect()->back()->withInput()->with('error', $this->remoteConnectionErrorMessage($e));
             }
         }
 
@@ -146,10 +135,93 @@ class Login extends BaseController
         }
     }
 
+    public function testRemote()
+    {
+        $mode = $this->request->getPost('mode') ?? '';
+        $host = strtolower(trim((string)$this->request->getPost('remote_host')));
+        $port = (int)$this->request->getPost('remote_port');
+        $username = trim((string)$this->request->getPost('username'));
+        $password = (string)$this->request->getPost('password');
+
+        try {
+            $this->validateRemoteConnectionInput($mode, $host, $port, $username, $password);
+            $this->assertRemoteHostAllowed($host);
+            $this->openRemoteConnection($mode, $host, $username, $password, $port);
+
+            return $this->response->setJSON([
+                'ok' => true,
+                'message' => 'Connection successful. You can now log in.',
+                'csrf' => [
+                    'name' => csrf_token(),
+                    'hash' => csrf_hash(),
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            return $this->response
+                ->setStatusCode(422)
+                ->setJSON([
+                    'ok' => false,
+                    'message' => $this->remoteConnectionErrorMessage($e),
+                    'csrf' => [
+                        'name' => csrf_token(),
+                        'hash' => csrf_hash(),
+                    ],
+                ]);
+        }
+    }
+
     public function logout()
     {
         session()->destroy();
         return redirect()->to('/login');
+    }
+
+    private function validateRemoteConnectionInput(string $mode, string $host, int $port, string $username, string $password): void
+    {
+        if (!in_array($mode, ['ftp', 'sftp'], true)) {
+            throw new \InvalidArgumentException('Select FTP or SFTP before testing the connection.');
+        }
+
+        if ($host === '' || $username === '' || $password === '') {
+            throw new \InvalidArgumentException('Remote host, username and password are required.');
+        }
+
+        if ($port < 1 || $port > 65535) {
+            throw new \InvalidArgumentException('Port must be between 1 and 65535.');
+        }
+    }
+
+    private function openRemoteConnection(string $mode, string $host, string $username, string $password, int $port): void
+    {
+        if ($mode === 'ftp') {
+            new \App\Services\VFS\FtpAdapter($host, $username, $password, $port);
+            return;
+        }
+
+        new \App\Services\VFS\Ssh2Adapter($host, $username, $password, $port);
+    }
+
+    private function remoteConnectionErrorMessage(\Throwable $e): string
+    {
+        $message = $e->getMessage();
+
+        if (str_contains($message, 'not allowlisted')) {
+            return 'This host is not on the remote host allowlist. Ask an administrator to allow the hostname or IP address.';
+        }
+
+        if (str_contains($message, 'private or reserved')) {
+            return 'This host resolves to a private or reserved address. Administrators must explicitly allow private network targets.';
+        }
+
+        if (stripos($message, 'login failed') !== false || stripos($message, 'authentication') !== false) {
+            return 'The server was reached, but the username or password was rejected.';
+        }
+
+        if (stripos($message, 'connect') !== false || stripos($message, 'Could not') !== false) {
+            return 'Could not connect to the remote server. Check the host, port, protocol, and firewall rules.';
+        }
+
+        return $message ?: 'Remote connection test failed.';
     }
 
     private function assertRemoteHostAllowed(string $host, ?array $allowlist = null): void

@@ -41,6 +41,7 @@
         .login-subtitle { color: #6b7280; }
         .form-hint { color: #7b8190; }
         .remote-card { background: #f6f8fb; border: 1px solid #e6e9f0; }
+        .remote-test-status { margin-top: 0.75rem; }
         .btn-check:checked + .btn-outline-primary {
             background-color: #1f4f9a;
             border-color: #1f4f9a;
@@ -112,24 +113,32 @@
                             <input type="radio" class="btn-check" name="mode" id="mode_sftp" value="sftp">
                             <label class="btn btn-outline-primary" for="mode_sftp">SFTP</label>
                         </div>
-                        <div class="form-hint small mt-1">Remote requires host and port.</div>
+                        <div class="form-hint small mt-1">FTP/SFTP uses the username and password above. Private network hosts may require administrator allowlisting.</div>
                     </div>
                     
                     <div id="remote_fields" class="collapse">
                         <div class="remote-card rounded-3 p-3 mb-4">
                             <div class="row g-3">
                                 <div class="col-md-8">
-                                    <label class="form-label" for="remote_host">Host</label>
+                                    <label class="form-label" for="remote_host">Remote host</label>
                                     <div class="input-group">
                                         <span class="input-group-text" aria-hidden="true"><i class="ri-global-line"></i></span>
-                                        <input type="text" name="remote_host" id="remote_host" class="form-control" placeholder="example.com" autocomplete="url">
+                                        <input type="text" name="remote_host" id="remote_host" class="form-control" placeholder="files.example.com" autocomplete="off" inputmode="url" spellcheck="false" autocapitalize="none">
                                     </div>
+                                    <div class="form-text">Use a hostname or IP address without protocol.</div>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label" for="remote_port">Port</label>
-                                    <input type="number" name="remote_port" id="remote_port" class="form-control" value="21">
+                                    <input type="number" name="remote_port" id="remote_port" class="form-control" value="21" min="1" max="65535" inputmode="numeric" autocomplete="off">
                                 </div>
                             </div>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="test_remote_connection">
+                                    <i class="ri-plug-line me-1" aria-hidden="true"></i>Test connection
+                                </button>
+                                <span class="small text-muted">The test validates host policy, port reachability, and credentials before login.</span>
+                            </div>
+                            <div id="remote_test_status" class="alert d-none py-2 small remote-test-status" role="status"></div>
                         </div>
                     </div>
 
@@ -156,6 +165,9 @@
         const remoteFields = document.getElementById('remote_fields');
         const port = document.getElementById('remote_port');
         const modes = document.querySelectorAll('input[name="mode"]');
+        const form = document.querySelector('form');
+        const testButton = document.getElementById('test_remote_connection');
+        const testStatus = document.getElementById('remote_test_status');
 
         function updateRemoteFields(val) {
             if (val === 'ftp' || val === 'sftp') {
@@ -167,8 +179,40 @@
             if (val === 'sftp') port.value = 22;
         }
 
+        function setRemoteStatus(type, message) {
+            testStatus.className = 'alert py-2 small remote-test-status alert-' + type;
+            testStatus.textContent = message;
+        }
+
+        function updateCsrf(csrf) {
+            if (!csrf || !csrf.name || !csrf.hash) return;
+            const existing = form.querySelector('input[type="hidden"][name="' + csrf.name + '"]');
+            if (existing) existing.value = csrf.hash;
+        }
+
         modes.forEach((el) => {
             el.addEventListener('change', () => updateRemoteFields(el.value));
+        });
+
+        testButton.addEventListener('click', async () => {
+            const data = new FormData(form);
+            testButton.disabled = true;
+            setRemoteStatus('info', 'Testing remote connection...');
+
+            try {
+                const res = await fetch('<?= site_url('login/test-remote') ?>', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: data
+                });
+                const payload = await res.json();
+                updateCsrf(payload.csrf);
+                setRemoteStatus(res.ok ? 'success' : 'danger', payload.message || 'Connection test failed.');
+            } catch (e) {
+                setRemoteStatus('danger', 'Could not reach the test endpoint. Check your network and try again.');
+            } finally {
+                testButton.disabled = false;
+            }
         });
 
         const checked = document.querySelector('input[name="mode"]:checked');
