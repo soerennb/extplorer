@@ -23,6 +23,7 @@ const app = createApp({
         const commandPaletteQuery = ref('');
         const commandPaletteInput = ref(null);
         const commandPaletteSelectedIndex = ref(0);
+        const detailsPaneOpen = ref(localStorage.getItem('extplorer_details_pane') === 'true');
         const contextMenu = Vue.reactive({ visible: false, x: 0, y: 0, file: null });
         const previewState = Vue.reactive({ src: '', index: 0, list: [], type: '', filename: '' });
         const theme = ref(localStorage.getItem('extplorer_theme') || 'auto');
@@ -102,6 +103,7 @@ const app = createApp({
                 { id: 'paste', label: i18n.t('paste'), icon: 'ri-clipboard-line', enabled: hasClipboard && !store.isTrashMode, reason: unavailable, action: paste },
                 { id: 'go-up', label: i18n.t('up_one_level'), icon: 'ri-arrow-up-line', enabled: Boolean(store.cwd), reason: unavailable, action: goUp },
                 { id: 'refresh', label: i18n.t('refresh'), icon: 'ri-refresh-line', enabled: true, action: reload },
+                { id: 'details', label: i18n.t('command_toggle_details'), icon: 'ri-sidebar-right-line', enabled: true, action: toggleDetailsPane },
                 { id: 'trash', label: i18n.t('command_toggle_trash'), icon: 'ri-delete-bin-7-line', enabled: true, action: toggleTrash },
                 { id: 'grid', label: i18n.t('command_grid_view'), icon: 'ri-grid-fill', enabled: store.viewMode !== 'grid', reason: unavailable, action: () => store.toggleViewMode('grid') },
                 { id: 'list', label: i18n.t('command_list_view'), icon: 'ri-list-check', enabled: store.viewMode !== 'list', reason: unavailable, action: () => store.toggleViewMode('list') },
@@ -156,6 +158,30 @@ const app = createApp({
                 crumbs.push({ name: part, path: current });
             }
             return crumbs;
+        });
+        const currentFolderBookmark = computed(() => {
+            const path = store.cwd || '';
+            const name = path ? path.split('/').filter(Boolean).pop() : '/';
+            return { name, path, type: 'dir', mime: 'directory' };
+        });
+        const detailsItem = computed(() => {
+            if (store.selectedItems.length === 1) return store.selectedItems[0];
+            if (store.selectedItems.length > 1) {
+                return {
+                    name: i18n.t('target_selected_items', { count: store.selectedItems.length }),
+                    path: store.cwd || '',
+                    type: 'multiple',
+                    mime: i18n.t('multiple_items'),
+                    size: store.selectedItems.reduce((sum, item) => sum + (Number(item.size) || 0), 0),
+                    mtime: null,
+                    isBulk: true
+                };
+            }
+            return null;
+        });
+        const detailsShareLabel = computed(() => {
+            if (!detailsItem.value || detailsItem.value.isBulk) return '';
+            return detailsItem.value.is_shared ? i18n.t('share_status_shared') : i18n.t('share_status_private');
         });
 
         const emptyStateIcon = computed(() => {
@@ -278,6 +304,17 @@ const app = createApp({
         // --- Core Actions ---
         const reload = () => store.reload();
         const goUp = () => { if (store.cwd) { const p = store.cwd.split('/'); p.pop(); store.loadPath(p.join('/')); } };
+        const toggleDetailsPane = () => {
+            detailsPaneOpen.value = !detailsPaneOpen.value;
+            localStorage.setItem('extplorer_details_pane', detailsPaneOpen.value ? 'true' : 'false');
+        };
+        const closeDetailsPane = () => {
+            detailsPaneOpen.value = false;
+            localStorage.setItem('extplorer_details_pane', 'false');
+        };
+        const toggleBookmark = (file) => {
+            store.toggleBookmark(file);
+        };
         const focusSearch = () => {
             const input = document.getElementById('navbarSearchInput');
             if (input) {
@@ -924,8 +961,10 @@ const app = createApp({
         return {
             store, i18n, t: (k, p) => i18n.t(k, p),
             commandPaletteOpen, commandPaletteQuery, commandPaletteInput, commandPaletteSelectedIndex, filteredCommandActions,
+            detailsPaneOpen, detailsItem, detailsShareLabel, currentFolderBookmark,
             goUp, goToPath, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, goToPage, setPageSize, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles, breadcrumbs,
             openCommandPalette, closeCommandPalette, moveCommandSelection, runCommand, runSelectedCommand,
+            toggleDetailsPane, closeDetailsPane, toggleBookmark,
             emptyStateIcon, emptyStateTitle, emptyStateDescription,
             isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer, openTransferWithFile, openShare, openHistory,
             contextMenu, showContextMenu, hideContextMenu, cmAction,

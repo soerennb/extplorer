@@ -66,6 +66,7 @@
     "command_requires_selection": "Sélectionnez d'abord un ou plusieurs éléments.",
     "command_requires_one_selection": "Sélectionnez d'abord exactement un élément.",
     "command_open_search": "Focus sur la recherche de fichiers",
+    "command_toggle_details": "Basculer le panneau de détails",
     "command_toggle_trash": "Basculer la corbeille",
     "command_grid_view": "Passer en vue grille",
     "command_list_view": "Passer en vue liste",

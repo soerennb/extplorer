@@ -16,16 +16,45 @@
         .content-area { flex: 1; overflow: auto; min-width: 0; }
         
         /* Sidebar */
-        .sidebar { 
-            width: 250px; 
-            border-right: 1px solid var(--bs-border-color); 
-            overflow-y: auto; 
-            background-color: var(--bs-body-bg); 
+        .sidebar {
+            width: 250px;
+            border-right: 1px solid var(--bs-border-color);
+            overflow-y: auto;
+            background-color: var(--bs-body-bg);
             flex-shrink: 0;
         }
-        
+        .details-pane {
+            width: 320px;
+            flex: 0 0 320px;
+            min-width: 320px;
+            border-left: 1px solid var(--bs-border-color);
+            background: var(--bs-body-bg);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .details-preview {
+            min-height: 120px;
+            border: 1px solid var(--bs-border-color);
+            background: var(--bs-tertiary-bg);
+        }
+        .details-preview-icon {
+            font-size: 3rem;
+        }
+        .bookmark-item-action {
+            opacity: 0.75;
+        }
+
         @media (max-width: 991.98px) {
             .sidebar { width: auto; border-right: none; }
+            .details-pane {
+                position: absolute;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                width: min(86vw, 340px);
+                z-index: 1030;
+                box-shadow: -0.5rem 0 1.5rem rgba(0, 0, 0, 0.16);
+            }
         }
         
         /* Main Container Drag Over */
@@ -710,6 +739,9 @@
                 <button class="btn btn-outline-danger btn-sm d-none d-sm-inline-flex align-items-center" @click="deleteSelected" :disabled="store.selectedItems.length === 0" :title="t('delete')">
                     <i class="ri-delete-bin-line"></i> <span class="d-none d-md-inline">{{ t('delete') }}</span>
                 </button>
+                <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" @click="toggleDetailsPane" :class="{active: detailsPaneOpen}" :aria-pressed="detailsPaneOpen" :title="t('details_pane')">
+                    <i class="ri-sidebar-right-line" aria-hidden="true"></i> <span class="d-none d-xl-inline">{{ t('details') }}</span>
+                </button>
 
                 <!-- Overflow Menu -->
                 <div class="dropdown app-toolbar-overflow">
@@ -915,6 +947,26 @@
                          </button>
                      </div>
 
+                     <!-- Bookmarks -->
+                     <div class="mb-4">
+                         <div class="d-flex justify-content-between align-items-center mb-2 px-2">
+                             <h6 class="small fw-bold text-uppercase text-muted mb-0">{{ t('bookmarks') }}</h6>
+                             <button class="btn btn-link btn-sm p-0 text-decoration-none" @click="toggleBookmark(currentFolderBookmark)" :aria-label="t('bookmark_current_folder')" :title="t('bookmark_current_folder')">
+                                 <i :class="store.isBookmarked(currentFolderBookmark) ? 'ri-star-fill' : 'ri-star-line'" aria-hidden="true"></i>
+                             </button>
+                         </div>
+                         <div v-if="store.bookmarks.length === 0" class="small text-muted px-2">{{ t('bookmarks_empty') }}</div>
+                         <div v-for="bookmark in store.bookmarks" :key="bookmark.path"
+                              class="d-flex align-items-center py-1 px-2 rounded small file-item"
+                              data-bs-dismiss="offcanvas" data-bs-target="#sidebarOffcanvas">
+                             <i :class="getIcon(bookmark)" class="me-2"></i>
+                             <span class="text-truncate flex-grow-1" @click="open(bookmark)">{{ bookmark.name }}</span>
+                             <button class="btn btn-link btn-sm p-0 text-muted bookmark-item-action" @click.stop="store.removeBookmark(bookmark.path)" :aria-label="t('remove_bookmark') + ': ' + bookmark.name" :title="t('remove_bookmark')">
+                                 <i class="ri-close-line" aria-hidden="true"></i>
+                             </button>
+                         </div>
+                     </div>
+
                      <!-- Recent Files -->
                      <div v-if="store.recentFiles.length > 0" class="mb-4">
                          <div class="d-flex justify-content-between align-items-center mb-2 px-2">
@@ -1063,8 +1115,59 @@
                     </div>
                 </div>
             </div>
+            <aside v-if="detailsPaneOpen" class="details-pane p-3" aria-labelledby="detailsPaneTitle" @click.stop>
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                    <h6 id="detailsPaneTitle" class="mb-0">{{ t('details_pane') }}</h6>
+                    <button class="btn btn-link btn-sm text-muted p-0" @click="closeDetailsPane" :aria-label="t('close') || 'Close'">
+                        <i class="ri-close-line" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div v-if="!detailsItem" class="text-center text-muted small py-4">
+                    <i class="ri-information-line d-block fs-2 mb-2" aria-hidden="true"></i>
+                    {{ t('details_empty') }}
+                </div>
+                <div v-else>
+                    <div class="details-preview rounded d-flex align-items-center justify-content-center mb-3 overflow-hidden">
+                        <img v-if="!detailsItem.isBulk && isImage(detailsItem)" :src="getThumbUrl(detailsItem)" class="w-100 h-100 object-fit-cover" :alt="detailsItem.name">
+                        <i v-else :class="getIcon(detailsItem)" class="details-preview-icon" aria-hidden="true"></i>
+                    </div>
+                    <div class="d-flex align-items-start justify-content-between gap-2 mb-3">
+                        <div class="min-w-0">
+                            <div class="fw-semibold text-truncate" :title="detailsItem.name">{{ detailsItem.name }}</div>
+                            <div class="small text-muted text-truncate" :title="'/' + detailsItem.path">/{{ detailsItem.path }}</div>
+                        </div>
+                        <button v-if="!detailsItem.isBulk" class="btn btn-outline-secondary btn-sm" @click="toggleBookmark(detailsItem)" :aria-label="store.isBookmarked(detailsItem) ? t('remove_bookmark') : t('add_bookmark')" :title="store.isBookmarked(detailsItem) ? t('remove_bookmark') : t('add_bookmark')">
+                            <i :class="store.isBookmarked(detailsItem) ? 'ri-star-fill' : 'ri-star-line'" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <dl class="row small mb-3">
+                        <dt class="col-4">{{ t('type') }}</dt>
+                        <dd class="col-8 text-truncate">{{ detailsItem.mime || detailsItem.type }}</dd>
+                        <dt class="col-4">{{ t('size') }}</dt>
+                        <dd class="col-8">{{ formatSize(detailsItem.size || 0) }}</dd>
+                        <dt class="col-4">{{ t('date') }}</dt>
+                        <dd class="col-8">{{ detailsItem.mtime ? formatDate(detailsItem.mtime) : '-' }}</dd>
+                        <dt class="col-4">{{ t('perms') }}</dt>
+                        <dd class="col-8">{{ detailsItem.perms || '-' }}</dd>
+                        <template v-if="!detailsItem.isBulk">
+                            <dt class="col-4">{{ t('share') }}</dt>
+                            <dd class="col-8">
+                                <span class="badge" :class="detailsItem.is_shared ? 'text-bg-primary' : 'text-bg-secondary'">{{ detailsShareLabel }}</span>
+                            </dd>
+                        </template>
+                    </dl>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm" @click="showProperties" :disabled="store.selectedItems.length === 0">
+                            <i class="ri-information-line me-1" aria-hidden="true"></i>{{ t('properties') }}
+                        </button>
+                        <button v-if="store.selectedItems.length === 1" class="btn btn-outline-primary btn-sm" @click="openShare" :disabled="store.isTrashMode">
+                            <i class="ri-share-line me-1" aria-hidden="true"></i>{{ t('share') }}
+                        </button>
+                    </div>
+                </div>
+            </aside>
         </div>
-        
+
         <!-- Status Bar -->
         <div class="bg-body-tertiary border-top px-3 py-2 small text-muted d-flex flex-wrap align-items-center gap-2 app-statusbar">
             <div class="d-flex align-items-center me-auto app-statusbar-summary">
@@ -1435,7 +1538,7 @@
     <script src="<?= base_url('assets/js/diff.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/diff2html-ui.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/api.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/store.js') ?>"></script>
+    <script src="<?= base_url('assets/js/store.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/i18n.js') ?>"></script>
     <script src="<?= base_url('assets/js/components/FileTree.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/components/UserAdmin.js?v=' . config('App')->version) ?>"></script>

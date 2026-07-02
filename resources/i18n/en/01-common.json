@@ -66,6 +66,7 @@
     "command_requires_selection": "Select one or more items first.",
     "command_requires_one_selection": "Select exactly one item first.",
     "command_open_search": "Focus file search",
+    "command_toggle_details": "Toggle details pane",
     "command_toggle_trash": "Toggle recycle bin",
     "command_grid_view": "Switch to grid view",
     "command_list_view": "Switch to list view",

@@ -6,6 +6,7 @@ const store = Vue.reactive({
     sortBy: 'name',
     sortDesc: false,
     clipboard: { items: [], mode: null },
+    bookmarks: JSON.parse(localStorage.getItem('extplorer_bookmarks') || '[]'),
     recentFiles: JSON.parse(localStorage.getItem('extplorer_recent_files') || '[]'),
     showHidden: localStorage.getItem('extplorer_show_hidden') === 'true',
     viewMode: localStorage.getItem('extplorer_view_mode') || 'grid',
@@ -96,6 +97,42 @@ const store = Vue.reactive({
     clearRecent() {
         this.recentFiles = [];
         localStorage.removeItem('extplorer_recent_files');
+    },
+
+    saveBookmarks() {
+        localStorage.setItem('extplorer_bookmarks', JSON.stringify(this.bookmarks));
+    },
+
+    addBookmark(file) {
+        if (!file || typeof file.path === 'undefined') return;
+        const entry = {
+            name: file.name || file.path || '/',
+            path: file.path || '',
+            type: file.type || 'dir',
+            mime: file.mime || (file.type === 'dir' ? 'directory' : '')
+        };
+        this.bookmarks = this.bookmarks.filter((item) => item.path !== entry.path);
+        this.bookmarks.unshift(entry);
+        if (this.bookmarks.length > 20) this.bookmarks.pop();
+        this.saveBookmarks();
+    },
+
+    removeBookmark(path) {
+        this.bookmarks = this.bookmarks.filter((item) => item.path !== path);
+        this.saveBookmarks();
+    },
+
+    toggleBookmark(file) {
+        if (!file || typeof file.path === 'undefined') return;
+        if (this.isBookmarked(file)) {
+            this.removeBookmark(file.path);
+        } else {
+            this.addBookmark(file);
+        }
+    },
+
+    isBookmarked(file) {
+        return Boolean(file && this.bookmarks.some((item) => item.path === file.path));
     },
 
     async loadPath(path, page = 1) {

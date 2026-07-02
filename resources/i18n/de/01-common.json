@@ -66,6 +66,7 @@
     "command_requires_selection": "Wählen Sie zuerst ein oder mehrere Elemente aus.",
     "command_requires_one_selection": "Wählen Sie zuerst genau ein Element aus.",
     "command_open_search": "Dateisuche fokussieren",
+    "command_toggle_details": "Detailbereich umschalten",
     "command_toggle_trash": "Papierkorb umschalten",
     "command_grid_view": "Zur Rasteransicht wechseln",
     "command_list_view": "Zur Listenansicht wechseln",

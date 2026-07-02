@@ -66,6 +66,7 @@
     "command_requires_selection": "Najprv vyberte jednu alebo viac položiek.",
     "command_requires_one_selection": "Najprv vyberte presne jednu položku.",
     "command_open_search": "Zamerať vyhľadávanie súborov",
+    "command_toggle_details": "Prepnúť panel detailov",
     "command_toggle_trash": "Prepnúť kôš",
     "command_grid_view": "Prepnúť na mriežku",
     "command_list_view": "Prepnúť na zoznam",
