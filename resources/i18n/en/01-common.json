@@ -46,6 +46,7 @@
     "expired": "Expired",
     "password": "Password",
     "send_files": "Send Files",
+    "refresh": "Refresh",
     "logout": "Logout",
     "quick_admin": "Quick Admin",
     "quick_admin_desc": "For full settings, logs, and system tools, use the admin console.",

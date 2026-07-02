@@ -1087,44 +1087,59 @@
                             <i :class="getIcon(propFile)" class="icon-large"></i>
                             <h6 class="mt-2">{{ propFile.name }}</h6>
                         </div>
-                        <table class="table table-sm small">
-                            <tbody>
-                                <tr><th>{{ t('name') }}</th><td>{{ propFile.name }}</td></tr>
-                                <tr><th>{{ t('location') }}</th><td>/{{ propFile.path }}</td></tr>
-                                <tr><th>{{ t('size') }}</th><td>
-                                    {{ formatSize(propFile.size) }}
-                                    <button v-if="propFile.type === 'dir'" class="btn btn-link btn-sm p-0 ms-2 text-decoration-none" @click="calcDirSize">
-                                        <i class="ri-calculator-line"></i> {{ t('calculate') }}
-                                    </button>
-                                </td></tr>
-                                <tr><th>{{ t('mime') }}</th><td>{{ propFile.mime }}</td></tr>
-                                <tr><th>{{ t('date') }}</th><td>{{ formatDate(propFile.mtime) }}</td></tr>
-                                <tr><th>{{ t('perms') }}</th><td>{{ propFile.perms }}</td></tr>
-                                <tr><th>{{ t('owner') }}</th><td>
-                                    <div v-if="isAdmin" class="input-group input-group-sm">
-                                        <input type="text" class="form-control" v-model="propFile.owner" :aria-label="t('owner') || 'Owner'">
-                                        <button class="btn btn-outline-secondary" @click="saveChown">Set</button>
-                                    </div>
-                                    <span v-else>{{ propFile.owner }}</span>
-                                </td></tr>
-                                <tr><th>{{ t('group') }}</th><td>
-                                    <div v-if="isAdmin" class="input-group input-group-sm">
-                                        <input type="text" class="form-control" v-model="propFile.group" :aria-label="t('group') || 'Group'">
-                                        <button class="btn btn-outline-secondary" @click="saveChown">Set</button>
-                                    </div>
-                                    <span v-else>{{ propFile.group }}</span>
-                                </td></tr>
-                                <tr v-if="isAdmin">
-                                    <th></th>
-                                    <td>
-                                        <div class="form-check form-check-sm small">
-                                            <input class="form-check-input" type="checkbox" id="propRecursive" v-model="propFile.recursive">
-                                            <label class="form-check-label" for="propRecursive">Apply Recursively</label>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <section aria-labelledby="propertiesMetadataHeading">
+                            <h6 id="propertiesMetadataHeading" class="text-uppercase text-muted small fw-bold mb-2">{{ t('properties_metadata') }}</h6>
+                            <table class="table table-sm small mb-0">
+                                <tbody>
+                                    <tr><th>{{ t('name') }}</th><td>{{ propFile.name }}</td></tr>
+                                    <tr><th>{{ t('location') }}</th><td>/{{ propFile.path }}</td></tr>
+                                    <tr><th>{{ t('size') }}</th><td>
+                                        {{ formatSize(propFile.size) }}
+                                        <button v-if="propFile.type === 'dir'" class="btn btn-link btn-sm p-0 ms-2 text-decoration-none" @click="calcDirSize">
+                                            <i class="ri-calculator-line" aria-hidden="true"></i> {{ t('calculate') }}
+                                        </button>
+                                    </td></tr>
+                                    <tr><th>{{ t('mime') }}</th><td>{{ propFile.mime }}</td></tr>
+                                    <tr><th>{{ t('date') }}</th><td>{{ formatDate(propFile.mtime) }}</td></tr>
+                                    <tr><th>{{ t('perms') }}</th><td>{{ propFile.perms }}</td></tr>
+                                    <tr><th>{{ t('owner') }}</th><td>{{ propFile.owner || '-' }}</td></tr>
+                                    <tr><th>{{ t('group') }}</th><td>{{ propFile.group || '-' }}</td></tr>
+                                </tbody>
+                            </table>
+                        </section>
+
+                        <section v-if="isAdmin" class="border border-warning-subtle rounded bg-warning-subtle p-3 mt-3" aria-labelledby="propertiesAdminHeading">
+                            <div class="d-flex align-items-start gap-2 mb-3">
+                                <i class="ri-shield-keyhole-line text-warning-emphasis fs-5" aria-hidden="true"></i>
+                                <div>
+                                    <h6 id="propertiesAdminHeading" class="mb-1">{{ t('properties_ownership_actions') }}</h6>
+                                    <div class="small text-warning-emphasis">{{ t('properties_ownership_desc') }}</div>
+                                </div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-sm-6">
+                                    <label class="form-label small" for="propOwner">{{ t('owner') }}</label>
+                                    <input id="propOwner" type="text" class="form-control form-control-sm" v-model="propFile.owner" autocomplete="off">
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label small" for="propGroup">{{ t('group') }}</label>
+                                    <input id="propGroup" type="text" class="form-control form-control-sm" v-model="propFile.group" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="form-check small mt-3">
+                                <input class="form-check-input" type="checkbox" id="propRecursive" v-model="propFile.recursive">
+                                <label class="form-check-label" for="propRecursive">{{ t('apply_recursively') }}</label>
+                            </div>
+                            <div v-if="propFile.recursive" class="alert alert-warning small py-2 mt-2 mb-0">
+                                {{ t('recursive_owner_warning') }}
+                            </div>
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3">
+                                <div class="small text-muted">{{ propertiesTargetSummary }}</div>
+                                <button class="btn btn-warning btn-sm" type="button" @click="saveChown">
+                                    <i class="ri-shield-check-line me-1" aria-hidden="true"></i>{{ t('apply_owner_group') }}
+                                </button>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </div>

@@ -46,6 +46,7 @@
     "expired": "Abgelaufen",
     "password": "Passwort",
     "send_files": "Dateien senden",
+    "refresh": "Aktualisieren",
     "logout": "Abmelden",
     "quick_admin": "Schnell-Admin",
     "quick_admin_desc": "Für vollständige Einstellungen, Logs und Systemwerkzeuge verwenden Sie die Admin-Konsole.",

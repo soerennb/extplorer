@@ -44,6 +44,14 @@ const app = createApp({
         });
 
         const webDavUrl = computed(() => window.baseUrl.replace(/\/$/, '') + '/dav');
+        const propertiesTargetSummary = computed(() => {
+            if (!propFile.value) return '';
+            if (propFile.value.isBulk) {
+                const count = Array.isArray(propFile.value.paths) ? propFile.value.paths.length : 0;
+                return i18n.t('target_selected_items', { count });
+            }
+            return '/' + (propFile.value.path || '');
+        });
 
         const filteredFiles = computed(() => {
             const sortItems = (items) => {
@@ -457,13 +465,20 @@ const app = createApp({
             if (!store.selectedItems.length) return;
             const { value: form } = await Swal.fire({
                 title: i18n.t('perms'),
-                html: `<input id="swal-i1" class="swal2-input" placeholder="Octal Mode" value="${store.selectedItems[0].perms || '755'}">` +
-                      '<div class="form-check mt-3 text-start ms-5"><input class="form-check-input" type="checkbox" id="swal-i2"><label class="form-check-label" for="swal-i2">Apply Recursively</label></div>',
+                html: `<input id="swal-i1" class="swal2-input" placeholder="${i18n.t('octal_mode')}" value="${store.selectedItems[0].perms || '755'}">` +
+                      `<div class="form-check mt-3 text-start ms-5"><input class="form-check-input" type="checkbox" id="swal-i2"><label class="form-check-label" for="swal-i2">${i18n.t('apply_recursively')}</label></div>`,
                 focusConfirm: false, preConfirm: () => [document.getElementById('swal-i1').value, document.getElementById('swal-i2').checked], showCancelButton: true
             });
             if (form) {
                 const [mode, recursive] = form;
-                if (!mode || !/^[0-7]{3,4}$/.test(mode)) return Swal.fire(i18n.t('error'), 'Invalid octal mode!', 'error');
+                if (!mode || !/^[0-7]{3,4}$/.test(mode)) return Swal.fire(i18n.t('error'), i18n.t('invalid_octal_mode'), 'error');
+                if (recursive) {
+                    const confirmed = await confirmRecursiveChange(
+                        i18n.t('confirm_recursive_perms_title'),
+                        i18n.t('confirm_recursive_perms_text', { target: selectedTargetSummary(), mode })
+                    );
+                    if (!confirmed) return;
+                }
                 try { await Api.post('chmod', { paths: store.selectedItems.map(f => f.path), mode, recursive }); reload(); store.selectedItems = []; Swal.fire(i18n.t('saved'), '', 'success'); }
                 catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
             }
@@ -482,8 +497,39 @@ const app = createApp({
             try {
                 const data = { user: propFile.value.owner, group: propFile.value.group, recursive: propFile.value.recursive };
                 if (propFile.value.isBulk) data.paths = propFile.value.paths; else data.path = propFile.value.path;
+                if (data.recursive) {
+                    const confirmed = await confirmRecursiveChange(
+                        i18n.t('confirm_recursive_owner_title'),
+                        i18n.t('confirm_recursive_owner_text', {
+                            target: propertiesTargetSummary.value,
+                            owner: data.user || '-',
+                            group: data.group || '-'
+                        })
+                    );
+                    if (!confirmed) return;
+                }
                 await Api.post('chown', data); reload(); Swal.fire(i18n.t('saved'), '', 'success');
             } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
+        };
+
+        const selectedTargetSummary = () => {
+            if (store.selectedItems.length === 1) {
+                return '/' + (store.selectedItems[0].path || '');
+            }
+            return i18n.t('target_selected_items', { count: store.selectedItems.length });
+        };
+
+        const confirmRecursiveChange = async (title, text) => {
+            const result = await Swal.fire({
+                icon: 'warning',
+                title,
+                text,
+                showCancelButton: true,
+                confirmButtonText: i18n.t('confirm_recursive_apply'),
+                cancelButtonText: i18n.t('cancel'),
+                confirmButtonColor: '#d97706'
+            });
+            return Boolean(result.isConfirmed);
         };
 
         const openShare = () => {
@@ -801,7 +847,7 @@ const app = createApp({
             setSort, isImage, isArchive, getThumbUrl,
             createFolder, deleteSelected, renameSelected, uploadFile, downloadSelected, createArchive, extractArchive, chmodSelected,
             showProperties, diffSelected, copySelected, cutSelected, paste,
-            editorFile, propFile, saveChown, calcDirSize, 
+            editorFile, propFile, propertiesTargetSummary, saveChown, calcDirSize,
             toggleTrash, restoreSelected, deletePermanent, emptyTrash,
             username: window.username,
             connectionMode: window.connectionMode,

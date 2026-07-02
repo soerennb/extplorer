@@ -46,6 +46,7 @@
     "expired": "Expiré",
     "password": "Mot de passe",
     "send_files": "Envoyer des fichiers",
+    "refresh": "Rafraîchir",
     "logout": "Se déconnecter",
     "quick_admin": "Admin rapide",
     "quick_admin_desc": "Pour tous les paramètres, journaux et outils système, utilisez la console d'administration.",
