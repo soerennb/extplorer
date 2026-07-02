@@ -48,5 +48,13 @@
     "send_files": "Odoslať súbory",
     "logout": "Odhlásiť sa",
     "quick_admin": "Rýchla správa",
-    "quick_admin_desc": "Pre úplné nastavenia, záznamy a systémové nástroje použite administračnú konzolu."
+    "quick_admin_desc": "Pre úplné nastavenia, záznamy a systémové nástroje použite administračnú konzolu.",
+    "quick_admin_manage_users": "Spravovať používateľov",
+    "quick_admin_manage_groups": "Spravovať skupiny",
+    "quick_admin_manage_roles": "Spravovať roly",
+    "quick_admin_open_users": "Otvoriť správu používateľov",
+    "quick_admin_open_sharing": "Otvoriť nastavenia zdieľania",
+    "quick_admin_open_mounts": "Otvoriť nastavenia pripojení",
+    "quick_admin_view_all_logs": "Zobraziť všetky auditné záznamy",
+    "quick_admin_recent_activity": "Nedávna aktivita"
 }

@@ -42,7 +42,7 @@ const AdminGroups = {
                             <span v-for="r in roles" :key="r" class="badge bg-info me-1">{{ r }}</span>
                         </td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-outline-primary me-1" @click="editGroup(name, roles)" :aria-label="t('admin_groups_group_label', 'Group: ') + name">
+                            <button class="btn btn-sm btn-outline-primary me-1" @click="editGroup(name, roles)" :title="t('admin_groups_group_label', 'Group: ') + name" :aria-label="t('admin_groups_group_label', 'Group: ') + name">
                                 <i class="ri-edit-line" aria-hidden="true"></i>
                             </button>
                             <button

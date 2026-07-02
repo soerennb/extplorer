@@ -48,5 +48,13 @@
     "send_files": "Envoyer des fichiers",
     "logout": "Se déconnecter",
     "quick_admin": "Admin rapide",
-    "quick_admin_desc": "Pour tous les paramètres, journaux et outils système, utilisez la console d'administration."
+    "quick_admin_desc": "Pour tous les paramètres, journaux et outils système, utilisez la console d'administration.",
+    "quick_admin_manage_users": "Gérer les utilisateurs",
+    "quick_admin_manage_groups": "Gérer les groupes",
+    "quick_admin_manage_roles": "Gérer les rôles",
+    "quick_admin_open_users": "Ouvrir l'administration des utilisateurs",
+    "quick_admin_open_sharing": "Ouvrir les paramètres de partage",
+    "quick_admin_open_mounts": "Ouvrir les paramètres de montage",
+    "quick_admin_view_all_logs": "Voir tous les journaux d'audit",
+    "quick_admin_recent_activity": "Activité récente"
 }

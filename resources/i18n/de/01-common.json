@@ -48,5 +48,13 @@
     "send_files": "Dateien senden",
     "logout": "Abmelden",
     "quick_admin": "Schnell-Admin",
-    "quick_admin_desc": "Für vollständige Einstellungen, Logs und Systemwerkzeuge verwenden Sie die Admin-Konsole."
+    "quick_admin_desc": "Für vollständige Einstellungen, Logs und Systemwerkzeuge verwenden Sie die Admin-Konsole.",
+    "quick_admin_manage_users": "Benutzer verwalten",
+    "quick_admin_manage_groups": "Gruppen verwalten",
+    "quick_admin_manage_roles": "Rollen verwalten",
+    "quick_admin_open_users": "Benutzerverwaltung öffnen",
+    "quick_admin_open_sharing": "Freigabe-Einstellungen öffnen",
+    "quick_admin_open_mounts": "Mount-Einstellungen öffnen",
+    "quick_admin_view_all_logs": "Alle Audit-Logs anzeigen",
+    "quick_admin_recent_activity": "Letzte Aktivität"
 }

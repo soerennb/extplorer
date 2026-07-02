@@ -57,7 +57,7 @@ const AdminRoles = {
                             <code class="small">{{ perms.join(', ') }}</code>
                         </td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-outline-primary me-1" @click="editRole(name, perms)" :aria-label="t('admin_roles_role_label', 'Role: ') + name">
+                            <button class="btn btn-sm btn-outline-primary me-1" @click="editRole(name, perms)" :title="t('admin_roles_role_label', 'Role: ') + name" :aria-label="t('admin_roles_role_label', 'Role: ') + name">
                                 <i class="ri-edit-line" aria-hidden="true"></i>
                             </button>
                             <button

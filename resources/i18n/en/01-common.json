@@ -48,5 +48,13 @@
     "send_files": "Send Files",
     "logout": "Logout",
     "quick_admin": "Quick Admin",
-    "quick_admin_desc": "For full settings, logs, and system tools, use the admin console."
+    "quick_admin_desc": "For full settings, logs, and system tools, use the admin console.",
+    "quick_admin_manage_users": "Manage users",
+    "quick_admin_manage_groups": "Manage groups",
+    "quick_admin_manage_roles": "Manage roles",
+    "quick_admin_open_users": "Open user administration",
+    "quick_admin_open_sharing": "Open sharing settings",
+    "quick_admin_open_mounts": "Open mount settings",
+    "quick_admin_view_all_logs": "View all audit logs",
+    "quick_admin_recent_activity": "Recent activity"
 }

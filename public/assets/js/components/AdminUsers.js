@@ -39,10 +39,10 @@ const AdminUsers = {
                         </td>
                         <td class="text-muted small">{{ user.home_dir }}</td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-outline-primary me-1" @click="editUser(user)" :aria-label="t('admin_users_edit_prefix', 'Edit User: ') + user.username">
+                            <button class="btn btn-sm btn-outline-primary me-1" @click="editUser(user)" :title="t('admin_users_edit_prefix', 'Edit User: ') + user.username" :aria-label="t('admin_users_edit_prefix', 'Edit User: ') + user.username">
                                 <i class="ri-edit-line" aria-hidden="true"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" @click="deleteUser(user)" :disabled="user.username === currentUsername" :aria-label="t('delete', 'Delete') + ': ' + user.username">
+                            <button class="btn btn-sm btn-outline-danger" @click="deleteUser(user)" :disabled="user.username === currentUsername" :title="t('delete', 'Delete') + ': ' + user.username" :aria-label="t('delete', 'Delete') + ': ' + user.username">
                                 <i class="ri-delete-bin-line" aria-hidden="true"></i>
                             </button>
                         </td>

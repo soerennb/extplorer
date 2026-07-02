@@ -59,7 +59,11 @@ const AdminLogs = {
                         <td>{{ log.ip }}</td>
                     </tr>
                     <tr v-if="logs.length === 0 && !isLoadingLogs">
-                        <td colspan="5" class="text-center text-muted py-4">{{ t('admin_logs_empty', 'No log entries match your filters.') }}</td>
+                        <td colspan="5" class="text-center text-muted py-5">
+                            <i class="ri-inbox-line d-block fs-3 mb-2" aria-hidden="true"></i>
+                            <div class="fw-semibold text-body">{{ hasActiveFilters ? t('admin_logs_empty', 'No log entries match your filters.') : t('admin_logs_empty_unfiltered', 'No audit activity has been recorded yet.') }}</div>
+                            <div class="small">{{ hasActiveFilters ? t('admin_logs_empty_filtered_hint', 'Adjust or reset the filters to broaden the audit search.') : t('admin_logs_empty_unfiltered_hint', 'Activity will appear here after users sign in, change files, share items, or update settings.') }}</div>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -92,6 +96,11 @@ const AdminLogs = {
     },
     mounted() {
         this.loadLogs();
+    },
+    computed: {
+        hasActiveFilters() {
+            return Object.values(this.logFilters).some((value) => String(value || '').trim() !== '');
+        }
     },
     methods: {
         t(key, fallback = '', params = {}) {
@@ -126,7 +135,7 @@ const AdminLogs = {
                     total: res.total ?? 0,
                     page: res.page ?? 1,
                     pageSize: res.pageSize ?? this.logsMeta.pageSize,
-                    totalPages: res.totalPages ?? 1
+                    totalPages: Math.max(1, res.totalPages ?? 1)
                 };
             } catch (e) {
                 this.error = e.message;
