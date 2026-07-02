@@ -1132,7 +1132,7 @@
 
         <!-- WebDAV Modal -->
         <div class="modal fade" id="webdavModal" tabindex="-1">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header py-2">
                         <h5 class="modal-title fs-6">{{ t('webdav_connect') }}</h5>
@@ -1144,14 +1144,45 @@
                             <label class="form-label small fw-bold" for="webdav_url_input">{{ t('webdav_url') }}</label>
                             <div class="input-group input-group-sm">
                                 <input type="text" class="form-control" :value="webDavUrl" readonly id="webdav_url_input">
-                                <button class="btn btn-outline-secondary" @click="copyWebDavUrl" :aria-label="t('copy') || 'Copy'" :title="t('copy') || 'Copy'">
+                                <button class="btn btn-outline-secondary" @click="copyWebDavUrl">
                                     <i class="ri-file-copy-line" aria-hidden="true"></i>
+                                    <span>{{ t('webdav_copy_url') }}</span>
                                 </button>
                             </div>
                         </div>
-                        <div class="alert alert-info py-2 small mb-0">
-                            <i class="ri-information-line me-1"></i>
-                            Use your eXtplorer <strong>{{ username }}</strong> credentials to login.
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="fw-bold small mb-2"><i class="ri-windows-line me-1" aria-hidden="true"></i>{{ t('webdav_windows_title') }}</div>
+                                    <div class="small text-muted">{{ t('webdav_windows_hint') }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="fw-bold small mb-2"><i class="ri-apple-line me-1" aria-hidden="true"></i>{{ t('webdav_macos_title') }}</div>
+                                    <div class="small text-muted">{{ t('webdav_macos_hint') }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="fw-bold small mb-2"><i class="ri-terminal-box-line me-1" aria-hidden="true"></i>{{ t('webdav_linux_title') }}</div>
+                                    <div class="small text-muted">{{ t('webdav_linux_hint') }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info py-2 small mb-2">
+                            <i class="ri-key-2-line me-1" aria-hidden="true"></i>
+                            {{ t('webdav_credentials_note', {username: username}) }}
+                        </div>
+                        <div class="alert alert-warning py-2 small mb-2">
+                            <i class="ri-shield-check-line me-1" aria-hidden="true"></i>
+                            {{ t('webdav_https_note') }}
+                        </div>
+                        <div class="alert alert-light border py-2 small mb-0">
+                            <i class="ri-admin-line me-1" aria-hidden="true"></i>
+                            {{ t('webdav_policy_note') }}
                         </div>
                     </div>
                 </div>
