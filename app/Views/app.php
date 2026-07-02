@@ -117,6 +117,78 @@
         }
 
         .navbar-logo { height: 48px; width: auto; margin-right: 10px; }
+        .mobile-current-path {
+            min-width: 0;
+            max-width: 42vw;
+        }
+        .mobile-current-path-text {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        @media (max-width: 575.98px) {
+            .app-navbar {
+                min-height: 48px;
+            }
+            .app-navbar .container-fluid {
+                gap: 0.35rem;
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            .navbar-logo {
+                height: 30px;
+                margin-right: 0;
+            }
+            .app-navbar .btn-sm {
+                --bs-btn-padding-y: 0.25rem;
+                --bs-btn-padding-x: 0.45rem;
+            }
+            .desktop-path,
+            .navbar-search {
+                display: none !important;
+            }
+            .app-toolbar {
+                padding: 0.5rem !important;
+                gap: 0.5rem !important;
+                flex-wrap: nowrap !important;
+            }
+            .app-toolbar-primary {
+                flex: 1 1 auto;
+                justify-content: center;
+            }
+            .app-toolbar-overflow {
+                flex: 0 0 auto;
+            }
+            .app-statusbar {
+                padding: 0.45rem 0.6rem !important;
+                gap: 0.5rem !important;
+            }
+            .app-statusbar-summary {
+                min-width: 0;
+                flex: 1 1 auto;
+            }
+            .app-statusbar-summary .connection-label,
+            .app-statusbar-summary .version-label {
+                display: none;
+            }
+            .app-statusbar-pagesize {
+                margin-left: 0 !important;
+            }
+            .app-statusbar-pagesize .form-select {
+                max-width: 76px;
+            }
+            .app-statusbar-pagination {
+                width: 100%;
+                order: 3 !important;
+                justify-content: center;
+            }
+            .app-statusbar-pagination .pagination {
+                --bs-pagination-padding-x: 0.45rem;
+                --bs-pagination-padding-y: 0.25rem;
+                --bs-pagination-font-size: 0.8rem;
+            }
+        }
         
         .file-item { 
             cursor: pointer; 
@@ -409,7 +481,7 @@
 <body>
     <div id="app" v-cloak>
         <!-- Navbar -->
-        <nav class="navbar navbar-expand-lg navbar-dark">
+        <nav class="navbar navbar-expand-lg navbar-dark app-navbar">
             <div class="container-fluid">
                 <!-- Mobile Sidebar Toggle -->
                 <button class="btn btn-outline-light btn-sm d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-label="Menu">
@@ -419,8 +491,12 @@
                 <a class="navbar-brand d-flex align-items-center" href="#">
                     <img src="<?= base_url('logo-dark.svg') ?>" alt="Logo" class="navbar-logo">
                 </a>
-                
-                <div class="d-flex align-items-center text-white me-3">
+
+                <div class="d-lg-none text-white mobile-current-path me-auto">
+                    <span class="mobile-current-path-text">{{ store.cwd || '/' }}</span>
+                </div>
+
+                <div class="d-flex align-items-center text-white me-3 desktop-path">
                     <span class="me-2 text-white-50">{{ t('path') }}</span>
                     <nav aria-label="breadcrumb" class="path-breadcrumb">
                         <ol class="breadcrumb mb-0">
@@ -434,7 +510,7 @@
                     </nav>
                 </div>
 
-                <div class="me-3">
+                <div class="me-3 navbar-search">
                     <div class="input-group input-group-sm">
                         <input id="navbarSearchInput" type="text" class="form-control bg-body-tertiary text-body border-secondary-subtle"
                                :placeholder="t('filter_placeholder')"
@@ -447,14 +523,14 @@
                     </div>
                 </div>
 
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-light btn-sm" @click="goUp" :disabled="!store.cwd">
+                <div class="d-flex gap-2 navbar-nav-tools">
+                    <button class="btn btn-outline-light btn-sm d-none d-sm-inline-flex align-items-center" @click="goUp" :disabled="!store.cwd">
                         <i class="ri-arrow-up-line"></i> {{ t('up') }}
                     </button>
-                    <button class="btn btn-outline-light btn-sm" @click="reload" aria-label="Refresh" title="Refresh">
+                    <button class="btn btn-outline-light btn-sm d-none d-sm-inline-flex align-items-center" @click="reload" aria-label="Refresh" title="Refresh">
                         <i class="ri-refresh-line" aria-hidden="true"></i>
                     </button>
-                    <div class="btn-group btn-group-sm" role="group" aria-label="View mode">
+                    <div class="btn-group btn-group-sm d-none d-sm-flex" role="group" aria-label="View mode">
                         <button class="btn btn-outline-light" :class="{active: store.viewMode === 'grid'}" @click="store.toggleViewMode('grid')" aria-label="Grid view" :aria-pressed="store.viewMode === 'grid'">
                             <i class="ri-grid-fill" aria-hidden="true"></i>
                         </button>
@@ -463,13 +539,14 @@
                         </button>
                     </div>
 
-                    <div class="dropdown">
+	                    <div class="dropdown">
                         <button class="btn btn-outline-light btn-sm ms-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-label="User menu">
                             <i class="ri-user-line" aria-hidden="true"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow">
-                            <li><a class="dropdown-item" href="#" @click.prevent="openProfile"><i class="ri-user-settings-line me-2"></i>{{ t('profile_settings') || 'Profile & Settings' }}</a></li>
-                            <li v-if="isAdmin"><a class="dropdown-item" href="<?= base_url('admin') ?>"><i class="ri-settings-3-line me-2"></i> Admin Console</a></li>
+	                            <li><a class="dropdown-item" href="#" @click.prevent="openProfile"><i class="ri-user-settings-line me-2"></i>{{ t('profile_settings') || 'Profile & Settings' }}</a></li>
+	                            <li v-if="isAdmin"><a class="dropdown-item" href="#" @click.prevent="openAdmin"><i class="ri-flashlight-line me-2"></i>Quick Admin</a></li>
+	                            <li v-if="isAdmin"><a class="dropdown-item" href="<?= base_url('admin') ?>"><i class="ri-settings-3-line me-2"></i> Admin Console</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><h6 class="dropdown-header">Appearance</h6></li>
                             <li><a class="dropdown-item" :class="{active: theme === 'light'}" href="#" @click.prevent="setTheme('light')">
@@ -485,11 +562,6 @@
                             <li><a class="dropdown-item text-danger" href="logout"><i class="ri-logout-box-r-line me-2"></i>{{ t('logout') || 'Logout' }}</a></li>
                         </ul>
                     </div>
-
-                    <button v-if="isAdmin" class="btn btn-outline-warning btn-sm ms-2" @click="openAdmin">
-                        <i class="ri-flashlight-line me-1"></i>
-                        Quick Admin
-                    </button>
                 </div>
             </div>
         </nav>
@@ -503,41 +575,58 @@
         <transfer-modal ref="transferModal"></transfer-modal>
 
         <!-- Toolbar -->
-        <div class="bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap">
+        <div class="bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap app-toolbar">
             <template v-if="!store.isTrashMode">
-                <button class="btn btn-primary btn-sm" @click="createFolder" :title="t('new_folder')">
+                <button class="btn btn-primary btn-sm d-none d-sm-inline-flex align-items-center" @click="createFolder" :title="t('new_folder')">
                     <i class="ri-folder-add-line"></i> <span class="d-none d-md-inline">{{ t('new_folder') }}</span>
                 </button>
-                <button class="btn btn-outline-secondary btn-sm" @click="uploadFile" :title="t('upload')">
-                    <i class="ri-upload-cloud-2-line"></i> <span class="d-none d-md-inline">{{ t('upload') }}</span>
+                <button class="btn btn-primary btn-sm app-toolbar-primary d-inline-flex align-items-center" @click="uploadFile" :title="t('upload')">
+                    <i class="ri-upload-cloud-2-line"></i> <span>{{ t('upload') }}</span>
                 </button>
-                
-                <div class="vr mx-1"></div>
 
-                <button class="btn btn-outline-secondary btn-sm" @click="copySelected" :disabled="store.selectedItems.length === 0" :title="t('copy')">
+                <div class="vr mx-1 d-none d-sm-block"></div>
+
+                <button class="btn btn-outline-secondary btn-sm d-none d-sm-inline-flex align-items-center" @click="copySelected" :disabled="store.selectedItems.length === 0" :title="t('copy')">
                     <i class="ri-file-copy-line"></i> <span class="d-none d-xl-inline">{{ t('copy') }}</span>
                 </button>
-                <button class="btn btn-outline-secondary btn-sm" @click="cutSelected" :disabled="store.selectedItems.length === 0" :title="t('cut')">
+                <button class="btn btn-outline-secondary btn-sm d-none d-sm-inline-flex align-items-center" @click="cutSelected" :disabled="store.selectedItems.length === 0" :title="t('cut')">
                     <i class="ri-scissors-cut-line"></i> <span class="d-none d-xl-inline">{{ t('cut') }}</span>
                 </button>
-                <button class="btn btn-outline-success btn-sm" @click="paste" :disabled="store.clipboard.items.length === 0" :title="t('paste')">
-                    <i class="ri-clipboard-line"></i> 
+                <button class="btn btn-outline-success btn-sm d-none d-sm-inline-flex align-items-center" @click="paste" :disabled="store.clipboard.items.length === 0" :title="t('paste')">
+                    <i class="ri-clipboard-line"></i>
                     <span class="d-none d-md-inline">{{ t('paste') }}</span>
                     <span v-if="store.clipboard.items.length > 0" class="badge bg-success ms-1">{{ store.clipboard.items.length }}</span>
                 </button>
 
-                <div class="vr mx-1"></div>
+                <div class="vr mx-1 d-none d-sm-block"></div>
 
-                <button class="btn btn-outline-danger btn-sm" @click="deleteSelected" :disabled="store.selectedItems.length === 0" :title="t('delete')">
+                <button class="btn btn-outline-danger btn-sm d-none d-sm-inline-flex align-items-center" @click="deleteSelected" :disabled="store.selectedItems.length === 0" :title="t('delete')">
                     <i class="ri-delete-bin-line"></i> <span class="d-none d-md-inline">{{ t('delete') }}</span>
                 </button>
 
                 <!-- Overflow Menu -->
-                <div class="dropdown">
+                <div class="dropdown app-toolbar-overflow">
                     <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-label="More actions">
                         <i class="ri-more-2-fill" aria-hidden="true"></i>
+                        <span class="d-sm-none">{{ t('more_actions') }}</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <li class="d-sm-none"><a class="dropdown-item" href="#" @click.prevent="createFolder">
+                            <i class="ri-folder-add-line me-2"></i> {{ t('new_folder') }}
+                        </a></li>
+                        <li class="d-sm-none"><a class="dropdown-item" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="copySelected">
+                            <i class="ri-file-copy-line me-2"></i> {{ t('copy') }}
+                        </a></li>
+                        <li class="d-sm-none"><a class="dropdown-item" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="cutSelected">
+                            <i class="ri-scissors-cut-line me-2"></i> {{ t('cut') }}
+                        </a></li>
+                        <li class="d-sm-none"><a class="dropdown-item" :class="{disabled: store.clipboard.items.length === 0}" href="#" @click.prevent="paste">
+                            <i class="ri-clipboard-line me-2"></i> {{ t('paste') }}
+                        </a></li>
+                        <li class="d-sm-none"><a class="dropdown-item text-danger" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="deleteSelected">
+                            <i class="ri-delete-bin-line me-2"></i> {{ t('delete') }}
+                        </a></li>
+                        <li class="d-sm-none"><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" :class="{disabled: store.selectedItems.length !== 1}" href="#" @click.prevent="downloadSelected">
                             <i class="ri-download-line me-2"></i> {{ t('download') }}
                         </a></li>
@@ -870,14 +959,14 @@
         </div>
         
         <!-- Status Bar -->
-        <div class="bg-body-tertiary border-top px-3 py-2 small text-muted d-flex flex-wrap align-items-center gap-2">
-            <div class="d-flex align-items-center me-auto">
-                <span class="me-2 fw-bold text-primary">v{{ appVersion }}</span>
+        <div class="bg-body-tertiary border-top px-3 py-2 small text-muted d-flex flex-wrap align-items-center gap-2 app-statusbar">
+            <div class="d-flex align-items-center me-auto app-statusbar-summary">
+                <span class="me-2 fw-bold text-primary version-label">v{{ appVersion }}</span>
                 <span>{{ t('items_count', {count: store.pagination.total}) }}</span>
-                <span class="ms-2">({{ connectionMode === 'local' ? t('local_fs') : connectionMode.toUpperCase() }})</span>
+                <span class="ms-2 connection-label">({{ connectionMode === 'local' ? t('local_fs') : connectionMode.toUpperCase() }})</span>
             </div>
-            
-            <div v-if="store.pagination.total > store.pagination.pageSize" class="d-flex align-items-center gap-2 mx-auto order-2 order-md-1">
+
+            <div v-if="store.pagination.total > store.pagination.pageSize" class="d-flex align-items-center gap-2 mx-auto order-2 order-md-1 app-statusbar-pagination">
                 <nav aria-label="File list pagination">
                     <ul class="pagination pagination-lg mb-0 flex-wrap gap-1">
                         <li class="page-item" :class="{disabled: store.pagination.page <= 1}">
@@ -901,7 +990,7 @@
                 <span class="text-muted small d-none d-md-inline">{{ t('page_info', {current: store.pagination.page, total: totalPages}) }}</span>
             </div>
 
-            <div class="d-flex align-items-center gap-2 ms-auto order-1 order-md-2">
+            <div class="d-flex align-items-center gap-2 ms-auto order-1 order-md-2 app-statusbar-pagesize">
                 <label for="pageSizeSelect" class="small text-muted d-none d-sm-inline mb-0">{{ t('rows_per_page') || 'Rows' }}</label>
                 <select id="pageSizeSelect" class="form-select form-select-sm w-auto" :value="store.pagination.pageSize" @change="setPageSize($event)">
                     <option value="25">25</option>
