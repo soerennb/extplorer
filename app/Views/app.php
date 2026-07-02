@@ -100,6 +100,61 @@
             flex-wrap: wrap;
             justify-content: flex-end;
         }
+        .command-palette-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 1060;
+            background: rgba(15, 23, 42, 0.38);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: min(12vh, 5rem) 1rem 1rem;
+        }
+        .command-palette {
+            width: min(640px, 100%);
+            overflow: hidden;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0.5rem;
+            background: var(--bs-body-bg);
+            box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.2);
+        }
+        .command-palette-search {
+            border-bottom: 1px solid var(--bs-border-color);
+        }
+        .command-palette-list {
+            max-height: min(55vh, 420px);
+            overflow-y: auto;
+        }
+        .command-palette-item {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 0.85rem;
+            border: 0;
+            background: transparent;
+            color: var(--bs-body-color);
+            text-align: left;
+        }
+        .command-palette-item:hover,
+        .command-palette-item.active {
+            background: var(--bs-tertiary-bg);
+        }
+        .command-palette-item:disabled {
+            color: var(--bs-secondary-color);
+            cursor: not-allowed;
+        }
+        .command-palette-icon {
+            width: 1.75rem;
+            height: 1.75rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.35rem;
+            background: var(--bs-secondary-bg);
+            color: var(--bs-primary);
+            flex: 0 0 auto;
+        }
         @media (max-width: 575.98px) {
             .selection-action-bar {
                 align-items: stretch;
@@ -530,6 +585,9 @@
                     <button class="btn btn-outline-light btn-sm d-none d-sm-inline-flex align-items-center" @click="reload" aria-label="Refresh" title="Refresh">
                         <i class="ri-refresh-line" aria-hidden="true"></i>
                     </button>
+                    <button class="btn btn-outline-light btn-sm d-inline-flex align-items-center" @click="openCommandPalette" :aria-label="t('command_palette')" :title="t('command_palette')">
+                        <i class="ri-command-line" aria-hidden="true"></i>
+                    </button>
                     <div class="btn-group btn-group-sm d-none d-sm-flex" role="group" aria-label="View mode">
                         <button class="btn btn-outline-light" :class="{active: store.viewMode === 'grid'}" @click="store.toggleViewMode('grid')" aria-label="Grid view" :aria-pressed="store.viewMode === 'grid'">
                             <i class="ri-grid-fill" aria-hidden="true"></i>
@@ -573,6 +631,55 @@
         <upload-modal ref="uploadModal"></upload-modal>
         <file-history-modal ref="fileHistoryModal"></file-history-modal>
         <transfer-modal ref="transferModal"></transfer-modal>
+
+        <div v-if="commandPaletteOpen" class="command-palette-backdrop" @mousedown.self="closeCommandPalette">
+            <section class="command-palette" role="dialog" aria-modal="true" :aria-label="t('command_palette')">
+                <div class="command-palette-search input-group input-group-lg">
+                    <span class="input-group-text bg-transparent border-0">
+                        <i class="ri-search-line" aria-hidden="true"></i>
+                    </span>
+                    <input
+                        ref="commandPaletteInput"
+                        id="commandPaletteSearch"
+                        name="command_palette_search"
+                        type="text"
+                        class="form-control border-0 shadow-none"
+                        v-model="commandPaletteQuery"
+                        autocomplete="off"
+                        :placeholder="t('command_palette_placeholder')"
+                        :aria-label="t('command_palette')"
+                        @keydown.down.prevent="moveCommandSelection(1)"
+                        @keydown.up.prevent="moveCommandSelection(-1)"
+                        @keydown.enter.prevent="runSelectedCommand"
+                        @keydown.esc.prevent="closeCommandPalette"
+                    >
+                    <button type="button" class="btn btn-link text-secondary text-decoration-none" @click="closeCommandPalette" :aria-label="t('close') || 'Close'">
+                        <i class="ri-close-line" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="command-palette-list py-1">
+                    <button
+                        v-for="(command, index) in filteredCommandActions"
+                        :key="command.id"
+                        type="button"
+                        class="command-palette-item"
+                        :class="{ active: index === commandPaletteSelectedIndex }"
+                        :disabled="!command.enabled"
+                        @mouseenter="commandPaletteSelectedIndex = index"
+                        @click="runCommand(command)"
+                    >
+                        <span class="command-palette-icon"><i :class="command.icon" aria-hidden="true"></i></span>
+                        <span class="flex-grow-1">
+                            <span class="d-block fw-semibold">{{ command.label }}</span>
+                            <span v-if="!command.enabled && command.reason" class="d-block small text-muted">{{ command.reason }}</span>
+                        </span>
+                    </button>
+                    <div v-if="filteredCommandActions.length === 0" class="text-center text-muted small py-4">
+                        {{ t('command_no_results') }}
+                    </div>
+                </div>
+            </section>
+        </div>
 
         <!-- Toolbar -->
         <div class="bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap app-toolbar">

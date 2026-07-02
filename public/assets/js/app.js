@@ -19,6 +19,10 @@ const app = createApp({
         const uploadModal = ref(null);
         const fileHistoryModal = ref(null);
         const transferModal = ref(null);
+        const commandPaletteOpen = ref(false);
+        const commandPaletteQuery = ref('');
+        const commandPaletteInput = ref(null);
+        const commandPaletteSelectedIndex = ref(0);
         const contextMenu = Vue.reactive({ visible: false, x: 0, y: 0, file: null });
         const previewState = Vue.reactive({ src: '', index: 0, list: [], type: '', filename: '' });
         const theme = ref(localStorage.getItem('extplorer_theme') || 'auto');
@@ -80,6 +84,40 @@ const app = createApp({
         });
 
         const totalPages = computed(() => Math.max(1, Math.ceil(store.pagination.total / store.pagination.pageSize)));
+        const commandActions = computed(() => {
+            const hasSelection = store.selectedItems.length > 0;
+            const hasSingleSelection = store.selectedItems.length === 1;
+            const hasClipboard = store.clipboard && store.clipboard.items && store.clipboard.items.length > 0;
+            const unavailable = i18n.t('command_unavailable');
+            return [
+                { id: 'search', label: i18n.t('command_open_search'), icon: 'ri-search-line', enabled: true, action: focusSearch },
+                { id: 'upload', label: i18n.t('upload'), icon: 'ri-upload-cloud-2-line', enabled: true, action: uploadFile },
+                { id: 'new-folder', label: i18n.t('new_folder'), icon: 'ri-folder-add-line', enabled: !store.isTrashMode, reason: unavailable, action: createFolder },
+                { id: 'send-files', label: i18n.t('send_files'), icon: 'ri-send-plane-line', enabled: true, action: openTransfer },
+                { id: 'share', label: i18n.t('share'), icon: 'ri-share-line', enabled: hasSingleSelection && !store.isTrashMode, reason: i18n.t('command_requires_one_selection'), action: openShare },
+                { id: 'properties', label: i18n.t('properties'), icon: 'ri-information-line', enabled: hasSelection, reason: i18n.t('command_requires_selection'), action: showProperties },
+                { id: 'perms', label: i18n.t('perms'), icon: 'ri-lock-2-line', enabled: hasSelection && !store.isTrashMode, reason: i18n.t('command_requires_selection'), action: chmodSelected },
+                { id: 'download', label: i18n.t('download'), icon: 'ri-download-line', enabled: hasSingleSelection && !store.isTrashMode, reason: i18n.t('command_requires_one_selection'), action: downloadSelected },
+                { id: 'copy', label: i18n.t('copy'), icon: 'ri-file-copy-line', enabled: hasSelection && !store.isTrashMode, reason: i18n.t('command_requires_selection'), action: copySelected },
+                { id: 'paste', label: i18n.t('paste'), icon: 'ri-clipboard-line', enabled: hasClipboard && !store.isTrashMode, reason: unavailable, action: paste },
+                { id: 'go-up', label: i18n.t('up_one_level'), icon: 'ri-arrow-up-line', enabled: Boolean(store.cwd), reason: unavailable, action: goUp },
+                { id: 'refresh', label: i18n.t('refresh'), icon: 'ri-refresh-line', enabled: true, action: reload },
+                { id: 'trash', label: i18n.t('command_toggle_trash'), icon: 'ri-delete-bin-7-line', enabled: true, action: toggleTrash },
+                { id: 'grid', label: i18n.t('command_grid_view'), icon: 'ri-grid-fill', enabled: store.viewMode !== 'grid', reason: unavailable, action: () => store.toggleViewMode('grid') },
+                { id: 'list', label: i18n.t('command_list_view'), icon: 'ri-list-check', enabled: store.viewMode !== 'list', reason: unavailable, action: () => store.toggleViewMode('list') },
+                { id: 'theme', label: i18n.t('command_toggle_theme'), icon: 'ri-contrast-2-line', enabled: true, action: toggleTheme },
+                { id: 'profile', label: i18n.t('command_open_profile'), icon: 'ri-user-settings-line', enabled: true, action: openProfile },
+                { id: 'quick-admin', label: i18n.t('command_open_quick_admin'), icon: 'ri-flashlight-line', enabled: isAdmin.value, reason: unavailable, action: openAdmin },
+                { id: 'admin-console', label: i18n.t('command_open_admin_console'), icon: 'ri-settings-3-line', enabled: isAdmin.value, reason: unavailable, action: () => { window.location.href = window.baseUrl + 'admin'; } }
+            ];
+        });
+        const filteredCommandActions = computed(() => {
+            const q = commandPaletteQuery.value.trim().toLowerCase();
+            const commands = q
+                ? commandActions.value.filter((command) => command.label.toLowerCase().includes(q))
+                : commandActions.value;
+            return commands;
+        });
         const paginationPages = computed(() => {
             const total = totalPages.value;
             const current = store.pagination.page;
@@ -240,6 +278,39 @@ const app = createApp({
         // --- Core Actions ---
         const reload = () => store.reload();
         const goUp = () => { if (store.cwd) { const p = store.cwd.split('/'); p.pop(); store.loadPath(p.join('/')); } };
+        const focusSearch = () => {
+            const input = document.getElementById('navbarSearchInput');
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        };
+        const openCommandPalette = () => {
+            commandPaletteOpen.value = true;
+            commandPaletteQuery.value = '';
+            commandPaletteSelectedIndex.value = 0;
+            nextTick(() => commandPaletteInput.value && commandPaletteInput.value.focus());
+        };
+        const closeCommandPalette = () => {
+            commandPaletteOpen.value = false;
+        };
+        const moveCommandSelection = (delta) => {
+            const total = filteredCommandActions.value.length;
+            if (!total) return;
+            commandPaletteSelectedIndex.value = (commandPaletteSelectedIndex.value + delta + total) % total;
+        };
+        const runCommand = (command) => {
+            if (!command || !command.enabled) return;
+            closeCommandPalette();
+            command.action();
+        };
+        const runSelectedCommand = () => {
+            const commands = filteredCommandActions.value;
+            if (!commands.length) return;
+            const preferred = commands[commandPaletteSelectedIndex.value];
+            const command = preferred && preferred.enabled ? preferred : commands.find((item) => item.enabled);
+            runCommand(command);
+        };
         const goToPath = (path) => {
             store.loadPath(path);
         };
@@ -567,6 +638,10 @@ const app = createApp({
         const openProfile = (tab = null) => { if (userProfile.value) userProfile.value.open(tab); };
         const openTransfer = () => { if (transferModal.value) transferModal.value.open(); };
         const openTransferWithFile = (file) => { if (transferModal.value) transferModal.value.openWithFiles([file]); };
+
+        watch(commandPaletteQuery, () => {
+            commandPaletteSelectedIndex.value = 0;
+        });
         const showWebDav = () => webdavModal.show();
         const copyWebDavUrl = () => {
             const i = document.getElementById('webdav_url_input'); i.select(); document.execCommand('copy');
@@ -821,6 +896,16 @@ const app = createApp({
             
             window.addEventListener('keydown', (e) => {
                 const t = e.target, isI = t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable;
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                    e.preventDefault();
+                    openCommandPalette();
+                    return;
+                }
+                if (commandPaletteOpen.value && e.key === 'Escape') {
+                    e.preventDefault();
+                    closeCommandPalette();
+                    return;
+                }
                 if (editorFile.value && !isI) { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveFile(); } return; }
                 if (isI) return;
                 if (e.key === 'Delete') { e.preventDefault(); deleteSelected(); }
@@ -838,7 +923,9 @@ const app = createApp({
 
         return {
             store, i18n, t: (k, p) => i18n.t(k, p),
+            commandPaletteOpen, commandPaletteQuery, commandPaletteInput, commandPaletteSelectedIndex, filteredCommandActions,
             goUp, goToPath, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, goToPage, setPageSize, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles, breadcrumbs,
+            openCommandPalette, closeCommandPalette, moveCommandSelection, runCommand, runSelectedCommand,
             emptyStateIcon, emptyStateTitle, emptyStateDescription,
             isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer, openTransferWithFile, openShare, openHistory,
             contextMenu, showContextMenu, hideContextMenu, cmAction,

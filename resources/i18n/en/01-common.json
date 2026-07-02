@@ -2,6 +2,7 @@
     "app_name": "eXtplorer 3",
     "cut": "Cut",
     "paste": "Paste",
+    "share": "Share",
     "created": "Created!",
     "renamed": "Renamed!",
     "error": "Error",
@@ -57,5 +58,19 @@
     "quick_admin_open_sharing": "Open sharing settings",
     "quick_admin_open_mounts": "Open mount settings",
     "quick_admin_view_all_logs": "View all audit logs",
-    "quick_admin_recent_activity": "Recent activity"
+    "quick_admin_recent_activity": "Recent activity",
+    "command_palette": "Command palette",
+    "command_palette_placeholder": "Search commands",
+    "command_no_results": "No commands found.",
+    "command_unavailable": "Unavailable in the current context.",
+    "command_requires_selection": "Select one or more items first.",
+    "command_requires_one_selection": "Select exactly one item first.",
+    "command_open_search": "Focus file search",
+    "command_toggle_trash": "Toggle recycle bin",
+    "command_grid_view": "Switch to grid view",
+    "command_list_view": "Switch to list view",
+    "command_toggle_theme": "Cycle theme",
+    "command_open_profile": "Open profile settings",
+    "command_open_quick_admin": "Open Quick Admin",
+    "command_open_admin_console": "Open Admin Console"
 }

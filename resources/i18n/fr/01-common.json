@@ -2,6 +2,7 @@
     "app_name": "eXtplorer 3",
     "cut": "Couper",
     "paste": "Coller",
+    "share": "Partager",
     "created": "Créé !",
     "renamed": "Renommé !",
     "error": "Erreur",
@@ -57,5 +58,19 @@
     "quick_admin_open_sharing": "Ouvrir les paramètres de partage",
     "quick_admin_open_mounts": "Ouvrir les paramètres de montage",
     "quick_admin_view_all_logs": "Voir tous les journaux d'audit",
-    "quick_admin_recent_activity": "Activité récente"
+    "quick_admin_recent_activity": "Activité récente",
+    "command_palette": "Palette de commandes",
+    "command_palette_placeholder": "Rechercher des commandes",
+    "command_no_results": "Aucune commande trouvée.",
+    "command_unavailable": "Indisponible dans le contexte actuel.",
+    "command_requires_selection": "Sélectionnez d'abord un ou plusieurs éléments.",
+    "command_requires_one_selection": "Sélectionnez d'abord exactement un élément.",
+    "command_open_search": "Focus sur la recherche de fichiers",
+    "command_toggle_trash": "Basculer la corbeille",
+    "command_grid_view": "Passer en vue grille",
+    "command_list_view": "Passer en vue liste",
+    "command_toggle_theme": "Changer de thème",
+    "command_open_profile": "Ouvrir les paramètres du profil",
+    "command_open_quick_admin": "Ouvrir l'admin rapide",
+    "command_open_admin_console": "Ouvrir la console d'administration"
 }
