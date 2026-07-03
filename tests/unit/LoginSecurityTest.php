@@ -30,5 +30,20 @@ class LoginSecurityTest extends CIUnitTestCase
         $this->callPrivate($controller, 'assertRemoteHostAllowed', ['8.8.8.8', []]);
         $this->assertTrue(true);
     }
-}
 
+    public function testSafeReturnPathAllowsInternalRelativePath(): void
+    {
+        $controller = new Login();
+
+        $this->assertSame('/api/ls?path=%2Fdocs', $this->callPrivate($controller, 'safeReturnPath', ['/api/ls?path=%2Fdocs']));
+    }
+
+    public function testSafeReturnPathBlocksExternalAndHeaderInjectionTargets(): void
+    {
+        $controller = new Login();
+
+        $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ['https://evil.example']));
+        $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ['//evil.example']));
+        $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ["/app\nLocation: https://evil.example"]));
+    }
+}

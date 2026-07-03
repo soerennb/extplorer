@@ -83,9 +83,13 @@
                 <?php if (session()->getFlashdata('error')): ?>
                     <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
                 <?php endif; ?>
+                <?php if (!empty($expired)): ?>
+                    <div class="alert alert-warning">Your session has expired. Sign in again to continue where you left off.</div>
+                <?php endif; ?>
 
                 <form action="<?= site_url('login/auth') ?>" method="post">
                     <?= csrf_field() ?>
+                    <input type="hidden" name="return" value="<?= esc($return_to ?? '/') ?>">
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label" for="login_username">Username</label>
@@ -150,6 +154,12 @@
                     </div>
                     <?php endif; ?>
 
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="remember_me" value="1" id="remember_me" <?= old('remember_me') === '1' ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="remember_me">Remember me on this device</label>
+                        <div class="form-text" id="remember_me_hint">Keeps local sign-in active for 30 days. Do not use this on shared devices.</div>
+                    </div>
+
                     <button type="submit" class="btn btn-primary btn-lg w-100">Login</button>
                     <?php if (!empty($show_default_creds)): ?>
                     <div class="text-center mt-3 text-muted small">
@@ -168,6 +178,8 @@
         const form = document.querySelector('form');
         const testButton = document.getElementById('test_remote_connection');
         const testStatus = document.getElementById('remote_test_status');
+        const rememberMe = document.getElementById('remember_me');
+        const rememberMeHint = document.getElementById('remember_me_hint');
 
         function updateRemoteFields(val) {
             if (val === 'ftp' || val === 'sftp') {
@@ -177,6 +189,14 @@
             }
             if (val === 'ftp') port.value = 21;
             if (val === 'sftp') port.value = 22;
+            if (rememberMe && rememberMeHint) {
+                const localMode = val === 'local';
+                rememberMe.disabled = !localMode;
+                if (!localMode) rememberMe.checked = false;
+                rememberMeHint.textContent = localMode
+                    ? 'Keeps local sign-in active for 30 days. Do not use this on shared devices.'
+                    : 'Remember me is available for local accounts only.';
+            }
         }
 
         function setRemoteStatus(type, message) {

@@ -1,4 +1,5 @@
 const Api = {
+    sessionExpiredDialogOpen: false,
     genericServerError() {
         if (window.i18n && typeof window.i18n.t === 'function') {
             return window.i18n.t('unexpected_error_generic', 'An unexpected server error occurred. Please try again.');
@@ -45,6 +46,60 @@ const Api = {
 
         return fallback || this.genericServerError();
     },
+    isSessionExpiredPayload(payload, status = 0) {
+        return status === 401 && payload && typeof payload === 'object'
+            && (payload.code === 'session_expired' || payload.code === 'auth_required');
+    },
+    sessionExpiredMessage(payload) {
+        if (payload && payload.code === 'auth_required') {
+            return (window.i18n && i18n.t('auth_required_message'))
+                || 'Please sign in to continue.';
+        }
+        return (window.i18n && i18n.t('session_expired_message'))
+            || 'Your session has expired. Sign in again to continue.';
+    },
+    handleSessionExpired(payload = {}) {
+        if (this.sessionExpiredDialogOpen) {
+            return;
+        }
+        this.sessionExpiredDialogOpen = true;
+
+        const title = (window.i18n && i18n.t('session_expired_title')) || 'Session expired';
+        const message = this.sessionExpiredMessage(payload);
+        const confirmText = (window.i18n && i18n.t('sign_in_again')) || 'Sign in again';
+        const currentReturn = window.location.pathname + window.location.search;
+        const expiredParam = payload.code === 'session_expired' ? 'expired=1&' : '';
+        const loginUrl = window.baseUrl
+            ? window.baseUrl + 'login?' + expiredParam + 'return=' + encodeURIComponent(currentReturn || '/')
+            : (payload.login_url || 'login');
+
+        if (window.Swal && typeof Swal.fire === 'function') {
+            Swal.fire({
+                icon: 'warning',
+                title,
+                text: message,
+                confirmButtonText: confirmText,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showCancelButton: false
+            }).then(() => {
+                window.location.href = loginUrl;
+            });
+            return;
+        }
+
+        window.location.href = loginUrl;
+    },
+    blockForSessionExpired(payload = {}) {
+        this.handleSessionExpired(payload);
+        return new Promise(() => {});
+    },
+    async handleNonOk(res, payload, fallback = '') {
+        if (this.isSessionExpiredPayload(payload, res.status)) {
+            return this.blockForSessionExpired(payload);
+        }
+        throw new Error(this.errorFromPayload(payload, fallback || res.statusText || this.genericServerError()));
+    },
     refreshCsrfToken(res) {
         if (!res || !res.headers || typeof res.headers.get !== 'function') {
             return;
@@ -57,6 +112,9 @@ const Api = {
     },
     async readErrorMessage(res, fallback = '') {
         const payload = await this.parseResponseBody(res);
+        if (this.isSessionExpiredPayload(payload, res.status)) {
+            return this.blockForSessionExpired(payload);
+        }
         const statusFallback = fallback || (res.status ? `HTTP ${res.status}` : '');
         return this.errorFromPayload(payload, statusFallback);
     },
@@ -74,7 +132,7 @@ const Api = {
         this.refreshCsrfToken(res);
         const payload = await this.parseResponseBody(res);
         if (!res.ok) {
-            throw new Error(this.errorFromPayload(payload, res.statusText || this.genericServerError()));
+            return this.handleNonOk(res, payload);
         }
 
         return payload ?? {};
@@ -113,7 +171,7 @@ const Api = {
         this.refreshCsrfToken(res);
         const payload = await this.parseResponseBody(res);
         if (!res.ok) {
-            throw new Error(this.errorFromPayload(payload, res.statusText || this.genericServerError()));
+            return this.handleNonOk(res, payload);
         }
 
         return payload ?? {};

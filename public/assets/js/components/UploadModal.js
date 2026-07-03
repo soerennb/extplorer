@@ -252,6 +252,10 @@ const UploadModal = {
                     payload = { message: xhr.responseText };
                 }
                 if (xhr.status < 200 || xhr.status >= 300) {
+                    if (Api.isSessionExpiredPayload && Api.isSessionExpiredPayload(payload, xhr.status)) {
+                        Api.handleSessionExpired(payload);
+                        return;
+                    }
                     reject(new Error(Api.errorFromPayload(payload, 'Upload failed')));
                     return;
                 }
@@ -295,6 +299,9 @@ const UploadModal = {
                 updateCsrfFromResponse(res);
                 const payload = await Api.parseResponseBody(res);
                 if (!res.ok) {
+                    if (Api.isSessionExpiredPayload && Api.isSessionExpiredPayload(payload, res.status)) {
+                        return Api.blockForSessionExpired(payload);
+                    }
                     throw new Error(Api.errorFromPayload(payload, 'Upload chunk failed'));
                 }
 

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\UserModel;
+use App\Services\RememberMeService;
 use App\Services\SettingsService;
 
 class Login extends BaseController
@@ -33,7 +34,11 @@ class Login extends BaseController
         $admin = $userModel->getUser('admin');
         $showDefaultCreds = $admin && password_verify('admin', $admin['password_hash']);
 
-        return view('login', ['show_default_creds' => $showDefaultCreds]);
+        return view('login', [
+            'show_default_creds' => $showDefaultCreds,
+            'expired' => $this->request->getGet('expired') === '1',
+            'return_to' => $this->safeReturnPath((string)($this->request->getGet('return') ?? '/')),
+        ]);
     }
 
     public function auth()
@@ -46,6 +51,8 @@ class Login extends BaseController
         $mode = $this->request->getPost('mode') ?? 'local';
         $username = $this->request->getPost('username');
         $password = $this->request->getPost('password');
+        $rememberRequested = $this->request->getPost('remember_me') === '1';
+        $returnTo = $this->safeReturnPath((string)($this->request->getPost('return') ?? '/'));
 
         if ($mode === 'ftp' || $mode === 'sftp') {
             $host = strtolower(trim((string)$this->request->getPost('remote_host')));
@@ -78,7 +85,10 @@ class Login extends BaseController
                         'pass' => $this->protectConnectionSecret($password)
                     ]
                 ]);
-                return redirect()->to('/');
+                $remember = new RememberMeService();
+                $response = redirect()->to($returnTo);
+                $remember->forget($this->request, $response);
+                return $response;
             } catch (\Exception $e) {
                 return redirect()->back()->withInput()->with('error', $this->remoteConnectionErrorMessage($e));
             }
@@ -129,7 +139,16 @@ class Login extends BaseController
                 'connection' => ['mode' => 'local'],
                 'force_password_change' => ($user['username'] === 'admin' && password_verify('admin', $user['password_hash']))
             ]);
-            return redirect()->to('/');
+
+            $remember = new RememberMeService();
+            $response = redirect()->to($returnTo);
+            if ($rememberRequested) {
+                $remember->remember($user['username'], $response);
+            } else {
+                $remember->forget($this->request, $response);
+            }
+
+            return $response;
         } else {
             return redirect()->back()->with('error', 'Invalid credentials');
         }
@@ -172,8 +191,25 @@ class Login extends BaseController
 
     public function logout()
     {
+        $remember = new RememberMeService();
+        $response = redirect()->to('/login');
+        $remember->forget($this->request, $response);
         session()->destroy();
-        return redirect()->to('/login');
+        return $response;
+    }
+
+    private function safeReturnPath(string $returnTo): string
+    {
+        $returnTo = trim($returnTo);
+        if ($returnTo === '' || $returnTo[0] !== '/') {
+            return '/';
+        }
+
+        if (str_starts_with($returnTo, '//') || preg_match('/[\r\n]/', $returnTo)) {
+            return '/';
+        }
+
+        return $returnTo;
     }
 
     private function validateRemoteConnectionInput(string $mode, string $host, int $port, string $username, string $password): void
