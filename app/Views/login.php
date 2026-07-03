@@ -1,9 +1,13 @@
+<?php
+$login_t = $login_t ?? [];
+$lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ?? $fallback ?: $key;
+?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= esc($login_locale ?? 'en') ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - eXtplorer 3</title>
+    <title><?= esc($lt('login_title', 'Login - eXtplorer 3')) ?></title>
     <link rel="icon" type="image/svg+xml" href="<?= base_url('favicon.svg') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/remixicon.css') ?>">
@@ -59,23 +63,23 @@
             <div class="col-lg-5 login-side p-4 p-lg-5 d-flex flex-column justify-content-between">
                 <div>
                     <img src="<?= base_url('logo-dark.svg') ?>" alt="eXtplorer 3" class="login-logo mb-4">
-                    <h2 class="fw-semibold mb-2">Welcome back</h2>
-                    <p class="mb-4">Secure, fast file access across local and remote mounts.</p>
+                    <h2 class="fw-semibold mb-2"><?= esc($lt('login_welcome_back', 'Welcome back')) ?></h2>
+                    <p class="mb-4"><?= esc($lt('login_intro', 'Secure, fast file access across local and remote mounts.')) ?></p>
                     <div class="d-flex flex-wrap gap-2">
-                        <span class="badge rounded-pill px-3 py-2">Versioned edits</span>
-                        <span class="badge rounded-pill px-3 py-2">Smart sharing</span>
-                        <span class="badge rounded-pill px-3 py-2">Mounts & WebDAV</span>
+                        <span class="badge rounded-pill px-3 py-2"><?= esc($lt('login_tag_versioned_edits', 'Versioned edits')) ?></span>
+                        <span class="badge rounded-pill px-3 py-2"><?= esc($lt('login_tag_smart_sharing', 'Smart sharing')) ?></span>
+                        <span class="badge rounded-pill px-3 py-2"><?= esc($lt('login_tag_mounts_webdav', 'Mounts & WebDAV')) ?></span>
                     </div>
                 </div>
                 <div class="small text-white-50">
-                    <i class="ri-shield-check-line me-1"></i> Enforced CSP, 2FA, and access controls
+                    <i class="ri-shield-check-line me-1"></i> <?= esc($lt('login_security_note', 'Enforced CSP, 2FA, and access controls')) ?>
                 </div>
             </div>
             <div class="col-lg-7 login-panel p-4 p-lg-5">
                 <div class="d-flex justify-content-between align-items-start mb-4">
                     <div>
-                        <h3 class="fw-semibold mb-1">Sign in</h3>
-                        <div class="login-subtitle">Choose a connection mode and continue.</div>
+                        <h3 class="fw-semibold mb-1"><?= esc($lt('login_sign_in', 'Sign in')) ?></h3>
+                        <div class="login-subtitle"><?= esc($lt('login_subtitle', 'Choose a connection mode and continue.')) ?></div>
                     </div>
                     <span class="badge text-bg-light border">eXtplorer 3</span>
                 </div>
@@ -84,7 +88,7 @@
                     <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
                 <?php endif; ?>
                 <?php if (!empty($expired)): ?>
-                    <div class="alert alert-warning">Your session has expired. Sign in again to continue where you left off.</div>
+                    <div class="alert alert-warning"><?= esc($lt('login_session_expired_hint', 'Your session has expired. Sign in again to continue where you left off.')) ?></div>
                 <?php endif; ?>
 
                 <form action="<?= site_url('login/auth') ?>" method="post">
@@ -92,14 +96,14 @@
                     <input type="hidden" name="return" value="<?= esc($return_to ?? '/') ?>">
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label" for="login_username">Username</label>
+                            <label class="form-label" for="login_username"><?= esc($lt('username', 'Username')) ?></label>
                             <div class="input-group">
                                 <span class="input-group-text" aria-hidden="true"><i class="ri-user-line"></i></span>
                                 <input type="text" name="username" id="login_username" class="form-control" required autofocus autocomplete="username">
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label" for="login_password">Password</label>
+                            <label class="form-label" for="login_password"><?= esc($lt('password', 'Password')) ?></label>
                             <div class="input-group">
                                 <span class="input-group-text" aria-hidden="true"><i class="ri-lock-line"></i></span>
                                 <input type="password" name="password" id="login_password" class="form-control" required value="<?= old('password') ?>" autocomplete="current-password">
@@ -108,39 +112,39 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Connection Mode</label>
-                        <div class="btn-group btn-group-sm w-100" role="group" aria-label="Connection mode">
+                        <label class="form-label fw-semibold"><?= esc($lt('login_connection_mode', 'Connection Mode')) ?></label>
+                        <div class="btn-group btn-group-sm w-100" role="group" aria-label="<?= esc($lt('login_connection_mode', 'Connection Mode')) ?>">
                             <input type="radio" class="btn-check" name="mode" id="mode_local" value="local" checked>
-                            <label class="btn btn-outline-primary" for="mode_local">Local</label>
+                            <label class="btn btn-outline-primary" for="mode_local"><?= esc($lt('login_mode_local', 'Local')) ?></label>
                             <input type="radio" class="btn-check" name="mode" id="mode_ftp" value="ftp">
                             <label class="btn btn-outline-primary" for="mode_ftp">FTP</label>
                             <input type="radio" class="btn-check" name="mode" id="mode_sftp" value="sftp">
                             <label class="btn btn-outline-primary" for="mode_sftp">SFTP</label>
                         </div>
-                        <div class="form-hint small mt-1">FTP/SFTP uses the username and password above. Private network hosts may require administrator allowlisting.</div>
+                        <div class="form-hint small mt-1"><?= esc($lt('login_mode_ftp_hint', 'FTP/SFTP uses the username and password above. Private network hosts may require administrator allowlisting.')) ?></div>
                     </div>
                     
                     <div id="remote_fields" class="collapse">
                         <div class="remote-card rounded-3 p-3 mb-4">
                             <div class="row g-3">
                                 <div class="col-md-8">
-                                    <label class="form-label" for="remote_host">Remote host</label>
+                                    <label class="form-label" for="remote_host"><?= esc($lt('login_remote_host', 'Remote host')) ?></label>
                                     <div class="input-group">
                                         <span class="input-group-text" aria-hidden="true"><i class="ri-global-line"></i></span>
-                                        <input type="text" name="remote_host" id="remote_host" class="form-control" placeholder="files.example.com" autocomplete="off" inputmode="url" spellcheck="false" autocapitalize="none">
+                                        <input type="text" name="remote_host" id="remote_host" class="form-control" placeholder="<?= esc($lt('login_remote_host_placeholder', 'files.example.com')) ?>" autocomplete="off" inputmode="url" spellcheck="false" autocapitalize="none">
                                     </div>
-                                    <div class="form-text">Use a hostname or IP address without protocol.</div>
+                                    <div class="form-text"><?= esc($lt('login_remote_host_hint', 'Use a hostname or IP address without protocol.')) ?></div>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label" for="remote_port">Port</label>
+                                    <label class="form-label" for="remote_port"><?= esc($lt('login_remote_port', 'Port')) ?></label>
                                     <input type="number" name="remote_port" id="remote_port" class="form-control" value="21" min="1" max="65535" inputmode="numeric" autocomplete="off">
                                 </div>
                             </div>
                             <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
                                 <button type="button" class="btn btn-outline-primary btn-sm" id="test_remote_connection">
-                                    <i class="ri-plug-line me-1" aria-hidden="true"></i>Test connection
+                                    <i class="ri-plug-line me-1" aria-hidden="true"></i><?= esc($lt('test_connection', 'Test connection')) ?>
                                 </button>
-                                <span class="small text-muted">The test validates host policy, port reachability, and credentials before login.</span>
+                                <span class="small text-muted"><?= esc($lt('login_remote_test_hint', 'The test validates host policy, port reachability, and credentials before login.')) ?></span>
                             </div>
                             <div id="remote_test_status" class="alert d-none py-2 small remote-test-status" role="status"></div>
                         </div>
@@ -148,22 +152,22 @@
 
                     <?php if (session()->getFlashdata('2fa_required')): ?>
                     <div class="mb-4">
-                        <label class="form-label text-primary fw-bold" for="login_2fa_code">Two-Factor Code</label>
-                        <input type="text" name="2fa_code" id="login_2fa_code" class="form-control" placeholder="000 000" autofocus autocomplete="one-time-code" inputmode="numeric">
-                        <div class="form-text">Enter the code from your authenticator app.</div>
+                        <label class="form-label text-primary fw-bold" for="login_2fa_code"><?= esc($lt('login_two_factor_code', 'Two-Factor Code')) ?></label>
+                        <input type="text" name="2fa_code" id="login_2fa_code" class="form-control" placeholder="<?= esc($lt('authenticator_code_hint', '000 000')) ?>" autofocus autocomplete="one-time-code" inputmode="numeric">
+                        <div class="form-text"><?= esc($lt('login_two_factor_hint', 'Enter the code from your authenticator app.')) ?></div>
                     </div>
                     <?php endif; ?>
 
                     <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" name="remember_me" value="1" id="remember_me" <?= old('remember_me') === '1' ? 'checked' : '' ?>>
-                        <label class="form-check-label" for="remember_me">Remember me on this device</label>
-                        <div class="form-text" id="remember_me_hint">Keeps local sign-in active for 30 days. Do not use this on shared devices.</div>
+                        <label class="form-check-label" for="remember_me"><?= esc($lt('remember_me', 'Remember me on this device')) ?></label>
+                        <div class="form-text" id="remember_me_hint"><?= esc($lt('remember_me_hint', 'Keeps local sign-in active for 30 days. Do not use this on shared devices.')) ?></div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100">Login</button>
+                    <button type="submit" class="btn btn-primary btn-lg w-100"><?= esc($lt('login_submit', 'Login')) ?></button>
                     <?php if (!empty($show_default_creds)): ?>
                     <div class="text-center mt-3 text-muted small">
-                        Default Local: admin / admin
+                        <?= esc($lt('login_default_local', 'Default Local: admin / admin')) ?>
                     </div>
                     <?php endif; ?>
                 </form>
@@ -172,6 +176,7 @@
     </div>
 
     <script <?= csp_script_nonce() ?>>
+        const loginMessages = <?= json_encode($login_t ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
         const remoteFields = document.getElementById('remote_fields');
         const port = document.getElementById('remote_port');
         const modes = document.querySelectorAll('input[name="mode"]');
@@ -194,8 +199,8 @@
                 rememberMe.disabled = !localMode;
                 if (!localMode) rememberMe.checked = false;
                 rememberMeHint.textContent = localMode
-                    ? 'Keeps local sign-in active for 30 days. Do not use this on shared devices.'
-                    : 'Remember me is available for local accounts only.';
+                    ? loginMessages.remember_me_hint
+                    : loginMessages.remember_me_local_only;
             }
         }
 
@@ -217,7 +222,7 @@
         testButton.addEventListener('click', async () => {
             const data = new FormData(form);
             testButton.disabled = true;
-            setRemoteStatus('info', 'Testing remote connection...');
+            setRemoteStatus('info', loginMessages.login_remote_testing);
 
             try {
                 const res = await fetch('<?= site_url('login/test-remote') ?>', {
@@ -227,9 +232,9 @@
                 });
                 const payload = await res.json();
                 updateCsrf(payload.csrf);
-                setRemoteStatus(res.ok ? 'success' : 'danger', payload.message || 'Connection test failed.');
+                setRemoteStatus(res.ok ? 'success' : 'danger', payload.message || loginMessages.login_connection_test_failed);
             } catch (e) {
-                setRemoteStatus('danger', 'Could not reach the test endpoint. Check your network and try again.');
+                setRemoteStatus('danger', loginMessages.login_remote_test_failed);
             } finally {
                 testButton.disabled = false;
             }

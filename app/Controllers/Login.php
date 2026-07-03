@@ -33,19 +33,24 @@ class Login extends BaseController
         $userModel = new UserModel();
         $admin = $userModel->getUser('admin');
         $showDefaultCreds = $admin && password_verify('admin', $admin['password_hash']);
+        $locale = $this->preferredLoginLocale();
+        $translations = $this->loginTranslations($locale);
 
         return view('login', [
             'show_default_creds' => $showDefaultCreds,
             'expired' => $this->request->getGet('expired') === '1',
             'return_to' => $this->safeReturnPath((string)($this->request->getGet('return') ?? '/')),
+            'login_locale' => $locale,
+            'login_t' => $translations,
         ]);
     }
 
     public function auth()
     {
+        $loginMessages = $this->loginTranslations($this->preferredLoginLocale());
         $throttler = \Config\Services::throttler();
         if ($throttler->check(md5($this->request->getIPAddress()), 5, 60) === false) {
-            return redirect()->back()->with('error', 'Too many login attempts. Please try again in a minute.');
+            return redirect()->back()->with('error', $loginMessages['login_too_many_attempts']);
         }
 
         $mode = $this->request->getPost('mode') ?? 'local';
@@ -64,7 +69,7 @@ class Login extends BaseController
                 $this->validateRemoteConnectionInput($mode, $host, $port, $username, $password);
                 $this->assertRemoteHostAllowed($host);
             } catch (\Throwable $e) {
-                return redirect()->back()->withInput()->with('error', $this->remoteConnectionErrorMessage($e));
+                return redirect()->back()->withInput()->with('error', $this->remoteConnectionErrorMessage($e, $loginMessages));
             }
             
             try {
@@ -90,7 +95,7 @@ class Login extends BaseController
                 $remember->forget($this->request, $response);
                 return $response;
             } catch (\Exception $e) {
-                return redirect()->back()->withInput()->with('error', $this->remoteConnectionErrorMessage($e));
+                return redirect()->back()->withInput()->with('error', $this->remoteConnectionErrorMessage($e, $loginMessages));
             }
         }
 
@@ -121,7 +126,7 @@ class Login extends BaseController
                      }
                      
                      if (!$validRecovery) {
-                         return redirect()->back()->withInput()->with('2fa_required', true)->with('error', 'Invalid 2FA Code');
+                         return redirect()->back()->withInput()->with('2fa_required', true)->with('error', $loginMessages['login_invalid_2fa']);
                      }
                 }
             }
@@ -150,12 +155,13 @@ class Login extends BaseController
 
             return $response;
         } else {
-            return redirect()->back()->with('error', 'Invalid credentials');
+            return redirect()->back()->with('error', $loginMessages['login_invalid_credentials']);
         }
     }
 
     public function testRemote()
     {
+        $loginMessages = $this->loginTranslations($this->preferredLoginLocale());
         $mode = $this->request->getPost('mode') ?? '';
         $host = strtolower(trim((string)$this->request->getPost('remote_host')));
         $port = (int)$this->request->getPost('remote_port');
@@ -169,7 +175,7 @@ class Login extends BaseController
 
             return $this->response->setJSON([
                 'ok' => true,
-                'message' => 'Connection successful. You can now log in.',
+                'message' => $loginMessages['login_remote_success'],
                 'csrf' => [
                     'name' => csrf_token(),
                     'hash' => csrf_hash(),
@@ -180,7 +186,7 @@ class Login extends BaseController
                 ->setStatusCode(422)
                 ->setJSON([
                     'ok' => false,
-                    'message' => $this->remoteConnectionErrorMessage($e),
+                    'message' => $this->remoteConnectionErrorMessage($e, $loginMessages),
                     'csrf' => [
                         'name' => csrf_token(),
                         'hash' => csrf_hash(),
@@ -212,6 +218,137 @@ class Login extends BaseController
         return $returnTo;
     }
 
+    private function preferredLoginLocale(): string
+    {
+        $i18n = config('I18n');
+        $fallback = $i18n->fallbackLocale ?? 'en';
+        $supported = $i18n->supportedLocales();
+        $acceptLanguage = (string)$this->request->getHeaderLine('Accept-Language');
+
+        foreach ($this->parseAcceptLanguage($acceptLanguage) as $candidate) {
+            if (in_array($candidate, $supported, true)) {
+                return $candidate;
+            }
+
+            $base = strtolower(strtok($candidate, '-'));
+            if ($base !== '' && in_array($base, $supported, true)) {
+                return $base;
+            }
+        }
+
+        return in_array($fallback, $supported, true) ? $fallback : 'en';
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function parseAcceptLanguage(string $header): array
+    {
+        $locales = [];
+        foreach (explode(',', $header) as $part) {
+            $segments = array_map('trim', explode(';', $part));
+            $locale = strtolower(str_replace('_', '-', $segments[0] ?? ''));
+            if ($locale === '' || !preg_match('/\A[a-z]{2,3}(?:-[a-z0-9]{2,8})?\z/', $locale)) {
+                continue;
+            }
+
+            $quality = 1.0;
+            foreach (array_slice($segments, 1) as $segment) {
+                if (str_starts_with($segment, 'q=')) {
+                    $quality = max(0.0, min(1.0, (float)substr($segment, 2)));
+                }
+            }
+
+            $locales[] = ['locale' => $locale, 'quality' => $quality];
+        }
+
+        usort($locales, static fn(array $a, array $b): int => $b['quality'] <=> $a['quality']);
+        return array_values(array_map(static fn(array $entry): string => $entry['locale'], $locales));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function loginTranslations(string $locale): array
+    {
+        $fallbackMessages = $this->loadLocaleMessages('en');
+        $messages = $locale === 'en'
+            ? $fallbackMessages
+            : array_merge($fallbackMessages, $this->loadLocaleMessages($locale));
+
+        $keys = [
+            'app_name',
+            'authenticator_code',
+            'authenticator_code_hint',
+            'login_title',
+            'login_too_many_attempts',
+            'login_invalid_2fa',
+            'login_invalid_credentials',
+            'login_welcome_back',
+            'login_intro',
+            'login_tag_versioned_edits',
+            'login_tag_smart_sharing',
+            'login_tag_mounts_webdav',
+            'login_security_note',
+            'login_sign_in',
+            'login_subtitle',
+            'username',
+            'password',
+            'login_connection_mode',
+            'login_mode_local',
+            'login_mode_ftp_hint',
+            'login_remote_host',
+            'login_remote_host_hint',
+            'login_remote_host_placeholder',
+            'login_remote_port',
+            'test_connection',
+            'login_remote_test_hint',
+            'login_remote_testing',
+            'login_remote_test_failed',
+            'login_connection_test_failed',
+            'login_remote_success',
+            'login_remote_select_protocol',
+            'login_remote_required',
+            'login_remote_port_range',
+            'login_remote_host_not_allowed',
+            'login_remote_private_host',
+            'login_remote_rejected',
+            'login_remote_connect_failed',
+            'login_remote_test_failed_generic',
+            'login_two_factor_code',
+            'login_two_factor_hint',
+            'remember_me',
+            'remember_me_hint',
+            'remember_me_local_only',
+            'login_submit',
+            'login_default_local',
+            'login_session_expired_hint',
+        ];
+
+        $translations = [];
+        foreach ($keys as $key) {
+            $translations[$key] = (string)($messages[$key] ?? $key);
+        }
+
+        return $translations;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function loadLocaleMessages(string $locale): array
+    {
+        $messages = [];
+        foreach (glob(ROOTPATH . 'resources/i18n/' . $locale . '/*.json') ?: [] as $path) {
+            $decoded = json_decode((string)file_get_contents($path), true);
+            if (is_array($decoded)) {
+                $messages = array_merge($messages, $decoded);
+            }
+        }
+
+        return $messages;
+    }
+
     private function validateRemoteConnectionInput(string $mode, string $host, int $port, string $username, string $password): void
     {
         if (!in_array($mode, ['ftp', 'sftp'], true)) {
@@ -237,27 +374,40 @@ class Login extends BaseController
         new \App\Services\VFS\Ssh2Adapter($host, $username, $password, $port);
     }
 
-    private function remoteConnectionErrorMessage(\Throwable $e): string
+    private function remoteConnectionErrorMessage(\Throwable $e, ?array $messages = null): string
     {
+        $messages ??= $this->loginTranslations($this->preferredLoginLocale());
         $message = $e->getMessage();
 
+        if (str_contains($message, 'Select FTP or SFTP')) {
+            return $messages['login_remote_select_protocol'];
+        }
+
+        if (str_contains($message, 'Remote host, username and password')) {
+            return $messages['login_remote_required'];
+        }
+
+        if (str_contains($message, 'Port must be')) {
+            return $messages['login_remote_port_range'];
+        }
+
         if (str_contains($message, 'not allowlisted')) {
-            return 'This host is not on the remote host allowlist. Ask an administrator to allow the hostname or IP address.';
+            return $messages['login_remote_host_not_allowed'];
         }
 
         if (str_contains($message, 'private or reserved')) {
-            return 'This host resolves to a private or reserved address. Administrators must explicitly allow private network targets.';
+            return $messages['login_remote_private_host'];
         }
 
         if (stripos($message, 'login failed') !== false || stripos($message, 'authentication') !== false) {
-            return 'The server was reached, but the username or password was rejected.';
+            return $messages['login_remote_rejected'];
         }
 
         if (stripos($message, 'connect') !== false || stripos($message, 'Could not') !== false) {
-            return 'Could not connect to the remote server. Check the host, port, protocol, and firewall rules.';
+            return $messages['login_remote_connect_failed'];
         }
 
-        return $message ?: 'Remote connection test failed.';
+        return $message ?: $messages['login_remote_test_failed_generic'];
     }
 
     private function assertRemoteHostAllowed(string $host, ?array $allowlist = null): void
