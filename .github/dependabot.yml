@@ -4,16 +4,40 @@ updates:
     directory: /
     schedule:
       interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: Europe/Berlin
     open-pull-requests-limit: 5
+    groups:
+      routine-updates:
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: Europe/Berlin
     open-pull-requests-limit: 5
+    groups:
+      routine-updates:
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: Europe/Berlin
     open-pull-requests-limit: 5
+    groups:
+      routine-updates:
+        update-types:
+          - minor
+          - patch

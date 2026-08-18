@@ -1,14 +1,29 @@
-name: Create Release
+name: Release
 
 on:
   push:
     tags:
       - "v*"
 
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  build:
+  quality:
+    name: Quality gate
+    uses: ./.github/workflows/quality.yml
+
+  archive:
     name: Create deployable archive
+    needs: quality
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -20,15 +35,21 @@ jobs:
           extensions: zip, json, gd, ftp
           tools: composer:2.10.2
 
+      - name: Verify release version
+        run: |
+          APP_VERSION="${GITHUB_REF_NAME#v}"
+          php scripts/check-release-version.php "$APP_VERSION"
+          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
+
       - name: Install dependencies
         run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
       - name: Ensure Ace assets
         run: bash ./scripts/ensure-ace-assets.sh
 
-      - name: Create Archive
+      - name: Create archive
         run: |
-          VERSION=$(grep 'public string $version' app/Config/App.php | sed -E "s/.*= '(.+)';/\1/")
+          VERSION="$APP_VERSION"
           mkdir -p release/writable/cache/thumbs
           mkdir -p release/writable/logs
           mkdir -p release/writable/session
@@ -43,9 +64,73 @@ jobs:
           cp LICENSE.md README.md .htaccess nginx.conf.example release/
           cd release && zip -r ../eXtplorer-$VERSION-release.zip .
 
-      - name: Release
+      - name: Verify archive and create checksum
+        run: |
+          unzip -t "eXtplorer-${GITHUB_REF_NAME#v}-release.zip"
+          sha256sum "eXtplorer-${GITHUB_REF_NAME#v}-release.zip" > "eXtplorer-${GITHUB_REF_NAME#v}-release.zip.sha256"
+
+      - name: Publish GitHub release
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
-          files: eXtplorer-*-release.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            eXtplorer-*-release.zip
+            eXtplorer-*-release.zip.sha256
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+  container:
+    name: Publish container image
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Verify release version
+        run: |
+          APP_VERSION="${GITHUB_REF_NAME#v}"
+          php scripts/check-release-version.php "$APP_VERSION"
+          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate image metadata
+        id: metadata
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/soerennb/extplorer3
+          flavor: latest=false
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: APP_VERSION=${{ env.APP_VERSION }}
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: mode=max
+          sbom: true
