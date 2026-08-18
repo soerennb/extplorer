@@ -164,7 +164,7 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
                         <div class="form-text" id="remember_me_hint"><?= esc($lt('remember_me_hint', 'Keeps local sign-in active for 30 days. Do not use this on shared devices.')) ?></div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100"><?= esc($lt('login_submit', 'Login')) ?></button>
+                    <button type="submit" class="btn btn-primary btn-lg w-100" data-testid="login-submit"><?= esc($lt('login_submit', 'Login')) ?></button>
                     <?php if (!empty($show_default_creds)): ?>
                     <div class="text-center mt-3 text-muted small">
                         <?= esc($lt('login_default_local', 'Default Local: admin / admin')) ?>

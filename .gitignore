@@ -145,6 +145,10 @@ _modules/*
 
 /results/
 /phpunit*.xml
+/node_modules/
+/playwright-report/
+/test-results/
+/e2e-compose.log
 
 #-------------------------
 # App Specific

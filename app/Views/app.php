@@ -563,7 +563,7 @@
     <style <?= csp_style_nonce() ?> id="context-menu-style"></style>
 </head>
 <body>
-    <div id="app" v-cloak>
+    <div id="app" v-cloak data-testid="app-shell">
         <!-- Navbar -->
         <nav class="navbar navbar-expand-lg navbar-dark app-navbar">
             <div class="container-fluid">
@@ -580,7 +580,7 @@
                     <span class="mobile-current-path-text">{{ store.cwd || '/' }}</span>
                 </div>
 
-                <div class="d-flex align-items-center text-white me-3 desktop-path">
+                <div class="d-flex align-items-center text-white me-3 desktop-path" data-testid="current-path">
                     <span class="me-2 text-white-50">{{ t('path') }}</span>
                     <nav aria-label="breadcrumb" class="path-breadcrumb">
                         <ol class="breadcrumb mb-0">
@@ -608,7 +608,7 @@
                 </div>
 
                 <div class="d-flex gap-2 navbar-nav-tools">
-                    <button class="btn btn-outline-light btn-sm d-none d-sm-inline-flex align-items-center" @click="goUp" :disabled="!store.cwd">
+                    <button class="btn btn-outline-light btn-sm d-none d-sm-inline-flex align-items-center" @click="goUp" :disabled="!store.cwd" data-testid="go-up">
                         <i class="ri-arrow-up-line"></i> {{ t('up') }}
                     </button>
                     <button class="btn btn-outline-light btn-sm d-none d-sm-inline-flex align-items-center" @click="reload" aria-label="Refresh" title="Refresh">
@@ -627,7 +627,7 @@
                     </div>
 
 	                    <div class="dropdown">
-                        <button class="btn btn-outline-light btn-sm ms-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-label="User menu">
+                        <button class="btn btn-outline-light btn-sm ms-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-label="User menu" data-testid="user-menu">
                             <i class="ri-user-line" aria-hidden="true"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow">
@@ -646,7 +646,7 @@
                                 <i class="ri-computer-line me-2"></i> {{ t('theme_auto') }}
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="logout"><i class="ri-logout-box-r-line me-2"></i>{{ t('logout') || 'Logout' }}</a></li>
+                            <li><a class="dropdown-item text-danger" href="logout" data-testid="logout"><i class="ri-logout-box-r-line me-2"></i>{{ t('logout') || 'Logout' }}</a></li>
                         </ul>
                     </div>
                 </div>
@@ -713,10 +713,10 @@
         <!-- Toolbar -->
         <div class="bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap app-toolbar">
             <template v-if="!store.isTrashMode">
-                <button class="btn btn-primary btn-sm d-none d-sm-inline-flex align-items-center" @click="createFolder" :title="t('new_folder')">
+                <button class="btn btn-primary btn-sm d-none d-sm-inline-flex align-items-center" @click="createFolder" :title="t('new_folder')" data-testid="create-folder">
                     <i class="ri-folder-add-line"></i> <span class="d-none d-md-inline">{{ t('new_folder') }}</span>
                 </button>
-                <button class="btn btn-primary btn-sm app-toolbar-primary d-inline-flex align-items-center" @click="uploadFile" :title="t('upload')">
+                <button class="btn btn-primary btn-sm app-toolbar-primary d-inline-flex align-items-center" @click="uploadFile" :title="t('upload')" data-testid="upload">
                     <i class="ri-upload-cloud-2-line"></i> <span>{{ t('upload') }}</span>
                 </button>
 
@@ -800,10 +800,10 @@
                 <div class="d-flex align-items-center text-danger fw-bold me-auto">
                     <i class="ri-delete-bin-line me-2"></i> {{ t('trash') || 'Recycle Bin' }}
                 </div>
-                <button class="btn btn-success btn-sm me-2" @click="restoreSelected" :disabled="store.selectedItems.length === 0">
+                <button class="btn btn-success btn-sm me-2" @click="restoreSelected" :disabled="store.selectedItems.length === 0" data-testid="trash-restore">
                     <i class="ri-restart-line"></i> {{ t('restore') || 'Restore' }}
                 </button>
-                <button class="btn btn-outline-danger btn-sm" @click="emptyTrash">
+                <button class="btn btn-outline-danger btn-sm" @click="emptyTrash" data-testid="empty-trash">
                     <i class="ri-delete-bin-2-line"></i> {{ t('empty_trash') || 'Empty Trash' }}
                 </button>
             </template>
@@ -828,7 +828,7 @@
                 </button>
 
                 <template v-if="store.isTrashMode">
-                    <button type="button" class="btn btn-success btn-sm" @click="restoreSelected">
+                    <button type="button" class="btn btn-success btn-sm" @click="restoreSelected" data-testid="selection-restore">
                         <i class="ri-restart-line" aria-hidden="true"></i>
                         <span>{{ t('restore') }}</span>
                     </button>
@@ -842,7 +842,8 @@
                     <button v-if="store.selectedItems.length === 1"
                             type="button"
                             class="btn btn-primary btn-sm"
-                            @click="downloadSelected">
+                            @click="downloadSelected"
+                            data-testid="selection-download">
                         <i class="ri-download-line" aria-hidden="true"></i>
                         <span>{{ t('download') }}</span>
                     </button>
@@ -854,7 +855,7 @@
                         <i class="ri-scissors-cut-line" aria-hidden="true"></i>
                         <span>{{ t('cut') }}</span>
                     </button>
-                    <button type="button" class="btn btn-outline-danger btn-sm" @click="deleteSelected">
+                    <button type="button" class="btn btn-outline-danger btn-sm" @click="deleteSelected" data-testid="selection-delete">
                         <i class="ri-delete-bin-line" aria-hidden="true"></i>
                         <span>{{ t('delete') }}</span>
                     </button>
@@ -863,13 +864,14 @@
                         <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
                                 type="button"
                                 data-bs-toggle="dropdown"
+                                data-testid="selection-more"
                                 :aria-label="t('selection_more_actions')">
                             <i class="ri-more-2-fill" aria-hidden="true"></i>
                             <span>{{ t('selection_more_actions') }}</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow">
                             <li v-if="store.selectedItems.length === 1">
-                                <a class="dropdown-item" href="#" @click.prevent="renameSelected">
+                                <a class="dropdown-item" href="#" @click.prevent="renameSelected" data-testid="selection-rename">
                                     <i class="ri-edit-line me-2" aria-hidden="true"></i>{{ t('rename') }}
                                 </a>
                             </li>
@@ -988,9 +990,10 @@
                      <file-tree path="" name="Root" :root="true" @click="isMobile ? closeOffcanvas() : null"></file-tree>
                      
                      <div class="mt-4 px-2">
-                         <div class="d-flex align-items-center py-1 px-2 rounded small file-item" 
+                         <div class="d-flex align-items-center py-1 px-2 rounded small file-item"
                               :class="{'bg-danger-subtle text-danger': store.isTrashMode}"
                               @click="toggleTrash"
+                              data-testid="trash-toggle"
                               data-bs-dismiss="offcanvas" data-bs-target="#sidebarOffcanvas">
                              <i class="ri-delete-bin-line me-2"></i>
                              <span>{{ t('trash') || 'Recycle Bin' }}</span>
@@ -1072,7 +1075,10 @@
                         </div>
 
                         <!-- File Loop -->
-                        <div v-for="file in filteredFiles" :key="file.name" class="file-item" 
+                        <div v-for="file in filteredFiles" :key="file.name" class="file-item"
+                             data-testid="file-item"
+                             :data-file-name="file.name"
+                             :data-file-path="file.path || file.originalPath"
                              :class="{'selected': store.isSelected(file), 'drag-over': file.isDragOver}"
                              draggable="true"
                              @dragstart="onDragStart($event, file)"

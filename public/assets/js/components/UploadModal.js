@@ -102,8 +102,8 @@ const UploadModal = {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" @click="clearFinished" :disabled="uploading || completedCount === 0">{{ t('upload_clear_finished', 'Clear finished') }}</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('close', 'Close') }}</button>
-                    <button type="button" class="btn btn-primary" @click="startUpload" :disabled="!canUploadHere || uploading || uploadableCount === 0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-testid="upload-close">{{ t('close', 'Close') }}</button>
+                    <button type="button" class="btn btn-primary" @click="startUpload" :disabled="!canUploadHere || uploading || uploadableCount === 0" data-testid="upload-submit">
                         <span v-if="uploading" class="spinner-border spinner-border-sm me-1"></span>
                         {{ uploading ? t('uploading', 'Uploading...') : t('upload', 'Upload') }} ({{ uploadableCount }})
                     </button>

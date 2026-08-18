@@ -26,10 +26,6 @@ for dir in \
     mkdir -p "$REAL_WRITEPATH/$dir"
 done
 
-if [ "$(id -u)" = "0" ]; then
-    chown -R www-data:www-data "$REAL_WRITEPATH"
-fi
-
 # 2. Initial Setup / Auto-Config
 if [ ! -f "$REAL_WRITEPATH/installed.lock" ] || [ "${EXTPLORER_APPLY_ENV:-0}" = "1" ]; then
     php /usr/local/bin/apply-env-settings.php || true
@@ -51,6 +47,11 @@ fi
 # 3. Migrations & Maintenance
 echo "Running migrations..."
 php spark security:migrate || true
+
+# CLI setup and migrations may create additional writable files as root.
+if [ "$(id -u)" = "0" ]; then
+    chown -R www-data:www-data "$REAL_WRITEPATH"
+fi
 
 # 4. Start PHP-FPM
 echo "Starting PHP-FPM..."
