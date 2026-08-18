@@ -1,6 +1,5 @@
 {
     "name": "codeigniter4/appstarter",
-    "version": "3.0.0-beta.1",
     "description": "CodeIgniter4 starter app",
     "license": "MIT",
     "type": "project",
@@ -20,7 +19,7 @@
     "require-dev": {
         "fakerphp/faker": "^1.9",
         "mikey179/vfsstream": "^1.6",
-        "phpunit/phpunit": "^12.4"
+        "phpunit/phpunit": "^11.5"
     },
     "autoload": {
         "psr-4": {
@@ -38,6 +37,9 @@
     },
     "config": {
         "optimize-autoloader": true,
+        "platform": {
+            "php": "8.2.0"
+        },
         "preferred-install": "dist",
         "sort-packages": true
     },

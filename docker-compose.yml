@@ -21,14 +21,14 @@ services:
       # CI4 Configuration
       - CI_ENVIRONMENT=production
       - WRITEPATH=/var/www/html/writable
-      
+
       # eXtplorer Configuration
       - EXTPLORER_ADMIN_USER=admin
       - EXTPLORER_ADMIN_PASS=admin1234
 
       # Apply env settings into writable/settings.php on every boot
       # - EXTPLORER_APPLY_ENV=1
-      
+
       # PHP Limits (Optional overrides)
       # You can use a custom php.ini if needed
     networks:
@@ -37,13 +37,17 @@ services:
       init:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "php -r '$$fp=@fsockopen(\"127.0.0.1\",9000); if($$fp){fclose($$fp); exit(0);} exit(1);'"]
+      test:
+        [
+          "CMD-SHELL",
+          'php -r ''$$fp=@fsockopen("127.0.0.1",9000); if($$fp){fclose($$fp); exit(0);} exit(1);''',
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
 
   web:
-    image: nginx:alpine
+    image: nginx:1.31.3-alpine3.24
     restart: unless-stopped
     ports:
       - "8080:80"
@@ -55,7 +59,8 @@ services:
     networks:
       - extplorer-net
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/health || exit 1"]
+      test:
+        ["CMD-SHELL", "wget -q -O /dev/null http://localhost/health || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3

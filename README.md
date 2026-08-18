@@ -22,7 +22,7 @@ eXtplorer 3 is a modern, web-based file manager built for speed, security, and e
 
 To run eXtplorer 3, your server must meet the following requirements:
 
-*   **PHP:** Version 8.2 or higher.
+*   **PHP:** Versions 8.2 through 8.5 are supported. The official container uses PHP 8.5.
 *   **PHP Extensions:**
     *   `intl` (Required for CodeIgniter 4)
     *   `mbstring`, `json`, `xml`, `curl`
@@ -112,7 +112,7 @@ Settings synced into `writable/settings.php` (apply once on first run, or always
 If you are contributing to eXtplorer or building from source:
 
 1.  Clone the repository.
-2.  Use PHP 8.2+ and Composer 2.
+2.  Use a supported PHP version (8.2 through 8.5) and Composer 2.10.
 3.  Optional for frontend asset maintenance: use Node.js `24.18.0` LTS (`.nvmrc` / `.node-version`).
 4.  Install development dependencies: `./composer install`.
 5.  After changing translations, run `composer i18n:build` and `composer i18n:check`.

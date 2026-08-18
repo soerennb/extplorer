@@ -1,4 +1,4 @@
-FROM php:8.3-fpm-alpine AS builder
+FROM php:8.5.9-fpm-alpine3.24 AS builder
 
 ARG APP_VERSION=dev
 
@@ -6,29 +6,22 @@ RUN apk add --no-cache \
         icu-libs \
         libpng \
         libzip \
-        libxml2 \
-        oniguruma \
     && apk add --no-cache --virtual .build-deps \
         icu-dev \
         libpng-dev \
         libzip-dev \
-        libxml2-dev \
-        oniguruma-dev \
         git \
         unzip \
-    && docker-php-ext-install \
+    && docker-php-ext-install -j"$(nproc)" \
         intl \
         gd \
         zip \
-        xml \
-        mbstring \
-        opcache \
     && apk del .build-deps
 
 WORKDIR /app
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:2.10.2 /usr/bin/composer /usr/local/bin/composer
 
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
@@ -44,7 +37,7 @@ COPY writable writable
 
 RUN echo "${APP_VERSION}" > /image-version
 
-FROM php:8.3-fpm-alpine
+FROM php:8.5.9-fpm-alpine3.24
 
 ARG APP_VERSION=dev
 ENV EXTPLORER_IMAGE_VERSION=${APP_VERSION}
@@ -53,21 +46,14 @@ RUN apk add --no-cache \
         icu-libs \
         libpng \
         libzip \
-        libxml2 \
-        oniguruma \
     && apk add --no-cache --virtual .build-deps \
         icu-dev \
         libpng-dev \
         libzip-dev \
-        libxml2-dev \
-        oniguruma-dev \
-    && docker-php-ext-install \
+    && docker-php-ext-install -j"$(nproc)" \
         intl \
         gd \
         zip \
-        xml \
-        mbstring \
-        opcache \
     && apk del .build-deps
 
 RUN mkdir -p /var/www/html /app
