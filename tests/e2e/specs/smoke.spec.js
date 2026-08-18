@@ -8,8 +8,14 @@ const fixturePath = path.resolve(__dirname, "../fixtures/smoke-upload.txt");
 
 async function monitorPage(page) {
   const pageErrors = [];
+  const failedResponses = [];
 
   page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("response", (response) => {
+    if (response.status() >= 400) {
+      failedResponses.push(`${response.status()} ${response.url()}`);
+    }
+  });
   await page.addInitScript(() => {
     window.__e2eCspViolations = [];
     document.addEventListener("securitypolicyviolation", (event) => {
@@ -25,6 +31,7 @@ async function monitorPage(page) {
       () => window.__e2eCspViolations || [],
     );
     expect(pageErrors, "uncaught browser errors").toEqual([]);
+    expect(failedResponses, "failed browser requests").toEqual([]);
     expect(cspViolations, "Content Security Policy violations").toEqual([]);
   };
 }
@@ -35,6 +42,8 @@ async function login(page) {
   await page.locator("#login_password").fill(password);
   await page.getByTestId("login-submit").click();
   await expect(page.getByTestId("app-shell")).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  await expect(page.locator(".swal2-container")).toHaveCount(0);
 }
 
 function fileItem(page, name) {
