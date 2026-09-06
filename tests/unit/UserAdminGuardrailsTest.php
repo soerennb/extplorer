@@ -21,9 +21,10 @@ class UserAdminGuardrailsTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        $this->usersFile = WRITEPATH . 'users.php';
-        $this->rolesFile = WRITEPATH . 'roles.php';
-        $this->groupsFile = WRITEPATH . 'groups.php';
+        $statePath = config('Storage')->state;
+        $this->usersFile = $statePath . '/users.php';
+        $this->rolesFile = $statePath . '/roles.php';
+        $this->groupsFile = $statePath . '/groups.php';
 
         $this->usersBackup = is_file($this->usersFile) ? file_get_contents($this->usersFile) : null;
         $this->rolesBackup = is_file($this->rolesFile) ? file_get_contents($this->rolesFile) : null;

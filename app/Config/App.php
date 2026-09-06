@@ -22,6 +22,21 @@ class App extends BaseConfig
     {
         parent::__construct();
 
+        $configuredBaseUrl = getenv('EXTPLORER_BASE_URL');
+        if ($configuredBaseUrl === false || trim($configuredBaseUrl) === '') {
+            $configuredBaseUrl = getenv('app.baseURL');
+        }
+        if ($configuredBaseUrl === false || trim($configuredBaseUrl) === '') {
+            $configuredBaseUrl = getenv('app_baseURL');
+        }
+        if ($configuredBaseUrl !== false && trim($configuredBaseUrl) !== '') {
+            $configuredBaseUrl = rtrim(trim($configuredBaseUrl), '/') . '/';
+            if (filter_var($configuredBaseUrl, FILTER_VALIDATE_URL) === false) {
+                throw new \RuntimeException('EXTPLORER_BASE_URL must be a valid absolute URL.');
+            }
+            $this->baseURL = $configuredBaseUrl;
+        }
+
         if (empty($this->baseURL)) {
             if (isset($_SERVER['HTTP_HOST'])) {
                 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';

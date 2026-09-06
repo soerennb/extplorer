@@ -20,9 +20,9 @@ CI_ENVIRONMENT = development
 # APP
 #--------------------------------------------------------------------
 
-# app.baseURL = ''
-# If you have trouble with `.`, you could also use `_`.
-# app_baseURL = ''
+# EXTPLORER_BASE_URL = 'https://files.example.com/'
+# EXTPLORER_WRITE_PATH = '/var/lib/extplorer/writable'
+# EXTPLORER_FILE_MANAGER_ROOT = '/var/lib/extplorer/writable/file_manager_root'
 # app.forceGlobalSecureRequests = false
 # app.CSPEnabled = false
 
@@ -53,7 +53,17 @@ CI_ENVIRONMENT = development
 # ENCRYPTION
 #--------------------------------------------------------------------
 
-# encryption.key =
+# EXTPLORER_ENCRYPTION_KEY_FILE = '/run/secrets/extplorer-encryption-key'
+# EXTPLORER_ENCRYPTION_KEY =
+
+#--------------------------------------------------------------------
+# ADMINISTRATION
+#--------------------------------------------------------------------
+
+# EXTPLORER_ADMIN_USER = 'admin'
+# EXTPLORER_ADMIN_PASSWORD_FILE = '/run/secrets/extplorer-admin-password'
+# EXTPLORER_ADMIN_RESET_PASSWORD = 0
+# EXTPLORER_UPLOAD_MAX_FILE_MB = 100
 
 #--------------------------------------------------------------------
 # SESSION

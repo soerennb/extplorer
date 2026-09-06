@@ -12,7 +12,7 @@ class ShareServiceTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->testFile = WRITEPATH . 'test_shares.json';
+        $this->testFile = config('Storage')->state . '/test_shares.php';
         if (file_exists($this->testFile)) unlink($this->testFile);
     }
 

@@ -17,8 +17,9 @@ class RememberMeServiceTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        $this->usersFile = WRITEPATH . 'users.php';
-        $this->tokensFile = WRITEPATH . 'test_remember_tokens.php';
+        $storage = config('Storage');
+        $this->usersFile = $storage->state . '/users.php';
+        $this->tokensFile = $storage->state . '/test_remember_tokens.php';
         $this->usersBackup = is_file($this->usersFile) ? file_get_contents($this->usersFile) : null;
 
         if (is_file($this->tokensFile)) {

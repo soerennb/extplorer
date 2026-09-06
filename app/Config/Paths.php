@@ -57,7 +57,14 @@ class Paths
 
     public function __construct()
     {
-        $this->writableDirectory = getenv('WRITEPATH') ?: __DIR__ . '/../../writable';
+        $writePath = getenv('EXTPLORER_WRITE_PATH');
+        if ($writePath === false || trim($writePath) === '') {
+            $writePath = getenv('WRITEPATH');
+        }
+
+        $this->writableDirectory = ($writePath !== false && trim((string) $writePath) !== '')
+            ? (string) $writePath
+            : __DIR__ . '/../../writable';
     }
 
     /**

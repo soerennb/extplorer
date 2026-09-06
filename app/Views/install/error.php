@@ -15,7 +15,7 @@
             <h3>Critical Configuration Error</h3>
             <p>The application cannot start because the <code>writable</code> directory is not writable by the web server.</p>
             
-            <p><strong>Path:</strong> <?= WRITEPATH ?></p>
+            <p><strong>Path:</strong> <?= esc(config('Storage')->root) ?></p>
             
             <hr>
             <h5>Solution:</h5>

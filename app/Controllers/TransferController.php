@@ -252,7 +252,7 @@ class TransferController extends BaseController
         
         // Define storage path
         $relPath = $hash; // For transfers, path is just the Hash folder name in uploads/shares
-        $absPath = WRITEPATH . 'uploads/shares/' . $hash;
+        $absPath = config('Storage')->uploads . '/shares/' . $hash;
         
         if (!mkdir($absPath, 0755, true)) {
             return $this->fail('Server Error: Cannot create storage');
@@ -395,7 +395,7 @@ class TransferController extends BaseController
 
         // Delete physical files
         if (isset($share['source']) && $share['source'] === 'transfer') {
-            $dir = WRITEPATH . 'uploads/shares/' . $share['path'];
+            $dir = config('Storage')->uploads . '/shares/' . $share['path'];
             // Recursive delete
             $this->rrmdir($dir);
         }
@@ -431,7 +431,7 @@ class TransferController extends BaseController
         if ($userKey === '') {
             $userKey = 'anonymous';
         }
-        return WRITEPATH . 'uploads/temp/' . $userKey . '/' . $sessionId;
+        return config('Storage')->uploads . '/temp/' . $userKey . '/' . $sessionId;
     }
 
     private function normalizeRecipients($recipients): array

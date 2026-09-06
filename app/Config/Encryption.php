@@ -23,6 +23,19 @@ class Encryption extends BaseConfig
      */
     public string $key = '';
 
+    public function __construct()
+    {
+        parent::__construct();
+
+        $key = getenv('EXTPLORER_ENCRYPTION_KEY');
+        if ($key === false || trim($key) === '') {
+            $key = getenv('encryption.key');
+        }
+        if ($key !== false && trim($key) !== '') {
+            $this->key = trim($key);
+        }
+    }
+
     /**
      * --------------------------------------------------------------------------
      * Encryption Driver to Use

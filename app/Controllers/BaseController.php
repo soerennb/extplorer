@@ -48,7 +48,7 @@ abstract class BaseController extends Controller
         
         // --- Poor Man's Cron (Auto Cleanup) ---
         // Run once per hour on a random request
-        $cronFile = WRITEPATH . 'last_cleanup.txt';
+        $cronFile = config('Storage')->runtime . '/last_cleanup.txt';
         $now = time();
         $lastRun = file_exists($cronFile) ? (int)file_get_contents($cronFile) : 0;
         

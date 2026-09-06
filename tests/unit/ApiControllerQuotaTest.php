@@ -21,7 +21,7 @@ class ApiControllerQuotaTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        $baseRoot = WRITEPATH . 'file_manager_root';
+        $baseRoot = config('Storage')->fileManagerRoot;
         $relativeHome = 'tests/quota-user';
         $this->homePath = $baseRoot . DIRECTORY_SEPARATOR . $relativeHome;
 

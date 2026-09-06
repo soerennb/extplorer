@@ -10,8 +10,8 @@ class InstallFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        // Check if WRITEPATH is writable
-        $writableError = !is_writable(WRITEPATH);
+        // Check if the persistent root is writable.
+        $writableError = !is_writable(config('Storage')->root);
         
         // Check if users exist using UserModel
         $usersExist = false;

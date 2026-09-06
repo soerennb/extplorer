@@ -1,0 +1,12 @@
+services:
+  web:
+    # Dokploy/Traefik is the ingress; do not publish a host port here.
+    ports: !override []
+    networks:
+      - extplorer-net
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    name: ${DOKPLOY_NETWORK_NAME:-dokploy-network}
+    external: true

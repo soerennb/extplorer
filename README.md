@@ -53,14 +53,19 @@ Prebuilt images are published to GHCR and intended to run as a multi-container s
 
 **Important:** To deploy via Docker, you must have the full repository (including the `docker/` directory) because the `nginx` service mounts the local configuration file.
 
-**Command Line:**
+**Command line:**
 ```bash
 # 1. Clone the repository
 git clone https://github.com/soerennb/extplorer3.git
 cd extplorer3
 
-# 2. Start the stack
-docker compose up -d
+# 2. Create a local-only bootstrap secret (use Docker/Dokploy secrets in production)
+umask 077
+printf '%s\n' 'replace-this-before-starting' > .extplorer-admin-password
+export EXTPLORER_ADMIN_PASSWORD_HOST_FILE="$PWD/.extplorer-admin-password"
+
+# 3. Start the stack with Docker Compose secrets
+docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example up -d --wait
 ```
 
 **Note for Portainer Users:** Do **not** simply paste the `docker-compose.yml` into the Web Editor. Use the "Repository" method to ensure Portainer clones the configuration files along with the compose file.
@@ -71,34 +76,54 @@ docker compose up -d
 
 ### Volumes
 
-- `extplorer_code`: contains the application code copied from the image.
-- `extplorer_writable`: contains persistent data (uploads, logs, sessions, etc.).
+- `extplorer_code`: contains immutable versioned application releases and a `current` symlink.
+- `extplorer_writable`: contains persistent data only (configuration, users, uploads, logs, sessions, trash and backups).
+
+The application container mounts the code volume read-only and runs PHP-FPM as `www-data` after initialization. Do not
+store uploads or application state in the code volume.
 
 ### Update Flow
 
-1. Pull the latest images: `docker compose pull`
-2. Restart: `docker compose up -d`
+1. Pull the selected image: `docker compose pull`
+2. Deploy and wait for init, app readiness and web health: `docker compose up -d --wait`
 
-The init container compares the image version with the version stored in the code volume and refreshes the code automatically when the image changes.
+The init container compares both the image version and a content hash with the active release. A changed image is staged,
+syntax-checked and switched atomically; previous releases remain available for rollback. The startup log contains the
+release identity. `pull_policy: always` does not replace an already active code release by itself; the init service performs
+that synchronization.
+
+To inspect or roll back a release:
+
+```bash
+docker compose run --rm init --rollback RELEASE_ID
+docker compose restart app web
+```
+
+Only roll back to a release that is compatible with the persistent data schema. Every data migration creates a timestamped
+backup below `writable/backups/` before changing legacy files.
 
 ### Environment Variables (common)
 
-Core app settings:
+Canonical application settings:
 - `CI_ENVIRONMENT`
-- `app.baseURL` (or `app_baseURL`)
-- `WRITEPATH`
-- `encryption.key`
+- `EXTPLORER_BASE_URL`
+- `EXTPLORER_WRITE_PATH`
+- `EXTPLORER_ENCRYPTION_KEY` or `EXTPLORER_ENCRYPTION_KEY_FILE`
 
-Admin bootstrap:
+Admin bootstrap (first initialization only):
 - `EXTPLORER_ADMIN_USER`
-- `EXTPLORER_ADMIN_PASS`
+- `EXTPLORER_ADMIN_PASSWORD_FILE` (recommended)
+- `EXTPLORER_ADMIN_PASS` (legacy compatibility only)
+- `EXTPLORER_ADMIN_RESET_PASSWORD=1` for one explicit, one-shot reset
 
-Settings synced into `writable/settings.php` (apply once on first run, or always if `EXTPLORER_APPLY_ENV=1`):
+Settings synced into `writable/config/settings.php` (apply once on first run, or on every start if
+`EXTPLORER_APPLY_ENV=1`):
+- `EXTPLORER_UPLOAD_MAX_FILE_MB` (default: `100`, maximum: `10240`)
 - `EXTPLORER_EMAIL_PROTOCOL`
 - `EXTPLORER_SMTP_HOST`
 - `EXTPLORER_SMTP_PORT`
 - `EXTPLORER_SMTP_USER`
-- `EXTPLORER_SMTP_PASS`
+- `EXTPLORER_SMTP_PASSWORD_FILE` (recommended) or `EXTPLORER_SMTP_PASS`
 - `EXTPLORER_SMTP_CRYPTO`
 - `EXTPLORER_SENDMAIL_PATH`
 - `EXTPLORER_EMAIL_FROM`
@@ -106,6 +131,33 @@ Settings synced into `writable/settings.php` (apply once on first run, or always
 - `EXTPLORER_DEFAULT_TRANSFER_EXPIRY`
 - `EXTPLORER_ALLOW_PUBLIC_UPLOADS`
 - `EXTPLORER_MOUNT_ROOT_ALLOWLIST` (comma- or newline-separated)
+- `EXTPLORER_MOUNT_REMOTE_HOST_ALLOWLIST` (comma- or newline-separated)
+
+The old names `app.baseURL`, `app_baseURL`, `WRITEPATH`, `encryption.key` and `EXTPLORER_ADMIN_PASS` remain accepted
+as migration aliases. New deployments should use the `EXTPLORER_*` names. Missing bootstrap secrets and migration/configuration
+errors make the app container fail; they are never treated as a successful initialization.
+
+### Health and readiness
+
+`GET /health` is served statically by Nginx and does not invoke PHP, the database, a session, DNS or TLS. The app healthcheck
+also requires the readiness marker written only after storage migration, settings synchronization and admin bootstrap have
+completed. A healthy Nginx container therefore represents both routing and application readiness.
+
+### Dokploy
+
+Dokploy uses a dedicated Compose override because its Traefik ingress network is external to ordinary Docker:
+
+```bash
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.dokploy.yml \
+  -f docker-compose.secrets.yml.example \
+  up -d --wait
+```
+
+Set the Dokploy domain on the `web` service in Dokploy's Domains UI and select the external network name used by the
+installation (`DOKPLOY_NETWORK_NAME` defaults to `dokploy-network`). Do not publish a host port in Dokploy. See the
+[Dokploy deployment runbook](docs/deployment/dokploy.md) for routing reconciliation, file mounts and reload behavior.
 
 ## 🛠 Development & Building
 

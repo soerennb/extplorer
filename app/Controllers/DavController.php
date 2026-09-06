@@ -79,7 +79,7 @@ class DavController extends BaseController
         }
 
         // 3. Determine Root Path
-        $baseRoot = WRITEPATH . 'file_manager_root';
+        $baseRoot = config('Storage')->fileManagerRoot;
         $rootPath = $this->resolveSafeDavRootPath($baseRoot, (string)($userData['home_dir'] ?? '/'));
 
         if (!is_dir($rootPath)) {
@@ -104,7 +104,7 @@ class DavController extends BaseController
         $server->addPlugin(new \Sabre\DAV\Browser\Plugin());
 
         // Add Locks Plugin (Essential for Windows/macOS clients)
-        $davCacheDir = WRITEPATH . 'cache/dav';
+        $davCacheDir = config('Storage')->cache . '/dav';
         if (!is_dir($davCacheDir)) {
             mkdir($davCacheDir, 0755, true);
         }

@@ -13,7 +13,7 @@ class VersionService
     public function __construct(string $username)
     {
         $this->username = $username;
-        $this->versionRoot = WRITEPATH . 'versions' . DIRECTORY_SEPARATOR . md5($username);
+        $this->versionRoot = config('Storage')->versions . DIRECTORY_SEPARATOR . md5($username);
 
         if (!is_dir($this->versionRoot)) {
             mkdir($this->versionRoot, 0755, true);

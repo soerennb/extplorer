@@ -33,9 +33,12 @@ COPY env env
 COPY nginx.conf.example nginx.conf.example
 COPY preload.php preload.php
 COPY .htaccess .htaccess
-COPY writable writable
-
 RUN echo "${APP_VERSION}" > /image-version
+RUN find /app -type f ! -path '/app/writable/*' -print0 \
+    | sort -z \
+    | xargs -0 sha256sum \
+    | sha256sum \
+    | awk '{print $1}' > /image-content-sha256
 
 FROM php:8.5.9-fpm-alpine3.24
 
@@ -46,6 +49,7 @@ RUN apk add --no-cache \
         icu-libs \
         libpng \
         libzip \
+        su-exec \
     && apk add --no-cache --virtual .build-deps \
         icu-dev \
         libpng-dev \
@@ -56,10 +60,15 @@ RUN apk add --no-cache \
         zip \
     && apk del .build-deps
 
+RUN sed -i -e 's#^error_log = /proc/self/fd/2#error_log = /var/www/html/writable/logs/php-fpm.log#' \
+    -e 's#^access.log = /proc/self/fd/2#access.log = /var/www/html/writable/logs/php-fpm-access.log#' \
+    /usr/local/etc/php-fpm.d/docker.conf
+
 RUN mkdir -p /var/www/html /app
 
 COPY --from=builder /app /app
 COPY --from=builder /image-version /image-version
+COPY --from=builder /image-content-sha256 /image-content-sha256
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY docker/init-code.sh /usr/local/bin/init-code

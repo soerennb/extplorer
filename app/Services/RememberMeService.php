@@ -18,7 +18,7 @@ class RememberMeService
     public function __construct(?UserModel $userModel = null, ?string $tokensFile = null)
     {
         $this->userModel = $userModel ?? new UserModel();
-        $this->tokensFile = $tokensFile ?? WRITEPATH . 'remember_tokens.php';
+        $this->tokensFile = $tokensFile ?? config('Storage')->state . '/remember_tokens.php';
 
         if (!is_file($this->tokensFile)) {
             $this->saveTokens([]);
@@ -211,28 +211,13 @@ class RememberMeService
 
     private function loadTokens(): array
     {
-        if (!is_file($this->tokensFile)) {
-            return [];
-        }
-
-        $content = file_get_contents($this->tokensFile);
-        if ($content === false) {
-            return [];
-        }
-
-        if (str_starts_with($content, '<?php')) {
-            $content = substr($content, (int)strpos($content, "\n") + 1);
-        }
-
-        $tokens = json_decode($content, true);
-        return is_array($tokens) ? $tokens : [];
+        return AtomicFileStore::read($this->tokensFile);
     }
 
     private function saveTokens(array $tokens): void
     {
         $this->pruneTokenArray($tokens);
-        $content = '<?php die("Access denied"); ?>' . PHP_EOL . json_encode($tokens, JSON_PRETTY_PRINT);
-        file_put_contents($this->tokensFile, $content, LOCK_EX);
+        AtomicFileStore::write($this->tokensFile, $tokens);
     }
 
     private function pruneTokenArray(array &$tokens): void

@@ -28,7 +28,7 @@ class CreateUser extends BaseCommand
         
         if (!$username || !$password) {
             CLI::error("Username and password required.");
-            return;
+            return EXIT_ERROR;
         }
 
         $role = $params['role'] ?? 'user';
@@ -38,7 +38,7 @@ class CreateUser extends BaseCommand
         $userModel = new UserModel();
         if (!$userModel->isValidUsername((string)$username)) {
             CLI::error("Invalid username format. Use 3-64 chars: letters, numbers, dot, underscore, hyphen.");
-            return;
+            return EXIT_ERROR;
         }
         
         // Ensure roles/groups exist
@@ -55,8 +55,10 @@ class CreateUser extends BaseCommand
 
         if ($userModel->addUser($username, $password, $role, '/', $groups)) {
             CLI::write("User '{$username}' created successfully.", 'green');
+            return EXIT_SUCCESS;
         } else {
             CLI::error("Failed to create user (might already exist).");
+            return EXIT_ERROR;
         }
     }
 }

@@ -16,8 +16,9 @@ class LogServiceTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->settingsPath = WRITEPATH . 'settings.php';
-        $this->logsPath = WRITEPATH . 'activity_logs.php';
+        $storage = config('Storage');
+        $this->settingsPath = $storage->state . '/settings.php';
+        $this->logsPath = $storage->logs . '/activity_logs.php';
 
         if (file_exists($this->settingsPath)) {
             $this->settingsBackup = file_get_contents($this->settingsPath) ?: '';
@@ -111,4 +112,3 @@ class LogServiceTest extends CIUnitTestCase
         file_put_contents($path, $content);
     }
 }
-

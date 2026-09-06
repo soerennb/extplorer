@@ -424,7 +424,7 @@ class ApiController extends BaseController
             return $this->fail("Chunk exceeds the maximum allowed upload size of {$maxMb} MB.");
         }
 
-        $tempDir = WRITEPATH . 'uploads/chunks/' . md5(session_id() . $targetPath . '|' . $relativePath . '|' . $filename);
+        $tempDir = config('Storage')->uploads . '/chunks/' . md5(session_id() . $targetPath . '|' . $relativePath . '|' . $filename);
         if (!is_dir($tempDir)) mkdir($tempDir, 0755, true);
 
         $file->move($tempDir, $chunkIndex . '.part');
@@ -491,7 +491,7 @@ class ApiController extends BaseController
             if (is_dir($fullPath)) {
                 // Folder Download -> Zip
                 $zipName = basename($fullPath) . '.zip';
-                $tempZip = WRITEPATH . 'cache/' . uniqid('dl_') . '.zip';
+                $tempZip = config('Storage')->cache . '/' . uniqid('dl_') . '.zip';
                 
                 // Use the archive method logic directly or via FS
                 // Creating a one-off archive of this folder
@@ -570,7 +570,7 @@ class ApiController extends BaseController
 
             // Cache file path (hash of full path + mtime to invalidate on change)
             $cacheName = md5($fullPath . filemtime($fullPath)) . '.jpg';
-            $cacheDir = WRITEPATH . 'cache/thumbs';
+            $cacheDir = config('Storage')->cache . '/thumbs';
             if (!is_dir($cacheDir)) mkdir($cacheDir, 0755, true);
             $cachePath = $cacheDir . DIRECTORY_SEPARATOR . $cacheName;
 
@@ -816,7 +816,7 @@ class ApiController extends BaseController
             if ($share && ($share['created_by'] === session('username') || can('admin_users'))) {
                 // If it is a transfer, delete the physical directory as well.
                 if (isset($share['source']) && $share['source'] === 'transfer') {
-                    $dir = WRITEPATH . 'uploads/shares/' . $share['path'];
+                    $dir = config('Storage')->uploads . '/shares/' . $share['path'];
                     $this->rrmdir($dir);
                 }
                 $service->deleteShare($hash);
@@ -1139,7 +1139,7 @@ class ApiController extends BaseController
 
     private function getUserHomePath(): string
     {
-        $baseRoot = WRITEPATH . 'file_manager_root';
+        $baseRoot = config('Storage')->fileManagerRoot;
         $homeDir = (string)(session('home_dir') ?? '/');
         $homeDir = str_replace('..', '', $homeDir);
         $homeDir = trim($homeDir, "/\\");

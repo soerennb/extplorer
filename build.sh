@@ -51,14 +51,21 @@ cp nginx.conf.example ${BUILD_DIR}/
 
 # 4. Create necessary writable structure
 mkdir -p ${BUILD_DIR}/writable/cache/thumbs
+mkdir -p ${BUILD_DIR}/writable/cache/dav
+mkdir -p ${BUILD_DIR}/writable/config
 mkdir -p ${BUILD_DIR}/writable/logs
 mkdir -p ${BUILD_DIR}/writable/session
-mkdir -p ${BUILD_DIR}/writable/uploads
+mkdir -p ${BUILD_DIR}/writable/uploads/temp
+mkdir -p ${BUILD_DIR}/writable/uploads/shares
+mkdir -p ${BUILD_DIR}/writable/uploads/chunks
 mkdir -p ${BUILD_DIR}/writable/file_manager_root
 mkdir -p ${BUILD_DIR}/writable/shared
 mkdir -p ${BUILD_DIR}/writable/trash
-touch ${BUILD_DIR}/writable/users.json
-echo "[]" > ${BUILD_DIR}/writable/users.json
+mkdir -p ${BUILD_DIR}/writable/versions
+mkdir -p ${BUILD_DIR}/writable/runtime
+mkdir -p ${BUILD_DIR}/writable/backups
+cp writable/.htaccess ${BUILD_DIR}/writable/.htaccess
+cp writable/index.html ${BUILD_DIR}/writable/index.html
 
 # Copy index.php to root if needed (CI4 usually uses public/ as root)
 cp public/index.php ${BUILD_DIR}/index.php 2>/dev/null || true

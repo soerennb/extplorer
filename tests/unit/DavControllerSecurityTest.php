@@ -18,7 +18,7 @@ class DavControllerSecurityTest extends CIUnitTestCase
     public function testResolveSafeDavRootPathStaysInsideBaseRoot(): void
     {
         $controller = new DavController();
-        $baseRoot = WRITEPATH . 'file_manager_root';
+        $baseRoot = config('Storage')->fileManagerRoot;
         @mkdir($baseRoot, 0755, true);
 
         $path = (string)$this->callPrivate($controller, 'resolveSafeDavRootPath', [$baseRoot, '../../etc/passwd']);
@@ -28,4 +28,3 @@ class DavControllerSecurityTest extends CIUnitTestCase
         $this->assertStringStartsWith($baseReal, $pathReal);
     }
 }
-

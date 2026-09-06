@@ -10,14 +10,7 @@ class ShareService
 
     public function __construct(?string $sharesFile = null)
     {
-        $this->sharesFile = $sharesFile ?? (WRITEPATH . 'shares.php');
-        
-        // Migration
-        if (file_exists(WRITEPATH . 'shares.json') && !file_exists($this->sharesFile)) {
-            $data = json_decode(file_get_contents(WRITEPATH . 'shares.json'), true) ?? [];
-            $this->saveShares($data);
-            unlink(WRITEPATH . 'shares.json');
-        }
+        $this->sharesFile = $sharesFile ?? (config('Storage')->state . '/shares.php');
 
         if (!file_exists($this->sharesFile)) {
             $this->saveShares([]);
@@ -26,21 +19,12 @@ class ShareService
 
     private function getShares(): array
     {
-        if (!file_exists($this->sharesFile)) return [];
-        $content = file_get_contents($this->sharesFile);
-        if (strpos($content, '<?php') === 0) {
-            $content = str_replace('<?php die("Access denied"); ?>' . PHP_EOL, '', $content);
-        }
-        return json_decode($content, true) ?? [];
+        return AtomicFileStore::read($this->sharesFile);
     }
 
     private function saveShares(array $shares): void
     {
-        $content = '<?php die("Access denied"); ?>' . PHP_EOL . json_encode($shares, JSON_PRETTY_PRINT);
-        $result = file_put_contents($this->sharesFile, $content, LOCK_EX);
-        if ($result === false) {
-            throw new Exception('Unable to persist share state.');
-        }
+        AtomicFileStore::write($this->sharesFile, $shares);
     }
 
     /**
@@ -56,9 +40,9 @@ class ShareService
             $hash = bin2hex(random_bytes(8));
         }
 
-        $baseRoot = WRITEPATH . 'file_manager_root/';
+        $baseRoot = rtrim(config('Storage')->fileManagerRoot, '/\\') . '/';
         if (($meta['source'] ?? '') === 'transfer') {
-            $baseRoot = WRITEPATH . 'uploads/shares/';
+            $baseRoot = rtrim(config('Storage')->uploads, '/\\') . '/shares/';
         }
         $targetPath = $baseRoot . $path;
         $type = is_dir($targetPath) ? 'dir' : (is_file($targetPath) ? 'file' : 'dir');
@@ -165,7 +149,7 @@ class ShareService
             if ($share['expires_at'] && $now > $share['expires_at']) {
                 // If it is a transfer, delete physical files
                 if (isset($share['source']) && $share['source'] === 'transfer') {
-                    $dir = WRITEPATH . 'uploads/shares/' . $share['path'];
+                    $dir = config('Storage')->uploads . '/shares/' . $share['path'];
                     if (is_dir($dir)) {
                         $this->rrmdir($dir);
                     }

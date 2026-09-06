@@ -13,8 +13,33 @@ cp env .env
 | Variable | Description | Recommended (Prod) |
 | :--- | :--- | :--- |
 | `CI_ENVIRONMENT` | Application mode. | `production` |
-| `app.baseURL` | Full URL (with trailing slash). | `https://yourdomain.com/` |
+| `EXTPLORER_BASE_URL` | Full public URL (with trailing slash). | `https://yourdomain.com/` |
+| `EXTPLORER_WRITE_PATH` | Persistent writable root. | `/var/lib/extplorer/writable` |
+| `EXTPLORER_ENCRYPTION_KEY_FILE` | File containing the encryption key. | `/run/secrets/extplorer-encryption-key` |
 | `app.forceGlobalSecureRequests` | Force HTTPS redirection. | `true` |
+
+The canonical container names are `EXTPLORER_BASE_URL`, `EXTPLORER_WRITE_PATH`, `EXTPLORER_ENCRYPTION_KEY` and
+`EXTPLORER_ENCRYPTION_KEY_FILE`. The aliases `app.baseURL`, `app_baseURL`, `WRITEPATH` and `encryption.key` remain supported
+for existing installations.
+
+### Admin and upload settings
+
+Use `EXTPLORER_ADMIN_PASSWORD_FILE` for first initialization. `EXTPLORER_ADMIN_PASS` is a compatibility fallback. The
+password is read only when the persistent user store is empty; redeploying does not overwrite an existing administrator.
+Set `EXTPLORER_ADMIN_RESET_PASSWORD=1` for one intentional reset, then remove the flag. The CLI alternative is:
+
+```bash
+php spark admin:reset-password admin --password-file /run/secrets/extplorer-admin-password
+```
+
+`EXTPLORER_UPLOAD_MAX_FILE_MB` defaults to 100 and is validated between 1 and 10240 MB. The same value configures Nginx,
+PHP-FPM and application-level upload/quota checks. Runtime resource controls are available in Compose through
+`EXTPLORER_APP_MEMORY_LIMIT`, `EXTPLORER_APP_CPUS`, `EXTPLORER_MEMORY_LIMIT`, `EXTPLORER_MAX_EXECUTION_TIME` and
+`EXTPLORER_MAX_INPUT_TIME`.
+
+Persistent state is stored under `writable/config`, logs under `writable/logs`, and local files under
+`writable/file_manager_root`. Back up the complete writable volume, especially `config`, `file_manager_root`, `uploads`,
+`trash` and `backups`.
 
 ### Security Controls (Current Defaults)
 The following controls are enabled in the application and should be considered part of your operational baseline:

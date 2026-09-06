@@ -257,8 +257,8 @@ class UserAdminController extends BaseController
             'upload_max_filesize' => ini_get('upload_max_filesize'),
             'post_max_size' => ini_get('post_max_size'),
             'extensions' => implode(', ', get_loaded_extensions()),
-            'disk_free' => disk_free_space(WRITEPATH),
-            'disk_total' => disk_total_space(WRITEPATH),
+            'disk_free' => disk_free_space(config('Storage')->root),
+            'disk_total' => disk_total_space(config('Storage')->root),
             'system_blocklist' => ['php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'pl', 'py', 'rb', 'cgi', 'exe', 'sh', 'bat', 'cmd', 'htaccess', 'htpasswd']
         ]);
     }

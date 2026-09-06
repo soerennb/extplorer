@@ -57,7 +57,7 @@ class VfsFactory
         }
 
         // Local Mode
-        $baseRoot = WRITEPATH . 'file_manager_root';
+        $baseRoot = config('Storage')->fileManagerRoot;
         if (!is_dir($baseRoot)) mkdir($baseRoot, 0755, true);
 
         // If no user provided (e.g. public access?), just return root adapter?
@@ -99,7 +99,7 @@ class VfsFactory
         $vfs->mount('Home', new LocalAdapter($homePath));
 
         // Mount Shared
-        $sharedPath = WRITEPATH . 'shared';
+        $sharedPath = config('Storage')->shared;
         if (!is_dir($sharedPath)) mkdir($sharedPath, 0755, true);
         $vfs->mount('Shared', new LocalAdapter($sharedPath));
         
@@ -143,7 +143,7 @@ class VfsFactory
         } catch (\Exception $e) {}
 
         // Optional: Mount Public if it exists
-        $publicPath = WRITEPATH . 'public';
+        $publicPath = config('Storage')->root . '/public';
         if (is_dir($publicPath)) {
             $vfs->mount('Public', new LocalAdapter($publicPath));
         }

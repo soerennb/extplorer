@@ -8,7 +8,7 @@ class SettingsService
 
     public function __construct()
     {
-        $this->settingsFile = WRITEPATH . 'settings.php';
+        $this->settingsFile = config('Storage')->state . '/settings.php';
     }
 
     /**
@@ -20,14 +20,7 @@ class SettingsService
             return $this->getDefaultSettings();
         }
 
-        $content = file_get_contents($this->settingsFile);
-        // Remove the protection header
-        $json = str_replace('<?php die("Access denied"); ?>' . PHP_EOL, '', $content);
-        
-        $data = json_decode($json, true);
-        
-        // Merge with defaults to ensure all keys exist
-        return array_merge($this->getDefaultSettings(), $data ?? []);
+        return array_merge($this->getDefaultSettings(), AtomicFileStore::read($this->settingsFile));
     }
 
     /**
@@ -39,10 +32,7 @@ class SettingsService
         $current = $this->getSettings();
         $newSettings = array_merge($current, $settings);
 
-        $json = json_encode($newSettings, JSON_PRETTY_PRINT);
-        $content = '<?php die("Access denied"); ?>' . PHP_EOL . $json;
-
-        file_put_contents($this->settingsFile, $content);
+        AtomicFileStore::write($this->settingsFile, $newSettings);
     }
 
     public function get(string $key, $default = null)
@@ -72,7 +62,7 @@ class SettingsService
             'share_require_expiry' => false,
             'share_max_expiry_days' => 30,
             'share_require_password' => false,
-            'upload_max_file_mb' => 0,
+            'upload_max_file_mb' => 100,
             'share_upload_allowed_extensions' => [],
             'share_upload_quota_mb' => 0,
             'share_upload_max_files' => 0,

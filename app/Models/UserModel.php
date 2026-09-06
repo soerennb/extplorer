@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\AtomicFileStore;
 use Config\Services;
 
 class UserModel
@@ -12,43 +13,24 @@ class UserModel
 
     public function __construct()
     {
-        $this->usersFile = WRITEPATH . 'users.php';
-        $this->rolesFile = WRITEPATH . 'roles.php';
-        $this->groupsFile = WRITEPATH . 'groups.php';
-
-        $this->migrateFile(WRITEPATH . 'users.json', $this->usersFile);
-        $this->migrateFile(WRITEPATH . 'roles.json', $this->rolesFile);
-        $this->migrateFile(WRITEPATH . 'groups.json', $this->groupsFile);
+        $storage = config('Storage');
+        $this->usersFile = $storage->state . '/users.php';
+        $this->rolesFile = $storage->state . '/roles.php';
+        $this->groupsFile = $storage->state . '/groups.php';
 
         if (!file_exists($this->usersFile)) $this->saveData($this->usersFile, []);
         if (!file_exists($this->rolesFile)) $this->saveData($this->rolesFile, []);
         if (!file_exists($this->groupsFile)) $this->saveData($this->groupsFile, []);
     }
 
-    private function migrateFile($oldPath, $newPath)
-    {
-        if (file_exists($oldPath) && !file_exists($newPath)) {
-            $data = json_decode(file_get_contents($oldPath), true) ?? [];
-            $this->saveData($newPath, $data);
-            unlink($oldPath);
-        }
-    }
-
     private function loadData($path)
     {
-        if (!file_exists($path)) return [];
-        $content = file_get_contents($path);
-        if (strpos($content, '<?php') === 0) {
-            // Remove the first line safely
-            $content = substr($content, strpos($content, "\n") + 1);
-        }
-        return json_decode($content, true) ?? [];
+        return AtomicFileStore::read($path);
     }
 
     private function saveData($path, $data)
     {
-        $content = '<?php die("Access denied"); ?>' . PHP_EOL . json_encode($data, JSON_PRETTY_PRINT);
-        file_put_contents($path, $content);
+        AtomicFileStore::write($path, $data);
     }
 
     // --- Users ---

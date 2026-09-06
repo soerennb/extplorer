@@ -10,6 +10,12 @@ writable/debugbar/*
 !writable/debugbar/index.html
 writable/file_manager_root/*
 writable/trash/*
+writable/shared/*
+writable/versions/*
+writable/backups/*
+writable/runtime/*
+writable/config/*
+writable/state/*
 writable/*.json
 writable/*.php
 !writable/index.html

@@ -26,8 +26,8 @@ class Install extends BaseController
             ],
             'writable' => [
                 'name' => 'Writable Directory Permissions',
-                'status' => is_writable(WRITEPATH),
-                'path' => WRITEPATH
+                'status' => is_writable(config('Storage')->root),
+                'path' => config('Storage')->root
             ],
             'extensions' => [
                 'intl' => extension_loaded('intl'),

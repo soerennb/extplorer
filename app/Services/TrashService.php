@@ -13,30 +13,16 @@ class TrashService
     {
         $this->username = $username;
         // Trash root per user: writable/trash/{username}
-        $this->trashRoot = WRITEPATH . 'trash' . DIRECTORY_SEPARATOR . $username;
+        $this->trashRoot = config('Storage')->trash . DIRECTORY_SEPARATOR . $username;
 
         if (!is_dir($this->trashRoot)) {
             mkdir($this->trashRoot, 0755, true);
         }
 
-        // Ensure index file exists
-        $this->migrateIndex();
+        // Ensure index file exists. Legacy conversion is performed centrally by
+        // DataMigrationService before the application is marked ready.
         if (!file_exists($this->getIndexFile())) {
             $this->saveIndex([]);
-        }
-    }
-
-    private function migrateIndex()
-    {
-        $oldFile = $this->trashRoot . DIRECTORY_SEPARATOR . 'index.json';
-        $newFile = $this->trashRoot . DIRECTORY_SEPARATOR . 'index.php';
-        
-        if (file_exists($oldFile) && !file_exists($newFile)) {
-            $data = json_decode(file_get_contents($oldFile), true) ?? [];
-            // Save to new format
-            $content = '<?php die("Access denied"); ?>' . PHP_EOL . json_encode($data, JSON_PRETTY_PRINT);
-            file_put_contents($newFile, $content);
-            unlink($oldFile);
         }
     }
 
@@ -48,17 +34,12 @@ class TrashService
     private function getIndex(): array
     {
         if (!file_exists($this->getIndexFile())) return [];
-        $content = file_get_contents($this->getIndexFile());
-        if (strpos($content, '<?php') === 0) {
-            $content = str_replace('<?php die("Access denied"); ?>' . PHP_EOL, '', $content);
-        }
-        return json_decode($content, true) ?? [];
+        return AtomicFileStore::read($this->getIndexFile());
     }
 
     private function saveIndex(array $index): void
     {
-        $content = '<?php die("Access denied"); ?>' . PHP_EOL . json_encode($index, JSON_PRETTY_PRINT);
-        file_put_contents($this->getIndexFile(), $content);
+        AtomicFileStore::write($this->getIndexFile(), $index);
     }
 
     /**

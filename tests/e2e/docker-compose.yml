@@ -1,16 +1,18 @@
 services:
   init:
     image: extplorer3:e2e
+    pull_policy: never
 
   app:
     image: extplorer3:e2e
+    pull_policy: never
     restart: "no"
     environment:
       CI_ENVIRONMENT: production
-      WRITEPATH: /var/www/html/writable
+      EXTPLORER_WRITE_PATH: /var/www/html/writable
+      EXTPLORER_BASE_URL: ${E2E_BASE_URL:-http://127.0.0.1:8080}/
       EXTPLORER_ADMIN_USER: e2e-admin
       EXTPLORER_ADMIN_PASS: e2e-admin-password
-      app.baseURL: ${E2E_BASE_URL:-http://127.0.0.1:8080}/
       app.forceGlobalSecureRequests: "false"
       cookie.secure: "false"
 

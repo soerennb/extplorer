@@ -50,14 +50,16 @@ jobs:
       - name: Create archive
         run: |
           VERSION="$APP_VERSION"
-          mkdir -p release/writable/cache/thumbs
+          mkdir -p release/writable/cache/thumbs release/writable/cache/dav
+          mkdir -p release/writable/config
           mkdir -p release/writable/logs
           mkdir -p release/writable/session
-          mkdir -p release/writable/uploads
+          mkdir -p release/writable/uploads/temp release/writable/uploads/shares release/writable/uploads/chunks
           mkdir -p release/writable/file_manager_root
           mkdir -p release/writable/shared
           mkdir -p release/writable/trash
-          echo "[]" > release/writable/users.json
+          mkdir -p release/writable/versions release/writable/runtime release/writable/backups
+          cp writable/.htaccess writable/index.html release/writable/
           cp -r app release/
           cp -r public release/
           cp -r vendor release/

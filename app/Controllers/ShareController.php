@@ -218,7 +218,7 @@ class ShareController extends BaseController
         if (is_dir($fullPath)) {
             // Zip directory outside the share root to avoid path resolution issues.
             $zipName = basename($fullPath) . '.zip';
-            $tempZip = WRITEPATH . 'cache/' . uniqid('share_', true) . '.zip';
+            $tempZip = config('Storage')->cache . '/' . uniqid('share_', true) . '.zip';
             $this->zipDirectory($fullPath, $tempZip);
 
             // Clean up after the response is sent.
@@ -393,9 +393,9 @@ class ShareController extends BaseController
      */
     private function resolveSharePaths(array $share): array
     {
-        $rootBase = WRITEPATH . 'file_manager_root/';
+        $rootBase = rtrim(config('Storage')->fileManagerRoot, '/\\') . '/';
         if (isset($share['source']) && $share['source'] === 'transfer') {
-            $rootBase = WRITEPATH . 'uploads/shares/';
+            $rootBase = rtrim(config('Storage')->uploads, '/\\') . '/shares/';
         }
 
         return [$rootBase, $rootBase . ($share['path'] ?? '')];

@@ -15,31 +15,51 @@
  */
 
 if (! function_exists('ensure_encryption_key')) {
-    function ensure_encryption_key() {
-        // Check if key is already set in env or server
-        if (getenv('encryption.key') || isset($_SERVER['encryption.key'])) {
+    function ensure_encryption_key(): void {
+        $configuredKey = getenv('EXTPLORER_ENCRYPTION_KEY');
+        if ($configuredKey === false || trim($configuredKey) === '') {
+            $configuredKey = getenv('encryption.key');
+        }
+
+        // Check if key is already set in env or server.
+        if ($configuredKey !== false && trim($configuredKey) !== '') {
+            putenv('encryption.key=' . trim($configuredKey));
+            $_SERVER['encryption.key'] = trim($configuredKey);
+            $_ENV['encryption.key'] = trim($configuredKey);
             return;
         }
 
-        // Check file storage
-        $keyFile = WRITEPATH . 'secret.key';
-        
-        if (file_exists($keyFile)) {
-            $key = trim(file_get_contents($keyFile));
+        $configuredFile = getenv('EXTPLORER_ENCRYPTION_KEY_FILE');
+        $keyFile = ($configuredFile !== false && trim($configuredFile) !== '')
+            ? trim($configuredFile)
+            : WRITEPATH . 'config/encryption.key';
+        $legacyKeyFile = WRITEPATH . 'secret.key';
+
+        if (is_file($keyFile)) {
+            $key = trim((string) file_get_contents($keyFile));
+        } elseif (is_file($legacyKeyFile)) {
+            $key = trim((string) file_get_contents($legacyKeyFile));
         } else {
-            // Generate new key
             try {
                 $key = 'hex2bin:' . bin2hex(random_bytes(32));
-                file_put_contents($keyFile, $key);
-                @chmod($keyFile, 0600); // Secure permissions
             } catch (Exception $e) {
-                // Fallback or log error? For now, we continue without specific error handling 
-                // as the app will likely fail later if key is missing.
-                return;
+                throw new RuntimeException('Unable to generate encryption key.', 0, $e);
             }
+
+            $directory = dirname($keyFile);
+            if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+                throw new RuntimeException('Unable to create encryption key directory.');
+            }
+            if (file_put_contents($keyFile, $key, LOCK_EX) === false) {
+                throw new RuntimeException('Unable to persist encryption key.');
+            }
+            chmod($keyFile, 0600);
         }
 
-        // Inject into environment
+        if ($key === '') {
+            throw new RuntimeException('Encryption key file is empty.');
+        }
+
         putenv("encryption.key=$key");
         $_SERVER['encryption.key'] = $key;
         $_ENV['encryption.key'] = $key;

@@ -13,15 +13,8 @@ class MountService
 
     public function __construct()
     {
-        $this->mountsFile = WRITEPATH . 'mounts.php';
+        $this->mountsFile = config('Storage')->state . '/mounts.php';
         $this->encryptionRawData = (bool)config('Encryption')->rawData;
-        
-        // Migration/Init
-        if (file_exists(WRITEPATH . 'mounts.json') && !file_exists($this->mountsFile)) {
-            $data = json_decode(file_get_contents(WRITEPATH . 'mounts.json'), true) ?? [];
-            $this->saveMounts($data);
-            unlink(WRITEPATH . 'mounts.json');
-        }
 
         if (!file_exists($this->mountsFile)) {
             $this->saveMounts([]);
@@ -31,19 +24,40 @@ class MountService
     private function getMounts(): array
     {
         if (!file_exists($this->mountsFile)) return [];
-        $content = file_get_contents($this->mountsFile);
-        if (strpos($content, '<?php') === 0) {
-            $content = substr($content, strpos($content, "\n") + 1);
-        }
-        $mounts = json_decode($content, true) ?? [];
-        $mounts = $this->migrateMountSecrets($mounts);
-        return $mounts;
+        return AtomicFileStore::read($this->mountsFile);
     }
 
     private function saveMounts(array $mounts): void
     {
-        $content = '<?php die("Access denied"); ?>' . PHP_EOL . json_encode($mounts, JSON_PRETTY_PRINT);
-        file_put_contents($this->mountsFile, $content);
+        AtomicFileStore::write($this->mountsFile, $mounts);
+    }
+
+    /**
+     * Encrypts legacy plaintext remote mount passwords during maintenance.
+     */
+    public function migrateSecrets(): void
+    {
+        $mounts = $this->getMounts();
+        if (!$this->canEncrypt()) {
+            return;
+        }
+
+        $dirty = false;
+        foreach ($mounts as $id => $mount) {
+            $type = strtolower((string)($mount['type'] ?? ''));
+            if (!in_array($type, ['ftp', 'sftp', 'ssh2'], true)) {
+                continue;
+            }
+            $pass = $mount['config']['pass'] ?? null;
+            if (is_string($pass) && $pass !== '' && !$this->isEncryptedSecret($pass)) {
+                $mounts[$id]['config']['pass'] = $this->encryptSecret($pass);
+                $dirty = true;
+            }
+        }
+
+        if ($dirty) {
+            $this->saveMounts($mounts);
+        }
     }
 
     public function getUserMounts(string $username, bool $includeSecrets = false): array
@@ -242,27 +256,6 @@ class MountService
             log_message('error', 'Failed to decrypt mount secret: ' . $e->getMessage());
             return '';
         }
-    }
-
-    private function migrateMountSecrets(array $mounts): array
-    {
-        if (!$this->canEncrypt()) {
-            return $mounts;
-        }
-        $dirty = false;
-        foreach ($mounts as $id => $mount) {
-            $type = strtolower((string)($mount['type'] ?? ''));
-            if (!in_array($type, ['ftp', 'sftp', 'ssh2'], true)) continue;
-            $pass = $mount['config']['pass'] ?? null;
-            if (is_string($pass) && $pass !== '' && !$this->isEncryptedSecret($pass)) {
-                $mounts[$id]['config']['pass'] = $this->encryptSecret($pass);
-                $dirty = true;
-            }
-        }
-        if ($dirty) {
-            $this->saveMounts($mounts);
-        }
-        return $mounts;
     }
 
     private function decryptMountSecrets(array $mounts): array
@@ -611,6 +604,7 @@ class MountService
     {
         $settingsService = new SettingsService();
         $allowedRoots = array_merge(
+            [config('Storage')->fileManagerRoot],
             config('App')->mountRootAllowlist ?? [],
             $settingsService->get('mount_root_allowlist', [])
         );

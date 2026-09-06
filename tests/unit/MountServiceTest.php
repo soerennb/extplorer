@@ -22,8 +22,9 @@ class MountServiceTest extends CIUnitTestCase
 
         helper('auth');
 
-        $this->mountsPath = WRITEPATH . 'mounts.php';
-        $this->settingsPath = WRITEPATH . 'settings.php';
+        $statePath = config('Storage')->state;
+        $this->mountsPath = $statePath . '/mounts.php';
+        $this->settingsPath = $statePath . '/settings.php';
         $this->mountsBackup = file_exists($this->mountsPath) ? file_get_contents($this->mountsPath) : null;
         $this->settingsBackup = file_exists($this->settingsPath) ? file_get_contents($this->settingsPath) : null;
 
@@ -38,7 +39,7 @@ class MountServiceTest extends CIUnitTestCase
 
         $this->originalAllowlist = config('App')->mountRootAllowlist ?? [];
 
-        $this->allowedRoot = WRITEPATH . 'tests/mount-root';
+        $this->allowedRoot = config('Storage')->fileManagerRoot . '/tests/mount-root';
         if (!is_dir($this->allowedRoot)) {
             mkdir($this->allowedRoot, 0777, true);
         }

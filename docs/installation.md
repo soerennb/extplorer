@@ -6,104 +6,77 @@ eXtplorer 3 is a standalone web application designed for easy deployment.
 
 Ensure your server meets the following criteria:
 
-*   **OS:** Linux (Recommended), Windows, or macOS.
-*   **Web Server:** Apache or Nginx.
-*   **PHP:** Version **8.1** or higher.
-*   **PHP Extensions:**
-    *   `intl` (Required)
-    *   `mbstring`, `json`, `xml`, `curl`
-    *   `gd` (Required for thumbnails)
-    *   `zip` (Required for Archives)
-    *   `ftp` (Optional, for FTP mounts)
-    *   `ssh2` (Optional, for SFTP/SSH mounts)
-*   **Encryption key:** Set `encryption.key` in your `.env` file to store remote mount credentials securely.
+* **OS:** Linux (recommended), Windows, or macOS.
+* **Web Server:** Apache or Nginx.
+* **PHP:** Version **8.2** or higher.
+* **PHP Extensions:** `intl`, `mbstring`, `json`, `xml`, `curl`, `gd`, and `zip`.
+* **Optional Extensions:** `ftp` for FTP mounts and `ssh2` for SFTP mounts.
+* **Encryption key:** Set `EXTPLORER_ENCRYPTION_KEY_FILE` (recommended) or `EXTPLORER_ENCRYPTION_KEY` to store remote
+  mount credentials securely.
 
 ## 2. Installation Steps
 
-### Step 1: Download & Extract
-1.  Download the latest release (`.tar.gz` or `.zip`) from the [Releases Page](https://github.com/soerennb/extplorer/releases).
-2.  Extract the contents to your web server's document root (e.g., `/var/www/html/extplorer`).
+### Step 1: Download and extract
+
+Download the latest release (`.tar.gz` or `.zip`) from the [Releases Page](https://github.com/soerennb/extplorer/releases)
+and extract it to the document root (for example, `/var/www/html/extplorer`). Configure the web server document root as the
+application's `public/` directory.
 
 ### Step 2: Permissions
-The application requires write access to the `writable` directory and its subdirectories.
+
+The application requires write access to `writable/` and its subdirectories. Keep the code and writable data separate when
+possible:
 
 ```bash
 cd /path/to/extplorer
-chmod -R 0755 writable
 chown -R www-data:www-data writable
+find writable -type d -exec chmod 0750 {} \;
+find writable -type f -exec chmod 0640 {} \;
 ```
-*(Replace `www-data` with your web server's user)*
 
-### Step 3: Web Server Configuration
+Replace `www-data` with the web-server user used by the installation.
 
-See the [Configuration Guide](configuration.md) for detailed instructions on setting up Apache or Nginx.
+### Step 3: Migrate and initialize
+
+Run the versioned migration once from the application root. It converts legacy root-level JSON/PHP state into protected files
+below `writable/config/` and creates a backup below `writable/backups/` before removing a migrated legacy file:
+
+```bash
+php spark security:migrate
+```
+
+Migration errors return a non-zero exit code and must be fixed before serving the application.
 
 ## 3. Initial Admin Setup
 
-Depending on how you obtained eXtplorer 3, it may or may not come with a default administrator account.
+There are no built-in production credentials. On a fresh installation, provide the administrator password through a secret
+file and run the bootstrap command:
 
-*   **Default Credentials:** Try logging in with `admin` / `admin`. 
-*   **Manual Setup:** If the default credentials do not work, or if your `writable/users.json` file is empty (`[]`), you must manually create the initial administrator account using the script below.
-
-1.  Create a file named `setup_admin.php` in the root directory (next to `spark`).
-2.  Paste the following content into it:
-
-```php
-<?php
-// setup_admin.php
-// Run this via CLI: php setup_admin.php
-
-define('WRITEPATH', __DIR__ . '/writable/');
-
-// 1. Create Default Roles
-$roles = [
-    'admin' => ['*'], // Admin has ALL permissions
-    'user'  => ['read', 'write', 'upload', 'delete', 'rename', 'archive', 'extract']
-];
-
-if (!file_exists(WRITEPATH . 'roles.json')) {
-    file_put_contents(WRITEPATH . 'roles.json', json_encode($roles, JSON_PRETTY_PRINT));
-    echo "[OK] Created writable/roles.json\n";
-} else {
-    echo "[SKIP] writable/roles.json already exists\n";
-}
-
-// 2. Create Admin User
-$username = 'admin';
-$password = 'admin123'; // CHANGE THIS AFTER LOGIN
-
-$users = [
-    [
-        'username' => $username,
-        'password_hash' => password_hash($password, PASSWORD_DEFAULT),
-        'role' => 'admin',
-        'home_dir' => '/',
-        'groups' => [],
-        'allowed_extensions' => '',
-        'blocked_extensions' => '',
-        '2fa_enabled' => false
-    ]
-];
-
-if (!file_exists(WRITEPATH . 'users.json') || filesize(WRITEPATH . 'users.json') < 5) {
-    file_put_contents(WRITEPATH . 'users.json', json_encode($users, JSON_PRETTY_PRINT));
-    echo "[OK] Created writable/users.json\n";
-    echo "------------------------------------------------\n";
-    echo "User: $username\n";
-    echo "Pass: $password\n";
-    echo "------------------------------------------------\n";
-} else {
-    echo "[SKIP] writable/users.json already contains data\n";
-}
+```bash
+umask 077
+printf '%s\n' 'choose-a-long-password' > /run/secrets/extplorer-admin-password
+EXTPLORER_ADMIN_PASSWORD_FILE=/run/secrets/extplorer-admin-password php spark admin:bootstrap
 ```
 
-3.  Run the script via CLI:
-    ```bash
-    php setup_admin.php
-    ```
-4.  **Delete the script** immediately after use.
+`EXTPLORER_ADMIN_PASS` is accepted for compatibility but should not be used in production. The bootstrap is idempotent: an
+existing administrator password is not overwritten on redeploy. For an intentional reset, use the one-shot environment flag
+or the CLI command, which never takes the password as a process argument:
+
+```bash
+EXTPLORER_ADMIN_PASSWORD_FILE=/run/secrets/extplorer-admin-password \
+EXTPLORER_ADMIN_RESET_PASSWORD=1 php spark admin:bootstrap
+php spark admin:reset-password admin --password-file /run/secrets/extplorer-admin-password
+```
+
+Remove one-shot reset variables after the operation. A missing secret or a persistent user store without an administrator is a
+startup error, not a reason to silently create a default account.
 
 ## 4. Verification
-1.  Open your browser and navigate to your installation (e.g., `http://localhost/extplorer`).
-2.  Login with `admin` / `admin123`.
-3.  **Immediately change your password** in the Profile section.
+
+1. Open the configured HTTPS URL.
+2. Log in with the administrator credentials supplied during bootstrap.
+3. Enable 2FA and verify the backup/recovery procedure.
+4. Confirm that `writable/config/`, `writable/logs/` and `writable/file_manager_root/` are backed up according to your
+   recovery policy.
+
+See the [Configuration Guide](configuration.md) for web-server settings and Docker/Dokploy deployment details.

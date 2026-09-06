@@ -63,6 +63,10 @@ writable/cache/dav/*
 writable/logs/*
 !writable/logs/index.html
 
+writable/config/*
+writable/runtime/*
+writable/backups/*
+
 writable/session/*
 !writable/session/index.html
 
@@ -172,6 +176,7 @@ writable/groups.php
 writable/roles.json
 writable/roles.php
 writable/settings.php
+writable/remember_tokens.php
 composer.phar
 temp_ci4/
 
