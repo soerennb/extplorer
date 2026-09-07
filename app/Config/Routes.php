@@ -27,43 +27,43 @@ $routes->get('s/(:segment)/ls', 'ShareController::ls/$1');
 $routes->post('s/(:segment)/upload', 'ShareController::upload/$1');
 
 $routes->group('api', function($routes) {
-    $routes->get('ls', 'ApiController::ls');
-    $routes->get('content', 'ApiController::content');
-    $routes->post('save', 'ApiController::save');
-    $routes->post('rm', 'ApiController::rm');
-    $routes->post('mkdir', 'ApiController::mkdir');
-    $routes->post('mv', 'ApiController::mv');
-    $routes->post('cp', 'ApiController::cp');
-    $routes->post('upload', 'ApiController::upload');
-    $routes->post('upload_chunk', 'ApiController::uploadChunk');
-    $routes->post('upload/session', 'ApiController::uploadSessionCreate');
-    $routes->put('upload/session/(:segment)/chunk/(:num)', 'ApiController::uploadSessionChunk/$1/$2');
-    $routes->post('upload/session/(:segment)/complete', 'ApiController::uploadSessionComplete/$1');
-    $routes->delete('upload/session/(:segment)', 'ApiController::uploadSessionAbort/$1');
-    $routes->get('download', 'ApiController::download');
-    $routes->get('thumb', 'ApiController::thumb');
-    $routes->get('search', 'ApiController::search');
-    $routes->get('dirsize', 'ApiController::dirsize');
-    $routes->post('archive', 'ApiController::archive');
-    $routes->post('extract', 'ApiController::extract');
-    $routes->post('chmod', 'ApiController::chmod');
-    $routes->post('chown', 'ApiController::chown');
+    $routes->get('ls', 'ApiFileController::ls');
+    $routes->get('content', 'ApiFileController::content');
+    $routes->post('save', 'ApiFileController::save');
+    $routes->post('rm', 'ApiFileController::rm');
+    $routes->post('mkdir', 'ApiFileController::mkdir');
+    $routes->post('mv', 'ApiFileController::mv');
+    $routes->post('cp', 'ApiFileController::cp');
+    $routes->post('upload', 'ApiTransferController::upload');
+    $routes->post('upload_chunk', 'ApiTransferController::uploadChunk');
+    $routes->post('upload/session', 'ApiTransferController::uploadSessionCreate');
+    $routes->put('upload/session/(:segment)/chunk/(:num)', 'ApiTransferController::uploadSessionChunk/$1/$2');
+    $routes->post('upload/session/(:segment)/complete', 'ApiTransferController::uploadSessionComplete/$1');
+    $routes->delete('upload/session/(:segment)', 'ApiTransferController::uploadSessionAbort/$1');
+    $routes->get('download', 'ApiDownloadController::download');
+    $routes->get('thumb', 'ApiDownloadController::thumb');
+    $routes->get('search', 'ApiDownloadController::search');
+    $routes->get('dirsize', 'ApiDownloadController::dirsize');
+    $routes->post('archive', 'ApiDownloadController::archive');
+    $routes->post('extract', 'ApiDownloadController::extract');
+    $routes->post('chmod', 'ApiDownloadController::chmod');
+    $routes->post('chown', 'ApiFileController::chown');
 
     // Share Management
-    $routes->post('share/create', 'ApiController::shareCreate');
-    $routes->post('share/delete', 'ApiController::shareDelete');
-    $routes->get('share/list', 'ApiController::shareList');
-    $routes->get('share/policy', 'ApiController::sharePolicy');
+    $routes->post('share/create', 'ApiShareController::shareCreate');
+    $routes->post('share/delete', 'ApiShareController::shareDelete');
+    $routes->get('share/list', 'ApiShareController::shareList');
+    $routes->get('share/policy', 'ApiShareController::sharePolicy');
 
     // Trash
-    $routes->get('trash/list', 'ApiController::trashList');
-    $routes->post('trash/restore', 'ApiController::trashRestore');
-    $routes->post('trash/delete', 'ApiController::trashDelete');
-    $routes->post('trash/empty', 'ApiController::trashEmpty');
+    $routes->get('trash/list', 'ApiFileController::trashList');
+    $routes->post('trash/restore', 'ApiFileController::trashRestore');
+    $routes->post('trash/delete', 'ApiFileController::trashDelete');
+    $routes->post('trash/empty', 'ApiFileController::trashEmpty');
 
     // Versions
-    $routes->get('versions/list', 'ApiController::versionList');
-    $routes->post('versions/restore', 'ApiController::versionRestore');
+    $routes->get('versions/list', 'ApiFileController::versionList');
+    $routes->post('versions/restore', 'ApiFileController::versionRestore');
 
     // Mounts
     $routes->get('mounts', 'MountController::index');

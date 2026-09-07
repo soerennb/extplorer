@@ -1,9 +1,10 @@
 services:
-  init:
+  extplorer-init:
     image: ${EXTPLORER_IMAGE_REF:-ghcr.io/soerennb/extplorer3:latest}
     pull_policy: always
     entrypoint: ["/usr/local/bin/init-code"]
     restart: "no"
+    user: "0:0"
     environment:
       EXTPLORER_CODE_FORCE: ${EXTPLORER_CODE_FORCE:-0}
       EXTPLORER_FIX_PERMISSIONS: ${EXTPLORER_FIX_PERMISSIONS:-0}
@@ -13,18 +14,46 @@ services:
     networks:
       - extplorer-net
 
-  app:
+  extplorer-app:
     image: ${EXTPLORER_IMAGE_REF:-ghcr.io/soerennb/extplorer3:latest}
     pull_policy: always
     restart: unless-stopped
+    user: "82:82"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
     volumes:
       - extplorer_code:/var/www/html:ro
       - extplorer_writable:/var/www/html/writable
     environment:
       CI_ENVIRONMENT: production
       EXTPLORER_WRITE_PATH: /var/www/html/writable
+      PHP_INI_SCAN_DIR: /usr/local/etc/php/conf.d
       EXTPLORER_BASE_URL: ${EXTPLORER_BASE_URL:-}
       EXTPLORER_FILE_MANAGER_ROOT: ${EXTPLORER_FILE_MANAGER_ROOT:-}
+      EXTPLORER_STATE_DRIVER: ${EXTPLORER_STATE_DRIVER:-file}
+      EXTPLORER_SESSION_DRIVER: ${EXTPLORER_SESSION_DRIVER:-file}
+      EXTPLORER_CACHE_DRIVER: ${EXTPLORER_CACHE_DRIVER:-file}
+      EXTPLORER_CACHE_PREFIX: ${EXTPLORER_CACHE_PREFIX:-extplorer_}
+      EXTPLORER_DB_DRIVER: ${EXTPLORER_DB_DRIVER:-}
+      EXTPLORER_DB_HOST: ${EXTPLORER_DB_HOST:-}
+      EXTPLORER_DB_PORT: ${EXTPLORER_DB_PORT:-}
+      EXTPLORER_DB_NAME: ${EXTPLORER_DB_NAME:-}
+      EXTPLORER_DB_USER: ${EXTPLORER_DB_USER:-}
+      EXTPLORER_DB_PASSWORD_FILE: ${EXTPLORER_DB_PASSWORD_FILE:-}
+      EXTPLORER_DB_PASSWORD: ${EXTPLORER_DB_PASSWORD:-}
+      EXTPLORER_DB_PREFIX: ${EXTPLORER_DB_PREFIX:-}
+      EXTPLORER_SESSION_TABLE: ${EXTPLORER_SESSION_TABLE:-ci_sessions}
+      EXTPLORER_REDIS_URL: ${EXTPLORER_REDIS_URL:-}
+      EXTPLORER_REDIS_HOST: ${EXTPLORER_REDIS_HOST:-}
+      EXTPLORER_REDIS_PORT: ${EXTPLORER_REDIS_PORT:-6379}
+      EXTPLORER_REDIS_PASSWORD_FILE: ${EXTPLORER_REDIS_PASSWORD_FILE:-}
+      EXTPLORER_REDIS_PASSWORD: ${EXTPLORER_REDIS_PASSWORD:-}
+      EXTPLORER_REDIS_DATABASE: ${EXTPLORER_REDIS_DATABASE:-0}
 
       # Admin bootstrap is only used when the persistent user store is empty.
       EXTPLORER_ADMIN_USER: ${EXTPLORER_ADMIN_USER:-admin}
@@ -33,6 +62,13 @@ services:
       EXTPLORER_ADMIN_RESET_PASSWORD: ${EXTPLORER_ADMIN_RESET_PASSWORD:-0}
 
       EXTPLORER_UPLOAD_MAX_FILE_MB: ${EXTPLORER_UPLOAD_MAX_FILE_MB:-100}
+      EXTPLORER_MAX_DOWNLOAD_MB: ${EXTPLORER_MAX_DOWNLOAD_MB:-2048}
+      EXTPLORER_ARCHIVE_MAX_ENTRIES: ${EXTPLORER_ARCHIVE_MAX_ENTRIES:-100000}
+      EXTPLORER_ARCHIVE_MAX_EXPANDED_MB: ${EXTPLORER_ARCHIVE_MAX_EXPANDED_MB:-2048}
+      EXTPLORER_ARCHIVE_MAX_RATIO: ${EXTPLORER_ARCHIVE_MAX_RATIO:-200}
+      EXTPLORER_IMAGE_MAX_MB: ${EXTPLORER_IMAGE_MAX_MB:-25}
+      EXTPLORER_IMAGE_MAX_PIXELS: ${EXTPLORER_IMAGE_MAX_PIXELS:-40000000}
+      EXTPLORER_BACKUP_MAX_MB: ${EXTPLORER_BACKUP_MAX_MB:-102400}
       EXTPLORER_MEMORY_LIMIT: ${EXTPLORER_MEMORY_LIMIT:-256M}
       EXTPLORER_MAX_EXECUTION_TIME: ${EXTPLORER_MAX_EXECUTION_TIME:-120}
       EXTPLORER_MAX_INPUT_TIME: ${EXTPLORER_MAX_INPUT_TIME:-120}
@@ -59,25 +95,43 @@ services:
     networks:
       - extplorer-net
     depends_on:
-      init:
+      extplorer-init:
         condition: service_completed_successfully
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "test -f /tmp/extplorer-ready && php -r '$$fp=@fsockopen(\"127.0.0.1\",9000); if($$fp){fclose($$fp); exit(0);} exit(1);'",
+          "php /var/www/html/current/spark system:readiness >/dev/null && php -r '$$fp=@fsockopen(\"127.0.0.1\",9000); if($$fp){fclose($$fp); exit(0);} exit(1);'",
         ]
       interval: 10s
       timeout: 5s
       retries: 6
       start_period: 10s
 
-  web:
+  extplorer-web:
     image: nginx:1.31.3-alpine3.24
     restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - NET_BIND_SERVICE
+    tmpfs:
+      - /etc/nginx/conf.d
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
     ports:
       - "${EXTPLORER_HTTP_PORT:-8080}:80"
-    entrypoint: ["/usr/local/bin/extplorer-nginx-entrypoint"]
+    # The script is bind-mounted from the host. Invoke it through /bin/sh so
+    # clean checkouts and filesystems that do not preserve executable bits do
+    # not make the web service fail before nginx can validate its config.
+    entrypoint: ["/bin/sh", "/usr/local/bin/extplorer-nginx-entrypoint"]
     environment:
       EXTPLORER_UPLOAD_MAX_FILE_MB: ${EXTPLORER_UPLOAD_MAX_FILE_MB:-100}
     mem_limit: ${EXTPLORER_WEB_MEMORY_LIMIT:-128m}
@@ -87,7 +141,7 @@ services:
       - ./docker/nginx/entrypoint.sh:/usr/local/bin/extplorer-nginx-entrypoint:ro
       - extplorer_code:/var/www/html:ro
     depends_on:
-      app:
+      extplorer-app:
         condition: service_healthy
     networks:
       - extplorer-net
@@ -97,11 +151,19 @@ services:
       timeout: 5s
       retries: 6
 
-  cleanup:
+  extplorer-cleanup:
     image: ${EXTPLORER_IMAGE_REF:-ghcr.io/soerennb/extplorer3:latest}
     pull_policy: always
     profiles: ["worker"]
     restart: unless-stopped
+    user: "82:82"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
     entrypoint: ["php"]
     command: ["/var/www/html/current/spark", "shares:cleanup"]
     volumes:
@@ -110,11 +172,28 @@ services:
     environment:
       CI_ENVIRONMENT: production
       EXTPLORER_WRITE_PATH: /var/www/html/writable
+      EXTPLORER_STATE_DRIVER: ${EXTPLORER_STATE_DRIVER:-file}
+      EXTPLORER_CACHE_DRIVER: ${EXTPLORER_CACHE_DRIVER:-file}
+      EXTPLORER_CACHE_PREFIX: ${EXTPLORER_CACHE_PREFIX:-extplorer_}
+      EXTPLORER_DB_DRIVER: ${EXTPLORER_DB_DRIVER:-}
+      EXTPLORER_DB_HOST: ${EXTPLORER_DB_HOST:-}
+      EXTPLORER_DB_PORT: ${EXTPLORER_DB_PORT:-}
+      EXTPLORER_DB_NAME: ${EXTPLORER_DB_NAME:-}
+      EXTPLORER_DB_USER: ${EXTPLORER_DB_USER:-}
+      EXTPLORER_DB_PASSWORD_FILE: ${EXTPLORER_DB_PASSWORD_FILE:-}
+      EXTPLORER_DB_PASSWORD: ${EXTPLORER_DB_PASSWORD:-}
+      EXTPLORER_DB_PREFIX: ${EXTPLORER_DB_PREFIX:-}
+      EXTPLORER_REDIS_URL: ${EXTPLORER_REDIS_URL:-}
+      EXTPLORER_REDIS_HOST: ${EXTPLORER_REDIS_HOST:-}
+      EXTPLORER_REDIS_PORT: ${EXTPLORER_REDIS_PORT:-6379}
+      EXTPLORER_REDIS_PASSWORD_FILE: ${EXTPLORER_REDIS_PASSWORD_FILE:-}
+      EXTPLORER_REDIS_PASSWORD: ${EXTPLORER_REDIS_PASSWORD:-}
+      EXTPLORER_REDIS_DATABASE: ${EXTPLORER_REDIS_DATABASE:-0}
       EXTPLORER_ENCRYPTION_KEY: ${EXTPLORER_ENCRYPTION_KEY:-}
       EXTPLORER_ENCRYPTION_KEY_FILE: ${EXTPLORER_ENCRYPTION_KEY_FILE:-}
       EXTPLORER_REMOTE_SECURITY_MODE: ${EXTPLORER_REMOTE_SECURITY_MODE:-compat}
     depends_on:
-      init:
+      extplorer-init:
         condition: service_completed_successfully
     networks:
       - extplorer-net

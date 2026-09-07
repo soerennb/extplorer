@@ -1,5 +1,5 @@
 services:
-  web:
+  extplorer-web:
     # Dokploy/Traefik is the ingress; do not publish a host port here.
     ports: !override []
     networks:

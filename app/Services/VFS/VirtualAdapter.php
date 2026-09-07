@@ -97,6 +97,13 @@ class VirtualAdapter implements IFileSystem
         return $adapter->readFile($relPath);
     }
 
+    public function openReadStream(string $path)
+    {
+        [$adapter, $relPath] = $this->resolveMount($path);
+        if (!$adapter) throw new Exception("Path not found: {$path}");
+        return $adapter->openReadStream($relPath);
+    }
+
     public function writeFile(string $path, string $content): bool
     {
         [$adapter, $relPath] = $this->resolveMount($path);

@@ -72,11 +72,11 @@ function buildRootRender(viewName, marker, outputName, globalName) {
     const openEnd = view.indexOf('>', start);
     const scriptStart = view.indexOf('\n    <?php if (!$is_file): ?>', openEnd);
     const end = scriptStart >= 0 ? scriptStart : view.indexOf('\n    <script', openEnd);
-    if (openEnd < 0 || end < 0) {
+    if (openEnd < 0) {
         throw new Error(`${viewName}: root boundary not found`);
     }
 
-    const body = view.slice(openEnd + 1, end);
+    const body = view.slice(openEnd + 1, end >= 0 ? end : view.length);
     const closing = body.lastIndexOf('\n    </div>');
     if (closing < 0) {
         throw new Error(`${viewName}: root closing element not found`);
@@ -87,8 +87,8 @@ function buildRootRender(viewName, marker, outputName, globalName) {
 }
 
 buildComponents();
-buildRootRender('app.php', '<div id="app" v-cloak data-testid="app-shell">', 'app-render.js', 'appTemplateRender');
-buildRootRender('shared.php', '<div id="app" class="shared-container">', 'shared-render.js', 'sharedAppTemplateRender');
+buildRootRender('app_template.php', '<div id="app" v-cloak data-testid="app-shell">', 'app-render.js', 'appTemplateRender');
+buildRootRender('shared_template.php', '<div id="app" class="shared-container">', 'shared-render.js', 'sharedAppTemplateRender');
 
 const runtimeSource = require.resolve('vue/dist/vue.runtime.global.prod.js');
 write(

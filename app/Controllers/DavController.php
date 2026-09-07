@@ -31,7 +31,7 @@ class DavController extends BaseController
 
         // 1. Security Check: Rate Limiting
         $throttler = \Config\Services::throttler();
-        if ($throttler->check('dav-' . $this->request->getIPAddress(), 120, MINUTE) === false) {
+        if ($throttler->check('dav-' . hash('sha256', $this->request->getIPAddress()), 120, MINUTE) === false) {
             header('HTTP/1.1 429 Too Many Requests');
             echo 'Too many requests. Please slow down.';
             exit;

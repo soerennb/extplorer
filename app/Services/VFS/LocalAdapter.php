@@ -2,6 +2,7 @@
 
 namespace App\Services\VFS;
 
+use App\Services\ResourcePolicy;
 use Exception;
 use ZipArchive;
 use PharData;
@@ -9,9 +10,13 @@ use PharData;
 class LocalAdapter implements IFileSystem
 {
     private string $rootPath;
+    private ResourcePolicy $resourcePolicy;
+    private int $archiveEntries = 0;
+    private int $archiveBytes = 0;
 
-    public function __construct(string $rootPath)
+    public function __construct(string $rootPath, ?ResourcePolicy $resourcePolicy = null)
     {
+        $this->resourcePolicy = $resourcePolicy ?? new ResourcePolicy();
         // Normalize WSL paths on Windows
         if (DIRECTORY_SEPARATOR === '\\' && preg_match('|^/mnt/([a-z])/(.*)|i', $rootPath, $matches)) {
             $rootPath = strtoupper($matches[1]) . ':/' . $matches[2];
@@ -77,6 +82,16 @@ class LocalAdapter implements IFileSystem
         }
 
         return $content;
+    }
+
+    public function openReadStream(string $path)
+    {
+        $stream = fopen($this->resolvePath($path), 'rb');
+        if ($stream === false) {
+            throw new Exception("Unable to open file: {$path}");
+        }
+
+        return $stream;
     }
 
     public function writeFile(string $path, string $content): bool
@@ -227,6 +242,8 @@ class LocalAdapter implements IFileSystem
 
     public function archive(array $sources, string $destination): bool
     {
+        $this->archiveEntries = 0;
+        $this->archiveBytes = 0;
         $fullDest = $this->resolvePath($destination);
         $ext = strtolower(pathinfo($fullDest, PATHINFO_EXTENSION));
         
@@ -243,7 +260,12 @@ class LocalAdapter implements IFileSystem
                 $fullSource = $this->resolvePath($source);
                 $baseName = basename($fullSource);
                 if (is_dir($fullSource)) $this->addDirToZip($zip, $fullSource, $baseName);
-                else $zip->addFile($fullSource, $baseName);
+                else {
+                    $this->reserveArchive(is_file($fullSource) ? (int)filesize($fullSource) : 0);
+                    if (!$zip->addFile($fullSource, $baseName)) {
+                        throw new Exception("Unable to add archive source: {$source}");
+                    }
+                }
             }
             return $zip->close();
         } else if ($ext === 'tar' || $ext === 'tar.gz') {
@@ -252,8 +274,13 @@ class LocalAdapter implements IFileSystem
             $phar = new PharData($archiveName);
             foreach ($sources as $source) {
                 $fullSource = $this->resolvePath($source);
-                if (is_dir($fullSource)) $phar->buildFromDirectory($fullSource);
-                else $phar->addFile($fullSource, basename($fullSource));
+                if (is_dir($fullSource)) {
+                    $this->reserveTree($fullSource);
+                    $phar->buildFromDirectory($fullSource);
+                } else {
+                    $this->reserveArchive((int)(filesize($fullSource) ?: 0));
+                    $phar->addFile($fullSource, basename($fullSource));
+                }
             }
             if ($ext === 'tar.gz') {
                 $phar->compress(\Phar::GZ);
@@ -264,8 +291,9 @@ class LocalAdapter implements IFileSystem
         throw new Exception("Unsupported archive format: $ext");
     }
 
-    private function addDirToZip(ZipArchive $zip, string $dir, string $localPath) 
+    private function addDirToZip(ZipArchive $zip, string $dir, string $localPath)
     {
+        $this->reserveArchive();
         $zip->addEmptyDir($localPath);
         $files = scandir($dir);
         foreach ($files as $file) {
@@ -278,8 +306,35 @@ class LocalAdapter implements IFileSystem
             if (is_dir($fullPath)) {
                 $this->addDirToZip($zip, $fullPath, $newLocalPath);
             } else {
-                $zip->addFile($fullPath, $newLocalPath);
+                $this->reserveArchive((int)(filesize($fullPath) ?: 0));
+                if (!$zip->addFile($fullPath, $newLocalPath)) {
+                    throw new Exception("Unable to add archive source: {$fullPath}");
+                }
             }
+        }
+    }
+
+    private function reserveArchive(int $bytes = 0): void
+    {
+        $this->archiveEntries++;
+        $this->archiveBytes += max(0, $bytes);
+        if ($this->archiveEntries > $this->resourcePolicy->maxArchiveEntries()
+            || $this->archiveBytes > $this->resourcePolicy->maxArchiveBytes()) {
+            throw new Exception('Archive exceeds the configured safety limits.');
+        }
+    }
+
+    private function reserveTree(string $directory): void
+    {
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+        foreach ($iterator as $item) {
+            if ($item->isLink()) {
+                throw new Exception('Refusing to archive symbolic links.');
+            }
+            $this->reserveArchive($item->isFile() ? (int)($item->getSize() ?: 0) : 0);
         }
     }
 
@@ -296,12 +351,22 @@ class LocalAdapter implements IFileSystem
         if ($ext === 'zip') {
             $zip = new ZipArchive();
             if ($zip->open($fullArchive) === true) {
+                $expanded = 0;
                 for ($i = 0; $i < $zip->numFiles; $i++) {
                     $entryName = (string)$zip->getNameIndex($i);
                     $this->assertSafeArchiveEntryPath($entryName);
                     $this->buildSafeExtractionPath($fullDest, $entryName);
                     if ($this->isZipEntrySymlink($zip, $i)) {
                         throw new Exception('Archive contains symbolic link entries.');
+                    }
+                    $stat = $zip->statIndex($i);
+                    $size = max(0, (int)($stat['size'] ?? 0));
+                    $compressed = max(0, (int)($stat['comp_size'] ?? 0));
+                    $expanded += $size;
+                    if ($i + 1 > $this->resourcePolicy->maxArchiveEntries()
+                        || $expanded > $this->resourcePolicy->maxArchiveBytes()
+                        || ($compressed > 0 && $size > $compressed * $this->resourcePolicy->maxArchiveRatio())) {
+                        throw new Exception('Archive exceeds the configured safety limits.');
                     }
                 }
 
@@ -321,12 +386,19 @@ class LocalAdapter implements IFileSystem
     {
         $iterator = new \RecursiveIteratorIterator($phar, \RecursiveIteratorIterator::SELF_FIRST);
 
+        $entries = 0;
+        $expanded = 0;
         foreach ($iterator as $internalPath => $entry) {
             if (!$entry instanceof \PharFileInfo) {
                 continue;
             }
 
             $entryPath = (string)$internalPath;
+            $entries++;
+            $expanded += max(0, (int)$entry->getSize());
+            if ($entries > $this->resourcePolicy->maxArchiveEntries() || $expanded > $this->resourcePolicy->maxArchiveBytes()) {
+                throw new Exception('Archive exceeds the configured safety limits.');
+            }
             $this->assertSafeArchiveEntryPath($entryPath);
             $targetPath = $this->buildSafeExtractionPath($destination, $entryPath);
 

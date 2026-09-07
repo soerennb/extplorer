@@ -48,7 +48,7 @@ class Login extends BaseController
     {
         $loginMessages = $this->loginTranslations($this->preferredLoginLocale());
         $throttler = \Config\Services::throttler();
-        $ipKey = 'login:ip:' . hash('sha256', $this->request->getIPAddress());
+        $ipKey = 'login_ip_' . hash('sha256', $this->request->getIPAddress());
         if ($throttler->check($ipKey, 5, 60) === false) {
             return redirect()->back()->with('error', $loginMessages['login_too_many_attempts']);
         }
@@ -61,7 +61,7 @@ class Login extends BaseController
 
         $usernameKey = trim((string)$username);
         if ($usernameKey !== '') {
-            $userKey = 'login:user:' . hash('sha256', strtolower($usernameKey));
+            $userKey = 'login_user_' . hash('sha256', strtolower($usernameKey));
             if ($throttler->check($userKey, 5, 300) === false) {
                 return redirect()->back()->with('error', $loginMessages['login_too_many_attempts']);
             }

@@ -28,6 +28,11 @@ final class DeniedFileSystem implements IFileSystem
         return $this->deny();
     }
 
+    public function openReadStream(string $path)
+    {
+        return $this->deny();
+    }
+
     public function writeFile(string $path, string $content): bool
     {
         return $this->deny();

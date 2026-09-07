@@ -31,7 +31,7 @@ jobs:
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
         with:
           php-version: ${{ matrix.php }}
-          extensions: curl, dom, gd, intl, mbstring, xml, zip
+          extensions: curl, dom, gd, intl, mbstring, sqlite3, xml, zip
           tools: composer:2.10.2
           coverage: none
 
@@ -42,6 +42,7 @@ jobs:
         run: composer install --no-interaction --prefer-dist
 
       - name: Audit dependencies
+        if: matrix.php == '8.2'
         run: composer audit
 
       - name: Check PHP syntax
@@ -50,6 +51,132 @@ jobs:
 
       - name: Run tests
         run: composer test
+
+      - name: Verify native storage backend
+        if: matrix.php == '8.2'
+        run: |
+          native_write_path="$(mktemp -d)"
+          mkdir -p "$native_write_path/file" "$native_write_path/sqlite"
+          EXTPLORER_WRITE_PATH="$native_write_path/file" php spark storage:check
+          EXTPLORER_WRITE_PATH="$native_write_path/sqlite" EXTPLORER_STATE_DRIVER=sqlite php spark security:migrate
+          EXTPLORER_WRITE_PATH="$native_write_path/sqlite" EXTPLORER_STATE_DRIVER=sqlite php spark storage:check
+
+  storage-matrix:
+    name: Storage integration (${{ matrix.backend }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [mysql, postgres, redis]
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: extplorer
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: extplorer
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d extplorer"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.2"
+          extensions: curl, dom, gd, intl, mbstring, mysqli, pdo_mysql, pdo_pgsql, pgsql, redis, sqlite3, xml, zip
+          tools: composer:2.10.2
+          coverage: none
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Verify selected backend
+        env:
+          EXTPLORER_WRITE_PATH: ${{ runner.temp }}/extplorer-writable
+          EXTPLORER_DB_HOST: 127.0.0.1
+          EXTPLORER_DB_NAME: extplorer
+          EXTPLORER_DB_USER: ${{ matrix.backend == 'mysql' && 'root' || 'postgres' }}
+          EXTPLORER_DB_PASSWORD: ${{ matrix.backend == 'mysql' && 'root' || 'postgres' }}
+          EXTPLORER_REDIS_HOST: 127.0.0.1
+          EXTPLORER_REDIS_PORT: 6379
+        run: |
+          mkdir -p "$EXTPLORER_WRITE_PATH"
+          if [ "${{ matrix.backend }}" = "mysql" ]; then
+            export EXTPLORER_DB_DRIVER=MySQLi
+            export EXTPLORER_STATE_DRIVER=database
+            export EXTPLORER_SESSION_DRIVER=database
+            export EXTPLORER_CACHE_DRIVER=file
+          elif [ "${{ matrix.backend }}" = "postgres" ]; then
+            export EXTPLORER_DB_DRIVER=Postgre
+            export EXTPLORER_STATE_DRIVER=database
+            export EXTPLORER_SESSION_DRIVER=database
+            export EXTPLORER_CACHE_DRIVER=file
+          else
+            export EXTPLORER_STATE_DRIVER=file
+            export EXTPLORER_SESSION_DRIVER=redis
+            export EXTPLORER_CACHE_DRIVER=redis
+          fi
+          php spark security:migrate
+          php spark storage:check
+
+  frontend:
+    name: Frontend build and CSP source checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high
+
+      - name: Compile Vue templates
+        run: npm run build:js
+
+      - name: Verify generated frontend assets
+        run: git diff --exit-code -- public/assets/js/compiled public/assets/js/vue.runtime.global.prod.js
+
+      - name: Reject unsafe inline CSP regressions
+        run: |
+          ! rg -n '<script(?![^>]*(?:nonce=|csp_script_nonce\(\)))(?![^>]*src=)|<style(?![^>]*(?:nonce=|csp_style_nonce\(\)))' app/Views --pcre2
+          ! rg -n '\s(on[a-z]+|style)=' app/Views --pcre2
 
   i18n:
     name: Translations
@@ -98,6 +225,12 @@ jobs:
       - name: Ensure Ace assets
         run: bash ./scripts/ensure-ace-assets.sh
 
+      - name: Validate Docker entrypoints
+        run: |
+          test -r docker/nginx/entrypoint.sh
+          test -x docker/nginx/entrypoint.sh
+          test "$(git ls-files -s docker/nginx/entrypoint.sh | cut -d' ' -f1)" = 100755
+
       - name: Build image
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
@@ -109,6 +242,15 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Scan image for high and critical vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: extplorer3:e2e
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+
       - name: Install E2E dependencies
         run: |
           npm ci
@@ -117,6 +259,16 @@ jobs:
 
       - name: Start E2E stack
         run: docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml up --detach --wait --wait-timeout 120
+
+      - name: Verify atomic code release rollback
+        run: |
+          initial_release="$(docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app readlink /var/www/html/current | sed 's#^.releases/##')"
+          docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml run --rm -e EXTPLORER_CODE_FORCE=1 extplorer-init
+          updated_release="$(docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app readlink /var/www/html/current | sed 's#^.releases/##')"
+          test "$updated_release" != "$initial_release"
+          docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml run --rm extplorer-init --rollback "$initial_release"
+          test "$(docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app readlink /var/www/html/current | sed 's#^.releases/##')" = "$initial_release"
+          docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app php /var/www/html/current/spark system:readiness
 
       - name: Run Chromium smoke tests
         run: npm run e2e

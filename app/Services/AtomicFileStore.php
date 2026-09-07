@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Services\State\StateBackendFactory;
+use App\Services\State\StateBackendInterface;
 use JsonException;
 use RuntimeException;
 
@@ -12,8 +14,16 @@ final class AtomicFileStore
 {
     private const HEADER = '<?php die("Access denied"); ?>';
 
+    private static ?StateBackendInterface $backend = null;
+    private static ?string $backendDriver = null;
+
     public static function read(string $path, array $default = []): array
     {
+        $backend = self::backend($path);
+        if ($backend !== null) {
+            return $backend->read($path, $default);
+        }
+
         if (!is_file($path)) {
             return $default;
         }
@@ -81,6 +91,12 @@ final class AtomicFileStore
 
     public static function write(string $path, array $data): void
     {
+        $backend = self::backend($path);
+        if ($backend !== null) {
+            $backend->write($path, $data);
+            return;
+        }
+
         $directory = dirname($path);
         if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
             throw new RuntimeException("Unable to create state directory: {$directory}");
@@ -123,6 +139,11 @@ final class AtomicFileStore
      */
     public static function transaction(string $path, callable $callback, array $default = []): mixed
     {
+        $backend = self::backend($path);
+        if ($backend !== null) {
+            return $backend->transaction($path, $callback, $default);
+        }
+
         $directory = dirname($path);
         if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
             throw new RuntimeException("Unable to create state directory: {$directory}");
@@ -150,6 +171,35 @@ final class AtomicFileStore
         } finally {
             fclose($lock);
         }
+    }
+
+    public static function exists(string $path): bool
+    {
+        $backend = self::backend($path);
+        return $backend === null ? is_file($path) : $backend->exists($path);
+    }
+
+    public static function verifyBackend(): void
+    {
+        $backend = self::backend(config('Storage')->state . '/backend-check.php');
+        if ($backend !== null) {
+            $backend->verify();
+        }
+    }
+
+    private static function backend(string $path): ?StateBackendInterface
+    {
+        $driver = strtolower(trim((string)(getenv('EXTPLORER_STATE_DRIVER') ?: 'file')));
+        if ($driver === 'file') {
+            return null;
+        }
+
+        if (self::$backend === null || self::$backendDriver !== $driver) {
+            self::$backend = StateBackendFactory::create($driver);
+            self::$backendDriver = $driver;
+        }
+
+        return self::$backend;
     }
 
     public static function copyLegacy(string $source, string $target): void

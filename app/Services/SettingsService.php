@@ -16,7 +16,7 @@ class SettingsService
      */
     public function getSettings(): array
     {
-        if (!file_exists($this->settingsFile)) {
+        if (!AtomicFileStore::exists($this->settingsFile)) {
             return $this->getDefaultSettings();
         }
 

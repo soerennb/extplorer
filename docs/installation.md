@@ -10,7 +10,8 @@ Ensure your server meets the following criteria:
 * **Web Server:** Apache or Nginx.
 * **PHP:** Version **8.2** or higher.
 * **PHP Extensions:** `intl`, `mbstring`, `json`, `xml`, `curl`, `gd`, and `zip`.
-* **Optional Extensions:** `ftp` for FTP mounts and `ssh2` for SFTP mounts.
+* **Optional Extensions:** `ftp` for FTP mounts, `ssh2` for SFTP mounts, and
+  `sqlite3`, `mysqli` or `pgsql` when using the corresponding database backend.
 * **Encryption key:** Set `EXTPLORER_ENCRYPTION_KEY_FILE` (recommended) or `EXTPLORER_ENCRYPTION_KEY` to store remote
   mount credentials securely.
 

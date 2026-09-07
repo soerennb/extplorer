@@ -1,6 +1,10 @@
 name: Security audit
 
 on:
+  pull_request:
+  push:
+    branches:
+      - main
   schedule:
     - cron: "17 4 * * 1"
   workflow_dispatch:
@@ -33,3 +37,59 @@ jobs:
 
       - name: Audit locked dependencies
         run: composer audit --locked --no-interaction
+
+  frontend:
+    name: NPM advisories and generated assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Audit locked dependencies
+        run: npm audit --audit-level=high
+
+      - name: Verify frontend compilation
+        run: |
+          npm run build:js
+          git diff --exit-code -- public/assets/js/compiled public/assets/js/vue.runtime.global.prod.js
+
+  container:
+    name: Container vulnerability scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Build image for scanning
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: extplorer3:security
+          build-args: APP_VERSION=security
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan image for high and critical vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: extplorer3:security
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH

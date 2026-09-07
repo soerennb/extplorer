@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Services\SecretReader;
 use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\Cache\Handlers\DummyHandler;
 use CodeIgniter\Cache\Handlers\FileHandler;
@@ -159,4 +160,41 @@ class Cache extends BaseConfig
      * @var bool|list<string>
      */
     public $cacheQueryString = false;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $driver = strtolower(trim((string)(getenv('EXTPLORER_CACHE_DRIVER') ?: 'file')));
+        $this->handler = match ($driver) {
+            'file' => 'file',
+            'redis' => 'redis',
+            'dummy' => 'dummy',
+            default => throw new \RuntimeException('EXTPLORER_CACHE_DRIVER must be file, redis or dummy.'),
+        };
+        $this->backupHandler = $this->handler === 'redis' ? 'dummy' : $this->handler;
+        $prefix = trim((string)(getenv('EXTPLORER_CACHE_PREFIX') ?: 'extplorer_'));
+        if ($prefix !== '' && preg_match('/[^A-Za-z0-9_-]/', $prefix)) {
+            throw new \RuntimeException('EXTPLORER_CACHE_PREFIX may contain only letters, numbers, underscores and hyphens.');
+        }
+        $this->prefix = $prefix;
+        $this->file['storePath'] = (string)(getenv('EXTPLORER_CACHE_PATH') ?: WRITEPATH . 'cache/');
+        if ($this->handler === 'file' && !is_dir($this->file['storePath'])) {
+            if (!mkdir($this->file['storePath'], 0775, true) && !is_dir($this->file['storePath'])) {
+                throw new \RuntimeException('Unable to create the configured cache directory.');
+            }
+        }
+
+        $passwordFile = getenv('EXTPLORER_REDIS_PASSWORD_FILE');
+        $redisPassword = $passwordFile !== false && trim($passwordFile) !== ''
+            ? SecretReader::file(trim($passwordFile))
+            : (getenv('EXTPLORER_REDIS_PASSWORD') ?: null);
+        $this->redis = array_replace($this->redis, [
+            'host' => getenv('EXTPLORER_REDIS_HOST') ?: $this->redis['host'],
+            'port' => (int)(getenv('EXTPLORER_REDIS_PORT') ?: $this->redis['port']),
+            'password' => $redisPassword,
+            'database' => (int)(getenv('EXTPLORER_REDIS_DATABASE') ?: $this->redis['database']),
+            'timeout' => (int)(getenv('EXTPLORER_REDIS_TIMEOUT') ?: $this->redis['timeout']),
+        ]);
+    }
 }

@@ -51,13 +51,19 @@ The VFS abstraction decouples the UI from physical storage.
 
 The Docker deployment uses three services:
 
-1. `init` stages an immutable image release into the code volume, validates it, and atomically updates `current`.
-2. `app` runs migrations, applies first-run configuration, bootstraps the administrator and then starts PHP-FPM as
+1. `extplorer-init` stages an immutable image release into the code volume, validates it, and atomically updates `current`.
+2. `extplorer-app` runs migrations, applies first-run configuration, bootstraps the administrator and then starts PHP-FPM as
    `www-data`.
-3. `web` renders the Nginx configuration, validates it with `nginx -t`, exposes the independent health endpoint and proxies
+3. `extplorer-web` renders the Nginx configuration, validates it with `nginx -t`, exposes the independent health endpoint and proxies
    requests to PHP-FPM.
 
-The code volume is read-only in `app` and `web`; persistent application data is kept in the separate writable volume.
+The runtime `extplorer-app` runs as `www-data` with a read-only root filesystem. Only the
+persistent writable volume and a temporary PHP configuration directory are
+writable. The `extplorer-init` service is the root-only permission and code-release
+boundary. `system:readiness` verifies the active release and configured
+storage backend before the app healthcheck reports readiness.
+
+The code volume is read-only in `extplorer-app` and `extplorer-web`; persistent application data is kept in the separate writable volume.
 Previous code releases and migration backups are retained for controlled rollback.
 
 ## 6. Frontend Architecture

@@ -23,6 +23,17 @@ CI_ENVIRONMENT = development
 # EXTPLORER_BASE_URL = 'https://files.example.com/'
 # EXTPLORER_WRITE_PATH = '/var/lib/extplorer/writable'
 # EXTPLORER_FILE_MANAGER_ROOT = '/var/lib/extplorer/writable/file_manager_root'
+# EXTPLORER_STATE_DRIVER = 'file' # file, sqlite or database
+# EXTPLORER_SESSION_DRIVER = 'file' # file, database or redis
+# EXTPLORER_CACHE_DRIVER = 'file' # file, redis or dummy
+# EXTPLORER_CACHE_PREFIX = 'extplorer_' # portable cache-key namespace
+# EXTPLORER_MAX_DOWNLOAD_MB = 2048
+# EXTPLORER_ARCHIVE_MAX_ENTRIES = 100000
+# EXTPLORER_ARCHIVE_MAX_EXPANDED_MB = 2048
+# EXTPLORER_ARCHIVE_MAX_RATIO = 200
+# EXTPLORER_IMAGE_MAX_MB = 25
+# EXTPLORER_IMAGE_MAX_PIXELS = 40000000
+# EXTPLORER_BACKUP_MAX_MB = 102400
 # app.forceGlobalSecureRequests = false
 # app.CSPEnabled = false
 
@@ -37,6 +48,14 @@ CI_ENVIRONMENT = development
 # database.default.DBDriver = MySQLi
 # database.default.DBPrefix =
 # database.default.port = 3306
+# EXTPLORER_DB_DRIVER = 'SQLite3' # SQLite3, MySQLi or Postgre
+# EXTPLORER_DB_HOST = localhost
+# EXTPLORER_DB_PORT = 3306
+# EXTPLORER_DB_NAME = extplorer
+# EXTPLORER_DB_USER = extplorer
+# EXTPLORER_DB_PASSWORD_FILE = '/run/secrets/extplorer-db-password'
+# EXTPLORER_DB_PREFIX = ''
+# EXTPLORER_SESSION_TABLE = ci_sessions
 
 # If you use MySQLi as tests, first update the values of Config\Database::$tests.
 # database.tests.hostname = localhost
@@ -71,6 +90,10 @@ CI_ENVIRONMENT = development
 
 # session.driver = 'CodeIgniter\Session\Handlers\FileHandler'
 # session.savePath = null
+# EXTPLORER_REDIS_HOST = 127.0.0.1
+# EXTPLORER_REDIS_PORT = 6379
+# EXTPLORER_REDIS_PASSWORD_FILE = '/run/secrets/extplorer-redis-password'
+# EXTPLORER_REDIS_DATABASE = 0
 
 #--------------------------------------------------------------------
 # LOGGER

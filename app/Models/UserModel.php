@@ -18,9 +18,9 @@ class UserModel
         $this->rolesFile = $storage->state . '/roles.php';
         $this->groupsFile = $storage->state . '/groups.php';
 
-        if (!file_exists($this->usersFile)) $this->saveData($this->usersFile, []);
-        if (!file_exists($this->rolesFile)) $this->saveData($this->rolesFile, []);
-        if (!file_exists($this->groupsFile)) $this->saveData($this->groupsFile, []);
+        if (!AtomicFileStore::exists($this->usersFile)) $this->saveData($this->usersFile, []);
+        if (!AtomicFileStore::exists($this->rolesFile)) $this->saveData($this->rolesFile, []);
+        if (!AtomicFileStore::exists($this->groupsFile)) $this->saveData($this->groupsFile, []);
     }
 
     private function loadData($path)

@@ -85,6 +85,15 @@ class Ssh2Adapter implements IFileSystem
         return file_get_contents($this->resolvePath($path));
     }
 
+    public function openReadStream(string $path)
+    {
+        $stream = fopen($this->resolvePath($path), 'rb');
+        if ($stream === false) {
+            throw new Exception("Could not open SFTP file: {$path}");
+        }
+        return $stream;
+    }
+
     public function writeFile(string $path, string $content): bool
     {
         return file_put_contents($this->resolvePath($path), $content) !== false;

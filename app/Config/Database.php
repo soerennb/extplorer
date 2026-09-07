@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Services\SecretReader;
 use CodeIgniter\Database\Config;
 
 /**
@@ -194,11 +195,50 @@ class Database extends Config
     {
         parent::__construct();
 
+        $this->defaultGroup = (string)(getenv('EXTPLORER_DB_GROUP') ?: $this->defaultGroup);
+
+        $stateDriver = strtolower(trim((string)(getenv('EXTPLORER_STATE_DRIVER') ?: 'file')));
+        $configuredDriver = getenv('EXTPLORER_DB_DRIVER') ?: getenv('database.default.DBDriver');
+        $driver = $this->normalizeDriver((string)($configuredDriver ?: ($stateDriver === 'sqlite' ? 'SQLite3' : $this->default['DBDriver'])));
+
+        $database = getenv('EXTPLORER_DB_NAME') ?: getenv('database.default.database');
+        if (($database === false || trim((string)$database) === '') && $stateDriver === 'sqlite') {
+            $database = rtrim((string)config('Storage')->root, '/\\') . '/extplorer.sqlite';
+        }
+
+        $passwordFile = getenv('EXTPLORER_DB_PASSWORD_FILE');
+        if ($passwordFile !== false && trim($passwordFile) !== '') {
+            $password = SecretReader::file(trim($passwordFile));
+        } else {
+            $password = getenv('EXTPLORER_DB_PASSWORD') ?: getenv('database.default.password') ?: $this->default['password'];
+        }
+
+        $this->default = array_replace($this->default, [
+            'DSN' => (string)(getenv('EXTPLORER_DB_DSN') ?: $this->default['DSN']),
+            'hostname' => getenv('EXTPLORER_DB_HOST') ?: getenv('database.default.hostname') ?: $this->default['hostname'],
+            'port' => (int)(getenv('EXTPLORER_DB_PORT') ?: getenv('database.default.port') ?: $this->default['port']),
+            'database' => $database ?: $this->default['database'],
+            'username' => getenv('EXTPLORER_DB_USER') ?: getenv('database.default.username') ?: $this->default['username'],
+            'password' => $password,
+            'DBDriver' => $driver,
+            'DBPrefix' => getenv('EXTPLORER_DB_PREFIX') ?: getenv('database.default.DBPrefix') ?: $this->default['DBPrefix'],
+        ]);
+
         // Ensure that we always set the database group to 'tests' if
         // we are currently running an automated test suite, so that
         // we don't overwrite live data on accident.
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
         }
+    }
+
+    private function normalizeDriver(string $driver): string
+    {
+        return match (strtolower(trim($driver))) {
+            'sqlite', 'sqlite3' => 'SQLite3',
+            'mysql', 'mysqli' => 'MySQLi',
+            'postgres', 'postgresql' => 'Postgre',
+            default => $driver,
+        };
     }
 }

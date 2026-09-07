@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use RuntimeException;
+use App\Services\State\StorageSchemaService;
 
 /**
  * Versioned migrations for the file-backed application state.
@@ -23,6 +24,8 @@ final class DataMigrationService
 
     public function run(): int
     {
+        (new StorageSchemaService())->ensure();
+
         return AtomicFileStore::transaction(
             $this->migrationState,
             fn(array &$state): int => $this->runLocked($state),
@@ -30,7 +33,7 @@ final class DataMigrationService
         );
     }
 
-    private function runLocked(array $state): int
+    private function runLocked(array &$state): int
     {
         $this->ensureDirectories();
         $version = (int)($state['version'] ?? 0);
@@ -42,27 +45,23 @@ final class DataMigrationService
         if ($version < 1) {
             $version = 1;
             $applied[] = 'storage-layout-v1';
-            $this->writeState($version, $applied);
         }
 
         if ($version < 2) {
             $version = 2;
             $applied[] = 'mount-secrets-v2';
-            $this->writeState($version, $applied);
         }
 
         if ($version < 3) {
             (new \App\Models\UserModel())->migratePasswordState();
             $version = 3;
             $applied[] = 'explicit-password-state-v3';
-            $this->writeState($version, $applied);
         }
 
         if ($version < 4) {
             (new \App\Models\UserModel())->migratePasswordState();
             $version = 4;
             $applied[] = 'account-auth-state-v4';
-            $this->writeState($version, $applied);
         }
 
         // Keep this idempotent and run it on every boot. This also handles a
@@ -85,7 +84,11 @@ final class DataMigrationService
             throw new RuntimeException("Unsupported data schema version: {$version}");
         }
 
-        $this->writeState($version, array_values(array_unique($applied)));
+        $state = [
+            'version' => $version,
+            'applied' => array_values(array_unique($applied)),
+            'updated_at' => gmdate(DATE_ATOM),
+        ];
         return $version;
     }
 
@@ -177,7 +180,7 @@ final class DataMigrationService
             $sourceData = $data;
         }
 
-        if (is_file($target)) {
+        if (AtomicFileStore::exists($target)) {
             $targetData = AtomicFileStore::read($target);
             if ($sourceData !== $targetData) {
                 throw new RuntimeException("Conflicting legacy and migrated {$name} state detected.");
@@ -206,12 +209,4 @@ final class DataMigrationService
         chmod($target, 0600);
     }
 
-    private function writeState(int $version, array $applied): void
-    {
-        AtomicFileStore::write($this->migrationState, [
-            'version' => $version,
-            'applied' => array_values(array_unique($applied)),
-            'updated_at' => gmdate(DATE_ATOM),
-        ]);
-    }
 }

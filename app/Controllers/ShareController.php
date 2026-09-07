@@ -6,6 +6,7 @@ use App\Services\ShareService;
 use App\Services\LogService;
 use App\Services\VFS\LocalAdapter;
 use App\Services\DownloadHeaders;
+use App\Services\ResourcePolicy;
 
 class ShareController extends BaseController
 {
@@ -139,7 +140,7 @@ class ShareController extends BaseController
     public function auth(string $hash)
     {
         $throttler = \Config\Services::throttler();
-        $authThrottleKey = 'share-auth-' . $hash . '-' . $this->request->getIPAddress();
+        $authThrottleKey = 'share-auth-' . $hash . '-' . hash('sha256', $this->request->getIPAddress());
         if ($throttler->check($authThrottleKey, 10, MINUTE) === false) {
             LogService::log('Share Auth Throttled', $hash, 'Public share auth rate limit exceeded', 'Public');
             return redirect()->back()->with('error', 'Too many requests. Please slow down.');
@@ -206,6 +207,9 @@ class ShareController extends BaseController
         $fullPath = $fs->resolvePath($relPath);
 
         if (!file_exists($fullPath)) return $this->failNotFound();
+        if (is_file($fullPath) && (int)(filesize($fullPath) ?: 0) > (new ResourcePolicy())->maxDownloadBytes()) {
+            return $this->fail('File exceeds the configured download size limit.', 413);
+        }
 
         // Track Download (only for main download, not inline previews if possible, or count all?)
         // Usually we count only "File Downloads" or "Zip Downloads". 
@@ -238,12 +242,12 @@ class ShareController extends BaseController
         }
 
         if ($inline) {
-            $mime = mime_content_type($fullPath);
-
+            $mime = mime_content_type($fullPath) ?: 'application/octet-stream';
             return $this->response
+                ->download($fullPath, null)
+                ->setFileName(DownloadHeaders::filename(basename($fullPath)))
                 ->setHeader('Content-Type', $mime)
-                ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('inline', basename($fullPath)))
-                ->setBody(file_get_contents($fullPath));
+                ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('inline', basename($fullPath)));
         }
 
         return $this->response
@@ -295,7 +299,7 @@ class ShareController extends BaseController
     public function upload(string $hash)
     {
         $throttler = \Config\Services::throttler();
-        $uploadThrottleKey = 'share-upload-' . $hash . '-' . $this->request->getIPAddress();
+        $uploadThrottleKey = 'share-upload-' . $hash . '-' . hash('sha256', $this->request->getIPAddress());
         if ($throttler->check($uploadThrottleKey, 30, MINUTE) === false) {
             LogService::log('Share Upload Throttled', $hash, 'Public share upload rate limit exceeded', 'Public');
             return $this->fail('Too many requests. Please slow down.', 429);
@@ -541,6 +545,9 @@ class ShareController extends BaseController
      */
     private function zipDirectory(string $sourceDir, string $destinationZip): void
     {
+        $policy = new ResourcePolicy();
+        $entries = 0;
+        $bytes = 0;
         $zip = new \ZipArchive();
         if ($zip->open($destinationZip, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
             throw new \RuntimeException('Cannot create zip archive.');
@@ -555,6 +562,13 @@ class ShareController extends BaseController
         );
 
         foreach ($iterator as $item) {
+            $entries++;
+            $bytes += $item->isFile() ? max(0, (int)($item->getSize() ?: 0)) : 0;
+            if ($entries > $policy->maxArchiveEntries() || $bytes > $policy->maxArchiveBytes()) {
+                $zip->close();
+                @unlink($destinationZip);
+                throw new \RuntimeException('Public share archive exceeds the configured safety limits.');
+            }
             $full = $item->getPathname();
             $relative = substr($full, $baseLen);
 

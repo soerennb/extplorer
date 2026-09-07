@@ -18,7 +18,59 @@ cp env .env
 | `EXTPLORER_ENCRYPTION_KEY_FILE` | File containing the encryption key. | `/run/secrets/extplorer-encryption-key` |
 | `app.forceGlobalSecureRequests` | Force HTTPS redirection. | `true` |
 
-The canonical container names are `EXTPLORER_BASE_URL`, `EXTPLORER_WRITE_PATH`, `EXTPLORER_ENCRYPTION_KEY` and
+### Storage backends
+
+The default `file` state/session/cache configuration is intended for a single
+classic Apache or Nginx/PHP-FPM installation. It requires no database or Redis
+service. The following alternatives are available:
+
+| Variable | Values | Use |
+| :--- | :--- | :--- |
+| `EXTPLORER_STATE_DRIVER` | `file`, `sqlite`, `database` | Metadata and application state |
+| `EXTPLORER_SESSION_DRIVER` | `file`, `database`, `redis` | PHP sessions |
+| `EXTPLORER_CACHE_DRIVER` | `file`, `redis`, `dummy` | Cache and request throttling |
+
+`EXTPLORER_CACHE_PREFIX` optionally overrides the cache namespace. It may
+contain only letters, numbers, underscores and hyphens because CodeIgniter
+reserves punctuation such as `:` in cache keys. The default is `extplorer_`.
+
+Resource limits are enforced for downloads, archive creation/extraction,
+thumbnail decoding and storage backups. Configure them with
+`EXTPLORER_MAX_DOWNLOAD_MB`, `EXTPLORER_ARCHIVE_MAX_ENTRIES`,
+`EXTPLORER_ARCHIVE_MAX_EXPANDED_MB`, `EXTPLORER_ARCHIVE_MAX_RATIO`,
+`EXTPLORER_IMAGE_MAX_MB`, `EXTPLORER_IMAGE_MAX_PIXELS` and
+`EXTPLORER_BACKUP_MAX_MB`. The defaults are intentionally finite and should be
+reviewed together with PHP/Nginx upload and timeout settings.
+
+For public deployments, an optional antivirus stage can scan files in
+`writable/uploads` (for example with ClamAV) before they are made available to
+other users. eXtplorer does not execute an arbitrary scanner command from an
+HTTP request; integrate the scanner as a separate upload-volume worker or
+reverse-proxy pipeline and quarantine files until the scan succeeds.
+
+`sqlite` is intended for one application instance. Database-backed sessions
+require MySQL/MariaDB or PostgreSQL because CodeIgniter does not provide a
+SQLite session handler. Use `database` state with a shared MySQL/MariaDB or
+PostgreSQL database for multiple replicas. Redis is
+used for sessions and cache; it is not the authoritative store for users,
+shares or configuration. Run `php spark storage:check` after changing a
+backend. A selected but unavailable backend is a startup error and is never
+silently replaced by file or dummy storage.
+
+Database credentials can be supplied with `EXTPLORER_DB_*` variables. Use
+`EXTPLORER_DB_PASSWORD_FILE` and `EXTPLORER_REDIS_PASSWORD_FILE` instead of
+putting secrets directly into the environment where possible. SQLite defaults
+to `writable/extplorer.sqlite` when `EXTPLORER_STATE_DRIVER=sqlite` and no
+database path is provided.
+
+For reproducible deployments, set `EXTPLORER_IMAGE_REF` to an immutable
+release tag or digest, for example
+`ghcr.io/soerennb/extplorer3:3.0.0-beta.1` or
+`ghcr.io/soerennb/extplorer3@sha256:<digest>`. `pull_policy: always` only
+controls when the reference is fetched; it does not make a mutable tag
+reproducible.
+
+The canonical configuration names are `EXTPLORER_BASE_URL`, `EXTPLORER_WRITE_PATH`, `EXTPLORER_ENCRYPTION_KEY` and
 `EXTPLORER_ENCRYPTION_KEY_FILE`. The aliases `app.baseURL`, `app_baseURL`, `WRITEPATH` and `encryption.key` remain supported
 for existing installations.
 
@@ -40,6 +92,11 @@ PHP-FPM and application-level upload/quota checks. Runtime resource controls are
 Persistent state is stored under `writable/config`, logs under `writable/logs`, and local files under
 `writable/file_manager_root`. Back up the complete writable volume, especially `config`, `file_manager_root`, `uploads`,
 `trash` and `backups`.
+
+Storage restores require `--force`, a compatible data schema and the same
+encryption key that created the backup. Run `php spark storage:verify
+BACKUP.zip` before a restore; the restore creates a pre-restore backup and
+rolls back staged files if activation fails.
 
 ### Security Controls (Current Defaults)
 The following controls are enabled in the application and should be considered part of your operational baseline:

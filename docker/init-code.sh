@@ -50,19 +50,45 @@ activate_release() {
     temporary_link="${TARGET_ROOT}/.current-link.$$"
     rm -f "$temporary_link"
     ln -s ".releases/${release_id_arg}" "$temporary_link"
-    mv -f "$temporary_link" "$CURRENT_LINK"
+    # BusyBox mv follows an existing symlink unless -T is used. Without this
+    # flag an update silently places the temporary link inside the old release
+    # directory and leaves current pointing at stale code.
+    mv -fT "$temporary_link" "$CURRENT_LINK"
+    # Docker volumes are commonly created as world-writable directories. On
+    # hosts with protected_symlinks enabled, a root-owned link in such a
+    # directory cannot be followed by the non-root runtime user.
+    if [ "$(id -u)" = '0' ]; then
+        chown -h www-data:www-data "$CURRENT_LINK"
+    fi
     log_event activate success "release=${release_id_arg}"
+}
+
+make_release_readable() {
+    release_path_arg=$1
+    if [ "$(id -u)" = '0' ]; then
+        # The runtime image uses Alpine's www-data account (UID 82). Apply
+        # ownership only to the newly activated release; the persistent code
+        # volume therefore remains cheap to start and safe to mount read-only.
+        chown -R www-data:www-data "$release_path_arg"
+    fi
 }
 
 if [ "${1:-}" = '--rollback' ]; then
     [ -n "${2:-}" ] || fail rollback missing_release 'A release id is required'
     mkdir -p "$RELEASES_ROOT"
     activate_release "$2"
+    make_release_readable "${RELEASES_ROOT}/${2}"
     exit 0
 fi
 
 phase=directories
 mkdir -p "$TARGET_ROOT" "$RELEASES_ROOT"
+if [ "$(id -u)" = '0' ]; then
+    # Runtime containers must be able to traverse the release directory even
+    # though only the init container performs release activation.
+    chown www-data:www-data "$RELEASES_ROOT"
+    chmod 755 "$RELEASES_ROOT"
+fi
 if [ ! -e "$CURRENT_LINK" ] && [ -d "$TARGET_ROOT/app" ] && [ -d "$TARGET_ROOT/public" ]; then
     legacy_release="legacy-$(date +%Y%m%d%H%M%S)"
     legacy_stage="${RELEASES_ROOT}/.${legacy_release}.staging"
@@ -120,6 +146,7 @@ if [ -e "$release_path" ]; then
 fi
 mv "$stage_directory" "$release_path"
 activate_release "$release_id"
+make_release_readable "$release_path"
 trap - EXIT
 
 log_event sync success "release=${release_id} changed=1 version=${IMAGE_VERSION}"

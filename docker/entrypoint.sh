@@ -6,6 +6,8 @@ set -o pipefail
 REAL_WRITEPATH=${EXTPLORER_WRITE_PATH:-${WRITEPATH:-/var/www/html/writable}}
 CODE_ROOT=${EXTPLORER_CODE_ROOT:-/var/www/html/current}
 READINESS_FILE=${EXTPLORER_READINESS_FILE:-/tmp/extplorer-ready}
+PHP_INI_SCAN_DIR=${PHP_INI_SCAN_DIR:-/usr/local/etc/php/conf.d}
+PHP_RUNTIME_INI_DIR=${EXTPLORER_PHP_RUNTIME_INI_DIR:-/tmp/extplorer-php-conf.d}
 UPLOAD_LIMIT_MB=${EXTPLORER_UPLOAD_MAX_FILE_MB:-100}
 MEMORY_LIMIT=${EXTPLORER_MEMORY_LIMIT:-256M}
 MAX_EXECUTION_TIME=${EXTPLORER_MAX_EXECUTION_TIME:-120}
@@ -72,6 +74,12 @@ mkdir -p \
     "$REAL_WRITEPATH/cache/dav" \
     "$REAL_WRITEPATH/runtime" \
     "$REAL_WRITEPATH/backups"
+mkdir -p "$PHP_RUNTIME_INI_DIR"
+case ":$PHP_INI_SCAN_DIR:" in
+    *":$PHP_RUNTIME_INI_DIR:"*) ;;
+    *) PHP_INI_SCAN_DIR="$PHP_INI_SCAN_DIR:$PHP_RUNTIME_INI_DIR" ;;
+esac
+export PHP_INI_SCAN_DIR
 if [ ! -w "$REAL_WRITEPATH" ]; then
     fail writable_path_not_writable "Persistent path is not writable: $REAL_WRITEPATH"
 fi
@@ -117,6 +125,13 @@ rm -f "$READINESS_FILE"
 phase=migration
 run_as_app php spark security:migrate
 
+# Validate every selected persistent backend before the runtime process is
+# started. CodeIgniter may otherwise fall back to a dummy cache handler when a
+# remote service is unavailable, which would make a broken deployment appear
+# healthy.
+phase=storage-check
+run_as_app php spark storage:check
+
 phase=config
 if [ ! -f "$REAL_WRITEPATH/installed.lock" ] || [ "${EXTPLORER_APPLY_ENV:-0}" = "1" ]; then
     run_as_app php /usr/local/bin/apply-env-settings.php
@@ -126,7 +141,7 @@ phase=admin-bootstrap
 run_as_app php spark admin:bootstrap
 
 phase=runtime-config
-cat > /usr/local/etc/php/conf.d/zz-extplorer-runtime.ini <<EOF
+cat > "$PHP_RUNTIME_INI_DIR/zz-extplorer-runtime.ini" <<EOF
 upload_max_filesize = ${UPLOAD_LIMIT_MB}M
 post_max_size = ${UPLOAD_LIMIT_MB}M
 memory_limit = ${MEMORY_LIMIT}
@@ -140,7 +155,4 @@ fi
 chmod 0644 "$READINESS_FILE"
 log_event complete success "image_version=${EXTPLORER_IMAGE_VERSION:-unknown}"
 
-if [ "$(id -u)" = "0" ]; then
-    exec su-exec www-data php-fpm -F
-fi
 exec php-fpm -F

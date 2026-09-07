@@ -49,15 +49,25 @@ RUN apk add --no-cache \
         icu-libs \
         libpng \
         libzip \
+        sqlite-libs \
         su-exec \
     && apk add --no-cache --virtual .build-deps \
+        $PHPIZE_DEPS \
         icu-dev \
         libpng-dev \
         libzip-dev \
+        sqlite-dev \
+        mariadb-connector-c-dev \
+    && cd /tmp \
+    && printf '\n\n\n\n\n' | pecl install redis-6.3.0 \
+    && docker-php-ext-enable redis \
     && docker-php-ext-install -j"$(nproc)" \
         intl \
         gd \
         zip \
+        mysqli \
+        pdo_mysql \
+        pdo_sqlite \
     && apk del .build-deps
 
 RUN sed -i -e 's#^error_log = /proc/self/fd/2#error_log = /var/www/html/writable/logs/php-fpm.log#' \

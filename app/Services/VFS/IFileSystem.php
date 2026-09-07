@@ -22,6 +22,13 @@ interface IFileSystem
     public function readFile(string $path): string;
 
     /**
+     * Opens a readable stream without materializing the complete file.
+     *
+     * @return resource
+     */
+    public function openReadStream(string $path);
+
+    /**
      * Write content to a file.
      *
      * @param string $path Relative path

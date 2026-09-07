@@ -117,6 +117,19 @@ class FtpAdapter implements IFileSystem
         throw new Exception("Could not read FTP file: $path");
     }
 
+    public function openReadStream(string $path)
+    {
+        $temp = tmpfile();
+        if ($temp === false || !ftp_fget($this->conn, $temp, $this->resolvePath($path), FTP_BINARY)) {
+            if (is_resource($temp)) {
+                fclose($temp);
+            }
+            throw new Exception("Could not open FTP file: {$path}");
+        }
+        rewind($temp);
+        return $temp;
+    }
+
     public function writeFile(string $path, string $content): bool
     {
         $temp = fopen('php://temp', 'r+');

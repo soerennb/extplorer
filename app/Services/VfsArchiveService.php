@@ -11,14 +11,23 @@ use ZipArchive;
  */
 final class VfsArchiveService
 {
-    private const MAX_ENTRIES = 100000;
-    private const MAX_BYTES = 2147483648;
-
     private int $entries = 0;
     private int $bytes = 0;
+    private ResourcePolicy $policy;
+    private string $stagingDirectory = '';
+    private array $stagedFiles = [];
+
+    public function __construct(?ResourcePolicy $policy = null)
+    {
+        $this->policy = $policy ?? new ResourcePolicy();
+    }
 
     public function createZip(IFileSystem $fs, array $sources, string $destination): void
     {
+        $this->entries = 0;
+        $this->bytes = 0;
+        $this->stagingDirectory = dirname($destination);
+        $this->stagedFiles = [];
         $zip = new ZipArchive();
         if ($zip->open($destination, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             throw new RuntimeException('Cannot create download archive.');
@@ -43,8 +52,10 @@ final class VfsArchiveService
             if (!$zip->close()) {
                 throw new RuntimeException('Cannot finalize download archive.');
             }
+            $this->cleanupStagedFiles();
         } catch (\Throwable $exception) {
             $zip->close();
+            $this->cleanupStagedFiles();
             @unlink($destination);
             throw $exception;
         }
@@ -88,27 +99,68 @@ final class VfsArchiveService
             }
         }
 
-        $content = $fs->readFile($path);
-        if (strlen($content) !== $declaredSize && $declaredSize > 0) {
+        $temporary = tempnam($this->stagingDirectory, '.extplorer-archive-');
+        if ($temporary === false) {
+            throw new RuntimeException('Unable to stage remote archive source.');
+        }
+        $this->stagedFiles[] = $temporary;
+
+        $source = null;
+        $target = null;
+        try {
+            $source = $fs->openReadStream($path);
+            $target = fopen($temporary, 'wb');
+            if ($target === false) {
+                throw new RuntimeException('Unable to stage remote archive source.');
+            }
+            $remainingBytes = $this->policy->maxArchiveBytes() - $this->bytes + $declaredSize;
+            $copied = $this->policy->copyStream($source, $target, max(0, $remainingBytes));
+        } finally {
+            if (is_resource($source)) fclose($source);
+            if (is_resource($target)) fclose($target);
+        }
+
+        if ($copied !== $declaredSize && $declaredSize > 0) {
             throw new RuntimeException('Download source changed while creating archive.');
         }
-        if (!$zip->addFromString($entryName, $content)) {
+        if ($declaredSize === 0) {
+            $this->reserveBytes($copied);
+        }
+        if (!$zip->addFile($temporary, $entryName)) {
             throw new RuntimeException('Cannot add file to download archive.');
         }
+    }
+
+    private function cleanupStagedFiles(): void
+    {
+        foreach ($this->stagedFiles as $file) {
+            if (is_file($file)) {
+                @unlink($file);
+            }
+        }
+        $this->stagedFiles = [];
     }
 
     private function reserveEntry(int $bytes = 0): void
     {
         $this->entries++;
-        $this->bytes += $bytes;
-        if ($this->entries > self::MAX_ENTRIES || $this->bytes > self::MAX_BYTES) {
+        if ($this->entries > $this->policy->maxArchiveEntries()) {
+            throw new RuntimeException('Download archive exceeds the configured safety limits.');
+        }
+        $this->reserveBytes($bytes);
+    }
+
+    private function reserveBytes(int $bytes): void
+    {
+        $this->bytes += max(0, $bytes);
+        if ($this->bytes > $this->policy->maxArchiveBytes()) {
             throw new RuntimeException('Download archive exceeds the configured safety limits.');
         }
     }
 
     private function safeComponent(string $name): string
     {
-        if ($name === '' || $name === '.' || $name === '..' || preg_match('/[\x00-\x1F\x7F\\\/]/', $name) === 1) {
+        if ($name === '' || $name === '.' || $name === '..' || preg_match('~[\x00-\x1F\x7F\\\\/]~', $name) === 1) {
             throw new RuntimeException('Archive contains an invalid path component.');
         }
         return $name;

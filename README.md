@@ -70,9 +70,9 @@ docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example up -d
 
 **Note for Portainer Users:** Do **not** simply paste the `docker-compose.yml` into the Web Editor. Use the "Repository" method to ensure Portainer clones the configuration files along with the compose file.
 
-- `ghcr.io/soerennb/extplorer3:latest` for the app (php-fpm)
-- `nginx:alpine` for the web server
-- An `init` service that populates the shared code volume on first run and on image updates
+- `ghcr.io/soerennb/extplorer3:latest` for the `extplorer-app` service (php-fpm)
+- `nginx:alpine` for the `extplorer-web` service
+- An `extplorer-init` service that populates the shared code volume on first run and on image updates
 
 ### Volumes
 
@@ -85,18 +85,22 @@ store uploads or application state in the code volume.
 ### Update Flow
 
 1. Pull the selected image: `docker compose pull`
-2. Deploy and wait for init, app readiness and web health: `docker compose up -d --wait`
+2. Deploy and wait for `extplorer-init`, `extplorer-app` readiness and `extplorer-web` health: `docker compose up -d --wait`
 
 The init container compares both the image version and a content hash with the active release. A changed image is staged,
 syntax-checked and switched atomically; previous releases remain available for rollback. The startup log contains the
-release identity. `pull_policy: always` does not replace an already active code release by itself; the init service performs
+release identity. `pull_policy: always` does not replace an already active code release by itself; the `extplorer-init` service performs
 that synchronization.
+
+Production deployments should set `EXTPLORER_IMAGE_REF` to an immutable
+release tag or digest. `latest` remains available as a convenience for
+development, but is not reproducible and makes rollback analysis harder.
 
 To inspect or roll back a release:
 
 ```bash
-docker compose run --rm init --rollback RELEASE_ID
-docker compose restart app web
+docker compose run --rm extplorer-init --rollback RELEASE_ID
+docker compose restart extplorer-app extplorer-web
 ```
 
 Only roll back to a release that is compatible with the persistent data schema. Every data migration creates a timestamped
@@ -140,13 +144,13 @@ errors make the app container fail; they are never treated as a successful initi
 
 ### Health and readiness
 
-`GET /health` is served statically by Nginx and does not invoke PHP, the database, a session, DNS or TLS. The app healthcheck
+`GET /health` is served statically by Nginx and does not invoke PHP, the database, a session, DNS or TLS. The `extplorer-app` healthcheck
 also requires the readiness marker written only after storage migration, settings synchronization and admin bootstrap have
 completed. A healthy Nginx container therefore represents both routing and application readiness.
 
 Share cleanup is an explicit CLI job and is no longer triggered by arbitrary web requests. Run it manually with
-`docker compose run --rm --entrypoint php app /var/www/html/current/spark shares:cleanup`, or enable the optional worker with
-`docker compose --profile worker up -d cleanup`.
+`docker compose run --rm --entrypoint php extplorer-app /var/www/html/current/spark shares:cleanup`, or enable the optional worker with
+`docker compose --profile worker up -d extplorer-cleanup`.
 
 ### Dokploy
 
@@ -160,7 +164,7 @@ docker compose \
   up -d --wait
 ```
 
-Set the Dokploy domain on the `web` service in Dokploy's Domains UI and select the external network name used by the
+Set the Dokploy domain on the `extplorer-web` service in Dokploy's Domains UI and select the external network name used by the
 installation (`DOKPLOY_NETWORK_NAME` defaults to `dokploy-network`). Do not publish a host port in Dokploy. See the
 [Dokploy deployment runbook](docs/deployment/dokploy.md) for routing reconciliation, file mounts and reload behavior.
 

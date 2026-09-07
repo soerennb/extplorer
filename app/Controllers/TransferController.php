@@ -262,7 +262,7 @@ class TransferController extends BaseController
         }
 
         $throttler = \Config\Services::throttler();
-        $sendThrottleKey = 'transfer-send-' . session('username') . '-' . $this->request->getIPAddress();
+        $sendThrottleKey = 'transfer-send-' . hash('sha256', (string)session('username')) . '-' . hash('sha256', $this->request->getIPAddress());
         if ($throttler->check($sendThrottleKey, 15, MINUTE) === false) {
             LogService::log('Transfer Send Throttled', '', 'Rate limit exceeded for transfer send');
             return $this->fail('Too many requests. Please slow down.', 429);

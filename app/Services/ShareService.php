@@ -14,7 +14,7 @@ class ShareService
     {
         $this->sharesFile = $sharesFile ?? (config('Storage')->state . '/shares.php');
 
-        if (!file_exists($this->sharesFile)) {
+        if (!AtomicFileStore::exists($this->sharesFile)) {
             $this->saveShares([]);
         }
     }

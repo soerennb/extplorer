@@ -24,6 +24,9 @@ class Storage extends BaseConfig
     public string $cache;
     public string $runtime;
     public string $backups;
+    public string $stateDriver;
+    public string $sessionDriver;
+    public string $cacheDriver;
 
     public function __construct()
     {
@@ -52,6 +55,10 @@ class Storage extends BaseConfig
         $this->cache = $this->root . '/cache';
         $this->runtime = $this->root . '/runtime';
         $this->backups = $this->root . '/backups';
+
+        $this->stateDriver = $this->driver('EXTPLORER_STATE_DRIVER', ['file', 'sqlite', 'database'], 'file');
+        $this->sessionDriver = $this->driver('EXTPLORER_SESSION_DRIVER', ['file', 'database', 'redis'], 'file');
+        $this->cacheDriver = $this->driver('EXTPLORER_CACHE_DRIVER', ['file', 'redis', 'dummy'], 'file');
     }
 
     private function resolveDirectory(string $environmentKey, string $default): string
@@ -73,5 +80,16 @@ class Storage extends BaseConfig
     {
         return str_starts_with($path, '/')
             || (bool) preg_match('/\A[A-Za-z]:[\\\\\/]/', $path);
+    }
+
+    /** @param list<string> $allowed */
+    private function driver(string $key, array $allowed, string $default): string
+    {
+        $value = strtolower(trim((string)(getenv($key) ?: $default)));
+        if (!in_array($value, $allowed, true)) {
+            throw new \RuntimeException("{$key} must be one of: " . implode(', ', $allowed));
+        }
+
+        return $value;
     }
 }
