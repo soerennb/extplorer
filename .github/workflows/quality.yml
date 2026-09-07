@@ -269,7 +269,7 @@ jobs:
       E2E_BASE_URL: http://127.0.0.1:8080
       E2E_USERNAME: e2e-admin
       E2E_PASSWORD: e2e-admin-password
-      EXTPLORER_ADMIN_PASSWORD_HOST_FILE: ${{ runner.temp }}/extplorer-admin-password
+      EXTPLORER_ADMIN_PASSWORD_HOST_FILE: ${{ github.workspace }}/.extplorer-admin-password-ci
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
