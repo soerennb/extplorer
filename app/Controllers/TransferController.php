@@ -7,6 +7,7 @@ use App\Services\EmailService;
 use App\Services\SettingsService;
 use App\Services\LogService;
 use App\Services\VFS\VfsFactory;
+use App\Services\ResourcePolicy;
 
 class TransferController extends BaseController
 {
@@ -121,14 +122,34 @@ class TransferController extends BaseController
                 return $this->fail('Invalid transfer storage.', 500);
             }
 
+            $stream = null;
+            $output = null;
+            $temporaryPath = $destPath . '.part-' . bin2hex(random_bytes(8));
             try {
-                $content = $vfs->readFile((string)$path);
+                $stream = $vfs->openReadStream((string)$path);
+                $output = fopen($temporaryPath, 'wb');
+                if ($output === false) {
+                    throw new \RuntimeException('Unable to create transfer staging file.');
+                }
+                $copied = (new ResourcePolicy())->copyStream($stream, $output, $maxFileBytes > 0 ? $maxFileBytes : null);
+                if ($size > 0 && $copied !== $size) {
+                    throw new \RuntimeException('Transfer source changed while it was being staged.');
+                }
+                if (!fclose($output) || !rename($temporaryPath, $destPath)) {
+                    $output = null;
+                    throw new \RuntimeException('Unable to activate transfer staging file.');
+                }
+                $output = null;
             } catch (\Throwable $e) {
+                @unlink($temporaryPath);
                 continue;
-            }
-
-            if (file_put_contents($destPath, $content, LOCK_EX) === false) {
-                return $this->fail('Server Error: Cannot write to temp storage');
+            } finally {
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+                if (is_resource($output)) {
+                    fclose($output);
+                }
             }
             
             $stagedCount++;

@@ -2,6 +2,8 @@
 
 namespace App\Filters;
 
+use App\Services\InstallStateService;
+use Config\Services;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -10,21 +12,6 @@ class InstallFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        // Check if the persistent root is writable.
-        $writableError = !is_writable(config('Storage')->root);
-        
-        // Check if users exist using UserModel
-        $usersExist = false;
-        try {
-            $userModel = new \App\Models\UserModel();
-            $users = $userModel->getUsers();
-            if (!empty($users) && count($users) > 0) {
-                $usersExist = true;
-            }
-        } catch (\Exception $e) {
-            // Ignore error, assume no users
-        }
-
         // Determine if we are currently accessing the install page
         $currentPath = trim($request->getUri()->getPath(), '/');
         // Match install/health as a path segment (works for subfolder deployments)
@@ -35,15 +22,28 @@ class InstallFilter implements FilterInterface
             return;
         }
 
-        // If not installed (writable error OR no users)
-        if ($writableError || !$usersExist) {
-            if (!$isInstallPage) {
-                return redirect()->to('install');
-            }
-        } 
-        // If installed and trying to access install page
-        else if ($isInstallPage) {
+        if (!is_writable(config('Storage')->root)) {
+            return $isInstallPage ? null : redirect()->to('install');
+        }
+
+        try {
+            $status = (new InstallStateService())->status();
+        } catch (\Throwable $exception) {
+            log_message('critical', 'Unable to determine installation state: {message}', [
+                'message' => $exception->getMessage(),
+            ]);
+            return Services::response()
+                ->setStatusCode(503)
+                ->setHeader('Cache-Control', 'no-store')
+                ->setBody('Installation state is unavailable.');
+        }
+
+        if ($status === InstallStateService::STATUS_INSTALLED && $isInstallPage) {
             return redirect()->to('/');
+        }
+
+        if ($status !== InstallStateService::STATUS_INSTALLED && !$isInstallPage) {
+            return redirect()->to('install');
         }
     }
 

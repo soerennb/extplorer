@@ -168,7 +168,7 @@ const UserProfile = {
                                     class="form-control"
                                     :class="{ 'is-invalid': passwordTouched && passwordInvalid }"
                                     v-model="passwordForm.new"
-                                    :placeholder="t('password_min_hint') || 'Min 8 chars'"
+                                    :placeholder="t('password_min_hint') || 'Min 12 chars'"
                                     autocomplete="new-password"
                                 >
 
@@ -186,7 +186,7 @@ const UserProfile = {
                                 </div>
 
                                 <ul class="profile-password-hints mt-2 mb-0">
-                                    <li :class="passwordChecks.length ? 'text-success' : 'text-muted'">{{ t('password_rule_length') || 'At least 8 characters' }}</li>
+                                    <li :class="passwordChecks.length ? 'text-success' : 'text-muted'">{{ t('password_rule_length') || 'At least 12 characters' }}</li>
                                     <li :class="passwordChecks.case ? 'text-success' : 'text-muted'">{{ t('password_rule_case') || 'Uppercase and lowercase letters' }}</li>
                                     <li :class="passwordChecks.number ? 'text-success' : 'text-muted'">{{ t('password_rule_number') || 'At least one number' }}</li>
                                     <li :class="passwordChecks.symbol ? 'text-success' : 'text-muted'">{{ t('password_rule_symbol') || 'At least one symbol' }}</li>
@@ -602,7 +602,7 @@ const UserProfile = {
         const passwordChecks = computed(() => {
             const value = passwordForm.new || '';
             return {
-                length: value.length >= 8,
+                length: value.length >= 12,
                 case: /[a-z]/.test(value) && /[A-Z]/.test(value),
                 number: /\d/.test(value),
                 symbol: /[^A-Za-z0-9]/.test(value),
@@ -637,7 +637,7 @@ const UserProfile = {
         const passwordTouched = computed(() => passwordForm.new.length > 0 || passwordForm.confirm.length > 0);
         const passwordMismatch = computed(() => passwordForm.new !== '' && passwordForm.confirm !== '' && passwordForm.new !== passwordForm.confirm);
         const passwordInvalidMessage = computed(() => {
-            if (!passwordChecks.value.length) return t('password_rule_length') || 'At least 8 characters';
+            if (!passwordChecks.value.length) return t('password_rule_length') || 'At least 12 characters';
             if (passwordMismatch.value) return t('password_mismatch') || 'Passwords do not match';
             return t('password_requirements_not_met') || 'Password requirements are not met';
         });

@@ -24,6 +24,10 @@ trait ApiFileOperationsTrait
 
         try {
             $data = $this->fs->listDirectory($path, $showHidden);
+            $maxEntries = (new ResourcePolicy())->maxDirectoryEntries();
+            if (count($data) > $maxEntries) {
+                return $this->fail('Directory exceeds the configured entry limit.', 413);
+            }
             usort($data, function ($a, $b) use ($sortBy, $sortDesc) {
                 if (($a['type'] ?? '') !== ($b['type'] ?? '')) {
                     return ($a['type'] ?? '') === 'dir' ? -1 : 1;
@@ -75,10 +79,17 @@ trait ApiFileOperationsTrait
         try {
             $metadata = $this->fs->getMetadata($path);
             if (is_array($metadata) && ($metadata['type'] ?? '') === 'file'
-                && (int)($metadata['size'] ?? 0) > (new ResourcePolicy())->maxDownloadBytes()) {
-                return $this->fail('File exceeds the configured download size limit.', 413);
+                && (int)($metadata['size'] ?? 0) > (new ResourcePolicy())->maxContentBytes()) {
+                return $this->fail('File exceeds the configured content limit.', 413);
             }
-            $content = $this->fs->readFile($path);
+            $stream = $this->fs->openReadStream($path);
+            try {
+                $content = (new ResourcePolicy())->readStream($stream);
+            } finally {
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+            }
             return $this->respond(['content' => $content]);
         } catch (\Throwable $e) {
             return $this->fail($e->getMessage());

@@ -11,6 +11,14 @@ server {
         try_files $uri $uri/ /index.php?$query_string;
     }
 
+    # Keep orchestration checks independent from PHP, sessions, storage,
+    # DNS and the public TLS endpoint.
+    location = /health {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
     # Pass PHP scripts to FastCGI server
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;

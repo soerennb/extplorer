@@ -198,8 +198,11 @@ class RememberMeService
 
     private function isSecureRequest(): bool
     {
-        return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-            || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+        try {
+            return Services::request()->isSecure();
+        } catch (\Throwable $exception) {
+            return !empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off';
+        }
     }
 
     private function loadTokens(): array

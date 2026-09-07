@@ -28,6 +28,9 @@ CI_ENVIRONMENT = development
 # EXTPLORER_CACHE_DRIVER = 'file' # file, redis or dummy
 # EXTPLORER_CACHE_PREFIX = 'extplorer_' # portable cache-key namespace
 # EXTPLORER_MAX_DOWNLOAD_MB = 2048
+# EXTPLORER_MAX_CONTENT_MB = 16
+# EXTPLORER_REMOTE_TIMEOUT_SECONDS = 15
+# EXTPLORER_MAX_DIRECTORY_ENTRIES = 10000
 # EXTPLORER_ARCHIVE_MAX_ENTRIES = 100000
 # EXTPLORER_ARCHIVE_MAX_EXPANDED_MB = 2048
 # EXTPLORER_ARCHIVE_MAX_RATIO = 200
@@ -36,6 +39,7 @@ CI_ENVIRONMENT = development
 # EXTPLORER_BACKUP_MAX_MB = 102400
 # app.forceGlobalSecureRequests = false
 # app.CSPEnabled = false
+# EXTPLORER_TRUSTED_PROXY_IPS = '10.0.0.10,10.0.0.0/24' # never use 0.0.0.0/0
 
 #--------------------------------------------------------------------
 # DATABASE
@@ -85,6 +89,13 @@ CI_ENVIRONMENT = development
 # EXTPLORER_ADMIN_PASSWORD_FILE = '/run/secrets/extplorer-admin-password'
 # EXTPLORER_ADMIN_RESET_PASSWORD = 0
 # EXTPLORER_UPLOAD_MAX_FILE_MB = 100
+
+# Remote connections are disabled unless explicitly enabled and allowlisted.
+# Use one exact endpoint per line, including protocol and port.
+# EXTPLORER_REMOTE_LOGIN_ENABLED = 0
+# EXTPLORER_REMOTE_ENDPOINT_ALLOWLIST = 'sftp://files.example.com:22'
+# EXTPLORER_REMOTE_ALLOW_PRIVATE_TARGETS = 0
+# EXTPLORER_REMOTE_SECURITY_MODE = 'strict' # strict or compat
 
 #--------------------------------------------------------------------
 # SESSION

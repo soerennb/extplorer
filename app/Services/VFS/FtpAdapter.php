@@ -2,7 +2,8 @@
 
 namespace App\Services\VFS;
 
-use App\Services\RemoteSecurityPolicy;
+use App\Services\RemoteEndpointPolicy;
+use App\Services\ResourcePolicy;
 use Exception;
 
 class FtpAdapter implements IFileSystem
@@ -26,16 +27,27 @@ class FtpAdapter implements IFileSystem
         $this->secure = $secure;
         $this->root = RemotePathPolicy::normalizeRoot($root);
 
-        (new RemoteSecurityPolicy())->assertProtocolAllowed($secure ? 'ftps' : 'ftp');
+        $endpoint = (new RemoteEndpointPolicy())->authorize($secure ? 'ftps' : 'ftp', $host, $port);
+        $this->host = $endpoint['host'];
 
-        $this->conn = $secure ? ftp_ssl_connect($host, $port) : ftp_connect($host, $port);
+        $connectHost = $endpoint['connect_host'];
+        $timeout = (new ResourcePolicy())->remoteTimeoutSeconds();
+        $this->conn = $secure
+            ? ftp_ssl_connect($connectHost, $port, $timeout)
+            : ftp_connect($connectHost, $port, $timeout);
         if (!$this->conn) throw new Exception("Could not connect to FTP host: $host");
+
+        if (defined('FTP_TIMEOUT_SEC')) {
+            ftp_set_option($this->conn, FTP_TIMEOUT_SEC, $timeout);
+        }
 
         if (!@ftp_login($this->conn, $user, $pass)) {
             throw new Exception("FTP Login failed for user: $user");
         }
 
-        ftp_pasv($this->conn, true);
+        if (!ftp_pasv($this->conn, true)) {
+            throw new Exception('Could not enable passive FTP mode.');
+        }
     }
 
     public function __destruct()
@@ -201,9 +213,15 @@ class FtpAdapter implements IFileSystem
             return $this->copyDirectory($from, $to);
         }
 
-        // FTP doesn't have a native copy. Must download and re-upload.
-        $content = $this->readFile($from);
-        return $this->writeFile($to, $content);
+        // FTP doesn't have a native copy. Stream through a bounded temporary
+        // file instead of materializing the complete source in PHP memory.
+        $stream = $this->openReadStream($from);
+        $destination = $this->resolvePath($to);
+        try {
+            return ftp_fput($this->conn, $destination, $stream, FTP_BINARY);
+        } finally {
+            fclose($stream);
+        }
     }
 
     private function copyDirectory(string $from, string $to): bool

@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Services\SettingsService;
 use App\Services\EmailService;
 use App\Services\LogService;
+use App\Services\RemoteEndpointPolicy;
 
 class SettingsController extends BaseController
 {
@@ -40,7 +41,10 @@ class SettingsController extends BaseController
         }
 
         $settings['mount_root_allowlist_text'] = implode("\n", $settings['mount_root_allowlist'] ?? []);
-        $settings['mount_remote_host_allowlist_text'] = implode("\n", $settings['mount_remote_host_allowlist'] ?? []);
+        $settings['remote_endpoint_allowlist_text'] = implode("\n", array_map(
+            static fn(array $endpoint): string => sprintf('%s://%s:%d', $endpoint['protocol'], $endpoint['host'], $endpoint['port']),
+            (new RemoteEndpointPolicy())->allowlistedEndpoints()
+        ));
         $settings['share_upload_allowed_extensions_text'] = implode("\n", $settings['share_upload_allowed_extensions'] ?? []);
 
         return $this->respond($settings);
@@ -67,13 +71,32 @@ class SettingsController extends BaseController
             $json['mount_root_allowlist'] = $this->parseTextList($json['mount_root_allowlist']);
         }
 
-        if (isset($json['mount_remote_host_allowlist_text'])) {
-            $json['mount_remote_host_allowlist'] = $this->parseTextList($json['mount_remote_host_allowlist_text']);
-            unset($json['mount_remote_host_allowlist_text']);
+        try {
+            if (isset($json['remote_endpoint_allowlist_text'])) {
+                $json['remote_endpoint_allowlist'] = $this->parseRemoteEndpointList($json['remote_endpoint_allowlist_text']);
+                unset($json['remote_endpoint_allowlist_text']);
+            }
+
+            if (isset($json['remote_endpoint_allowlist'])) {
+                if (is_string($json['remote_endpoint_allowlist']) || is_array($json['remote_endpoint_allowlist'])) {
+                    $json['remote_endpoint_allowlist'] = $this->parseRemoteEndpointList($json['remote_endpoint_allowlist']);
+                } else {
+                    return $this->fail('Invalid remote endpoint allowlist');
+                }
+            }
+
+            if (array_key_exists('remote_login_enabled', $json)) {
+                $json['remote_login_enabled'] = filter_var($json['remote_login_enabled'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                if ($json['remote_login_enabled'] === null) {
+                    return $this->fail('Invalid remote login setting');
+                }
+            }
+        } catch (\InvalidArgumentException $exception) {
+            return $this->fail($exception->getMessage());
         }
 
-        if (isset($json['mount_remote_host_allowlist']) && is_string($json['mount_remote_host_allowlist'])) {
-            $json['mount_remote_host_allowlist'] = $this->parseTextList($json['mount_remote_host_allowlist']);
+        if (array_key_exists('remote_login_enabled', $json) && !is_bool($json['remote_login_enabled'])) {
+            return $this->fail('Invalid remote login setting');
         }
 
         if (isset($json['share_upload_allowed_extensions_text'])) {
@@ -322,5 +345,38 @@ class SettingsController extends BaseController
 
         $lines = preg_split('/\r\n|\r|\n/', $raw) ?: [];
         return array_values(array_filter(array_map('trim', $lines)));
+    }
+
+    /**
+     * Parse exact protocol://host:port remote endpoints. Invalid entries are
+     * rejected instead of silently broadening the outbound access policy.
+     *
+     * @param mixed $raw
+     * @return list<array{protocol: string, host: string, port: int}>
+     */
+    private function parseRemoteEndpointList($raw): array
+    {
+        $entries = is_string($raw)
+            ? (preg_split('/\r\n|\r|\n/', $raw) ?: [])
+            : (is_array($raw) ? $raw : []);
+        $policy = new RemoteEndpointPolicy();
+        $normalized = [];
+
+        foreach ($entries as $entry) {
+            $endpoint = is_array($entry)
+                ? $policy->parseEndpoint(sprintf(
+                    '%s://%s:%d',
+                    (string)($entry['protocol'] ?? ''),
+                    (string)($entry['host'] ?? ''),
+                    (int)($entry['port'] ?? 0)
+                ))
+                : $policy->parseEndpoint((string)$entry);
+            if ($endpoint === null) {
+                throw new \InvalidArgumentException('Invalid remote endpoint allowlist entry. Use protocol://host:port.');
+            }
+            $normalized[json_encode($endpoint, JSON_THROW_ON_ERROR)] = $endpoint;
+        }
+
+        return array_values($normalized);
     }
 }

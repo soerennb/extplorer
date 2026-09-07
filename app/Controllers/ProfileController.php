@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\UserModel;
 use App\Services\AuthenticationService;
 use App\Services\LogService;
+use App\Services\PasswordPolicy;
 
 class ProfileController extends BaseController
 {
@@ -155,8 +156,9 @@ class ProfileController extends BaseController
         if (!$password) return $this->fail('Password required');
         if (!$oldPassword) return $this->fail('Current password required');
 
-        if (strlen($password) < 8) {
-            return $this->fail('Password must be at least 8 characters long');
+        $passwordError = PasswordPolicy::validate((string)$password);
+        if ($passwordError !== null) {
+            return $this->fail($passwordError);
         }
 
         $username = session('username');

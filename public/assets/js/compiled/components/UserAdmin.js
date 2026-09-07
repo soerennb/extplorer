@@ -157,181 +157,189 @@ const _hoisted_117 = { class: "row g-3" }
 const _hoisted_118 = { class: "col-md-6" }
 const _hoisted_119 = ["onUpdate:modelValue"]
 const _hoisted_120 = { class: "col-md-6" }
-const _hoisted_121 = ["onUpdate:modelValue"]
-const _hoisted_122 = { key: 4 }
-const _hoisted_123 = { class: "row g-3" }
-const _hoisted_124 = { class: "col-md-6" }
-const _hoisted_125 = ["onUpdate:modelValue"]
-const _hoisted_126 = { key: 5 }
-const _hoisted_127 = { class: "row g-3" }
-const _hoisted_128 = { class: "col-md-4" }
-const _hoisted_129 = ["onUpdate:modelValue"]
-const _hoisted_130 = { class: "col-md-4" }
-const _hoisted_131 = ["onUpdate:modelValue"]
-const _hoisted_132 = { key: 6 }
-const _hoisted_133 = { class: "row g-3" }
-const _hoisted_134 = { class: "col-md-4" }
-const _hoisted_135 = ["onUpdate:modelValue"]
-const _hoisted_136 = { class: "mt-4 pt-3 border-top text-end" }
-const _hoisted_137 = {
+const _hoisted_121 = { class: "form-check form-switch mb-2" }
+const _hoisted_122 = ["onUpdate:modelValue"]
+const _hoisted_123 = {
+  class: "form-check-label small fw-bold",
+  for: "legacyRemoteLoginEnabled"
+}
+const _hoisted_124 = { class: "form-label small fw-bold" }
+const _hoisted_125 = ["onUpdate:modelValue", "placeholder"]
+const _hoisted_126 = { class: "form-text" }
+const _hoisted_127 = { key: 4 }
+const _hoisted_128 = { class: "row g-3" }
+const _hoisted_129 = { class: "col-md-6" }
+const _hoisted_130 = ["onUpdate:modelValue"]
+const _hoisted_131 = { key: 5 }
+const _hoisted_132 = { class: "row g-3" }
+const _hoisted_133 = { class: "col-md-4" }
+const _hoisted_134 = ["onUpdate:modelValue"]
+const _hoisted_135 = { class: "col-md-4" }
+const _hoisted_136 = ["onUpdate:modelValue"]
+const _hoisted_137 = { key: 6 }
+const _hoisted_138 = { class: "row g-3" }
+const _hoisted_139 = { class: "col-md-4" }
+const _hoisted_140 = ["onUpdate:modelValue"]
+const _hoisted_141 = { class: "mt-4 pt-3 border-top text-end" }
+const _hoisted_142 = {
   key: 0,
   class: "text-warning small mb-2 text-start"
 }
-const _hoisted_138 = ["onClick", "disabled"]
-const _hoisted_139 = ["onClick", "disabled"]
-const _hoisted_140 = ["disabled"]
-const _hoisted_141 = { key: 2 }
-const _hoisted_142 = { class: "table table-striped table-hover small" }
-const _hoisted_143 = { class: "badge bg-secondary me-1" }
-const _hoisted_144 = { class: "text-end" }
-const _hoisted_145 = ["onClick", "aria-label"]
-const _hoisted_146 = ["onClick", "disabled", "aria-label"]
-const _hoisted_147 = ["onClick"]
-const _hoisted_148 = {
+const _hoisted_143 = ["onClick", "disabled"]
+const _hoisted_144 = ["onClick", "disabled"]
+const _hoisted_145 = ["disabled"]
+const _hoisted_146 = { key: 2 }
+const _hoisted_147 = { class: "table table-striped table-hover small" }
+const _hoisted_148 = { class: "badge bg-secondary me-1" }
+const _hoisted_149 = { class: "text-end" }
+const _hoisted_150 = ["onClick", "aria-label"]
+const _hoisted_151 = ["onClick", "disabled", "aria-label"]
+const _hoisted_152 = ["onClick"]
+const _hoisted_153 = {
   key: 0,
   class: "card mt-3 bg-body-tertiary"
 }
-const _hoisted_149 = { class: "card-body" }
-const _hoisted_150 = { class: "row g-2" }
-const _hoisted_151 = {
+const _hoisted_154 = { class: "card-body" }
+const _hoisted_155 = { class: "row g-2" }
+const _hoisted_156 = {
   key: 0,
   class: "col-md-6"
 }
-const _hoisted_152 = ["onUpdate:modelValue"]
-const _hoisted_153 = { class: "col-md-6" }
-const _hoisted_154 = {
+const _hoisted_157 = ["onUpdate:modelValue"]
+const _hoisted_158 = { class: "col-md-6" }
+const _hoisted_159 = {
   class: "form-label small",
   for: "quickAdminUserPassword"
 }
-const _hoisted_155 = ["onUpdate:modelValue"]
-const _hoisted_156 = { class: "col-md-6" }
-const _hoisted_157 = ["onUpdate:modelValue"]
-const _hoisted_158 = { class: "col-md-6" }
-const _hoisted_159 = ["onUpdate:modelValue"]
-const _hoisted_160 = { class: "col-md-6" }
-const _hoisted_161 = ["onUpdate:modelValue"]
-const _hoisted_162 = {
+const _hoisted_160 = ["onUpdate:modelValue"]
+const _hoisted_161 = { class: "col-md-6" }
+const _hoisted_162 = ["onUpdate:modelValue"]
+const _hoisted_163 = { class: "col-md-6" }
+const _hoisted_164 = ["onUpdate:modelValue"]
+const _hoisted_165 = { class: "col-md-6" }
+const _hoisted_166 = ["onUpdate:modelValue"]
+const _hoisted_167 = {
   key: 0,
   class: "mt-1"
 }
-const _hoisted_163 = { class: "col-md-12" }
-const _hoisted_164 = { class: "d-flex flex-wrap gap-2" }
-const _hoisted_165 = ["id", "value", "onUpdate:modelValue"]
-const _hoisted_166 = ["for"]
-const _hoisted_167 = {
+const _hoisted_168 = { class: "col-md-12" }
+const _hoisted_169 = { class: "d-flex flex-wrap gap-2" }
+const _hoisted_170 = ["id", "value", "onUpdate:modelValue"]
+const _hoisted_171 = ["for"]
+const _hoisted_172 = {
   key: 1,
   class: "col-md-12"
 }
-const _hoisted_168 = { class: "d-flex align-items-center justify-content-between" }
-const _hoisted_169 = ["onClick", "disabled"]
-const _hoisted_170 = {
+const _hoisted_173 = { class: "d-flex align-items-center justify-content-between" }
+const _hoisted_174 = ["onClick", "disabled"]
+const _hoisted_175 = {
   key: 0,
   class: "text-muted small"
 }
-const _hoisted_171 = {
+const _hoisted_176 = {
   key: 1,
   class: "text-muted small"
 }
-const _hoisted_172 = {
+const _hoisted_177 = {
   key: 2,
   class: "d-flex flex-wrap gap-1"
 }
-const _hoisted_173 = { class: "mt-3 text-end" }
-const _hoisted_174 = ["onClick", "disabled"]
-const _hoisted_175 = ["onClick", "disabled"]
-const _hoisted_176 = { key: 3 }
-const _hoisted_177 = { class: "table table-striped table-hover small" }
-const _hoisted_178 = { class: "badge bg-info me-1" }
-const _hoisted_179 = { class: "text-end" }
-const _hoisted_180 = ["onClick", "aria-label"]
-const _hoisted_181 = ["onClick", "aria-label"]
-const _hoisted_182 = ["onClick"]
-const _hoisted_183 = {
+const _hoisted_178 = { class: "mt-3 text-end" }
+const _hoisted_179 = ["onClick", "disabled"]
+const _hoisted_180 = ["onClick", "disabled"]
+const _hoisted_181 = { key: 3 }
+const _hoisted_182 = { class: "table table-striped table-hover small" }
+const _hoisted_183 = { class: "badge bg-info me-1" }
+const _hoisted_184 = { class: "text-end" }
+const _hoisted_185 = ["onClick", "aria-label"]
+const _hoisted_186 = ["onClick", "aria-label"]
+const _hoisted_187 = ["onClick"]
+const _hoisted_188 = {
   key: 0,
   class: "card mt-3 bg-body-tertiary"
 }
-const _hoisted_184 = { class: "card-body" }
-const _hoisted_185 = ["onUpdate:modelValue"]
-const _hoisted_186 = { class: "d-flex flex-wrap gap-2" }
-const _hoisted_187 = ["id", "value", "onUpdate:modelValue"]
-const _hoisted_188 = ["for"]
-const _hoisted_189 = { class: "mt-3 text-end" }
-const _hoisted_190 = ["onClick", "disabled"]
-const _hoisted_191 = ["onClick", "disabled"]
-const _hoisted_192 = { key: 4 }
-const _hoisted_193 = { class: "table table-striped table-hover small" }
-const _hoisted_194 = { class: "small" }
-const _hoisted_195 = { class: "text-end" }
-const _hoisted_196 = ["onClick", "aria-label"]
-const _hoisted_197 = ["onClick", "aria-label"]
-const _hoisted_198 = ["onClick"]
-const _hoisted_199 = {
+const _hoisted_189 = { class: "card-body" }
+const _hoisted_190 = ["onUpdate:modelValue"]
+const _hoisted_191 = { class: "d-flex flex-wrap gap-2" }
+const _hoisted_192 = ["id", "value", "onUpdate:modelValue"]
+const _hoisted_193 = ["for"]
+const _hoisted_194 = { class: "mt-3 text-end" }
+const _hoisted_195 = ["onClick", "disabled"]
+const _hoisted_196 = ["onClick", "disabled"]
+const _hoisted_197 = { key: 4 }
+const _hoisted_198 = { class: "table table-striped table-hover small" }
+const _hoisted_199 = { class: "small" }
+const _hoisted_200 = { class: "text-end" }
+const _hoisted_201 = ["onClick", "aria-label"]
+const _hoisted_202 = ["onClick", "aria-label"]
+const _hoisted_203 = ["onClick"]
+const _hoisted_204 = {
   key: 0,
   class: "card mt-3 bg-body-tertiary"
 }
-const _hoisted_200 = { class: "card-body" }
-const _hoisted_201 = ["onUpdate:modelValue"]
-const _hoisted_202 = ["onUpdate:modelValue"]
-const _hoisted_203 = {
+const _hoisted_205 = { class: "card-body" }
+const _hoisted_206 = ["onUpdate:modelValue"]
+const _hoisted_207 = ["onUpdate:modelValue"]
+const _hoisted_208 = {
   key: 1,
   class: "mt-2"
 }
-const _hoisted_204 = { class: "mt-3 text-end" }
-const _hoisted_205 = ["onClick", "disabled"]
-const _hoisted_206 = ["onClick", "disabled"]
-const _hoisted_207 = { key: 5 }
-const _hoisted_208 = {
+const _hoisted_209 = { class: "mt-3 text-end" }
+const _hoisted_210 = ["onClick", "disabled"]
+const _hoisted_211 = ["onClick", "disabled"]
+const _hoisted_212 = { key: 5 }
+const _hoisted_213 = {
   key: 0,
   class: "border rounded p-2 mb-2 bg-body-tertiary"
 }
-const _hoisted_209 = { class: "row g-2 align-items-end" }
-const _hoisted_210 = { class: "col-md-2" }
-const _hoisted_211 = ["onUpdate:modelValue"]
-const _hoisted_212 = { class: "col-md-2" }
-const _hoisted_213 = ["onUpdate:modelValue"]
-const _hoisted_214 = { class: "col-md-3" }
-const _hoisted_215 = ["onUpdate:modelValue"]
-const _hoisted_216 = { class: "col-md-2" }
-const _hoisted_217 = ["onUpdate:modelValue"]
-const _hoisted_218 = { class: "col-md-2" }
-const _hoisted_219 = ["onUpdate:modelValue"]
-const _hoisted_220 = { class: "col-md-1 d-grid" }
-const _hoisted_221 = ["onClick", "disabled"]
-const _hoisted_222 = { class: "mt-2 d-flex flex-wrap gap-2" }
-const _hoisted_223 = ["onClick", "disabled"]
-const _hoisted_224 = ["onClick", "disabled"]
-const _hoisted_225 = ["onClick", "disabled"]
-const _hoisted_226 = {
+const _hoisted_214 = { class: "row g-2 align-items-end" }
+const _hoisted_215 = { class: "col-md-2" }
+const _hoisted_216 = ["onUpdate:modelValue"]
+const _hoisted_217 = { class: "col-md-2" }
+const _hoisted_218 = ["onUpdate:modelValue"]
+const _hoisted_219 = { class: "col-md-3" }
+const _hoisted_220 = ["onUpdate:modelValue"]
+const _hoisted_221 = { class: "col-md-2" }
+const _hoisted_222 = ["onUpdate:modelValue"]
+const _hoisted_223 = { class: "col-md-2" }
+const _hoisted_224 = ["onUpdate:modelValue"]
+const _hoisted_225 = { class: "col-md-1 d-grid" }
+const _hoisted_226 = ["onClick", "disabled"]
+const _hoisted_227 = { class: "mt-2 d-flex flex-wrap gap-2" }
+const _hoisted_228 = ["onClick", "disabled"]
+const _hoisted_229 = ["onClick", "disabled"]
+const _hoisted_230 = ["onClick", "disabled"]
+const _hoisted_231 = {
   key: 1,
   class: "text-muted small mb-2"
 }
-const _hoisted_227 = {
+const _hoisted_232 = {
   key: 2,
   class: "text-muted small mb-2"
 }
-const _hoisted_228 = { class: "table-responsive admin-table-scroll" }
-const _hoisted_229 = { class: "table table-sm table-striped table-hover small" }
-const _hoisted_230 = { class: "text-nowrap" }
-const _hoisted_231 = ["title"]
-const _hoisted_232 = {
+const _hoisted_233 = { class: "table-responsive admin-table-scroll" }
+const _hoisted_234 = { class: "table table-sm table-striped table-hover small" }
+const _hoisted_235 = { class: "text-nowrap" }
+const _hoisted_236 = ["title"]
+const _hoisted_237 = {
   key: 3,
   class: "d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 small"
 }
-const _hoisted_233 = { class: "text-muted" }
-const _hoisted_234 = { class: "d-flex align-items-center gap-2" }
-const _hoisted_235 = ["onUpdate:modelValue", "onChange"]
-const _hoisted_236 = ["value"]
-const _hoisted_237 = ["onClick", "disabled"]
-const _hoisted_238 = ["onClick", "disabled"]
-const _hoisted_239 = { key: 6 }
-const _hoisted_240 = {
+const _hoisted_238 = { class: "text-muted" }
+const _hoisted_239 = { class: "d-flex align-items-center gap-2" }
+const _hoisted_240 = ["onUpdate:modelValue", "onChange"]
+const _hoisted_241 = ["value"]
+const _hoisted_242 = ["onClick", "disabled"]
+const _hoisted_243 = ["onClick", "disabled"]
+const _hoisted_244 = { key: 6 }
+const _hoisted_245 = {
   key: 0,
   class: "text-center text-muted"
 }
-const _hoisted_241 = { key: 1 }
-const _hoisted_242 = { class: "table table-sm table-bordered" }
-const _hoisted_243 = { class: "badge bg-success" }
-const _hoisted_244 = { class: "small text-muted p-2 bg-light border rounded admin-config-box" }
+const _hoisted_246 = { key: 1 }
+const _hoisted_247 = { class: "table table-sm table-bordered" }
+const _hoisted_248 = { class: "badge bg-success" }
+const _hoisted_249 = { class: "small text-muted p-2 bg-light border rounded admin-config-box" }
 
 return function render(_ctx, _cache) {
   with (_ctx) {
@@ -857,7 +865,7 @@ return function render(_ctx, _cache) {
                                   : _createCommentVNode("v-if", true),
                                 (settingsTab === 'mounts')
                                   ? (_openBlock(), _createElementBlock("div", _hoisted_116, [
-                                      _cache[39] || (_cache[39] = _createElementVNode("h6", { class: "border-bottom pb-2 mb-3" }, "External Mounts", -1 /* CACHED */)),
+                                      _cache[37] || (_cache[37] = _createElementVNode("h6", { class: "border-bottom pb-2 mb-3" }, "External Mounts", -1 /* CACHED */)),
                                       _createElementVNode("div", _hoisted_117, [
                                         _createElementVNode("div", _hoisted_118, [
                                           _cache[35] || (_cache[35] = _createElementVNode("label", { class: "form-label small fw-bold" }, "Allowlist (one path per line)", -1 /* CACHED */)),
@@ -872,26 +880,37 @@ return function render(_ctx, _cache) {
                                           _cache[36] || (_cache[36] = _createElementVNode("div", { class: "form-text" }, "Only paths under these roots can be mounted. Leave empty to disable external mounts.", -1 /* CACHED */))
                                         ]),
                                         _createElementVNode("div", _hoisted_120, [
-                                          _cache[37] || (_cache[37] = _createElementVNode("label", { class: "form-label small fw-bold" }, "Remote Host Allowlist (one entry per line)", -1 /* CACHED */)),
+                                          _createElementVNode("div", _hoisted_121, [
+                                            _withDirectives(_createElementVNode("input", {
+                                              class: "form-check-input",
+                                              type: "checkbox",
+                                              id: "legacyRemoteLoginEnabled",
+                                              "onUpdate:modelValue": $event => ((settings.remote_login_enabled) = $event)
+                                            }, null, 8 /* PROPS */, _hoisted_122), [
+                                              [_vModelCheckbox, settings.remote_login_enabled]
+                                            ]),
+                                            _createElementVNode("label", _hoisted_123, _toDisplayString(t('admin_settings_remote_login_enabled', 'Enable direct remote login')), 1 /* TEXT */)
+                                          ]),
+                                          _createElementVNode("label", _hoisted_124, _toDisplayString(t('admin_settings_remote_endpoint_allowlist', 'Remote endpoint allowlist (one exact endpoint per line)')), 1 /* TEXT */),
                                           _withDirectives(_createElementVNode("textarea", {
                                             class: "form-control form-control-sm",
                                             rows: "4",
-                                            "onUpdate:modelValue": $event => ((settings.mount_remote_host_allowlist_text) = $event),
-                                            placeholder: "files.example.com\n10.0.0.0/8\n*.corp.example"
-                                          }, null, 8 /* PROPS */, _hoisted_121), [
-                                            [_vModelText, settings.mount_remote_host_allowlist_text]
+                                            "onUpdate:modelValue": $event => ((settings.remote_endpoint_allowlist_text) = $event),
+                                            placeholder: t('admin_settings_remote_endpoint_allowlist_placeholder', 'sftp://files.example.com:22\nftps://ftp.example.com:990')
+                                          }, null, 8 /* PROPS */, _hoisted_125), [
+                                            [_vModelText, settings.remote_endpoint_allowlist_text]
                                           ]),
-                                          _cache[38] || (_cache[38] = _createElementVNode("div", { class: "form-text" }, "Allow hostnames, IPs, CIDR ranges, and wildcard domains. Leave empty to block private/reserved targets only.", -1 /* CACHED */))
+                                          _createElementVNode("div", _hoisted_126, _toDisplayString(t('admin_settings_remote_endpoint_allowlist_hint', 'Use protocol://hostname:port. Empty means deny all remote connections; wildcards and open networks are not accepted.')), 1 /* TEXT */)
                                         ])
                                       ])
                                     ]))
                                   : _createCommentVNode("v-if", true),
                                 (settingsTab === 'logging')
-                                  ? (_openBlock(), _createElementBlock("div", _hoisted_122, [
-                                      _cache[42] || (_cache[42] = _createElementVNode("h6", { class: "border-bottom pb-2 mb-3" }, "Audit Logging", -1 /* CACHED */)),
-                                      _createElementVNode("div", _hoisted_123, [
-                                        _createElementVNode("div", _hoisted_124, [
-                                          _cache[40] || (_cache[40] = _createElementVNode("label", { class: "form-label small fw-bold" }, "Retention Count", -1 /* CACHED */)),
+                                  ? (_openBlock(), _createElementBlock("div", _hoisted_127, [
+                                      _cache[40] || (_cache[40] = _createElementVNode("h6", { class: "border-bottom pb-2 mb-3" }, "Audit Logging", -1 /* CACHED */)),
+                                      _createElementVNode("div", _hoisted_128, [
+                                        _createElementVNode("div", _hoisted_129, [
+                                          _cache[38] || (_cache[38] = _createElementVNode("label", { class: "form-label small fw-bold" }, "Retention Count", -1 /* CACHED */)),
                                           _withDirectives(_createElementVNode("input", {
                                             type: "number",
                                             min: "100",
@@ -899,7 +918,7 @@ return function render(_ctx, _cache) {
                                             step: "100",
                                             class: "form-control form-control-sm",
                                             "onUpdate:modelValue": $event => ((settings.log_retention_count) = $event)
-                                          }, null, 8 /* PROPS */, _hoisted_125), [
+                                          }, null, 8 /* PROPS */, _hoisted_130), [
                                             [
                                               _vModelText,
                                               settings.log_retention_count,
@@ -907,24 +926,24 @@ return function render(_ctx, _cache) {
                                               { number: true }
                                             ]
                                           ]),
-                                          _cache[41] || (_cache[41] = _createElementVNode("div", { class: "form-text" }, "How many recent audit log entries to keep (100-20000).", -1 /* CACHED */))
+                                          _cache[39] || (_cache[39] = _createElementVNode("div", { class: "form-text" }, "How many recent audit log entries to keep (100-20000).", -1 /* CACHED */))
                                         ])
                                       ])
                                     ]))
                                   : _createCommentVNode("v-if", true),
                                 (settingsTab === 'governance')
-                                  ? (_openBlock(), _createElementBlock("div", _hoisted_126, [
-                                      _cache[47] || (_cache[47] = _createElementVNode("h6", { class: "border-bottom pb-2 mb-3" }, "Uploads & Quotas", -1 /* CACHED */)),
-                                      _createElementVNode("div", _hoisted_127, [
-                                        _createElementVNode("div", _hoisted_128, [
-                                          _cache[43] || (_cache[43] = _createElementVNode("label", { class: "form-label small fw-bold" }, "Max Upload Size (MB)", -1 /* CACHED */)),
+                                  ? (_openBlock(), _createElementBlock("div", _hoisted_131, [
+                                      _cache[45] || (_cache[45] = _createElementVNode("h6", { class: "border-bottom pb-2 mb-3" }, "Uploads & Quotas", -1 /* CACHED */)),
+                                      _createElementVNode("div", _hoisted_132, [
+                                        _createElementVNode("div", _hoisted_133, [
+                                          _cache[41] || (_cache[41] = _createElementVNode("label", { class: "form-label small fw-bold" }, "Max Upload Size (MB)", -1 /* CACHED */)),
                                           _withDirectives(_createElementVNode("input", {
                                             type: "number",
                                             min: "0",
                                             max: "10240",
                                             class: "form-control form-control-sm",
                                             "onUpdate:modelValue": $event => ((settings.upload_max_file_mb) = $event)
-                                          }, null, 8 /* PROPS */, _hoisted_129), [
+                                          }, null, 8 /* PROPS */, _hoisted_134), [
                                             [
                                               _vModelText,
                                               settings.upload_max_file_mb,
@@ -932,17 +951,17 @@ return function render(_ctx, _cache) {
                                               { number: true }
                                             ]
                                           ]),
-                                          _cache[44] || (_cache[44] = _createElementVNode("div", { class: "form-text" }, "0 disables the limit. Applies to single and chunked uploads.", -1 /* CACHED */))
+                                          _cache[42] || (_cache[42] = _createElementVNode("div", { class: "form-text" }, "0 disables the limit. Applies to single and chunked uploads.", -1 /* CACHED */))
                                         ]),
-                                        _createElementVNode("div", _hoisted_130, [
-                                          _cache[45] || (_cache[45] = _createElementVNode("label", { class: "form-label small fw-bold" }, "Per-User Quota (MB)", -1 /* CACHED */)),
+                                        _createElementVNode("div", _hoisted_135, [
+                                          _cache[43] || (_cache[43] = _createElementVNode("label", { class: "form-label small fw-bold" }, "Per-User Quota (MB)", -1 /* CACHED */)),
                                           _withDirectives(_createElementVNode("input", {
                                             type: "number",
                                             min: "0",
                                             max: "102400",
                                             class: "form-control form-control-sm",
                                             "onUpdate:modelValue": $event => ((settings.quota_per_user_mb) = $event)
-                                          }, null, 8 /* PROPS */, _hoisted_131), [
+                                          }, null, 8 /* PROPS */, _hoisted_136), [
                                             [
                                               _vModelText,
                                               settings.quota_per_user_mb,
@@ -950,24 +969,24 @@ return function render(_ctx, _cache) {
                                               { number: true }
                                             ]
                                           ]),
-                                          _cache[46] || (_cache[46] = _createElementVNode("div", { class: "form-text" }, "0 disables the quota. Applies to the user home directory.", -1 /* CACHED */))
+                                          _cache[44] || (_cache[44] = _createElementVNode("div", { class: "form-text" }, "0 disables the quota. Applies to the user home directory.", -1 /* CACHED */))
                                         ])
                                       ])
                                     ]))
                                   : _createCommentVNode("v-if", true),
                                 (settingsTab === 'security')
-                                  ? (_openBlock(), _createElementBlock("div", _hoisted_132, [
-                                      _cache[50] || (_cache[50] = _createElementVNode("h6", { class: "border-bottom pb-2 mb-3" }, "Session Security", -1 /* CACHED */)),
-                                      _createElementVNode("div", _hoisted_133, [
-                                        _createElementVNode("div", _hoisted_134, [
-                                          _cache[48] || (_cache[48] = _createElementVNode("label", { class: "form-label small fw-bold" }, "Idle Timeout (Minutes)", -1 /* CACHED */)),
+                                  ? (_openBlock(), _createElementBlock("div", _hoisted_137, [
+                                      _cache[48] || (_cache[48] = _createElementVNode("h6", { class: "border-bottom pb-2 mb-3" }, "Session Security", -1 /* CACHED */)),
+                                      _createElementVNode("div", _hoisted_138, [
+                                        _createElementVNode("div", _hoisted_139, [
+                                          _cache[46] || (_cache[46] = _createElementVNode("label", { class: "form-label small fw-bold" }, "Idle Timeout (Minutes)", -1 /* CACHED */)),
                                           _withDirectives(_createElementVNode("input", {
                                             type: "number",
                                             min: "0",
                                             max: "1440",
                                             class: "form-control form-control-sm",
                                             "onUpdate:modelValue": $event => ((settings.session_idle_timeout_minutes) = $event)
-                                          }, null, 8 /* PROPS */, _hoisted_135), [
+                                          }, null, 8 /* PROPS */, _hoisted_140), [
                                             [
                                               _vModelText,
                                               settings.session_idle_timeout_minutes,
@@ -975,14 +994,14 @@ return function render(_ctx, _cache) {
                                               { number: true }
                                             ]
                                           ]),
-                                          _cache[49] || (_cache[49] = _createElementVNode("div", { class: "form-text" }, "0 disables idle timeout. Applies to API and UI sessions.", -1 /* CACHED */))
+                                          _cache[47] || (_cache[47] = _createElementVNode("div", { class: "form-text" }, "0 disables idle timeout. Applies to API and UI sessions.", -1 /* CACHED */))
                                         ])
                                       ])
                                     ]))
                                   : _createCommentVNode("v-if", true),
-                                _createElementVNode("div", _hoisted_136, [
+                                _createElementVNode("div", _hoisted_141, [
                                   settingsDirty
-                                    ? (_openBlock(), _createElementBlock("div", _hoisted_137, " You have unsaved settings changes. "))
+                                    ? (_openBlock(), _createElementBlock("div", _hoisted_142, " You have unsaved settings changes. "))
                                     : _createCommentVNode("v-if", true),
                                   (settingsTab === 'email')
                                     ? (_openBlock(), _createElementBlock("button", {
@@ -991,7 +1010,7 @@ return function render(_ctx, _cache) {
                                         class: "btn btn-outline-secondary btn-sm me-2",
                                         onClick: validateEmailSettings,
                                         disabled: !settings || isValidatingEmail
-                                      }, _toDisplayString(isValidatingEmail ? 'Validating…' : 'Validate'), 9 /* TEXT, PROPS */, _hoisted_138))
+                                      }, _toDisplayString(isValidatingEmail ? 'Validating…' : 'Validate'), 9 /* TEXT, PROPS */, _hoisted_143))
                                     : _createCommentVNode("v-if", true),
                                   (settingsTab === 'email')
                                     ? (_openBlock(), _createElementBlock("button", {
@@ -1000,13 +1019,13 @@ return function render(_ctx, _cache) {
                                         class: "btn btn-outline-secondary btn-sm me-2",
                                         onClick: testEmail,
                                         disabled: !settings || isTestingEmail
-                                      }, _toDisplayString(isTestingEmail ? 'Sending…' : 'Send Test Email'), 9 /* TEXT, PROPS */, _hoisted_139))
+                                      }, _toDisplayString(isTestingEmail ? 'Sending…' : 'Send Test Email'), 9 /* TEXT, PROPS */, _hoisted_144))
                                     : _createCommentVNode("v-if", true),
                                   _createElementVNode("button", {
                                     type: "submit",
                                     class: "btn btn-primary btn-sm",
                                     disabled: !settingsDirty || isSavingSettings
-                                  }, _toDisplayString(isSavingSettings ? 'Saving…' : 'Save Settings'), 9 /* TEXT, PROPS */, _hoisted_140)
+                                  }, _toDisplayString(isSavingSettings ? 'Saving…' : 'Save Settings'), 9 /* TEXT, PROPS */, _hoisted_145)
                                 ])
                               ], 40 /* PROPS, NEED_HYDRATION */, _hoisted_67)
                             ]))
@@ -1014,9 +1033,9 @@ return function render(_ctx, _cache) {
                     : _createCommentVNode("v-if", true),
                   _createCommentVNode(" Users Tab "),
                   (tab === 'users')
-                    ? (_openBlock(), _createElementBlock("div", _hoisted_141, [
-                        _createElementVNode("table", _hoisted_142, [
-                          _cache[53] || (_cache[53] = _createElementVNode("thead", null, [
+                    ? (_openBlock(), _createElementBlock("div", _hoisted_146, [
+                        _createElementVNode("table", _hoisted_147, [
+                          _cache[51] || (_cache[51] = _createElementVNode("thead", null, [
                             _createElementVNode("tr", null, [
                               _createElementVNode("th", null, "Username"),
                               _createElementVNode("th", null, "Groups"),
@@ -1030,32 +1049,32 @@ return function render(_ctx, _cache) {
                                 _createElementVNode("td", null, _toDisplayString(user.username), 1 /* TEXT */),
                                 _createElementVNode("td", null, [
                                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(user.groups, (g) => {
-                                    return (_openBlock(), _createElementBlock("span", _hoisted_143, _toDisplayString(g), 1 /* TEXT */))
+                                    return (_openBlock(), _createElementBlock("span", _hoisted_148, _toDisplayString(g), 1 /* TEXT */))
                                   }), 256 /* UNKEYED_FRAGMENT */))
                                 ]),
                                 _createElementVNode("td", null, _toDisplayString(user.home_dir), 1 /* TEXT */),
-                                _createElementVNode("td", _hoisted_144, [
+                                _createElementVNode("td", _hoisted_149, [
                                   _createElementVNode("button", {
                                     class: "btn btn-sm btn-outline-primary me-1",
                                     onClick: $event => (editUser(user)),
                                     "aria-label": 'Edit User: ' + user.username
-                                  }, [...(_cache[51] || (_cache[51] = [
+                                  }, [...(_cache[49] || (_cache[49] = [
                                     _createElementVNode("i", {
                                       class: "ri-edit-line",
                                       "aria-hidden": "true"
                                     }, null, -1 /* CACHED */)
-                                  ]))], 8 /* PROPS */, _hoisted_145),
+                                  ]))], 8 /* PROPS */, _hoisted_150),
                                   _createElementVNode("button", {
                                     class: "btn btn-sm btn-outline-danger",
                                     onClick: $event => (deleteUser(user)),
                                     disabled: user.username === currentUsername,
                                     "aria-label": 'Delete: ' + user.username
-                                  }, [...(_cache[52] || (_cache[52] = [
+                                  }, [...(_cache[50] || (_cache[50] = [
                                     _createElementVNode("i", {
                                       class: "ri-delete-bin-line",
                                       "aria-hidden": "true"
                                     }, null, -1 /* CACHED */)
-                                  ]))], 8 /* PROPS */, _hoisted_146)
+                                  ]))], 8 /* PROPS */, _hoisted_151)
                                 ])
                               ]))
                             }), 128 /* KEYED_FRAGMENT */))
@@ -1064,18 +1083,18 @@ return function render(_ctx, _cache) {
                         _createElementVNode("button", {
                           class: "btn btn-success btn-sm",
                           onClick: showAddForm
-                        }, [...(_cache[54] || (_cache[54] = [
+                        }, [...(_cache[52] || (_cache[52] = [
                           _createElementVNode("i", { class: "ri-user-add-line" }, null, -1 /* CACHED */),
                           _createTextVNode(" Add User ", -1 /* CACHED */)
-                        ]))], 8 /* PROPS */, _hoisted_147),
+                        ]))], 8 /* PROPS */, _hoisted_152),
                         editingUser
-                          ? (_openBlock(), _createElementBlock("div", _hoisted_148, [
-                              _createElementVNode("div", _hoisted_149, [
+                          ? (_openBlock(), _createElementBlock("div", _hoisted_153, [
+                              _createElementVNode("div", _hoisted_154, [
                                 _createElementVNode("h6", null, _toDisplayString(isNew ? 'Add User' : 'Edit User: ' + editingUser.username), 1 /* TEXT */),
-                                _createElementVNode("div", _hoisted_150, [
+                                _createElementVNode("div", _hoisted_155, [
                                   isNew
-                                    ? (_openBlock(), _createElementBlock("div", _hoisted_151, [
-                                        _cache[55] || (_cache[55] = _createElementVNode("label", {
+                                    ? (_openBlock(), _createElementBlock("div", _hoisted_156, [
+                                        _cache[53] || (_cache[53] = _createElementVNode("label", {
                                           class: "form-label small",
                                           for: "quickAdminUserUsername"
                                         }, "Username", -1 /* CACHED */)),
@@ -1085,25 +1104,25 @@ return function render(_ctx, _cache) {
                                           class: "form-control form-control-sm",
                                           "onUpdate:modelValue": $event => ((editingUser.username) = $event),
                                           autocomplete: "username"
-                                        }, null, 8 /* PROPS */, _hoisted_152), [
+                                        }, null, 8 /* PROPS */, _hoisted_157), [
                                           [_vModelText, editingUser.username]
                                         ])
                                       ]))
                                     : _createCommentVNode("v-if", true),
-                                  _createElementVNode("div", _hoisted_153, [
-                                    _createElementVNode("label", _hoisted_154, "Password " + _toDisplayString(!isNew ? '(Leave blank to keep)' : ''), 1 /* TEXT */),
+                                  _createElementVNode("div", _hoisted_158, [
+                                    _createElementVNode("label", _hoisted_159, "Password " + _toDisplayString(!isNew ? '(Leave blank to keep)' : ''), 1 /* TEXT */),
                                     _withDirectives(_createElementVNode("input", {
                                       id: "quickAdminUserPassword",
                                       type: "password",
                                       class: "form-control form-control-sm",
                                       "onUpdate:modelValue": $event => ((editingUser.password) = $event),
                                       autocomplete: "new-password"
-                                    }, null, 8 /* PROPS */, _hoisted_155), [
+                                    }, null, 8 /* PROPS */, _hoisted_160), [
                                       [_vModelText, editingUser.password]
                                     ])
                                   ]),
-                                  _createElementVNode("div", _hoisted_156, [
-                                    _cache[56] || (_cache[56] = _createElementVNode("label", {
+                                  _createElementVNode("div", _hoisted_161, [
+                                    _cache[54] || (_cache[54] = _createElementVNode("label", {
                                       class: "form-label small",
                                       for: "quickAdminUserHome"
                                     }, "Home Dir", -1 /* CACHED */)),
@@ -1112,12 +1131,12 @@ return function render(_ctx, _cache) {
                                       type: "text",
                                       class: "form-control form-control-sm",
                                       "onUpdate:modelValue": $event => ((editingUser.home_dir) = $event)
-                                    }, null, 8 /* PROPS */, _hoisted_157), [
+                                    }, null, 8 /* PROPS */, _hoisted_162), [
                                       [_vModelText, editingUser.home_dir]
                                     ])
                                   ]),
-                                  _createElementVNode("div", _hoisted_158, [
-                                    _cache[57] || (_cache[57] = _createElementVNode("label", {
+                                  _createElementVNode("div", _hoisted_163, [
+                                    _cache[55] || (_cache[55] = _createElementVNode("label", {
                                       class: "form-label small",
                                       for: "quickAdminUserAllowed"
                                     }, "Allowed Extensions (csv)", -1 /* CACHED */)),
@@ -1127,12 +1146,12 @@ return function render(_ctx, _cache) {
                                       class: "form-control form-control-sm",
                                       "onUpdate:modelValue": $event => ((editingUser.allowed_extensions) = $event),
                                       placeholder: "e.g. jpg,png,pdf"
-                                    }, null, 8 /* PROPS */, _hoisted_159), [
+                                    }, null, 8 /* PROPS */, _hoisted_164), [
                                       [_vModelText, editingUser.allowed_extensions]
                                     ])
                                   ]),
-                                  _createElementVNode("div", _hoisted_160, [
-                                    _cache[59] || (_cache[59] = _createElementVNode("label", {
+                                  _createElementVNode("div", _hoisted_165, [
+                                    _cache[57] || (_cache[57] = _createElementVNode("label", {
                                       class: "form-label small",
                                       for: "quickAdminUserBlocked"
                                     }, "Blocked Extensions (csv)", -1 /* CACHED */)),
@@ -1142,12 +1161,12 @@ return function render(_ctx, _cache) {
                                       class: "form-control form-control-sm",
                                       "onUpdate:modelValue": $event => ((editingUser.blocked_extensions) = $event),
                                       placeholder: "e.g. php,exe"
-                                    }, null, 8 /* PROPS */, _hoisted_161), [
+                                    }, null, 8 /* PROPS */, _hoisted_166), [
                                       [_vModelText, editingUser.blocked_extensions]
                                     ]),
                                     (system && system.system_blocklist)
-                                      ? (_openBlock(), _createElementBlock("div", _hoisted_162, [
-                                          _cache[58] || (_cache[58] = _createElementVNode("span", { class: "small text-muted d-block admin-note" }, "System Blocklist (Always Applied):", -1 /* CACHED */)),
+                                      ? (_openBlock(), _createElementBlock("div", _hoisted_167, [
+                                          _cache[56] || (_cache[56] = _createElementVNode("span", { class: "small text-muted d-block admin-note" }, "System Blocklist (Always Applied):", -1 /* CACHED */)),
                                           (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(system.system_blocklist, (ext) => {
                                             return (_openBlock(), _createElementBlock("span", {
                                               key: ext,
@@ -1157,9 +1176,9 @@ return function render(_ctx, _cache) {
                                         ]))
                                       : _createCommentVNode("v-if", true)
                                   ]),
-                                  _createElementVNode("div", _hoisted_163, [
-                                    _cache[60] || (_cache[60] = _createElementVNode("label", { class: "form-label small d-block" }, "Groups", -1 /* CACHED */)),
-                                    _createElementVNode("div", _hoisted_164, [
+                                  _createElementVNode("div", _hoisted_168, [
+                                    _cache[58] || (_cache[58] = _createElementVNode("label", { class: "form-label small d-block" }, "Groups", -1 /* CACHED */)),
+                                    _createElementVNode("div", _hoisted_169, [
                                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(groupsList, (roles, gname) => {
                                         return (_openBlock(), _createElementBlock("div", {
                                           key: gname,
@@ -1171,32 +1190,32 @@ return function render(_ctx, _cache) {
                                             id: 'chk_g_'+gname,
                                             value: gname,
                                             "onUpdate:modelValue": $event => ((editingUser.groups) = $event)
-                                          }, null, 8 /* PROPS */, _hoisted_165), [
+                                          }, null, 8 /* PROPS */, _hoisted_170), [
                                             [_vModelCheckbox, editingUser.groups]
                                           ]),
                                           _createElementVNode("label", {
                                             class: "form-check-label",
                                             for: 'chk_g_'+gname
-                                          }, _toDisplayString(gname), 9 /* TEXT, PROPS */, _hoisted_166)
+                                          }, _toDisplayString(gname), 9 /* TEXT, PROPS */, _hoisted_171)
                                         ]))
                                       }), 128 /* KEYED_FRAGMENT */))
                                     ])
                                   ]),
                                   (!isNew)
-                                    ? (_openBlock(), _createElementBlock("div", _hoisted_167, [
-                                        _createElementVNode("div", _hoisted_168, [
-                                          _cache[61] || (_cache[61] = _createElementVNode("label", { class: "form-label small fw-bold mb-1" }, "Effective Permissions", -1 /* CACHED */)),
+                                    ? (_openBlock(), _createElementBlock("div", _hoisted_172, [
+                                        _createElementVNode("div", _hoisted_173, [
+                                          _cache[59] || (_cache[59] = _createElementVNode("label", { class: "form-label small fw-bold mb-1" }, "Effective Permissions", -1 /* CACHED */)),
                                           _createElementVNode("button", {
                                             class: "btn btn-outline-secondary btn-sm py-0 px-2",
                                             onClick: $event => (loadEffectivePermissions(editingUser.username)),
                                             disabled: effectivePermissions.loading
-                                          }, _toDisplayString(effectivePermissions.loading ? '…' : 'Refresh'), 9 /* TEXT, PROPS */, _hoisted_169)
+                                          }, _toDisplayString(effectivePermissions.loading ? '…' : 'Refresh'), 9 /* TEXT, PROPS */, _hoisted_174)
                                         ]),
                                         (effectivePermissions.loading)
-                                          ? (_openBlock(), _createElementBlock("div", _hoisted_170, "Loading permissions…"))
+                                          ? (_openBlock(), _createElementBlock("div", _hoisted_175, "Loading permissions…"))
                                           : (effectivePermissions.perms.length === 0)
-                                            ? (_openBlock(), _createElementBlock("div", _hoisted_171, "No permissions resolved."))
-                                            : (_openBlock(), _createElementBlock("div", _hoisted_172, [
+                                            ? (_openBlock(), _createElementBlock("div", _hoisted_176, "No permissions resolved."))
+                                            : (_openBlock(), _createElementBlock("div", _hoisted_177, [
                                                 (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(effectivePermissions.perms, (perm) => {
                                                   return (_openBlock(), _createElementBlock("span", {
                                                     key: perm,
@@ -1207,17 +1226,17 @@ return function render(_ctx, _cache) {
                                       ]))
                                     : _createCommentVNode("v-if", true)
                                 ]),
-                                _createElementVNode("div", _hoisted_173, [
+                                _createElementVNode("div", _hoisted_178, [
                                   _createElementVNode("button", {
                                     class: "btn btn-secondary btn-sm me-2",
                                     onClick: cancelEdit,
                                     disabled: isSavingUser
-                                  }, "Cancel", 8 /* PROPS */, _hoisted_174),
+                                  }, "Cancel", 8 /* PROPS */, _hoisted_179),
                                   _createElementVNode("button", {
                                     class: "btn btn-primary btn-sm",
                                     onClick: saveUser,
                                     disabled: isSavingUser
-                                  }, _toDisplayString(isSavingUser ? 'Saving…' : 'Save'), 9 /* TEXT, PROPS */, _hoisted_175)
+                                  }, _toDisplayString(isSavingUser ? 'Saving…' : 'Save'), 9 /* TEXT, PROPS */, _hoisted_180)
                                 ])
                               ])
                             ]))
@@ -1226,9 +1245,9 @@ return function render(_ctx, _cache) {
                     : _createCommentVNode("v-if", true),
                   _createCommentVNode(" Groups Tab "),
                   (tab === 'groups')
-                    ? (_openBlock(), _createElementBlock("div", _hoisted_176, [
-                        _createElementVNode("table", _hoisted_177, [
-                          _cache[64] || (_cache[64] = _createElementVNode("thead", null, [
+                    ? (_openBlock(), _createElementBlock("div", _hoisted_181, [
+                        _createElementVNode("table", _hoisted_182, [
+                          _cache[62] || (_cache[62] = _createElementVNode("thead", null, [
                             _createElementVNode("tr", null, [
                               _createElementVNode("th", null, "Group Name"),
                               _createElementVNode("th", null, "Assigned Roles"),
@@ -1241,30 +1260,30 @@ return function render(_ctx, _cache) {
                                 _createElementVNode("td", null, _toDisplayString(name), 1 /* TEXT */),
                                 _createElementVNode("td", null, [
                                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(roles, (r) => {
-                                    return (_openBlock(), _createElementBlock("span", _hoisted_178, _toDisplayString(r), 1 /* TEXT */))
+                                    return (_openBlock(), _createElementBlock("span", _hoisted_183, _toDisplayString(r), 1 /* TEXT */))
                                   }), 256 /* UNKEYED_FRAGMENT */))
                                 ]),
-                                _createElementVNode("td", _hoisted_179, [
+                                _createElementVNode("td", _hoisted_184, [
                                   _createElementVNode("button", {
                                     class: "btn btn-sm btn-outline-primary me-1",
                                     onClick: $event => (editGroup(name, roles)),
                                     "aria-label": 'Group: ' + name
-                                  }, [...(_cache[62] || (_cache[62] = [
+                                  }, [...(_cache[60] || (_cache[60] = [
                                     _createElementVNode("i", {
                                       class: "ri-edit-line",
                                       "aria-hidden": "true"
                                     }, null, -1 /* CACHED */)
-                                  ]))], 8 /* PROPS */, _hoisted_180),
+                                  ]))], 8 /* PROPS */, _hoisted_185),
                                   _createElementVNode("button", {
                                     class: "btn btn-sm btn-outline-danger",
                                     onClick: $event => (deleteGroup(name)),
                                     "aria-label": 'Delete: ' + name
-                                  }, [...(_cache[63] || (_cache[63] = [
+                                  }, [...(_cache[61] || (_cache[61] = [
                                     _createElementVNode("i", {
                                       class: "ri-delete-bin-line",
                                       "aria-hidden": "true"
                                     }, null, -1 /* CACHED */)
-                                  ]))], 8 /* PROPS */, _hoisted_181)
+                                  ]))], 8 /* PROPS */, _hoisted_186)
                                 ])
                               ]))
                             }), 128 /* KEYED_FRAGMENT */))
@@ -1273,13 +1292,13 @@ return function render(_ctx, _cache) {
                         _createElementVNode("button", {
                           class: "btn btn-success btn-sm",
                           onClick: showAddGroupForm
-                        }, [...(_cache[65] || (_cache[65] = [
+                        }, [...(_cache[63] || (_cache[63] = [
                           _createElementVNode("i", { class: "ri-add-line" }, null, -1 /* CACHED */),
                           _createTextVNode(" Add Group ", -1 /* CACHED */)
-                        ]))], 8 /* PROPS */, _hoisted_182),
+                        ]))], 8 /* PROPS */, _hoisted_187),
                         editingGroup
-                          ? (_openBlock(), _createElementBlock("div", _hoisted_183, [
-                              _createElementVNode("div", _hoisted_184, [
+                          ? (_openBlock(), _createElementBlock("div", _hoisted_188, [
+                              _createElementVNode("div", _hoisted_189, [
                                 _createElementVNode("h6", null, "Group: " + _toDisplayString(editingGroup.name || 'New'), 1 /* TEXT */),
                                 (!editingGroup.isEdit)
                                   ? _withDirectives((_openBlock(), _createElementBlock("input", {
@@ -1289,12 +1308,12 @@ return function render(_ctx, _cache) {
                                       placeholder: "Group Name",
                                       "onUpdate:modelValue": $event => ((editingGroup.name) = $event),
                                       "aria-label": "Group Name"
-                                    }, null, 8 /* PROPS */, _hoisted_185)), [
+                                    }, null, 8 /* PROPS */, _hoisted_190)), [
                                       [_vModelText, editingGroup.name]
                                     ])
                                   : _createCommentVNode("v-if", true),
-                                _cache[66] || (_cache[66] = _createElementVNode("label", { class: "small d-block mb-1" }, "Roles", -1 /* CACHED */)),
-                                _createElementVNode("div", _hoisted_186, [
+                                _cache[64] || (_cache[64] = _createElementVNode("label", { class: "small d-block mb-1" }, "Roles", -1 /* CACHED */)),
+                                _createElementVNode("div", _hoisted_191, [
                                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(rolesList, (perms, rname) => {
                                     return (_openBlock(), _createElementBlock("div", {
                                       key: rname,
@@ -1306,27 +1325,27 @@ return function render(_ctx, _cache) {
                                         id: 'chk_r_'+rname,
                                         value: rname,
                                         "onUpdate:modelValue": $event => ((editingGroup.roles) = $event)
-                                      }, null, 8 /* PROPS */, _hoisted_187), [
+                                      }, null, 8 /* PROPS */, _hoisted_192), [
                                         [_vModelCheckbox, editingGroup.roles]
                                       ]),
                                       _createElementVNode("label", {
                                         class: "form-check-label",
                                         for: 'chk_r_'+rname
-                                      }, _toDisplayString(rname), 9 /* TEXT, PROPS */, _hoisted_188)
+                                      }, _toDisplayString(rname), 9 /* TEXT, PROPS */, _hoisted_193)
                                     ]))
                                   }), 128 /* KEYED_FRAGMENT */))
                                 ]),
-                                _createElementVNode("div", _hoisted_189, [
+                                _createElementVNode("div", _hoisted_194, [
                                   _createElementVNode("button", {
                                     class: "btn btn-secondary btn-sm me-2",
                                     onClick: $event => (editingGroup = null),
                                     disabled: isSavingGroup
-                                  }, "Cancel", 8 /* PROPS */, _hoisted_190),
+                                  }, "Cancel", 8 /* PROPS */, _hoisted_195),
                                   _createElementVNode("button", {
                                     class: "btn btn-primary btn-sm",
                                     onClick: saveGroup,
                                     disabled: isSavingGroup
-                                  }, _toDisplayString(isSavingGroup ? 'Saving…' : 'Save'), 9 /* TEXT, PROPS */, _hoisted_191)
+                                  }, _toDisplayString(isSavingGroup ? 'Saving…' : 'Save'), 9 /* TEXT, PROPS */, _hoisted_196)
                                 ])
                               ])
                             ]))
@@ -1335,9 +1354,9 @@ return function render(_ctx, _cache) {
                     : _createCommentVNode("v-if", true),
                   _createCommentVNode(" Roles Tab "),
                   (tab === 'roles')
-                    ? (_openBlock(), _createElementBlock("div", _hoisted_192, [
-                        _createElementVNode("table", _hoisted_193, [
-                          _cache[69] || (_cache[69] = _createElementVNode("thead", null, [
+                    ? (_openBlock(), _createElementBlock("div", _hoisted_197, [
+                        _createElementVNode("table", _hoisted_198, [
+                          _cache[67] || (_cache[67] = _createElementVNode("thead", null, [
                             _createElementVNode("tr", null, [
                               _createElementVNode("th", null, "Role Name"),
                               _createElementVNode("th", null, "Permissions"),
@@ -1349,29 +1368,29 @@ return function render(_ctx, _cache) {
                               return (_openBlock(), _createElementBlock("tr", { key: name }, [
                                 _createElementVNode("td", null, _toDisplayString(name), 1 /* TEXT */),
                                 _createElementVNode("td", null, [
-                                  _createElementVNode("code", _hoisted_194, _toDisplayString(perms.join(', ')), 1 /* TEXT */)
+                                  _createElementVNode("code", _hoisted_199, _toDisplayString(perms.join(', ')), 1 /* TEXT */)
                                 ]),
-                                _createElementVNode("td", _hoisted_195, [
+                                _createElementVNode("td", _hoisted_200, [
                                   _createElementVNode("button", {
                                     class: "btn btn-sm btn-outline-primary me-1",
                                     onClick: $event => (editRole(name, perms)),
                                     "aria-label": 'Role: ' + name
-                                  }, [...(_cache[67] || (_cache[67] = [
+                                  }, [...(_cache[65] || (_cache[65] = [
                                     _createElementVNode("i", {
                                       class: "ri-edit-line",
                                       "aria-hidden": "true"
                                     }, null, -1 /* CACHED */)
-                                  ]))], 8 /* PROPS */, _hoisted_196),
+                                  ]))], 8 /* PROPS */, _hoisted_201),
                                   _createElementVNode("button", {
                                     class: "btn btn-sm btn-outline-danger",
                                     onClick: $event => (deleteRole(name)),
                                     "aria-label": 'Delete: ' + name
-                                  }, [...(_cache[68] || (_cache[68] = [
+                                  }, [...(_cache[66] || (_cache[66] = [
                                     _createElementVNode("i", {
                                       class: "ri-delete-bin-line",
                                       "aria-hidden": "true"
                                     }, null, -1 /* CACHED */)
-                                  ]))], 8 /* PROPS */, _hoisted_197)
+                                  ]))], 8 /* PROPS */, _hoisted_202)
                                 ])
                               ]))
                             }), 128 /* KEYED_FRAGMENT */))
@@ -1380,13 +1399,13 @@ return function render(_ctx, _cache) {
                         _createElementVNode("button", {
                           class: "btn btn-success btn-sm",
                           onClick: showAddRoleForm
-                        }, [...(_cache[70] || (_cache[70] = [
+                        }, [...(_cache[68] || (_cache[68] = [
                           _createElementVNode("i", { class: "ri-add-line" }, null, -1 /* CACHED */),
                           _createTextVNode(" Add Role ", -1 /* CACHED */)
-                        ]))], 8 /* PROPS */, _hoisted_198),
+                        ]))], 8 /* PROPS */, _hoisted_203),
                         editingRole
-                          ? (_openBlock(), _createElementBlock("div", _hoisted_199, [
-                              _createElementVNode("div", _hoisted_200, [
+                          ? (_openBlock(), _createElementBlock("div", _hoisted_204, [
+                              _createElementVNode("div", _hoisted_205, [
                                 _createElementVNode("h6", null, "Role: " + _toDisplayString(editingRole.name || 'New'), 1 /* TEXT */),
                                 (!editingRole.isEdit)
                                   ? _withDirectives((_openBlock(), _createElementBlock("input", {
@@ -1396,11 +1415,11 @@ return function render(_ctx, _cache) {
                                       placeholder: "Role Name",
                                       "onUpdate:modelValue": $event => ((editingRole.name) = $event),
                                       "aria-label": "Role Name"
-                                    }, null, 8 /* PROPS */, _hoisted_201)), [
+                                    }, null, 8 /* PROPS */, _hoisted_206)), [
                                       [_vModelText, editingRole.name]
                                     ])
                                   : _createCommentVNode("v-if", true),
-                                _cache[72] || (_cache[72] = _createElementVNode("label", {
+                                _cache[70] || (_cache[70] = _createElementVNode("label", {
                                   class: "small d-block mb-1",
                                   for: "quickAdminRolePerms"
                                 }, "Permissions (comma separated or *)", -1 /* CACHED */)),
@@ -1409,12 +1428,12 @@ return function render(_ctx, _cache) {
                                   type: "text",
                                   class: "form-control form-control-sm",
                                   "onUpdate:modelValue": $event => ((editingRole.permsString) = $event)
-                                }, null, 8 /* PROPS */, _hoisted_202), [
+                                }, null, 8 /* PROPS */, _hoisted_207), [
                                   [_vModelText, editingRole.permsString]
                                 ]),
                                 (permissionCatalog.length)
-                                  ? (_openBlock(), _createElementBlock("div", _hoisted_203, [
-                                      _cache[71] || (_cache[71] = _createElementVNode("span", { class: "small text-muted d-block admin-note" }, "Known permissions:", -1 /* CACHED */)),
+                                  ? (_openBlock(), _createElementBlock("div", _hoisted_208, [
+                                      _cache[69] || (_cache[69] = _createElementVNode("span", { class: "small text-muted d-block admin-note" }, "Known permissions:", -1 /* CACHED */)),
                                       (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(permissionCatalog, (perm) => {
                                         return (_openBlock(), _createElementBlock("span", {
                                           key: perm,
@@ -1423,17 +1442,17 @@ return function render(_ctx, _cache) {
                                       }), 128 /* KEYED_FRAGMENT */))
                                     ]))
                                   : _createCommentVNode("v-if", true),
-                                _createElementVNode("div", _hoisted_204, [
+                                _createElementVNode("div", _hoisted_209, [
                                   _createElementVNode("button", {
                                     class: "btn btn-secondary btn-sm me-2",
                                     onClick: $event => (editingRole = null),
                                     disabled: isSavingRole
-                                  }, "Cancel", 8 /* PROPS */, _hoisted_205),
+                                  }, "Cancel", 8 /* PROPS */, _hoisted_210),
                                   _createElementVNode("button", {
                                     class: "btn btn-primary btn-sm",
                                     onClick: saveRole,
                                     disabled: isSavingRole
-                                  }, _toDisplayString(isSavingRole ? 'Saving…' : 'Save'), 9 /* TEXT, PROPS */, _hoisted_206)
+                                  }, _toDisplayString(isSavingRole ? 'Saving…' : 'Save'), 9 /* TEXT, PROPS */, _hoisted_211)
                                 ])
                               ])
                             ]))
@@ -1442,12 +1461,12 @@ return function render(_ctx, _cache) {
                     : _createCommentVNode("v-if", true),
                   _createCommentVNode(" Logs Tab "),
                   (tab === 'logs')
-                    ? (_openBlock(), _createElementBlock("div", _hoisted_207, [
+                    ? (_openBlock(), _createElementBlock("div", _hoisted_212, [
                         (!quickAdmin)
-                          ? (_openBlock(), _createElementBlock("div", _hoisted_208, [
-                              _createElementVNode("div", _hoisted_209, [
-                                _createElementVNode("div", _hoisted_210, [
-                                  _cache[73] || (_cache[73] = _createElementVNode("label", {
+                          ? (_openBlock(), _createElementBlock("div", _hoisted_213, [
+                              _createElementVNode("div", _hoisted_214, [
+                                _createElementVNode("div", _hoisted_215, [
+                                  _cache[71] || (_cache[71] = _createElementVNode("label", {
                                     class: "form-label small mb-1",
                                     for: "quickAdminLogUser"
                                   }, "User", -1 /* CACHED */)),
@@ -1457,7 +1476,7 @@ return function render(_ctx, _cache) {
                                     class: "form-control form-control-sm",
                                     "onUpdate:modelValue": $event => ((logFilters.user) = $event),
                                     placeholder: "username"
-                                  }, null, 8 /* PROPS */, _hoisted_211), [
+                                  }, null, 8 /* PROPS */, _hoisted_216), [
                                     [
                                       _vModelText,
                                       logFilters.user,
@@ -1466,8 +1485,8 @@ return function render(_ctx, _cache) {
                                     ]
                                   ])
                                 ]),
-                                _createElementVNode("div", _hoisted_212, [
-                                  _cache[74] || (_cache[74] = _createElementVNode("label", {
+                                _createElementVNode("div", _hoisted_217, [
+                                  _cache[72] || (_cache[72] = _createElementVNode("label", {
                                     class: "form-label small mb-1",
                                     for: "quickAdminLogAction"
                                   }, "Action", -1 /* CACHED */)),
@@ -1477,7 +1496,7 @@ return function render(_ctx, _cache) {
                                     class: "form-control form-control-sm",
                                     "onUpdate:modelValue": $event => ((logFilters.action) = $event),
                                     placeholder: "action"
-                                  }, null, 8 /* PROPS */, _hoisted_213), [
+                                  }, null, 8 /* PROPS */, _hoisted_218), [
                                     [
                                       _vModelText,
                                       logFilters.action,
@@ -1486,8 +1505,8 @@ return function render(_ctx, _cache) {
                                     ]
                                   ])
                                 ]),
-                                _createElementVNode("div", _hoisted_214, [
-                                  _cache[75] || (_cache[75] = _createElementVNode("label", {
+                                _createElementVNode("div", _hoisted_219, [
+                                  _cache[73] || (_cache[73] = _createElementVNode("label", {
                                     class: "form-label small mb-1",
                                     for: "quickAdminLogPath"
                                   }, "Path contains", -1 /* CACHED */)),
@@ -1497,7 +1516,7 @@ return function render(_ctx, _cache) {
                                     class: "form-control form-control-sm",
                                     "onUpdate:modelValue": $event => ((logFilters.path_contains) = $event),
                                     placeholder: "/path"
-                                  }, null, 8 /* PROPS */, _hoisted_215), [
+                                  }, null, 8 /* PROPS */, _hoisted_220), [
                                     [
                                       _vModelText,
                                       logFilters.path_contains,
@@ -1506,8 +1525,8 @@ return function render(_ctx, _cache) {
                                     ]
                                   ])
                                 ]),
-                                _createElementVNode("div", _hoisted_216, [
-                                  _cache[76] || (_cache[76] = _createElementVNode("label", {
+                                _createElementVNode("div", _hoisted_221, [
+                                  _cache[74] || (_cache[74] = _createElementVNode("label", {
                                     class: "form-label small mb-1",
                                     for: "quickAdminLogFrom"
                                   }, "From", -1 /* CACHED */)),
@@ -1516,12 +1535,12 @@ return function render(_ctx, _cache) {
                                     type: "date",
                                     class: "form-control form-control-sm",
                                     "onUpdate:modelValue": $event => ((logFilters.date_from) = $event)
-                                  }, null, 8 /* PROPS */, _hoisted_217), [
+                                  }, null, 8 /* PROPS */, _hoisted_222), [
                                     [_vModelText, logFilters.date_from]
                                   ])
                                 ]),
-                                _createElementVNode("div", _hoisted_218, [
-                                  _cache[77] || (_cache[77] = _createElementVNode("label", {
+                                _createElementVNode("div", _hoisted_223, [
+                                  _cache[75] || (_cache[75] = _createElementVNode("label", {
                                     class: "form-label small mb-1",
                                     for: "quickAdminLogTo"
                                   }, "To", -1 /* CACHED */)),
@@ -1530,43 +1549,43 @@ return function render(_ctx, _cache) {
                                     type: "date",
                                     class: "form-control form-control-sm",
                                     "onUpdate:modelValue": $event => ((logFilters.date_to) = $event)
-                                  }, null, 8 /* PROPS */, _hoisted_219), [
+                                  }, null, 8 /* PROPS */, _hoisted_224), [
                                     [_vModelText, logFilters.date_to]
                                   ])
                                 ]),
-                                _createElementVNode("div", _hoisted_220, [
+                                _createElementVNode("div", _hoisted_225, [
                                   _createElementVNode("button", {
                                     class: "btn btn-primary btn-sm",
                                     onClick: applyLogFilters,
                                     disabled: isLoadingLogs
-                                  }, _toDisplayString(isLoadingLogs ? '…' : 'Apply'), 9 /* TEXT, PROPS */, _hoisted_221)
+                                  }, _toDisplayString(isLoadingLogs ? '…' : 'Apply'), 9 /* TEXT, PROPS */, _hoisted_226)
                                 ])
                               ]),
-                              _createElementVNode("div", _hoisted_222, [
+                              _createElementVNode("div", _hoisted_227, [
                                 _createElementVNode("button", {
                                   class: "btn btn-outline-secondary btn-sm",
                                   onClick: resetLogFilters,
                                   disabled: isLoadingLogs
-                                }, "Reset", 8 /* PROPS */, _hoisted_223),
+                                }, "Reset", 8 /* PROPS */, _hoisted_228),
                                 _createElementVNode("button", {
                                   class: "btn btn-outline-secondary btn-sm",
                                   onClick: $event => (exportLogs('json')),
                                   disabled: isLoadingLogs || logs.length === 0
-                                }, "Export JSON", 8 /* PROPS */, _hoisted_224),
+                                }, "Export JSON", 8 /* PROPS */, _hoisted_229),
                                 _createElementVNode("button", {
                                   class: "btn btn-outline-secondary btn-sm",
                                   onClick: $event => (exportLogs('csv')),
                                   disabled: isLoadingLogs || logs.length === 0
-                                }, "Export CSV", 8 /* PROPS */, _hoisted_225)
+                                }, "Export CSV", 8 /* PROPS */, _hoisted_230)
                               ])
                             ]))
-                          : (_openBlock(), _createElementBlock("div", _hoisted_226, " Showing the most recent activity. Use the admin console for full audit tools. ")),
+                          : (_openBlock(), _createElementBlock("div", _hoisted_231, " Showing the most recent activity. Use the admin console for full audit tools. ")),
                         isLoadingLogs
-                          ? (_openBlock(), _createElementBlock("div", _hoisted_227, "Loading logs…"))
+                          ? (_openBlock(), _createElementBlock("div", _hoisted_232, "Loading logs…"))
                           : _createCommentVNode("v-if", true),
-                        _createElementVNode("div", _hoisted_228, [
-                          _createElementVNode("table", _hoisted_229, [
-                            _cache[78] || (_cache[78] = _createElementVNode("thead", { class: "sticky-top bg-body" }, [
+                        _createElementVNode("div", _hoisted_233, [
+                          _createElementVNode("table", _hoisted_234, [
+                            _cache[76] || (_cache[76] = _createElementVNode("thead", { class: "sticky-top bg-body" }, [
                               _createElementVNode("tr", null, [
                                 _createElementVNode("th", null, "Date"),
                                 _createElementVNode("th", null, "User"),
@@ -1578,7 +1597,7 @@ return function render(_ctx, _cache) {
                             _createElementVNode("tbody", null, [
                               (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(logs, (log) => {
                                 return (_openBlock(), _createElementBlock("tr", { key: log.timestamp + log.action }, [
-                                  _createElementVNode("td", _hoisted_230, _toDisplayString(formatDate(log.timestamp)), 1 /* TEXT */),
+                                  _createElementVNode("td", _hoisted_235, _toDisplayString(formatDate(log.timestamp)), 1 /* TEXT */),
                                   _createElementVNode("td", null, _toDisplayString(log.user), 1 /* TEXT */),
                                   _createElementVNode("td", null, [
                                     _createElementVNode("strong", null, _toDisplayString(log.action), 1 /* TEXT */)
@@ -1586,7 +1605,7 @@ return function render(_ctx, _cache) {
                                   _createElementVNode("td", {
                                     class: "text-truncate admin-log-path",
                                     title: log.path
-                                  }, _toDisplayString(log.path), 9 /* TEXT, PROPS */, _hoisted_231),
+                                  }, _toDisplayString(log.path), 9 /* TEXT, PROPS */, _hoisted_236),
                                   _createElementVNode("td", null, _toDisplayString(log.ip), 1 /* TEXT */)
                                 ]))
                               }), 128 /* KEYED_FRAGMENT */))
@@ -1594,10 +1613,10 @@ return function render(_ctx, _cache) {
                           ])
                         ]),
                         (!quickAdmin)
-                          ? (_openBlock(), _createElementBlock("div", _hoisted_232, [
-                              _createElementVNode("div", _hoisted_233, " Showing page " + _toDisplayString(logsMeta.page) + " of " + _toDisplayString(logsMeta.totalPages) + " (" + _toDisplayString(logsMeta.total) + " total) ", 1 /* TEXT */),
-                              _createElementVNode("div", _hoisted_234, [
-                                _cache[79] || (_cache[79] = _createElementVNode("label", {
+                          ? (_openBlock(), _createElementBlock("div", _hoisted_237, [
+                              _createElementVNode("div", _hoisted_238, " Showing page " + _toDisplayString(logsMeta.page) + " of " + _toDisplayString(logsMeta.totalPages) + " (" + _toDisplayString(logsMeta.total) + " total) ", 1 /* TEXT */),
+                              _createElementVNode("div", _hoisted_239, [
+                                _cache[77] || (_cache[77] = _createElementVNode("label", {
                                   class: "mb-0",
                                   for: "quickAdminLogPageSize"
                                 }, "Page size", -1 /* CACHED */)),
@@ -1611,9 +1630,9 @@ return function render(_ctx, _cache) {
                                     return (_openBlock(), _createElementBlock("option", {
                                       key: size,
                                       value: size
-                                    }, _toDisplayString(size), 9 /* TEXT, PROPS */, _hoisted_236))
+                                    }, _toDisplayString(size), 9 /* TEXT, PROPS */, _hoisted_241))
                                   }), 128 /* KEYED_FRAGMENT */))
-                                ], 40 /* PROPS, NEED_HYDRATION */, _hoisted_235), [
+                                ], 40 /* PROPS, NEED_HYDRATION */, _hoisted_240), [
                                   [
                                     _vModelSelect,
                                     logsMeta.pageSize,
@@ -1625,12 +1644,12 @@ return function render(_ctx, _cache) {
                                   class: "btn btn-outline-secondary btn-sm",
                                   onClick: $event => (changeLogsPage(-1)),
                                   disabled: isLoadingLogs || logsMeta.page <= 1
-                                }, "Prev", 8 /* PROPS */, _hoisted_237),
+                                }, "Prev", 8 /* PROPS */, _hoisted_242),
                                 _createElementVNode("button", {
                                   class: "btn btn-outline-secondary btn-sm",
                                   onClick: $event => (changeLogsPage(1)),
                                   disabled: isLoadingLogs || logsMeta.page >= logsMeta.totalPages
-                                }, "Next", 8 /* PROPS */, _hoisted_238)
+                                }, "Next", 8 /* PROPS */, _hoisted_243)
                               ])
                             ]))
                           : _createCommentVNode("v-if", true)
@@ -1638,54 +1657,54 @@ return function render(_ctx, _cache) {
                     : _createCommentVNode("v-if", true),
                   _createCommentVNode(" System Info Tab "),
                   (tab === 'system')
-                    ? (_openBlock(), _createElementBlock("div", _hoisted_239, [
+                    ? (_openBlock(), _createElementBlock("div", _hoisted_244, [
                         (!system)
-                          ? (_openBlock(), _createElementBlock("div", _hoisted_240, "Loading..."))
-                          : (_openBlock(), _createElementBlock("div", _hoisted_241, [
-                              _createElementVNode("table", _hoisted_242, [
+                          ? (_openBlock(), _createElementBlock("div", _hoisted_245, "Loading..."))
+                          : (_openBlock(), _createElementBlock("div", _hoisted_246, [
+                              _createElementVNode("table", _hoisted_247, [
                                 _createElementVNode("tbody", null, [
                                   _createElementVNode("tr", null, [
-                                    _cache[80] || (_cache[80] = _createElementVNode("th", { class: "admin-meta-label" }, "eXtplorer Version", -1 /* CACHED */)),
+                                    _cache[78] || (_cache[78] = _createElementVNode("th", { class: "admin-meta-label" }, "eXtplorer Version", -1 /* CACHED */)),
                                     _createElementVNode("td", null, [
-                                      _createElementVNode("span", _hoisted_243, _toDisplayString(system.app_version), 1 /* TEXT */)
+                                      _createElementVNode("span", _hoisted_248, _toDisplayString(system.app_version), 1 /* TEXT */)
                                     ])
                                   ]),
                                   _createElementVNode("tr", null, [
-                                    _cache[81] || (_cache[81] = _createElementVNode("th", null, "PHP Version", -1 /* CACHED */)),
+                                    _cache[79] || (_cache[79] = _createElementVNode("th", null, "PHP Version", -1 /* CACHED */)),
                                     _createElementVNode("td", null, _toDisplayString(system.php_version), 1 /* TEXT */)
                                   ]),
                                   _createElementVNode("tr", null, [
-                                    _cache[82] || (_cache[82] = _createElementVNode("th", null, "OS", -1 /* CACHED */)),
+                                    _cache[80] || (_cache[80] = _createElementVNode("th", null, "OS", -1 /* CACHED */)),
                                     _createElementVNode("td", null, _toDisplayString(system.server_os), 1 /* TEXT */)
                                   ]),
                                   _createElementVNode("tr", null, [
-                                    _cache[83] || (_cache[83] = _createElementVNode("th", null, "Server Software", -1 /* CACHED */)),
+                                    _cache[81] || (_cache[81] = _createElementVNode("th", null, "Server Software", -1 /* CACHED */)),
                                     _createElementVNode("td", null, _toDisplayString(system.server_software), 1 /* TEXT */)
                                   ]),
                                   _createElementVNode("tr", null, [
-                                    _cache[84] || (_cache[84] = _createElementVNode("th", null, "Memory Limit", -1 /* CACHED */)),
+                                    _cache[82] || (_cache[82] = _createElementVNode("th", null, "Memory Limit", -1 /* CACHED */)),
                                     _createElementVNode("td", null, _toDisplayString(system.memory_limit), 1 /* TEXT */)
                                   ]),
                                   _createElementVNode("tr", null, [
-                                    _cache[85] || (_cache[85] = _createElementVNode("th", null, "Upload Limit", -1 /* CACHED */)),
+                                    _cache[83] || (_cache[83] = _createElementVNode("th", null, "Upload Limit", -1 /* CACHED */)),
                                     _createElementVNode("td", null, _toDisplayString(system.upload_max_filesize), 1 /* TEXT */)
                                   ]),
                                   _createElementVNode("tr", null, [
-                                    _cache[86] || (_cache[86] = _createElementVNode("th", null, "POST Limit", -1 /* CACHED */)),
+                                    _cache[84] || (_cache[84] = _createElementVNode("th", null, "POST Limit", -1 /* CACHED */)),
                                     _createElementVNode("td", null, _toDisplayString(system.post_max_size), 1 /* TEXT */)
                                   ]),
                                   _createElementVNode("tr", null, [
-                                    _cache[87] || (_cache[87] = _createElementVNode("th", null, "Disk Free", -1 /* CACHED */)),
+                                    _cache[85] || (_cache[85] = _createElementVNode("th", null, "Disk Free", -1 /* CACHED */)),
                                     _createElementVNode("td", null, _toDisplayString(formatSize(system.disk_free)), 1 /* TEXT */)
                                   ]),
                                   _createElementVNode("tr", null, [
-                                    _cache[88] || (_cache[88] = _createElementVNode("th", null, "Disk Total", -1 /* CACHED */)),
+                                    _cache[86] || (_cache[86] = _createElementVNode("th", null, "Disk Total", -1 /* CACHED */)),
                                     _createElementVNode("td", null, _toDisplayString(formatSize(system.disk_total)), 1 /* TEXT */)
                                   ])
                                 ])
                               ]),
-                              _cache[89] || (_cache[89] = _createElementVNode("h6", null, "Loaded Extensions", -1 /* CACHED */)),
-                              _createElementVNode("div", _hoisted_244, _toDisplayString(system.extensions), 1 /* TEXT */)
+                              _cache[87] || (_cache[87] = _createElementVNode("h6", null, "Loaded Extensions", -1 /* CACHED */)),
+                              _createElementVNode("div", _hoisted_249, _toDisplayString(system.extensions), 1 /* TEXT */)
                             ]))
                       ]))
                     : _createCommentVNode("v-if", true)
@@ -1855,9 +1874,6 @@ return function render(_ctx, _cache) {
                 this.settings = await Api.get('settings');
                 if (!this.settings.mount_root_allowlist_text && Array.isArray(this.settings.mount_root_allowlist)) {
                     this.settings.mount_root_allowlist_text = this.settings.mount_root_allowlist.join('\n');
-                }
-                if (!this.settings.mount_remote_host_allowlist_text && Array.isArray(this.settings.mount_remote_host_allowlist)) {
-                    this.settings.mount_remote_host_allowlist_text = this.settings.mount_remote_host_allowlist.join('\n');
                 }
                 if (!this.settings.email_protocol) {
                     this.settings.email_protocol = 'smtp';

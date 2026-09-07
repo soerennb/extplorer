@@ -39,8 +39,12 @@ thumbnail decoding and storage backups. Configure them with
 `EXTPLORER_MAX_DOWNLOAD_MB`, `EXTPLORER_ARCHIVE_MAX_ENTRIES`,
 `EXTPLORER_ARCHIVE_MAX_EXPANDED_MB`, `EXTPLORER_ARCHIVE_MAX_RATIO`,
 `EXTPLORER_IMAGE_MAX_MB`, `EXTPLORER_IMAGE_MAX_PIXELS` and
-`EXTPLORER_BACKUP_MAX_MB`. The defaults are intentionally finite and should be
-reviewed together with PHP/Nginx upload and timeout settings.
+`EXTPLORER_BACKUP_MAX_MB`. Directory listings are capped by
+`EXTPLORER_MAX_DIRECTORY_ENTRIES` (default 10,000), editor reads by
+`EXTPLORER_MAX_CONTENT_MB` (default 16 MB), and outbound connection setup by
+`EXTPLORER_REMOTE_TIMEOUT_SECONDS` (default 15 seconds). The defaults are
+intentionally finite and should be reviewed together with PHP/Nginx upload
+and timeout settings.
 
 For public deployments, an optional antivirus stage can scan files in
 `writable/uploads` (for example with ClamAV) before they are made available to
@@ -112,11 +116,38 @@ The following controls are enabled in the application and should be considered p
 - Transfer send endpoint has throttling:
   - Transfer send: `15 requests/minute` per `user + IP`
 - Sensitive security denials and throttling events are written to activity logs.
-- External local mounts require an explicit allowlist (`mountRootAllowlist` / `mount_root_allowlist`).
-- Remote FTP/SFTP mounts support an allowlist (`mountRemoteHostAllowlist` / `mount_remote_host_allowlist`):
-  - If configured, only listed hosts are allowed (hostname/IP/CIDR, plus `*.example.com` wildcard domains).
-  - If empty, private/reserved targets (e.g. localhost, RFC1918, link-local, ULA) are blocked by default.
-- Direct FTP/SFTP login uses the same remote host policy as mounts.
+- External local mounts require an explicit, dedicated path allowlist
+  (`mountRootAllowlist` / `mount_root_allowlist`). The general
+  `file_manager_root` is never implicitly allowlisted; keep mount roots in a
+  separate directory such as `writable/mounts/`.
+- Outbound remote connections are denied by default. Enable direct remote
+  login explicitly in the administrator settings or with
+  `EXTPLORER_REMOTE_LOGIN_ENABLED=1` and configure exact endpoint entries in
+  `EXTPLORER_REMOTE_ENDPOINT_ALLOWLIST`, one per
+  line, including protocol and port, for example:
+  `sftp://files.example.com:22`.
+- The same exact endpoint policy applies to direct login, connection tests,
+  saved mounts and every subsequent VFS connection. An empty allowlist denies
+  all remote endpoints. The old host-only setting
+  `mount_remote_host_allowlist` and wildcard/CIDR entries no longer grant
+  outbound access; migrate them to exact endpoint entries.
+- DNS results are resolved and validated before connecting. Private,
+  loopback, link-local, multicast, metadata and other reserved targets are
+  blocked. `EXTPLORER_REMOTE_ALLOW_PRIVATE_TARGETS=1` is an explicit
+  environment-only escape hatch for controlled internal networks and must be
+  paired with a narrow exact allowlist.
+- Strict remote security is the default: plain FTP is disabled and SFTP
+  requires a pinned host-key fingerprint. FTPS remains disabled until
+  certificate verification is configured. Set
+  `EXTPLORER_REMOTE_SECURITY_MODE=compat` only for a documented migration.
+- Set `EXTPLORER_REMOTE_TIMEOUT_SECONDS` to bound outbound connection setup
+  and use network-level egress filtering as a second enforcement layer.
+- Only explicitly configured reverse proxies may supply forwarded headers.
+  Set `EXTPLORER_TRUSTED_PROXY_IPS` to concrete proxy IPs/CIDRs; never trust
+  forwarded headers from arbitrary clients.
+- In Compose, an unset `EXTPLORER_REMOTE_LOGIN_ENABLED` intentionally leaves
+  the persisted administrator setting in control. Set `0` to enforce a
+  platform-level deny regardless of the UI setting.
 
 ## 2. Web Server Configuration
 

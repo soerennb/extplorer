@@ -15,7 +15,7 @@ independently:
 | --- | --- |
 | `config/` | users, roles, groups, settings, mounts and remember-me tokens |
 | `logs/` | activity logs |
-| `file_manager_root/` | local file-manager data and the default mount allowlist root |
+| `file_manager_root/` | local file-manager data; it is not a local-mount allowlist by default |
 | `uploads/` | temporary, share and chunk upload data |
 | `session/` | PHP sessions |
 | `trash/` | per-user trash and indexes |
@@ -35,6 +35,12 @@ The VFS abstraction decouples the UI from physical storage.
 * **Adapters:** `LocalAdapter`, `FtpAdapter`, and `Ssh2Adapter`.
 * **Jails:** Local users are jailed to `file_manager_root` or a configured subdirectory. Path traversal attempts are blocked
   by the VFS layer.
+* **Outbound policy:** Remote login, remote connection tests, saved mounts and
+  VFS adapters share one exact `protocol://host:port` allowlist. DNS results
+  are pinned for the connection and reserved/private targets are denied by
+  default.
+* **WebDAV:** The endpoint has an explicit method allowlist and rejects
+  symlinks to keep filesystem operations inside the authenticated home.
 
 ## 4. Security Model
 

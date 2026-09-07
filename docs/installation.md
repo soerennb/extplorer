@@ -72,6 +72,20 @@ php spark admin:reset-password admin --password-file /run/secrets/extplorer-admi
 Remove one-shot reset variables after the operation. A missing secret or a persistent user store without an administrator is a
 startup error, not a reason to silently create a default account.
 
+### Web installer claim
+
+The browser installer is protected by a one-time operator claim token. On a
+fresh installation, open `/install` once; the application creates
+`writable/.extplorer-install-token` with restrictive permissions. Read that
+file directly on the server and enter the token in the installer form. It is
+not displayed in the browser, is accepted once, and expires after 24 hours.
+Do not place the token in a URL, ticket, access log or shell history. Once
+installation succeeds, `/install` is permanently unavailable unless the
+persistent state is repaired through the CLI.
+
+For unattended native or Docker installations, prefer the secret-file CLI
+bootstrap above; it avoids making the web installer reachable at all.
+
 ## 4. Verification
 
 1. Open the configured HTTPS URL.

@@ -12,16 +12,9 @@
 <body>
     <div class="container">
         <div class="error-card">
-            <h3>Critical Configuration Error</h3>
-            <p>The application cannot start because the <code>writable</code> directory is not writable by the web server.</p>
-            
-            <p><strong>Path:</strong> <?= esc(config('Storage')->root) ?></p>
-            
-            <hr>
-            <h5>Solution:</h5>
-            <p>Run the following command on your server:</p>
-            <pre class="bg-light p-3">chmod -R 0777 writable</pre>
-            <p class="text-muted small">(Or chown it to the web user, e.g., www-data)</p>
+            <h3>Installation unavailable</h3>
+            <p><?= esc($error ?? 'The application cannot be initialized safely.') ?></p>
+            <p class="text-muted small">Check the writable directory permissions and the application logs. Do not make the directory world-writable.</p>
             
             <a href="<?= site_url('install') ?>" class="btn btn-primary mt-3">Retry</a>
         </div>

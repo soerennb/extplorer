@@ -238,21 +238,31 @@ class ShareController extends BaseController
                 @unlink($tempZip);
             });
 
-            return $this->response->download($tempZip, null)->setFileName(DownloadHeaders::filename($zipName, 'shared.zip'));
+            return $this->response->download($tempZip, null)
+                ->setFileName(DownloadHeaders::filename($zipName, 'shared.zip'))
+                ->setHeader('X-Content-Type-Options', 'nosniff');
+        }
+
+        $filename = basename($fullPath);
+        $mime = mime_content_type($fullPath) ?: 'application/octet-stream';
+        if ($inline && !DownloadHeaders::isSafeInline($filename, $mime)) {
+            $inline = false;
         }
 
         if ($inline) {
-            $mime = mime_content_type($fullPath) ?: 'application/octet-stream';
             return $this->response
                 ->download($fullPath, null)
-                ->setFileName(DownloadHeaders::filename(basename($fullPath)))
+                ->setFileName(DownloadHeaders::filename($filename))
                 ->setHeader('Content-Type', $mime)
-                ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('inline', basename($fullPath)));
+                ->setHeader('X-Content-Type-Options', 'nosniff')
+                ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('inline', $filename));
         }
 
         return $this->response
             ->download($fullPath, null)
-            ->setFileName(DownloadHeaders::filename(basename($fullPath)));
+            ->setFileName(DownloadHeaders::filename($filename))
+            ->setHeader('X-Content-Type-Options', 'nosniff')
+            ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('attachment', $filename));
     }
 
     // JSON API for the shared view (listing subfolders)

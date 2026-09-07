@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use Sabre\DAV\Server;
-use Sabre\DAV\FS\Directory;
+use App\Services\Dav\SafeDirectory;
 use App\Models\UserModel;
 use App\Services\Dav\AuthBackend;
 use App\Services\VFS\PathPolicy;
@@ -12,6 +12,11 @@ use Exception;
 
 class DavController extends BaseController
 {
+    /** @var list<string> */
+    private array $allowedMethods = [
+        'OPTIONS', 'GET', 'HEAD', 'PUT', 'DELETE', 'MKCOL', 'MOVE', 'COPY',
+        'PROPFIND', 'PROPPATCH', 'LOCK', 'UNLOCK',
+    ];
     /**
      * Minimal permissions required for WebDAV to avoid bypassing UI/API permission controls.
      *
@@ -21,28 +26,30 @@ class DavController extends BaseController
 
     public function index(...$path)
     {
+        $method = strtoupper($this->request->getMethod());
+        if (!in_array($method, $this->allowedMethods, true)) {
+            return $this->response
+                ->setStatusCode(405)
+                ->setHeader('Allow', implode(', ', $this->allowedMethods))
+                ->setBody('WebDAV method is not allowed.');
+        }
+
         // 0. Global Switch
         $settings = new \App\Services\SettingsService();
         if (!$settings->get('webdav_enabled', true)) {
-            header('HTTP/1.1 403 Forbidden');
-            echo 'WebDAV Access is disabled by the administrator.';
-            exit;
+            return $this->response->setStatusCode(403)->setBody('WebDAV access is disabled.');
         }
 
         // 1. Security Check: Rate Limiting
         $throttler = \Config\Services::throttler();
         if ($throttler->check('dav-' . hash('sha256', $this->request->getIPAddress()), 120, MINUTE) === false) {
-            header('HTTP/1.1 429 Too Many Requests');
-            echo 'Too many requests. Please slow down.';
-            exit;
+            return $this->response->setStatusCode(429)->setBody('Too many requests.');
         }
 
         // 2. Security Check: HTTPS Enforcement (Optional but recommended)
         // If not already handled by a global filter
         if (ENVIRONMENT !== 'development' && !$this->request->isSecure()) {
-            header('HTTP/1.1 403 Forbidden');
-            echo 'SSL/HTTPS is required for WebDAV.';
-            exit;
+            return $this->response->setStatusCode(403)->setBody('HTTPS is required for WebDAV.');
         }
 
         // 3. Setup Auth Backend
@@ -73,10 +80,10 @@ class DavController extends BaseController
         }
 
         if (!$userData) {
-            header('WWW-Authenticate: Basic realm="eXtplorer3 WebDAV"');
-            header('HTTP/1.1 401 Unauthorized');
-            echo 'Authentication required';
-            exit;
+            return $this->response
+                ->setStatusCode(401)
+                ->setHeader('WWW-Authenticate', 'Basic realm="eXtplorer3 WebDAV"')
+                ->setBody('Authentication required.');
         }
 
         // 3. Determine Root Path
@@ -88,7 +95,7 @@ class DavController extends BaseController
         }
 
         // 4. Initialize SabreDAV
-        $rootNode = new Directory($rootPath);
+        $rootNode = new SafeDirectory($rootPath, $rootPath);
         $server = new Server($rootNode);
 
         // Set the base URL (important!)

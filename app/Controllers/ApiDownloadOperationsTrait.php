@@ -44,7 +44,8 @@ trait ApiDownloadOperationsTrait
                 return $this->response
                     ->download($tempZip, null)
                     ->setFileName(DownloadHeaders::filename($zipName))
-                    ->setHeader('Content-Type', 'application/zip');
+                    ->setHeader('Content-Type', 'application/zip')
+                    ->setHeader('X-Content-Type-Options', 'nosniff');
             }
 
             if (!is_array($metadata)) {
@@ -54,27 +55,21 @@ trait ApiDownloadOperationsTrait
                 return $this->fail('File exceeds the configured download size limit.', 413);
             }
 
-            // Security: Only allow inline for safe media types
             $filename = (string)($metadata['name'] ?? basename(trim(str_replace('\\', '/', $path), '/')));
-            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-            $safeInlineTypes = [
-                'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg',
-                'pdf',
-                'mp4', 'webm', 'ogv',
-                'mp3', 'wav', 'ogg'
-            ];
-
-            if ($inline && !in_array($ext, $safeInlineTypes)) {
+            $mime = $fullPath !== null
+                ? (mime_content_type($fullPath) ?: 'application/octet-stream')
+                : ((string)($metadata['mime'] ?? 'application/octet-stream'));
+            if ($inline && !DownloadHeaders::isSafeInline($filename, $mime)) {
                 $inline = false;
             }
 
             if ($inline) {
-                $mime = $fullPath !== null ? (mime_content_type($fullPath) ?: 'application/octet-stream') : ((string)($metadata['mime'] ?? 'application/octet-stream'));
                 if ($fullPath !== null) {
                     return $this->response
                         ->download($fullPath, null)
                         ->setFileName(DownloadHeaders::filename($filename))
                         ->setHeader('Content-Type', $mime)
+                        ->setHeader('X-Content-Type-Options', 'nosniff')
                         ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('inline', $filename));
                 }
 
@@ -83,13 +78,15 @@ trait ApiDownloadOperationsTrait
                     ->download($temporary, null)
                     ->setFileName(DownloadHeaders::filename($filename))
                     ->setHeader('Content-Type', $mime)
+                    ->setHeader('X-Content-Type-Options', 'nosniff')
                     ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('inline', $filename));
             }
 
             if ($fullPath !== null) {
                 return $this->response
                     ->download($fullPath, null)
-                    ->setFileName(DownloadHeaders::filename($filename));
+                    ->setFileName(DownloadHeaders::filename($filename))
+                    ->setHeader('X-Content-Type-Options', 'nosniff');
             }
 
             $temporary = $this->stageStream($path, (int)($metadata['size'] ?? 0));
@@ -97,6 +94,7 @@ trait ApiDownloadOperationsTrait
                 ->download($temporary, null)
                 ->setFileName(DownloadHeaders::filename($filename))
                 ->setHeader('Content-Type', (string)($metadata['mime'] ?? 'application/octet-stream'))
+                ->setHeader('X-Content-Type-Options', 'nosniff')
                 ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('attachment', $filename));
         } catch (\Throwable $e) {
             return $this->fail($e->getMessage());

@@ -4,9 +4,9 @@ namespace App\Controllers;
 
 use App\Models\UserModel;
 use App\Services\RememberMeService;
-use App\Services\SettingsService;
 use App\Services\AuthenticationService;
 use App\Services\LogService;
+use App\Services\RemoteEndpointPolicy;
 
 class Login extends BaseController
 {
@@ -32,15 +32,16 @@ class Login extends BaseController
         if (session()->get('isLoggedIn')) {
             return redirect()->to('/');
         }
-        $userModel = new UserModel();
         $locale = $this->preferredLoginLocale();
         $translations = $this->loginTranslations($locale);
+        $remoteLoginEnabled = (new RemoteEndpointPolicy())->directLoginEnabled();
 
         return view('login', [
             'expired' => $this->request->getGet('expired') === '1',
             'return_to' => $this->safeReturnPath((string)($this->request->getGet('return') ?? '/')),
             'login_locale' => $locale,
             'login_t' => $translations,
+            'remote_login_enabled' => $remoteLoginEnabled,
         ]);
     }
 
@@ -53,9 +54,12 @@ class Login extends BaseController
             return redirect()->back()->with('error', $loginMessages['login_too_many_attempts']);
         }
 
-        $mode = $this->request->getPost('mode') ?? 'local';
-        $username = $this->request->getPost('username');
-        $password = $this->request->getPost('password');
+        $modeValue = $this->request->getPost('mode');
+        $usernameValue = $this->request->getPost('username');
+        $passwordValue = $this->request->getPost('password');
+        $mode = is_string($modeValue) ? trim($modeValue) : 'invalid';
+        $username = is_string($usernameValue) ? $usernameValue : '';
+        $password = is_string($passwordValue) ? $passwordValue : '';
         $rememberRequested = $this->request->getPost('remember_me') === '1';
         $returnTo = $this->safeReturnPath((string)($this->request->getPost('return') ?? '/'));
 
@@ -68,17 +72,19 @@ class Login extends BaseController
         }
 
         if (in_array($mode, ['ftp', 'ftps', 'sftp'], true)) {
-            $host = strtolower(trim((string)$this->request->getPost('remote_host')));
-            $port = (int)$this->request->getPost('remote_port');
-            $username = trim((string)$username);
-            $password = (string)$password;
-            $fingerprint = trim((string)$this->request->getPost('remote_host_key_fingerprint'));
+            $hostValue = $this->request->getPost('remote_host');
+            $portValue = $this->request->getPost('remote_port');
+            $fingerprintValue = $this->request->getPost('remote_host_key_fingerprint');
+            $host = is_string($hostValue) ? strtolower(trim($hostValue)) : '';
+            $port = is_scalar($portValue) ? (int)$portValue : 0;
+            $username = trim($username);
+            $fingerprint = is_string($fingerprintValue) ? trim($fingerprintValue) : '';
 
             try {
+                (new RemoteEndpointPolicy())->assertDirectLoginEnabled();
                 $this->validateRemoteConnectionInput($mode, $host, $port, $username, $password);
-                $host = $this->assertRemoteHostAllowed($host);
             } catch (\Throwable $e) {
-                return redirect()->back()->withInput()->with('error', $this->remoteConnectionErrorMessage($e, $loginMessages));
+                return redirect()->back()->with('error', $this->remoteConnectionErrorMessage($e, $loginMessages));
             }
             
             try {
@@ -91,13 +97,16 @@ class Login extends BaseController
                     'port' => $port,
                     'user' => $username,
                     'pass' => $this->protectConnectionSecret($password),
+                    'host_key_fingerprint' => $fingerprint,
+                    'direct_login' => true,
                 ]);
                 $remember = new RememberMeService();
                 $response = redirect()->to($returnTo);
                 $remember->forget($this->request, $response);
                 return $response;
             } catch (\Exception $e) {
-                return redirect()->back()->withInput()->with('error', $this->remoteConnectionErrorMessage($e, $loginMessages));
+                LogService::log('Remote Login Failed', '', 'Remote authentication or connection failed.');
+                return redirect()->back()->with('error', $this->remoteConnectionErrorMessage($e, $loginMessages));
             }
         }
 
@@ -147,16 +156,22 @@ class Login extends BaseController
     public function testRemote()
     {
         $loginMessages = $this->loginTranslations($this->preferredLoginLocale());
-        $mode = $this->request->getPost('mode') ?? '';
-        $host = strtolower(trim((string)$this->request->getPost('remote_host')));
-        $port = (int)$this->request->getPost('remote_port');
-        $username = trim((string)$this->request->getPost('username'));
-        $password = (string)$this->request->getPost('password');
+        $modeValue = $this->request->getPost('mode');
+        $hostValue = $this->request->getPost('remote_host');
+        $portValue = $this->request->getPost('remote_port');
+        $usernameValue = $this->request->getPost('username');
+        $passwordValue = $this->request->getPost('password');
+        $mode = is_string($modeValue) ? trim($modeValue) : '';
+        $host = is_string($hostValue) ? strtolower(trim($hostValue)) : '';
+        $port = is_scalar($portValue) ? (int)$portValue : 0;
+        $username = is_string($usernameValue) ? trim($usernameValue) : '';
+        $password = is_string($passwordValue) ? $passwordValue : '';
 
         try {
+            (new RemoteEndpointPolicy())->assertDirectLoginEnabled();
             $this->validateRemoteConnectionInput($mode, $host, $port, $username, $password);
-            $host = $this->assertRemoteHostAllowed($host);
-            $fingerprint = trim((string)$this->request->getPost('remote_host_key_fingerprint'));
+            $fingerprintValue = $this->request->getPost('remote_host_key_fingerprint');
+            $fingerprint = is_string($fingerprintValue) ? trim($fingerprintValue) : '';
             $this->openRemoteConnection($mode, $host, $username, $password, $port, $fingerprint);
 
             return $this->response->setJSON([
@@ -298,6 +313,9 @@ class Login extends BaseController
             'login_remote_port_range',
             'login_remote_host_not_allowed',
             'login_remote_private_host',
+            'login_remote_disabled',
+            'login_remote_protocol_disabled',
+            'login_remote_host_key_fingerprint_required',
             'login_remote_rejected',
             'login_remote_connect_failed',
             'login_remote_test_failed_generic',
@@ -380,8 +398,20 @@ class Login extends BaseController
             return $messages['login_remote_host_not_allowed'];
         }
 
-        if (str_contains($message, 'private or reserved')) {
+        if (str_contains($message, 'private') || str_contains($message, 'reserved')) {
             return $messages['login_remote_private_host'];
+        }
+
+        if (str_contains($message, 'Direct remote login is disabled')) {
+            return $messages['login_remote_disabled'];
+        }
+
+        if (str_contains($message, 'FTPS is unavailable') || str_contains($message, 'Plain FTP is disabled')) {
+            return $messages['login_remote_protocol_disabled'];
+        }
+
+        if (str_contains($message, 'fingerprint')) {
+            return $messages['login_remote_host_key_fingerprint_required'];
         }
 
         if (stripos($message, 'login failed') !== false || stripos($message, 'authentication') !== false) {
@@ -392,220 +422,6 @@ class Login extends BaseController
             return $messages['login_remote_connect_failed'];
         }
 
-        return $message ?: $messages['login_remote_test_failed_generic'];
-    }
-
-    private function assertRemoteHostAllowed(string $host, ?array $allowlist = null): string
-    {
-        if ($allowlist === null) {
-            $settingsService = new SettingsService();
-            $allowlist = array_merge(
-                config('App')->mountRemoteHostAllowlist ?? [],
-                $settingsService->get('mount_remote_host_allowlist', [])
-            );
-        }
-
-        $allowlist = array_values(array_filter(array_map(
-            static fn($entry) => is_string($entry) ? trim(strtolower($entry)) : '',
-            $allowlist
-        )));
-
-        if (!empty($allowlist)) {
-            if (!$this->hostMatchesAllowlist($host, $allowlist)) {
-                throw new \RuntimeException('Remote host is not allowlisted.');
-            }
-            $ips = $this->resolveHostIps($host);
-            if ($ips === []) {
-                throw new \RuntimeException('Remote host could not be resolved.');
-            }
-            return $ips[0];
-        }
-
-        if ($this->isPrivateOrReservedHost($host)) {
-            throw new \RuntimeException('Remote host resolves to a private or reserved target.');
-        }
-
-        $ips = $this->resolveHostIps($host);
-        if ($ips === []) {
-            throw new \RuntimeException('Remote host could not be resolved.');
-        }
-        return $ips[0];
-    }
-
-    private function hostMatchesAllowlist(string $host, array $allowlist): bool
-    {
-        $hostIps = $this->resolveHostIps($host);
-        $isHostIp = filter_var($host, FILTER_VALIDATE_IP) !== false;
-
-        foreach ($allowlist as $entry) {
-            if ($entry === '') {
-                continue;
-            }
-
-            if ($entry === $host) {
-                return true;
-            }
-
-            if (str_starts_with($entry, '*.')) {
-                $suffix = substr($entry, 1);
-                if (str_ends_with($host, $suffix)) {
-                    return true;
-                }
-            }
-
-            if (strpos($entry, '/') !== false) {
-                foreach ($hostIps as $ip) {
-                    if ($this->ipMatchesCidr($ip, $entry)) {
-                        return true;
-                    }
-                }
-                continue;
-            }
-
-            if ($isHostIp && $entry === $host) {
-                return true;
-            }
-
-            if (filter_var($entry, FILTER_VALIDATE_IP) !== false && in_array($entry, $hostIps, true)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function isPrivateOrReservedHost(string $host): bool
-    {
-        $ips = $this->resolveHostIps($host);
-        if (empty($ips)) {
-            return true;
-        }
-
-        foreach ($ips as $ip) {
-            if ($this->isPrivateOrReservedIp($ip)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    private function resolveHostIps(string $host): array
-    {
-        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
-            return [$host];
-        }
-
-        $ips = [];
-        $records = dns_get_record($host, DNS_A + DNS_AAAA);
-        if (is_array($records)) {
-            foreach ($records as $record) {
-                if (isset($record['ip']) && filter_var($record['ip'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                    $ips[] = $record['ip'];
-                }
-                if (isset($record['ipv6']) && filter_var($record['ipv6'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-                    $ips[] = $record['ipv6'];
-                }
-            }
-        }
-
-        if (empty($ips)) {
-            $ipv4 = gethostbynamel($host);
-            if (is_array($ipv4)) {
-                foreach ($ipv4 as $ip) {
-                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                        $ips[] = $ip;
-                    }
-                }
-            }
-        }
-
-        return array_values(array_unique($ips));
-    }
-
-    private function isPrivateOrReservedIp(string $ip): bool
-    {
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-            return filter_var(
-                $ip,
-                FILTER_VALIDATE_IP,
-                FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-            ) === false;
-        }
-
-        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-            return true;
-        }
-
-        if ($ip === '::' || $ip === '::1') {
-            return true;
-        }
-
-        return $this->ipv6MatchesPrefix($ip, 'fc00::', 7)
-            || $this->ipv6MatchesPrefix($ip, 'fe80::', 10)
-            || $this->ipv6MatchesPrefix($ip, 'ff00::', 8)
-            || $this->ipv6MatchesPrefix($ip, '2001:db8::', 32);
-    }
-
-    private function ipMatchesCidr(string $ip, string $cidr): bool
-    {
-        $parts = explode('/', $cidr, 2);
-        if (count($parts) !== 2) {
-            return false;
-        }
-
-        $network = trim($parts[0]);
-        $prefix = (int)trim($parts[1]);
-
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)
-            && filter_var($network, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)
-            && $prefix >= 0 && $prefix <= 32
-        ) {
-            $ipLong = ip2long($ip);
-            $networkLong = ip2long($network);
-            if ($ipLong === false || $networkLong === false) {
-                return false;
-            }
-
-            $mask = $prefix === 0 ? 0 : (-1 << (32 - $prefix));
-            return (($ipLong & $mask) === ($networkLong & $mask));
-        }
-
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)
-            && filter_var($network, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)
-            && $prefix >= 0 && $prefix <= 128
-        ) {
-            return $this->ipv6MatchesPrefix($ip, $network, $prefix);
-        }
-
-        return false;
-    }
-
-    private function ipv6MatchesPrefix(string $ip, string $network, int $prefixLength): bool
-    {
-        $ipPacked = inet_pton($ip);
-        $networkPacked = inet_pton($network);
-        if ($ipPacked === false || $networkPacked === false) {
-            return false;
-        }
-
-        $fullBytes = intdiv($prefixLength, 8);
-        $remainingBits = $prefixLength % 8;
-
-        if ($fullBytes > 0
-            && substr($ipPacked, 0, $fullBytes) !== substr($networkPacked, 0, $fullBytes)
-        ) {
-            return false;
-        }
-
-        if ($remainingBits === 0) {
-            return true;
-        }
-
-        $mask = (0xFF << (8 - $remainingBits)) & 0xFF;
-        return (ord($ipPacked[$fullBytes]) & $mask) === (ord($networkPacked[$fullBytes]) & $mask);
+        return $messages['login_remote_test_failed_generic'];
     }
 }

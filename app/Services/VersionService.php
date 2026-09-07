@@ -45,9 +45,11 @@ class VersionService
 
         $versionDir = $this->getVersionDir($relativePath);
         $timestamp = time();
-        $backupPath = $versionDir . DIRECTORY_SEPARATOR . $timestamp . '.bak';
+        $backupPath = $versionDir . DIRECTORY_SEPARATOR . $timestamp . '_' . bin2hex(random_bytes(6)) . '.bak';
 
-        copy($fullPath, $backupPath);
+        if (!copy($fullPath, $backupPath)) {
+            throw new Exception('Failed to create file version.');
+        }
         $this->cleanup($relativePath);
     }
 
@@ -65,7 +67,13 @@ class VersionService
         $versions = [];
 
         foreach ($files as $file) {
+            if (!$this->isSafeVersionId($file)) {
+                continue;
+            }
             $path = $versionDir . DIRECTORY_SEPARATOR . $file;
+            if (!is_file($path) || is_link($path)) {
+                continue;
+            }
             $timestamp = (int)pathinfo($file, PATHINFO_FILENAME);
             $versions[] = [
                 'id' => $file,
@@ -87,9 +95,15 @@ class VersionService
     public function restoreVersion(string $relativePath, string $versionId, \App\Services\VFS\IFileSystem $fs): void
     {
         $versionDir = $this->versionRoot . DIRECTORY_SEPARATOR . $this->getPathHash($relativePath);
+        if (!$this->isSafeVersionId($versionId)) {
+            throw new Exception('Version not found.');
+        }
         $backupPath = $versionDir . DIRECTORY_SEPARATOR . $versionId;
 
-        if (!file_exists($backupPath)) {
+        $versionRoot = realpath($versionDir);
+        $backupRealPath = realpath($backupPath);
+        if ($versionRoot === false || $backupRealPath === false || !is_file($backupRealPath) || is_link($backupPath)
+            || !$this->isWithinDirectory($versionRoot, $backupRealPath)) {
             throw new Exception("Version not found.");
         }
 
@@ -98,9 +112,32 @@ class VersionService
         // Before restoring, create a version of the CURRENT state so we can undo the restore
         $this->createVersion($targetPath, $relativePath);
 
-        if (!copy($backupPath, $targetPath)) {
-            throw new Exception("Failed to restore file.");
+        $temporary = tempnam(dirname($targetPath), '.extplorer-restore-');
+        if ($temporary === false) {
+            throw new Exception("Failed to create restore staging file.");
         }
+
+        try {
+            if (!copy($backupRealPath, $temporary) || !rename($temporary, $targetPath)) {
+                throw new Exception("Failed to restore file.");
+            }
+        } finally {
+            if (is_file($temporary)) {
+                @unlink($temporary);
+            }
+        }
+    }
+
+    private function isSafeVersionId(string $versionId): bool
+    {
+        return preg_match('/\A\d{10,}(?:_[a-f0-9]{12})?\.bak\z/i', $versionId) === 1
+            && basename($versionId) === $versionId;
+    }
+
+    private function isWithinDirectory(string $directory, string $path): bool
+    {
+        $directory = rtrim($directory, DIRECTORY_SEPARATOR);
+        return $path === $directory || str_starts_with($path, $directory . DIRECTORY_SEPARATOR);
     }
 
     /**

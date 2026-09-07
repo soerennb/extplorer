@@ -4,6 +4,7 @@ namespace App\Filters;
 
 use App\Services\SettingsService;
 use App\Services\RememberMeService;
+use App\Services\RemoteEndpointPolicy;
 use App\Models\UserModel;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\IncomingRequest;
@@ -18,13 +19,16 @@ class AuthFilter implements FilterInterface
         if (!session()->get('isLoggedIn')) {
             $remember = new RememberMeService();
             if ($remember->restore($request, Services::response())) {
+                if ((bool)session('force_password_change') && !$this->isPasswordChangeRoute($request)) {
+                    return $this->handlePasswordChangeRequired($request);
+                }
                 return null;
             }
 
             return $this->handleExpiredSession($request, false);
         }
 
-        if (!$this->isCurrentLocalSessionValid()) {
+        if (!$this->isCurrentSessionValid()) {
             $this->terminateSession($request);
             return $this->handleExpiredSession($request, true);
         }
@@ -45,6 +49,10 @@ class AuthFilter implements FilterInterface
             return $this->handleExpiredSession($request, true);
         }
 
+        if ((bool)session('force_password_change') && !$this->isPasswordChangeRoute($request)) {
+            return $this->handlePasswordChangeRequired($request);
+        }
+
         $this->touchLastActivity();
         return null;
     }
@@ -59,11 +67,27 @@ class AuthFilter implements FilterInterface
         session()->set('last_activity_ts', time());
     }
 
-    private function isCurrentLocalSessionValid(): bool
+    private function isCurrentSessionValid(): bool
     {
         $connection = session('connection');
         if (($connection['mode'] ?? 'local') !== 'local') {
-            return true;
+            try {
+                if (!empty($connection['direct_login'])) {
+                    (new RemoteEndpointPolicy())->assertDirectLoginEnabled();
+                }
+                (new RemoteEndpointPolicy())->authorize(
+                    (string)$connection['mode'],
+                    (string)($connection['host'] ?? ''),
+                    (int)($connection['port'] ?? 0),
+                    (string)($connection['host_key_fingerprint'] ?? '')
+                );
+                return true;
+            } catch (\Throwable $exception) {
+                log_message('warning', 'Remote session rejected by current endpoint policy: {message}', [
+                    'message' => $exception->getMessage(),
+                ]);
+                return false;
+            }
         }
 
         $username = (string)session('username');
@@ -144,6 +168,30 @@ class AuthFilter implements FilterInterface
 
         $accept = strtolower((string)$request->getHeaderLine('Accept'));
         return str_contains($accept, 'application/json') || str_contains($accept, 'text/json');
+    }
+
+    private function isPasswordChangeRoute(RequestInterface $request): bool
+    {
+        $path = trim($request->getUri()->getPath(), '/');
+        return $path === ''
+            || $path === 'api/profile/details'
+            || $path === 'api/profile/password'
+            || $path === 'logout';
+    }
+
+    private function handlePasswordChangeRequired(RequestInterface $request)
+    {
+        if ($this->expectsJson($request) || str_starts_with(trim($request->getUri()->getPath(), '/'), 'api/')) {
+            return Services::response()
+                ->setStatusCode(403)
+                ->setJSON([
+                    'status' => 'error',
+                    'code' => 'password_change_required',
+                    'message' => 'Password change is required before continuing.',
+                ]);
+        }
+
+        return redirect()->to(site_url('/?password_change_required=1'));
     }
 
     private function returnPath(string $path, string $query = ''): string

@@ -14,7 +14,7 @@ final class RemoteSecurityPolicy
 
     public function mode(): string
     {
-        $mode = strtolower(trim((string)(getenv('EXTPLORER_REMOTE_SECURITY_MODE') ?: self::COMPAT)));
+        $mode = strtolower(trim((string)(getenv('EXTPLORER_REMOTE_SECURITY_MODE') ?: self::STRICT)));
         if (!in_array($mode, [self::COMPAT, self::STRICT], true)) {
             throw new RuntimeException('EXTPLORER_REMOTE_SECURITY_MODE must be compat or strict.');
         }
@@ -40,6 +40,9 @@ final class RemoteSecurityPolicy
 
         if ($type === 'ftp') {
             throw new RuntimeException('Plain FTP is disabled in strict remote security mode. Use FTPS or SFTP.');
+        }
+        if ($type === 'ftps') {
+            throw new RuntimeException('FTPS is unavailable in strict remote security mode until certificate verification is configured.');
         }
         if ($type === 'sftp' && $this->normalizeFingerprint((string)($config['host_key_fingerprint'] ?? '')) === '') {
             throw new RuntimeException('SFTP host-key fingerprint is required in strict remote security mode.');

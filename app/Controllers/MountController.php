@@ -44,7 +44,9 @@ class MountController extends BaseController
         $type = $json->type ?? 'local';
         $config = $json->config ?? [];
 
-        if (!$name) return $this->fail('Name required');
+        if (!is_string($name) || $name === '' || !is_string($type) || (!is_array($config) && !is_object($config))) {
+            return $this->fail('Invalid mount request');
+        }
 
         try {
             $id = $this->mountService->addMount(session('username'), $name, $type, (array)$config);
@@ -66,8 +68,8 @@ class MountController extends BaseController
         $type = $json->type ?? 'local';
         $config = $json->config ?? [];
 
-        if (!$name) {
-            return $this->fail('Name required');
+        if (!is_string($name) || $name === '' || !is_string($type) || (!is_array($config) && !is_object($config))) {
+            return $this->fail('Invalid mount request');
         }
 
         try {
@@ -87,8 +89,8 @@ class MountController extends BaseController
         $type = $json->type ?? 'local';
         $config = $json->config ?? [];
 
-        if (!$name) {
-            return $this->fail('Name required');
+        if (!is_string($name) || $name === '' || !is_string($type) || (!is_array($config) && !is_object($config))) {
+            return $this->fail('Invalid mount request');
         }
 
         try {

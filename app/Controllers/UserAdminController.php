@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Models\UserModel;
 use App\Services\LogService;
 use App\Services\AuthenticationService;
+use App\Services\PasswordPolicy;
+use App\Services\VFS\PathPolicy;
 
 class UserAdminController extends BaseController
 {
@@ -44,7 +46,26 @@ class UserAdminController extends BaseController
         $name = $json->name ?? '';
         $permissions = $json->permissions ?? [];
 
-        if (!$name) return $this->fail('Role name required');
+        if (!is_string($name) || $name === '') return $this->fail('Role name required');
+        if (preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9_-]{0,31}\z/', $name) !== 1) {
+            return $this->fail('Invalid role name');
+        }
+        if (!is_array($permissions)) {
+            return $this->fail('Role permissions must be an array');
+        }
+        $catalog = $this->getPermissionCatalog();
+        foreach ($permissions as $permission) {
+            if (!is_string($permission) || ($permission !== '*' && !in_array($permission, $catalog, true))) {
+                return $this->fail('Role contains an unknown permission');
+            }
+            if ($permission === '*' && $name !== 'admin') {
+                return $this->fail('Wildcard permissions are only allowed for the admin role');
+            }
+        }
+        $permissions = array_values(array_unique($permissions));
+        if ($name === 'admin' && !in_array('*', $permissions, true)) {
+            return $this->fail('The admin role must retain wildcard permissions');
+        }
 
         $roles = $this->userModel->getRoles();
         $roles[$name] = $permissions;
@@ -119,7 +140,20 @@ class UserAdminController extends BaseController
         $name = $json->name ?? '';
         $roles = $json->roles ?? [];
 
-        if (!$name) return $this->fail('Group name required');
+        if (!is_string($name) || $name === '') return $this->fail('Group name required');
+        if (preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9 _-]{0,63}\z/', $name) !== 1) {
+            return $this->fail('Invalid group name');
+        }
+        if (!is_array($roles) || array_filter($roles, 'is_string') !== $roles) {
+            return $this->fail('Group roles must be an array');
+        }
+        $availableRoles = $this->userModel->getRoles();
+        foreach ($roles as $role) {
+            if (!isset($availableRoles[$role])) {
+                return $this->fail('Group contains an unknown role');
+            }
+        }
+        $roles = array_values(array_unique($roles));
 
         $groups = $this->userModel->getGroups();
         $groups[$name] = $roles;
@@ -191,18 +225,31 @@ class UserAdminController extends BaseController
         $allowedExt = $json->allowed_extensions ?? '';
         $blockedExt = $json->blocked_extensions ?? '';
 
-        if (!$username || !$password) {
+        if (!is_string($username) || !is_string($password) || $username === '' || $password === '') {
             return $this->fail('Username and Password required');
         }
         if (!$this->userModel->isValidUsername($username)) {
             return $this->fail('Invalid username format');
         }
 
-        if (strlen($password) < 8) {
-            return $this->fail('Password must be at least 8 characters long');
+        $passwordError = PasswordPolicy::validate((string)$password);
+        if ($passwordError !== null) {
+            return $this->fail($passwordError);
+        }
+        $roles = $this->userModel->getRoles();
+        if (!is_string($role) || !isset($roles[$role])) {
+            return $this->fail('Invalid role');
+        }
+        if (!is_string($homeDir) || !is_string($allowedExt) || !is_string($blockedExt)) {
+            return $this->fail('Invalid user settings');
+        }
+        try {
+            $homeDir = $this->normalizeHomeDir($homeDir);
+        } catch (\Throwable $exception) {
+            return $this->fail('Invalid home directory');
         }
 
-        if ($this->userModel->addUser($username, $password, $role, $homeDir, [], $allowedExt, $blockedExt)) {
+        if ($this->userModel->addUser($username, $password, $role, $homeDir, [], $allowedExt, $blockedExt, true)) {
             LogService::log('Create User', $username);
             return $this->respondCreated(['status' => 'success']);
         } else {
@@ -233,22 +280,62 @@ class UserAdminController extends BaseController
             'password',
         ];
         $data = array_intersect_key($data, array_flip($allowed));
+        $existingUser = $this->userModel->getUser($username);
+        if (!$existingUser) {
+            return $this->failNotFound('User not found');
+        }
+        if (isset($data['role'])) {
+            if (!is_string($data['role']) || !isset($this->userModel->getRoles()[$data['role']])) {
+                return $this->fail('Invalid role');
+            }
+        }
+        if (isset($data['home_dir'])) {
+            if (!is_string($data['home_dir'])) {
+                return $this->fail('Invalid home directory');
+            }
+            try {
+                $data['home_dir'] = $this->normalizeHomeDir($data['home_dir']);
+            } catch (\Throwable $exception) {
+                return $this->fail('Invalid home directory');
+            }
+        }
+        if (isset($data['groups'])) {
+            if (!is_array($data['groups']) || array_filter($data['groups'], 'is_string') !== $data['groups']) {
+                return $this->fail('Invalid groups');
+            }
+            $data['groups'] = array_values(array_unique($data['groups']));
+        }
         if (isset($data['password'])) {
-            if (!is_string($data['password']) || strlen($data['password']) < 8) {
-                return $this->fail('Password must be at least 8 characters long');
+            if (!is_string($data['password'])) {
+                return $this->fail('Invalid password');
+            }
+            $passwordError = PasswordPolicy::validate($data['password']);
+            if ($passwordError !== null) {
+                return $this->fail($passwordError);
             }
             $data['must_change_password'] = true;
         }
 
-        if ($this->userModel->updateUser($username, $data)) {
-            if (isset($data['password']) || array_key_exists('disabled', $data) || array_key_exists('locked_until', $data)) {
-                (new AuthenticationService($this->userModel))->revokeUserTokens($username);
-            }
-            LogService::log('Update User', $username);
-            return $this->respond(['status' => 'success']);
-        } else {
-            return $this->failNotFound('User not found');
+        $currentIsAdmin = ($existingUser['role'] ?? '') === 'admin' && empty($existingUser['disabled']);
+        $willRemainAdmin = ($data['role'] ?? ($existingUser['role'] ?? '')) === 'admin'
+            && !($data['disabled'] ?? false);
+        if ($currentIsAdmin && !$willRemainAdmin && $this->activeAdministratorCount() <= 1) {
+            return $this->fail('The last active administrator cannot be disabled or demoted', 409);
         }
+
+        try {
+            if ($this->userModel->updateUser($username, $data)) {
+                if (isset($data['password']) || array_key_exists('disabled', $data) || array_key_exists('locked_until', $data)) {
+                    (new AuthenticationService($this->userModel))->revokeUserTokens($username);
+                }
+                LogService::log('Update User', $username);
+                return $this->respond(['status' => 'success']);
+            }
+        } catch (\RuntimeException $exception) {
+            return $this->fail($exception->getMessage(), 409);
+        }
+
+        return $this->failNotFound('User not found');
     }
 
     public function delete($username = null)
@@ -262,13 +349,22 @@ class UserAdminController extends BaseController
             return $this->fail('Cannot delete yourself');
         }
 
-        if ($this->userModel->deleteUser($username)) {
-            (new AuthenticationService($this->userModel))->revokeUserTokens($username);
-            LogService::log('Delete User', $username);
-            return $this->respond(['status' => 'success']);
-        } else {
-            return $this->failNotFound('User not found');
+        $target = $this->userModel->getUser($username);
+        if ($target && ($target['role'] ?? '') === 'admin' && empty($target['disabled']) && $this->activeAdministratorCount() <= 1) {
+            return $this->fail('The last active administrator cannot be deleted', 409);
         }
+
+        try {
+            if ($this->userModel->deleteUser($username)) {
+                (new AuthenticationService($this->userModel))->revokeUserTokens($username);
+                LogService::log('Delete User', $username);
+                return $this->respond(['status' => 'success']);
+            }
+        } catch (\RuntimeException $exception) {
+            return $this->fail($exception->getMessage(), 409);
+        }
+
+        return $this->failNotFound('User not found');
     }
 
     public function systemInfo()
@@ -353,5 +449,19 @@ class UserAdminController extends BaseController
             'admin_users',
             'admin_settings',
         ];
+    }
+
+    private function activeAdministratorCount(): int
+    {
+        return count(array_filter(
+            $this->userModel->getUsers(),
+            static fn(array $user): bool => ($user['role'] ?? '') === 'admin' && empty($user['disabled'])
+        ));
+    }
+
+    private function normalizeHomeDir(string $homeDir): string
+    {
+        $normalized = PathPolicy::normalizeRelative($homeDir);
+        return $normalized === '' ? '/' : '/' . $normalized;
     }
 }

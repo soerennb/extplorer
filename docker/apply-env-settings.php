@@ -141,7 +141,7 @@ if (($value = env_value('EXTPLORER_MOUNT_ROOT_ALLOWLIST')) !== null) {
 }
 if (($value = env_value('EXTPLORER_MOUNT_REMOTE_HOST_ALLOWLIST')) !== null) {
     if (trim($value) !== '') {
-        $updates['mount_remote_host_allowlist'] = parse_list($value);
+        fail_config('EXTPLORER_MOUNT_REMOTE_HOST_ALLOWLIST is deprecated; use exact EXTPLORER_REMOTE_ENDPOINT_ALLOWLIST entries');
     }
 }
 

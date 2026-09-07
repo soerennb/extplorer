@@ -37,6 +37,8 @@ class AdminBootstrapServiceTest extends CIUnitTestCase
             $storage->state . '/groups.php',
             $storage->state . '/admin-bootstrap.php',
             $storage->root . '/installed.lock',
+            $storage->root . '/.extplorer-install-token',
+            $storage->root . '/.install.lock',
         ] as $path) {
             $this->backups[$path] = is_file($path) ? file_get_contents($path) : null;
             if (is_file($path)) {
@@ -79,6 +81,8 @@ class AdminBootstrapServiceTest extends CIUnitTestCase
 
         $this->assertSame('Administrator bootstrap completed.', $message);
         $this->assertNotNull($model->verifyUser('operator', 'first-password'));
+        $this->assertTrue($model->getUser('operator')['must_change_password']);
+        $this->assertNotContains('mount_external', $model->getRoles()['user']);
         $this->assertFileExists(config('Storage')->root . '/installed.lock');
     }
 

@@ -11,6 +11,21 @@ final class ResourcePolicy
         return $this->megabytes('EXTPLORER_MAX_DOWNLOAD_MB', 2048, 1, 10240);
     }
 
+    public function maxContentBytes(): int
+    {
+        return $this->megabytes('EXTPLORER_MAX_CONTENT_MB', 16, 1, 1024);
+    }
+
+    public function remoteTimeoutSeconds(): int
+    {
+        return $this->integer('EXTPLORER_REMOTE_TIMEOUT_SECONDS', 15, 1, 300);
+    }
+
+    public function maxDirectoryEntries(): int
+    {
+        return $this->integer('EXTPLORER_MAX_DIRECTORY_ENTRIES', 10000, 1, 1000000);
+    }
+
     public function maxArchiveEntries(): int
     {
         return $this->integer('EXTPLORER_ARCHIVE_MAX_ENTRIES', 100000, 1, 1000000);
@@ -71,6 +86,30 @@ final class ResourcePolicy
         }
 
         return $copied;
+    }
+
+    public function readStream($source, ?int $maxBytes = null): string
+    {
+        if (!is_resource($source)) {
+            throw new RuntimeException('Invalid stream supplied.');
+        }
+
+        $temporary = fopen('php://temp/maxmemory:2097152', 'w+b');
+        if ($temporary === false) {
+            throw new RuntimeException('Unable to allocate a bounded content buffer.');
+        }
+
+        try {
+            $this->copyStream($source, $temporary, $maxBytes ?? $this->maxContentBytes());
+            rewind($temporary);
+            $content = stream_get_contents($temporary);
+            if ($content === false) {
+                throw new RuntimeException('Unable to read bounded content buffer.');
+            }
+            return $content;
+        } finally {
+            fclose($temporary);
+        }
     }
 
     private function megabytes(string $key, int $default, int $minimum, int $maximum): int

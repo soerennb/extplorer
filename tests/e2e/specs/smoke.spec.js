@@ -3,7 +3,9 @@ const path = require("node:path");
 const { test, expect } = require("@playwright/test");
 
 const username = process.env.E2E_USERNAME || "e2e-admin";
-const password = process.env.E2E_PASSWORD || "e2e-admin-password";
+const initialPassword = process.env.E2E_PASSWORD || "e2e-admin-password";
+let password = initialPassword;
+const updatedPassword = "E2e-New-Password!2026";
 const fixturePath = path.resolve(__dirname, "../fixtures/smoke-upload.txt");
 
 async function monitorPage(page) {
@@ -12,7 +14,12 @@ async function monitorPage(page) {
 
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("response", (response) => {
-    if (response.status() >= 400) {
+    // The application loads the file list before the mandatory first-login
+    // password change has completed. Those two 403 responses are expected;
+    // all other failed browser requests remain test failures.
+    const expectedPasswordGate =
+      response.status() === 403 && response.url().includes("/api/ls");
+    if (response.status() >= 400 && !expectedPasswordGate) {
       failedResponses.push(`${response.status()} ${response.url()}`);
     }
   });
@@ -43,7 +50,41 @@ async function login(page) {
   await page.getByTestId("login-submit").click();
   await expect(page.getByTestId("app-shell")).toBeVisible();
   await page.waitForLoadState("networkidle");
+  await completeRequiredPasswordChange(page);
   await expect(page.locator(".swal2-container")).toHaveCount(0);
+}
+
+async function completeRequiredPasswordChange(page) {
+  const newPasswordInput = page.locator("#profile-new-password");
+  const passwordChangeRequired = await page.evaluate(
+    () => window.forcePasswordChange === true,
+  );
+  if (!passwordChangeRequired) return;
+  await expect(newPasswordInput).toBeVisible();
+
+  await page.locator("#profile-current-password").fill(password);
+  await newPasswordInput.fill(updatedPassword);
+  await page.locator("#profile-confirm-password").fill(updatedPassword);
+  await page.locator("#profile-panel-security button").filter({ hasText: "Update" }).click();
+  await expect(page.locator("#profile-new-password")).toHaveValue("");
+  password = updatedPassword;
+  await page.locator("#userProfileModal .btn-close").click();
+  await expect(page.locator("#userProfileModal")).toBeHidden();
+}
+
+async function restoreInitialPassword(page) {
+  await page.getByTestId("user-menu").click();
+  await page.locator(".dropdown-menu.show a.dropdown-item").first().click();
+  await page.locator("#profile-tab-security").click();
+  await expect(page.locator("#profile-new-password")).toBeVisible();
+  await page.locator("#profile-current-password").fill(password);
+  await page.locator("#profile-new-password").fill(initialPassword);
+  await page.locator("#profile-confirm-password").fill(initialPassword);
+  await page.locator("#profile-panel-security button").filter({ hasText: "Update" }).click();
+  await expect(page.locator("#profile-new-password")).toHaveValue("");
+  password = initialPassword;
+  await page.locator("#userProfileModal .btn-close").click();
+  await expect(page.locator("#userProfileModal")).toBeHidden();
 }
 
 function fileItem(page, name) {
@@ -95,7 +136,9 @@ test("local user can reject invalid credentials, sign in, and sign out", async (
   await page.locator("#login_password").fill(password);
   await page.getByTestId("login-submit").click();
   await expect(page.getByTestId("app-shell")).toBeVisible();
+  await completeRequiredPasswordChange(page);
 
+  await restoreInitialPassword(page);
   await page.getByTestId("user-menu").click();
   await page.getByTestId("logout").click();
   await expect(page).toHaveURL(/\/login$/);

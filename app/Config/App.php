@@ -22,6 +22,8 @@ class App extends BaseConfig
     {
         parent::__construct();
 
+        $this->configureTrustedProxies();
+
         $configuredBaseUrl = getenv('EXTPLORER_BASE_URL');
         if ($configuredBaseUrl === false || trim($configuredBaseUrl) === '') {
             $configuredBaseUrl = getenv('app.baseURL');
@@ -184,10 +186,10 @@ class App extends BaseConfig
     public array $mountRootAllowlist = [];
 
     /**
-     * Optional allowlist for remote mount hosts (FTP/SFTP).
-     * Supports hostnames/IPs, CIDR ranges, and wildcard domains (e.g. *.example.com).
-     * Empty list falls back to blocking private/reserved targets by default.
+     * Legacy setting retained for state-file compatibility. It is not used to
+     * authorize remote connections; use RemoteEndpointPolicy instead.
      *
+     * @deprecated Use exact protocol://host:port endpoint entries.
      * @var list<string>
      */
     public array $mountRemoteHostAllowlist = [];
@@ -263,4 +265,31 @@ class App extends BaseConfig
      * --------------------------------------------------------------------------
      */
     public string $version = '3.0.0-beta.2';
+
+    private function configureTrustedProxies(): void
+    {
+        $configured = getenv('EXTPLORER_TRUSTED_PROXY_IPS');
+        if ($configured === false || trim($configured) === '') {
+            return;
+        }
+
+        $proxies = preg_split('/[\s,]+/', trim($configured)) ?: [];
+        foreach ($proxies as $proxy) {
+            if ($proxy === '' || (filter_var($proxy, FILTER_VALIDATE_IP) === false && !$this->isValidCidr($proxy))) {
+                throw new \RuntimeException('EXTPLORER_TRUSTED_PROXY_IPS contains an invalid IP or CIDR.');
+            }
+            $this->proxyIPs[$proxy] = 'X-Forwarded-For';
+        }
+    }
+
+    private function isValidCidr(string $value): bool
+    {
+        [$ip, $prefix] = array_pad(explode('/', $value, 2), 2, null);
+        if ($prefix === null || filter_var($ip, FILTER_VALIDATE_IP) === false || !ctype_digit($prefix)) {
+            return false;
+        }
+
+        $maximum = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false ? 128 : 32;
+        return (int)$prefix >= 0 && (int)$prefix <= $maximum;
+    }
 }

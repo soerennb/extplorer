@@ -63,4 +63,12 @@ class UserModelSecurityTest extends CIUnitTestCase
         $this->assertFalse($model->consumeRecoveryCode('alice', 'recovery-1'));
         $this->assertSame(['recovery-2'], $model->getRecoveryCodes('alice'));
     }
+
+    public function testPasswordWritesEnforceCentralPasswordPolicy(): void
+    {
+        $model = new UserModel();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $model->changePassword('alice', 'short');
+    }
 }

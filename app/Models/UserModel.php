@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Services\AtomicFileStore;
+use App\Services\PasswordPolicy;
 use Config\Services;
+use InvalidArgumentException;
 
 class UserModel
 {
@@ -18,9 +20,6 @@ class UserModel
         $this->rolesFile = $storage->state . '/roles.php';
         $this->groupsFile = $storage->state . '/groups.php';
 
-        if (!AtomicFileStore::exists($this->usersFile)) $this->saveData($this->usersFile, []);
-        if (!AtomicFileStore::exists($this->rolesFile)) $this->saveData($this->rolesFile, []);
-        if (!AtomicFileStore::exists($this->groupsFile)) $this->saveData($this->groupsFile, []);
     }
 
     private function loadData($path)
@@ -100,11 +99,20 @@ class UserModel
         $this->saveData($this->usersFile, $users);
     }
 
-    public function addUser(string $username, string $password, string $role = 'user', string $homeDir = '/', array $groups = [], string $allowedExt = '', string $blockedExt = ''): bool
+    public function addUser(string $username, string $password, string $role = 'user', string $homeDir = '/', array $groups = [], string $allowedExt = '', string $blockedExt = '', bool $mustChangePassword = false): bool
     {
         $username = trim($username);
         if (!$this->isValidUsername($username)) {
             return false;
+        }
+
+        if (!array_key_exists($role, $this->getRoles())) {
+            throw new InvalidArgumentException('Unknown user role.');
+        }
+
+        $passwordError = PasswordPolicy::validate($password);
+        if ($passwordError !== null) {
+            throw new InvalidArgumentException($passwordError);
         }
 
         return AtomicFileStore::transaction($this->usersFile, function (array &$users) use (
@@ -114,7 +122,8 @@ class UserModel
             $homeDir,
             $groups,
             $allowedExt,
-            $blockedExt
+            $blockedExt,
+            $mustChangePassword
         ): bool {
             foreach ($users as $user) {
                 if (($user['username'] ?? null) === $username) {
@@ -133,7 +142,7 @@ class UserModel
                 '2fa_secret' => null,
                 '2fa_enabled' => false,
                 'recovery_codes' => [],
-                'must_change_password' => false,
+                'must_change_password' => $mustChangePassword,
                 'auth_version' => 1,
                 'disabled' => false,
                 'failed_login_count' => 0,
@@ -145,6 +154,22 @@ class UserModel
 
     public function updateUser(string $username, array $data): bool
     {
+        if (array_key_exists('role', $data)) {
+            if (!is_string($data['role']) || !array_key_exists($data['role'], $this->getRoles())) {
+                throw new InvalidArgumentException('Unknown user role.');
+            }
+        }
+
+        if (array_key_exists('password', $data)) {
+            if (!is_string($data['password'])) {
+                throw new InvalidArgumentException('Password must be a string.');
+            }
+            $passwordError = PasswordPolicy::validate($data['password']);
+            if ($passwordError !== null) {
+                throw new InvalidArgumentException($passwordError);
+            }
+        }
+
         return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username, $data): bool {
             foreach ($users as &$user) {
                 if (($user['username'] ?? null) !== $username) {
@@ -152,6 +177,21 @@ class UserModel
                 }
 
                 $user = $this->withAuthDefaults($user);
+                $currentlyActiveAdmin = ($user['role'] ?? '') === 'admin' && empty($user['disabled']);
+                $nextRole = array_key_exists('role', $data) ? $data['role'] : $user['role'];
+                $nextDisabled = array_key_exists('disabled', $data) ? (bool)$data['disabled'] : $user['disabled'];
+                if ($currentlyActiveAdmin && ($nextRole !== 'admin' || $nextDisabled)) {
+                    $activeAdministrators = 0;
+                    foreach ($users as $candidate) {
+                        if (($candidate['role'] ?? '') === 'admin' && empty($candidate['disabled'])) {
+                            $activeAdministrators++;
+                        }
+                    }
+                    if ($activeAdministrators <= 1) {
+                        throw new \RuntimeException('The last active administrator cannot be disabled or demoted.');
+                    }
+                }
+
                 $securityChanged = false;
                 if (isset($data['role'])) $user['role'] = $data['role'];
                 if (isset($data['home_dir'])) $user['home_dir'] = $data['home_dir'];
@@ -254,6 +294,25 @@ class UserModel
     public function deleteUser(string $username): bool
     {
         return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username): bool {
+            $target = null;
+            $activeAdministrators = 0;
+            foreach ($users as $user) {
+                if (($user['username'] ?? null) === $username) {
+                    $target = $user;
+                }
+                if (($user['role'] ?? '') === 'admin' && empty($user['disabled'])) {
+                    $activeAdministrators++;
+                }
+            }
+
+            if (is_array($target)
+                && ($target['role'] ?? '') === 'admin'
+                && empty($target['disabled'])
+                && $activeAdministrators <= 1
+            ) {
+                throw new \RuntimeException('The last active administrator cannot be deleted.');
+            }
+
             $newUsers = array_filter($users, fn($user) => ($user['username'] ?? null) !== $username);
             if (count($users) === count($newUsers)) return false;
             $users = array_values($newUsers);
@@ -353,6 +412,12 @@ class UserModel
                 $user['failed_login_count']++;
                 if ($user['failed_login_count'] >= 5) {
                     $user['locked_until'] = time() + 900;
+                    \App\Services\LogService::log(
+                        'User Locked',
+                        '',
+                        'Account temporarily locked after repeated failed logins.',
+                        $username
+                    );
                 }
                 return;
             }
@@ -388,7 +453,6 @@ class UserModel
                 'admin' => ['*', 'admin_settings'],
                 'user'  => ['read', 'write', 'upload', 'delete', 'rename', 'archive', 'extract', 'chmod']
             ];
-            $this->saveRoles($roles);
         }
         return $roles;
     }

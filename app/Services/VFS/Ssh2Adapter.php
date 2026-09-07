@@ -4,6 +4,8 @@ namespace App\Services\VFS;
 
 use Exception;
 use App\Services\RemoteSecurityPolicy;
+use App\Services\RemoteEndpointPolicy;
+use App\Services\ResourcePolicy;
 
 class Ssh2Adapter implements IFileSystem
 {
@@ -19,9 +21,13 @@ class Ssh2Adapter implements IFileSystem
 
         $this->root = RemotePathPolicy::normalizeRoot($root);
         $policy = new RemoteSecurityPolicy();
-        $policy->assertProtocolAllowed('sftp', ['host_key_fingerprint' => $hostKeyFingerprint]);
+        $endpoint = (new RemoteEndpointPolicy())->authorize('sftp', $host, $port, $hostKeyFingerprint);
 
-        $this->conn = ssh2_connect($host, $port);
+        $timeout = (new ResourcePolicy())->remoteTimeoutSeconds();
+        $parameters = (new \ReflectionFunction('ssh2_connect'))->getNumberOfParameters();
+        $this->conn = $parameters >= 5
+            ? ssh2_connect($endpoint['connect_host'], $port, null, null, $timeout)
+            : ssh2_connect($endpoint['connect_host'], $port);
         if (!$this->conn) throw new Exception("Could not connect to SSH host: $host");
 
         $policy->assertSshFingerprint($this->conn, $hostKeyFingerprint);
@@ -149,8 +155,12 @@ class Ssh2Adapter implements IFileSystem
             return $this->copyDirectory($from, $to);
         }
 
-        $content = $this->readFile($from);
-        return $this->writeFile($to, $content);
+        $stream = $this->openReadStream($from);
+        try {
+            return file_put_contents($this->resolvePath($to), $stream) !== false;
+        } finally {
+            fclose($stream);
+        }
     }
 
     private function copyDirectory(string $from, string $to): bool

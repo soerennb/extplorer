@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Models\UserModel;
 use App\Services\SecretReader;
+use App\Services\PasswordPolicy;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 use RuntimeException;
@@ -47,6 +48,11 @@ class AdminResetPassword extends BaseCommand
                 $password = SecretReader::stdin();
             } else {
                 throw new RuntimeException('Use --password-file or --password-stdin.');
+            }
+
+            $passwordError = PasswordPolicy::validate($password);
+            if ($passwordError !== null) {
+                throw new RuntimeException($passwordError);
             }
 
             $model = new UserModel();

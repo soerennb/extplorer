@@ -69,6 +69,8 @@ class SettingsService
             'webdav_enabled' => true,
             'mount_root_allowlist' => [],
             'mount_remote_host_allowlist' => [],
+            'remote_login_enabled' => false,
+            'remote_endpoint_allowlist' => [],
         ];
     }
 }

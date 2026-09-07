@@ -49,18 +49,30 @@
                 </ul>
             </div>
 
-            <?php if ($checks['php']['status'] && $checks['writable']['status']): ?>
+            <?php if (!empty($claimTokenPath)): ?>
+                <div class="alert alert-warning">
+                    Before continuing, read the one-time installation token from
+                    <code><?= esc($claimTokenPath) ?></code> on the server and enter it below.
+                    The token is not displayed in this browser and expires after 24 hours.
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($formReady)): ?>
                 <form action="<?= site_url('install/create') ?>" method="post">
                     <?= csrf_field() ?>
                     <h4 class="mb-3">Create Admin Account</h4>
                     <div class="mb-3">
+                        <label class="form-label">Installation token</label>
+                        <input type="password" name="claim_token" class="form-control" required minlength="64" autocomplete="one-time-code">
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Username</label>
-                        <input type="text" name="username" class="form-control" value="admin" required>
+                        <input type="text" name="username" class="form-control" value="<?= esc($username ?? 'admin') ?>" required autocomplete="username">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Password</label>
-                        <input type="password" name="password" class="form-control" required minlength="8">
-                        <div class="form-text">Must be at least 8 characters.</div>
+                        <input type="password" name="password" class="form-control" required minlength="12" autocomplete="new-password">
+                        <div class="form-text">Must be at least 12 characters.</div>
                     </div>
                     <button type="submit" class="btn btn-primary w-100">Install & Create Admin</button>
                 </form>

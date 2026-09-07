@@ -614,7 +614,7 @@ return function render(_ctx, _cache) {
                     type: "password",
                     class: _normalizeClass(["form-control", { 'is-invalid': passwordTouched && passwordInvalid }]),
                     "onUpdate:modelValue": $event => ((passwordForm.new) = $event),
-                    placeholder: t('password_min_hint') || 'Min 8 chars',
+                    placeholder: t('password_min_hint') || 'Min 12 chars',
                     autocomplete: "new-password"
                   }, null, 10 /* CLASS, PROPS */, _hoisted_55), [
                     [_vModelText, passwordForm.new]
@@ -643,7 +643,7 @@ return function render(_ctx, _cache) {
                   _createElementVNode("ul", _hoisted_60, [
                     _createElementVNode("li", {
                       class: _normalizeClass(passwordChecks.length ? 'text-success' : 'text-muted')
-                    }, _toDisplayString(t('password_rule_length') || 'At least 8 characters'), 3 /* TEXT, CLASS */),
+                    }, _toDisplayString(t('password_rule_length') || 'At least 12 characters'), 3 /* TEXT, CLASS */),
                     _createElementVNode("li", {
                       class: _normalizeClass(passwordChecks.case ? 'text-success' : 'text-muted')
                     }, _toDisplayString(t('password_rule_case') || 'Uppercase and lowercase letters'), 3 /* TEXT, CLASS */),
@@ -1238,7 +1238,7 @@ return function render(_ctx, _cache) {
         const passwordChecks = computed(() => {
             const value = passwordForm.new || '';
             return {
-                length: value.length >= 8,
+                length: value.length >= 12,
                 case: /[a-z]/.test(value) && /[A-Z]/.test(value),
                 number: /\d/.test(value),
                 symbol: /[^A-Za-z0-9]/.test(value),
@@ -1273,7 +1273,7 @@ return function render(_ctx, _cache) {
         const passwordTouched = computed(() => passwordForm.new.length > 0 || passwordForm.confirm.length > 0);
         const passwordMismatch = computed(() => passwordForm.new !== '' && passwordForm.confirm !== '' && passwordForm.new !== passwordForm.confirm);
         const passwordInvalidMessage = computed(() => {
-            if (!passwordChecks.value.length) return t('password_rule_length') || 'At least 8 characters';
+            if (!passwordChecks.value.length) return t('password_rule_length') || 'At least 12 characters';
             if (passwordMismatch.value) return t('password_mismatch') || 'Passwords do not match';
             return t('password_requirements_not_met') || 'Password requirements are not met';
         });

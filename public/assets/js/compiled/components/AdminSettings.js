@@ -177,41 +177,47 @@ const _hoisted_134 = { class: "form-label small fw-bold" }
 const _hoisted_135 = ["onUpdate:modelValue", "aria-label", "placeholder"]
 const _hoisted_136 = { class: "form-text" }
 const _hoisted_137 = { class: "col-md-6" }
-const _hoisted_138 = { class: "form-label small fw-bold" }
-const _hoisted_139 = ["onUpdate:modelValue", "aria-label", "placeholder"]
-const _hoisted_140 = { class: "form-text" }
-const _hoisted_141 = { key: 5 }
-const _hoisted_142 = { class: "border-bottom pb-2 mb-3" }
-const _hoisted_143 = { class: "row g-3" }
-const _hoisted_144 = { class: "col-md-6" }
-const _hoisted_145 = { class: "form-label small fw-bold" }
-const _hoisted_146 = ["onUpdate:modelValue", "aria-label"]
-const _hoisted_147 = { class: "form-text" }
-const _hoisted_148 = { key: 6 }
-const _hoisted_149 = { class: "border-bottom pb-2 mb-3" }
-const _hoisted_150 = { class: "row g-3" }
-const _hoisted_151 = { class: "col-md-4" }
-const _hoisted_152 = { class: "form-label small fw-bold" }
-const _hoisted_153 = ["onUpdate:modelValue", "aria-label"]
-const _hoisted_154 = { class: "form-text" }
-const _hoisted_155 = { class: "border-bottom pb-2 mb-3 mt-4" }
-const _hoisted_156 = { class: "row g-3" }
-const _hoisted_157 = { class: "col-md-12" }
-const _hoisted_158 = { class: "form-check form-switch mb-0" }
-const _hoisted_159 = ["onUpdate:modelValue"]
-const _hoisted_160 = {
+const _hoisted_138 = { class: "form-check form-switch mb-2" }
+const _hoisted_139 = ["onUpdate:modelValue"]
+const _hoisted_140 = {
+  class: "form-check-label small fw-bold",
+  for: "remoteLoginEnabled"
+}
+const _hoisted_141 = { class: "form-label small fw-bold" }
+const _hoisted_142 = ["onUpdate:modelValue", "aria-label", "placeholder"]
+const _hoisted_143 = { class: "form-text" }
+const _hoisted_144 = { key: 5 }
+const _hoisted_145 = { class: "border-bottom pb-2 mb-3" }
+const _hoisted_146 = { class: "row g-3" }
+const _hoisted_147 = { class: "col-md-6" }
+const _hoisted_148 = { class: "form-label small fw-bold" }
+const _hoisted_149 = ["onUpdate:modelValue", "aria-label"]
+const _hoisted_150 = { class: "form-text" }
+const _hoisted_151 = { key: 6 }
+const _hoisted_152 = { class: "border-bottom pb-2 mb-3" }
+const _hoisted_153 = { class: "row g-3" }
+const _hoisted_154 = { class: "col-md-4" }
+const _hoisted_155 = { class: "form-label small fw-bold" }
+const _hoisted_156 = ["onUpdate:modelValue", "aria-label"]
+const _hoisted_157 = { class: "form-text" }
+const _hoisted_158 = { class: "border-bottom pb-2 mb-3 mt-4" }
+const _hoisted_159 = { class: "row g-3" }
+const _hoisted_160 = { class: "col-md-12" }
+const _hoisted_161 = { class: "form-check form-switch mb-0" }
+const _hoisted_162 = ["onUpdate:modelValue"]
+const _hoisted_163 = {
   class: "form-check-label small fw-bold",
   for: "adminDavEnabled"
 }
-const _hoisted_161 = { class: "form-text mt-1" }
-const _hoisted_162 = { class: "mt-4 pt-3 border-top text-end" }
-const _hoisted_163 = {
+const _hoisted_164 = { class: "form-text mt-1" }
+const _hoisted_165 = { class: "mt-4 pt-3 border-top text-end" }
+const _hoisted_166 = {
   key: 0,
   class: "text-warning small mb-2 text-start"
 }
-const _hoisted_164 = ["onClick", "disabled"]
-const _hoisted_165 = ["onClick", "disabled"]
-const _hoisted_166 = ["disabled"]
+const _hoisted_167 = ["onClick", "disabled"]
+const _hoisted_168 = ["onClick", "disabled"]
+const _hoisted_169 = ["disabled"]
 
 return function render(_ctx, _cache) {
   with (_ctx) {
@@ -701,27 +707,38 @@ return function render(_ctx, _cache) {
                         _createElementVNode("div", _hoisted_136, _toDisplayString(t('admin_settings_mounts_allowlist_hint', 'Only paths under these roots can be mounted. Leave empty to disable external mounts.')), 1 /* TEXT */)
                       ]),
                       _createElementVNode("div", _hoisted_137, [
-                        _createElementVNode("label", _hoisted_138, _toDisplayString(t('admin_settings_mounts_remote_allowlist', 'Remote Host Allowlist (one entry per line)')), 1 /* TEXT */),
+                        _createElementVNode("div", _hoisted_138, [
+                          _withDirectives(_createElementVNode("input", {
+                            class: "form-check-input",
+                            type: "checkbox",
+                            id: "remoteLoginEnabled",
+                            "onUpdate:modelValue": $event => ((settings.remote_login_enabled) = $event)
+                          }, null, 8 /* PROPS */, _hoisted_139), [
+                            [_vModelCheckbox, settings.remote_login_enabled]
+                          ]),
+                          _createElementVNode("label", _hoisted_140, _toDisplayString(t('admin_settings_remote_login_enabled', 'Enable direct remote login')), 1 /* TEXT */)
+                        ]),
+                        _createElementVNode("label", _hoisted_141, _toDisplayString(t('admin_settings_remote_endpoint_allowlist', 'Remote endpoint allowlist (one exact endpoint per line)')), 1 /* TEXT */),
                         _withDirectives(_createElementVNode("textarea", {
                           class: "form-control form-control-sm",
                           rows: "4",
-                          "onUpdate:modelValue": $event => ((settings.mount_remote_host_allowlist_text) = $event),
-                          "aria-label": t('admin_settings_mounts_remote_allowlist', 'Remote Host Allowlist (one entry per line)'),
-                          placeholder: t('admin_settings_mounts_remote_allowlist_placeholder', 'files.example.com\\n10.0.0.0/8\\n*.corp.example')
-                        }, null, 8 /* PROPS */, _hoisted_139), [
-                          [_vModelText, settings.mount_remote_host_allowlist_text]
+                          "onUpdate:modelValue": $event => ((settings.remote_endpoint_allowlist_text) = $event),
+                          "aria-label": t('admin_settings_remote_endpoint_allowlist', 'Remote endpoint allowlist (one exact endpoint per line)'),
+                          placeholder: t('admin_settings_remote_endpoint_allowlist_placeholder', 'sftp://files.example.com:22\\nftps://ftp.example.com:990')
+                        }, null, 8 /* PROPS */, _hoisted_142), [
+                          [_vModelText, settings.remote_endpoint_allowlist_text]
                         ]),
-                        _createElementVNode("div", _hoisted_140, _toDisplayString(t('admin_settings_mounts_remote_allowlist_hint', 'Allow hostnames, IPs, CIDR ranges, and wildcard domains. Leave empty to block private/reserved targets only.')), 1 /* TEXT */)
+                        _createElementVNode("div", _hoisted_143, _toDisplayString(t('admin_settings_remote_endpoint_allowlist_hint', 'Use protocol://hostname:port. Empty means deny all remote connections; wildcards and open networks are not accepted.')), 1 /* TEXT */)
                       ])
                     ])
                   ]))
                 : _createCommentVNode("v-if", true),
               (settingsTab === 'logging')
-                ? (_openBlock(), _createElementBlock("div", _hoisted_141, [
-                    _createElementVNode("h6", _hoisted_142, _toDisplayString(t('admin_settings_logging_heading', 'Audit Logging')), 1 /* TEXT */),
-                    _createElementVNode("div", _hoisted_143, [
-                      _createElementVNode("div", _hoisted_144, [
-                        _createElementVNode("label", _hoisted_145, _toDisplayString(t('admin_settings_logging_retention', 'Retention Count')), 1 /* TEXT */),
+                ? (_openBlock(), _createElementBlock("div", _hoisted_144, [
+                    _createElementVNode("h6", _hoisted_145, _toDisplayString(t('admin_settings_logging_heading', 'Audit Logging')), 1 /* TEXT */),
+                    _createElementVNode("div", _hoisted_146, [
+                      _createElementVNode("div", _hoisted_147, [
+                        _createElementVNode("label", _hoisted_148, _toDisplayString(t('admin_settings_logging_retention', 'Retention Count')), 1 /* TEXT */),
                         _withDirectives(_createElementVNode("input", {
                           type: "number",
                           min: "100",
@@ -730,7 +747,7 @@ return function render(_ctx, _cache) {
                           class: "form-control form-control-sm",
                           "onUpdate:modelValue": $event => ((settings.log_retention_count) = $event),
                           "aria-label": t('admin_settings_logging_retention', 'Retention Count')
-                        }, null, 8 /* PROPS */, _hoisted_146), [
+                        }, null, 8 /* PROPS */, _hoisted_149), [
                           [
                             _vModelText,
                             settings.log_retention_count,
@@ -738,17 +755,17 @@ return function render(_ctx, _cache) {
                             { number: true }
                           ]
                         ]),
-                        _createElementVNode("div", _hoisted_147, _toDisplayString(t('admin_settings_logging_retention_hint', 'How many recent audit log entries to keep (100-20000).')), 1 /* TEXT */)
+                        _createElementVNode("div", _hoisted_150, _toDisplayString(t('admin_settings_logging_retention_hint', 'How many recent audit log entries to keep (100-20000).')), 1 /* TEXT */)
                       ])
                     ])
                   ]))
                 : _createCommentVNode("v-if", true),
               (settingsTab === 'security')
-                ? (_openBlock(), _createElementBlock("div", _hoisted_148, [
-                    _createElementVNode("h6", _hoisted_149, _toDisplayString(t('admin_settings_security_heading', 'Session Security')), 1 /* TEXT */),
-                    _createElementVNode("div", _hoisted_150, [
-                      _createElementVNode("div", _hoisted_151, [
-                        _createElementVNode("label", _hoisted_152, _toDisplayString(t('admin_settings_security_idle_timeout', 'Idle Timeout (Minutes)')), 1 /* TEXT */),
+                ? (_openBlock(), _createElementBlock("div", _hoisted_151, [
+                    _createElementVNode("h6", _hoisted_152, _toDisplayString(t('admin_settings_security_heading', 'Session Security')), 1 /* TEXT */),
+                    _createElementVNode("div", _hoisted_153, [
+                      _createElementVNode("div", _hoisted_154, [
+                        _createElementVNode("label", _hoisted_155, _toDisplayString(t('admin_settings_security_idle_timeout', 'Idle Timeout (Minutes)')), 1 /* TEXT */),
                         _withDirectives(_createElementVNode("input", {
                           type: "number",
                           min: "0",
@@ -756,7 +773,7 @@ return function render(_ctx, _cache) {
                           class: "form-control form-control-sm",
                           "onUpdate:modelValue": $event => ((settings.session_idle_timeout_minutes) = $event),
                           "aria-label": t('admin_settings_security_idle_timeout', 'Idle Timeout (Minutes)')
-                        }, null, 8 /* PROPS */, _hoisted_153), [
+                        }, null, 8 /* PROPS */, _hoisted_156), [
                           [
                             _vModelText,
                             settings.session_idle_timeout_minutes,
@@ -764,31 +781,31 @@ return function render(_ctx, _cache) {
                             { number: true }
                           ]
                         ]),
-                        _createElementVNode("div", _hoisted_154, _toDisplayString(t('admin_settings_security_idle_timeout_hint', '0 disables idle timeout. Applies to API and UI sessions.')), 1 /* TEXT */)
+                        _createElementVNode("div", _hoisted_157, _toDisplayString(t('admin_settings_security_idle_timeout_hint', '0 disables idle timeout. Applies to API and UI sessions.')), 1 /* TEXT */)
                       ])
                     ]),
-                    _createElementVNode("h6", _hoisted_155, _toDisplayString(t('admin_settings_dav_heading', 'WebDAV')), 1 /* TEXT */),
-                    _createElementVNode("div", _hoisted_156, [
-                      _createElementVNode("div", _hoisted_157, [
-                        _createElementVNode("div", _hoisted_158, [
+                    _createElementVNode("h6", _hoisted_158, _toDisplayString(t('admin_settings_dav_heading', 'WebDAV')), 1 /* TEXT */),
+                    _createElementVNode("div", _hoisted_159, [
+                      _createElementVNode("div", _hoisted_160, [
+                        _createElementVNode("div", _hoisted_161, [
                           _withDirectives(_createElementVNode("input", {
                             class: "form-check-input",
                             type: "checkbox",
                             id: "adminDavEnabled",
                             "onUpdate:modelValue": $event => ((settings.webdav_enabled) = $event)
-                          }, null, 8 /* PROPS */, _hoisted_159), [
+                          }, null, 8 /* PROPS */, _hoisted_162), [
                             [_vModelCheckbox, settings.webdav_enabled]
                           ]),
-                          _createElementVNode("label", _hoisted_160, _toDisplayString(t('admin_settings_dav_enabled', 'Enable WebDAV')), 1 /* TEXT */)
+                          _createElementVNode("label", _hoisted_163, _toDisplayString(t('admin_settings_dav_enabled', 'Enable WebDAV')), 1 /* TEXT */)
                         ]),
-                        _createElementVNode("div", _hoisted_161, _toDisplayString(t('admin_settings_dav_enabled_hint', 'Allow users to access files via WebDAV.')), 1 /* TEXT */)
+                        _createElementVNode("div", _hoisted_164, _toDisplayString(t('admin_settings_dav_enabled_hint', 'Allow users to access files via WebDAV.')), 1 /* TEXT */)
                       ])
                     ])
                   ]))
                 : _createCommentVNode("v-if", true),
-              _createElementVNode("div", _hoisted_162, [
+              _createElementVNode("div", _hoisted_165, [
                 settingsDirty
-                  ? (_openBlock(), _createElementBlock("div", _hoisted_163, _toDisplayString(t('admin_settings_unsaved', 'You have unsaved settings changes.')), 1 /* TEXT */))
+                  ? (_openBlock(), _createElementBlock("div", _hoisted_166, _toDisplayString(t('admin_settings_unsaved', 'You have unsaved settings changes.')), 1 /* TEXT */))
                   : _createCommentVNode("v-if", true),
                 (settingsTab === 'email')
                   ? (_openBlock(), _createElementBlock("button", {
@@ -797,7 +814,7 @@ return function render(_ctx, _cache) {
                       class: "btn btn-outline-secondary btn-sm me-2",
                       onClick: validateEmailSettings,
                       disabled: !settings || isValidatingEmail
-                    }, _toDisplayString(isValidatingEmail ? t('admin_settings_validating', 'Validating…') : t('admin_settings_validate', 'Validate')), 9 /* TEXT, PROPS */, _hoisted_164))
+                    }, _toDisplayString(isValidatingEmail ? t('admin_settings_validating', 'Validating…') : t('admin_settings_validate', 'Validate')), 9 /* TEXT, PROPS */, _hoisted_167))
                   : _createCommentVNode("v-if", true),
                 (settingsTab === 'email')
                   ? (_openBlock(), _createElementBlock("button", {
@@ -806,13 +823,13 @@ return function render(_ctx, _cache) {
                       class: "btn btn-outline-secondary btn-sm me-2",
                       onClick: testEmail,
                       disabled: !settings || isTestingEmail
-                    }, _toDisplayString(isTestingEmail ? t('admin_settings_sending', 'Sending…') : t('admin_settings_send_test_email', 'Send Test Email')), 9 /* TEXT, PROPS */, _hoisted_165))
+                    }, _toDisplayString(isTestingEmail ? t('admin_settings_sending', 'Sending…') : t('admin_settings_send_test_email', 'Send Test Email')), 9 /* TEXT, PROPS */, _hoisted_168))
                   : _createCommentVNode("v-if", true),
                 _createElementVNode("button", {
                   type: "submit",
                   class: "btn btn-primary btn-sm",
                   disabled: !settingsDirty || isSavingSettings
-                }, _toDisplayString(isSavingSettings ? t('admin_settings_saving', 'Saving…') : t('admin_settings_save', 'Save Settings')), 9 /* TEXT, PROPS */, _hoisted_166)
+                }, _toDisplayString(isSavingSettings ? t('admin_settings_saving', 'Saving…') : t('admin_settings_save', 'Save Settings')), 9 /* TEXT, PROPS */, _hoisted_169)
               ])
             ], 40 /* PROPS, NEED_HYDRATION */, _hoisted_19)
           ]))
@@ -872,8 +889,11 @@ return function render(_ctx, _cache) {
                 if (!this.settings.mount_root_allowlist_text && Array.isArray(this.settings.mount_root_allowlist)) {
                     this.settings.mount_root_allowlist_text = this.settings.mount_root_allowlist.join('\n');
                 }
-                if (!this.settings.mount_remote_host_allowlist_text && Array.isArray(this.settings.mount_remote_host_allowlist)) {
-                    this.settings.mount_remote_host_allowlist_text = this.settings.mount_remote_host_allowlist.join('\n');
+                if (!this.settings.remote_endpoint_allowlist_text && Array.isArray(this.settings.remote_endpoint_allowlist)) {
+                    this.settings.remote_endpoint_allowlist_text = this.settings.remote_endpoint_allowlist.map((entry) => {
+                        if (typeof entry === 'string') return entry;
+                        return `${entry.protocol}://${entry.host}:${entry.port}`;
+                    }).join('\n');
                 }
                 if (!this.settings.share_upload_allowed_extensions_text && Array.isArray(this.settings.share_upload_allowed_extensions)) {
                     this.settings.share_upload_allowed_extensions_text = this.settings.share_upload_allowed_extensions.join('\n');
@@ -923,6 +943,19 @@ return function render(_ctx, _cache) {
             if (typeof this.settings.webdav_enabled !== 'boolean') {
                 this.settings.webdav_enabled = true;
             }
+            if (typeof this.settings.remote_login_enabled !== 'boolean') {
+                this.settings.remote_login_enabled = false;
+            }
+            if (typeof this.settings.remote_endpoint_allowlist_text !== 'string') {
+                if (Array.isArray(this.settings.remote_endpoint_allowlist)) {
+                    this.settings.remote_endpoint_allowlist_text = this.settings.remote_endpoint_allowlist.map((entry) => {
+                        if (typeof entry === 'string') return entry;
+                        return `${entry.protocol}://${entry.host}:${entry.port}`;
+                    }).join('\n');
+                } else {
+                    this.settings.remote_endpoint_allowlist_text = '';
+                }
+            }
             if (typeof this.settings.share_upload_quota_mb !== 'number' || Number.isNaN(this.settings.share_upload_quota_mb)) {
                 this.settings.share_upload_quota_mb = 0;
             }
@@ -944,13 +977,6 @@ return function render(_ctx, _cache) {
             }
             if (typeof this.settings.quota_per_user_mb !== 'number' || Number.isNaN(this.settings.quota_per_user_mb)) {
                 this.settings.quota_per_user_mb = 0;
-            }
-            if (typeof this.settings.mount_remote_host_allowlist_text !== 'string') {
-                if (Array.isArray(this.settings.mount_remote_host_allowlist)) {
-                    this.settings.mount_remote_host_allowlist_text = this.settings.mount_remote_host_allowlist.join('\n');
-                } else {
-                    this.settings.mount_remote_host_allowlist_text = '';
-                }
             }
         },
         async saveSettings() {

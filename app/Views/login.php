@@ -106,7 +106,7 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
                             <label class="form-label" for="login_password"><?= esc($lt('password', 'Password')) ?></label>
                             <div class="input-group">
                                 <span class="input-group-text" aria-hidden="true"><i class="ri-lock-line"></i></span>
-                                <input type="password" name="password" id="login_password" class="form-control" required value="<?= old('password') ?>" autocomplete="current-password">
+                                <input type="password" name="password" id="login_password" class="form-control" required autocomplete="current-password">
                             </div>
                         </div>
                     </div>
@@ -116,16 +116,21 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
                         <div class="btn-group btn-group-sm w-100" role="group" aria-label="<?= esc($lt('login_connection_mode', 'Connection Mode')) ?>">
                             <input type="radio" class="btn-check" name="mode" id="mode_local" value="local" checked>
                             <label class="btn btn-outline-primary" for="mode_local"><?= esc($lt('login_mode_local', 'Local')) ?></label>
+                            <?php if (!empty($remote_login_enabled)): ?>
                             <input type="radio" class="btn-check" name="mode" id="mode_ftp" value="ftp">
                             <label class="btn btn-outline-primary" for="mode_ftp">FTP</label>
                             <input type="radio" class="btn-check" name="mode" id="mode_ftps" value="ftps">
                             <label class="btn btn-outline-primary" for="mode_ftps">FTPS</label>
                             <input type="radio" class="btn-check" name="mode" id="mode_sftp" value="sftp">
                             <label class="btn btn-outline-primary" for="mode_sftp">SFTP</label>
+                            <?php endif; ?>
                         </div>
-                        <div class="form-hint small mt-1"><?= esc($lt('login_mode_ftp_hint', 'FTP/SFTP uses the username and password above. Private network hosts may require administrator allowlisting.')) ?></div>
+                        <div class="form-hint small mt-1"><?= esc(!empty($remote_login_enabled)
+                            ? $lt('login_mode_ftp_hint', 'FTP/SFTP uses the username and password above. Private network hosts may require administrator allowlisting.')
+                            : $lt('login_remote_disabled', 'Direct FTP/SFTP login is disabled by administrator policy.')) ?></div>
                     </div>
-                    
+
+                    <?php if (!empty($remote_login_enabled)): ?>
                     <div id="remote_fields" class="collapse">
                         <div class="remote-card rounded-3 p-3 mb-4">
                             <div class="row g-3">
@@ -143,7 +148,7 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
                                 </div>
                             </div>
                             <div class="mt-3">
-                                <label class="form-label" for="remote_host_key_fingerprint"><?= esc($lt('login_remote_host_key_fingerprint', 'SFTP host-key fingerprint (optional in compatibility mode)')) ?></label>
+                                <label class="form-label" for="remote_host_key_fingerprint"><?= esc($lt('login_remote_host_key_fingerprint', 'SFTP host-key fingerprint (required for SFTP)')) ?></label>
                                 <input type="text" name="remote_host_key_fingerprint" id="remote_host_key_fingerprint" class="form-control" placeholder="SHA256:..." autocomplete="off" spellcheck="false">
                                 <div class="form-text"><?= esc($lt('login_remote_host_key_fingerprint_hint', 'Use the SHA-256 fingerprint supplied by the server administrator.')) ?></div>
                             </div>
@@ -156,6 +161,7 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
                             <div id="remote_test_status" class="alert d-none py-2 small remote-test-status" role="status"></div>
                         </div>
                     </div>
+                    <?php endif; ?>
 
                     <?php if (session()->getFlashdata('2fa_required')): ?>
                     <div class="mb-4">
@@ -189,9 +195,9 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
         const rememberMeHint = document.getElementById('remember_me_hint');
 
         function updateRemoteFields(val) {
-            if (val === 'ftp' || val === 'ftps' || val === 'sftp') {
+            if (remoteFields && (val === 'ftp' || val === 'ftps' || val === 'sftp')) {
                 remoteFields.classList.add('show');
-            } else {
+            } else if (remoteFields) {
                 remoteFields.classList.remove('show');
             }
             if (val === 'ftp') port.value = 21;
@@ -222,7 +228,7 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
             el.addEventListener('change', () => updateRemoteFields(el.value));
         });
 
-        testButton.addEventListener('click', async () => {
+        if (testButton) testButton.addEventListener('click', async () => {
             const data = new FormData(form);
             testButton.disabled = true;
             setRemoteStatus('info', loginMessages.login_remote_testing);

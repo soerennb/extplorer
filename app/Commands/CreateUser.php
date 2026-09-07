@@ -5,6 +5,7 @@ namespace App\Commands;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 use App\Models\UserModel;
+use App\Services\PasswordPolicy;
 
 class CreateUser extends BaseCommand
 {
@@ -31,6 +32,12 @@ class CreateUser extends BaseCommand
             return EXIT_ERROR;
         }
 
+        $passwordError = PasswordPolicy::validate((string)$password);
+        if ($passwordError !== null) {
+            CLI::error($passwordError);
+            return EXIT_ERROR;
+        }
+
         $role = $params['role'] ?? 'user';
         $group = $params['group'] ?? null;
         $groups = $group ? [$group] : [];
@@ -45,6 +52,11 @@ class CreateUser extends BaseCommand
         $roles = $userModel->getRoles();
         if (empty($roles)) {
             $userModel->saveRoles(['admin' => ['*'], 'user' => ['read', 'write']]);
+            $roles = $userModel->getRoles();
+        }
+        if (!isset($roles[$role])) {
+            CLI::error("Unknown role '{$role}'.");
+            return EXIT_ERROR;
         }
         
         $allGroups = $userModel->getGroups();
