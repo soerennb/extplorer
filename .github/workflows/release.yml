@@ -148,7 +148,6 @@ jobs:
           build-args: APP_VERSION=${{ env.APP_VERSION }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
-          progress: plain
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: mode=max

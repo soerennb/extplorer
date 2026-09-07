@@ -62,7 +62,6 @@ jobs:
           build-args: APP_VERSION=${{ steps.version.outputs.version }}
           tags: ghcr.io/soerennb/extplorer3:${{ steps.version.outputs.version }}
           labels: org.opencontainers.image.version=${{ steps.version.outputs.version }}
-          progress: plain
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: mode=max
