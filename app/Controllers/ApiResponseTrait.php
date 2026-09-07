@@ -47,11 +47,16 @@ trait ApiResponseTrait
             }
         }
 
-        return $this->respond([
+        $payload = [
             'status' => $status,
             'error' => $errorCode,
             'messages' => $publicMessages,
             'request_id' => $requestId,
-        ], $status, $customMessage)->setHeader('X-Request-ID', $requestId);
+        ];
+        if (is_array($messages) && isset($messages['action']) && is_string($messages['action'])) {
+            $payload['action'] = $messages['action'];
+        }
+
+        return $this->respond($payload, $status, $customMessage)->setHeader('X-Request-ID', $requestId);
     }
 }

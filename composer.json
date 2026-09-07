@@ -19,6 +19,7 @@
     "require-dev": {
         "fakerphp/faker": "^1.9",
         "mikey179/vfsstream": "^1.6",
+        "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^11.5"
     },
     "autoload": {
@@ -46,6 +47,7 @@
     "scripts": {
         "i18n:build": "node scripts/build-i18n.js",
         "i18n:check": "node scripts/check-i18n.js",
+        "static:phpstan": "vendor/bin/phpstan analyse --configuration=phpstan.neon",
         "test": "php -d opcache.enable_cli=0 vendor/bin/phpunit --no-coverage"
     }
 }

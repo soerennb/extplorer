@@ -483,6 +483,36 @@ const UserProfile = {
                                                 <div class="form-text">{{ t('mount_host_key_fingerprint_hint') || 'Required in strict remote security mode.' }}</div>
                                             </div>
                                         </div>
+                                        <div class="row g-2 mt-1" v-if="mountForm.type === 'ftps'">
+                                            <div class="col-12">
+                                                <label class="form-label small" for="mount-tls-spki-pin">{{ t('mount_tls_spki_pin') || 'FTPS certificate SHA-256 pin (optional)' }}</label>
+                                                <input id="mount-tls-spki-pin" type="text" class="form-control form-control-sm" v-model="mountForm.config.tls_spki_pin" placeholder="AA:BB:..." autocomplete="off" spellcheck="false">
+                                                <div class="form-text">{{ t('mount_tls_spki_pin_hint') || 'The system CA store is always checked in strict mode.' }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="row g-2 mt-1" v-if="mountForm.type === 'sftp'">
+                                            <div class="col-md-4">
+                                                <label class="form-label small" for="mount-auth-method">{{ t('mount_auth_method') || 'Authentication' }}</label>
+                                                <select id="mount-auth-method" class="form-select form-select-sm" v-model="mountForm.config.auth_method">
+                                                    <option value="password">{{ t('mount_auth_password') || 'Password' }}</option>
+                                                    <option value="private_key">{{ t('mount_auth_private_key') || 'Public key' }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div v-if="mountForm.type === 'sftp' && mountForm.config.auth_method === 'private_key'" class="row g-2 mt-1">
+                                            <div class="col-md-6">
+                                                <label class="form-label small" for="mount-private-key">{{ t('mount_private_key') || 'Private key' }}</label>
+                                                <textarea id="mount-private-key" class="form-control form-control-sm font-monospace" rows="4" v-model="mountForm.config.private_key" :placeholder="mountForm.hasPrivateKey ? (t('mount_private_key_keep') || 'Leave blank to keep current key') : '-----BEGIN OPENSSH PRIVATE KEY-----'"></textarea>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label small" for="mount-public-key">{{ t('mount_public_key') || 'Public key' }}</label>
+                                                <textarea id="mount-public-key" class="form-control form-control-sm font-monospace" rows="4" v-model="mountForm.config.public_key" :placeholder="mountForm.hasPublicKey ? (t('mount_public_key_keep') || 'Leave blank to keep current key') : 'ssh-ed25519 AAAA...'"></textarea>
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label small" for="mount-private-key-passphrase">{{ t('mount_private_key_passphrase') || 'Private-key passphrase' }}</label>
+                                                <input id="mount-private-key-passphrase" type="password" class="form-control form-control-sm" v-model="mountForm.config.private_key_passphrase" autocomplete="new-password">
+                                            </div>
+                                        </div>
                                         <div class="row g-2 mt-1">
                                             <div class="col-md-6">
                                                 <label class="form-label small" for="mount-user">{{ t('mount_user') || 'Username' }}</label>
@@ -506,6 +536,7 @@ const UserProfile = {
                                                     v-model="mountForm.config.pass"
                                                     :placeholder="mountForm.hasStoredPass ? (t('mount_pass_keep') || 'Leave blank to keep current password') : (t('password_placeholder') || '••••••••')"
                                                     autocomplete="new-password"
+                                                    :disabled="mountForm.type === 'sftp' && mountForm.config.auth_method === 'private_key'"
                                                 >
                                                 <div v-if="mountErrors.pass" class="invalid-feedback d-block">{{ mountErrors.pass }}</div>
                                                 <div v-else-if="mountForm.hasStoredPass" class="form-text small">{{ t('mount_pass_keep_hint') || 'Leave the password empty to keep the existing one.' }}</div>
@@ -564,7 +595,9 @@ const UserProfile = {
             name: '',
             type: 'local',
             hasStoredPass: false,
-            config: { path: '', host: '', port: 21, user: '', pass: '', root: '/', host_key_fingerprint: '' },
+            hasPrivateKey: false,
+            hasPublicKey: false,
+            config: { path: '', host: '', port: 21, user: '', pass: '', root: '/', host_key_fingerprint: '', auth_method: 'password', private_key: '', public_key: '', private_key_passphrase: '', tls_spki_pin: '' },
         });
 
         const forcePasswordChange = ref(!!window.forcePasswordChange);
@@ -686,6 +719,8 @@ const UserProfile = {
             mountForm.name = '';
             mountForm.type = 'local';
             mountForm.hasStoredPass = false;
+            mountForm.hasPrivateKey = false;
+            mountForm.hasPublicKey = false;
             mountForm.config.path = '';
             mountForm.config.host = '';
             mountForm.config.port = 21;
@@ -693,6 +728,11 @@ const UserProfile = {
             mountForm.config.pass = '';
             mountForm.config.root = '/';
             mountForm.config.host_key_fingerprint = '';
+            mountForm.config.auth_method = 'password';
+            mountForm.config.private_key = '';
+            mountForm.config.public_key = '';
+            mountForm.config.private_key_passphrase = '';
+            mountForm.config.tls_spki_pin = '';
         };
 
         const setMountMessage = (type, text) => {
@@ -769,8 +809,13 @@ const UserProfile = {
                     mountErrors.user = t('mount_error_user') || 'Username is required.';
                     valid = false;
                 }
-                if (!mountForm.config.pass.trim() && !mountForm.hasStoredPass) {
+                const keyAuth = mountForm.type === 'sftp' && mountForm.config.auth_method === 'private_key';
+                if (!keyAuth && !mountForm.config.pass.trim() && !mountForm.hasStoredPass) {
                     mountErrors.pass = t('mount_error_pass') || 'Password is required.';
+                    valid = false;
+                }
+                if (keyAuth && ((!mountForm.config.private_key.trim() && !mountForm.hasPrivateKey) || (!mountForm.config.public_key.trim() && !mountForm.hasPublicKey))) {
+                    mountErrors.pass = t('mount_error_keys') || 'Private and public keys are required.';
                     valid = false;
                 }
             }
@@ -782,7 +827,9 @@ const UserProfile = {
             if (!mountForm.name.trim()) return false;
             if (mountForm.type === 'local') return !!mountForm.config.path.trim();
             if (!mountForm.config.host.trim() || !mountForm.config.user.trim()) return false;
-            if (!mountForm.config.pass.trim() && !mountForm.hasStoredPass) return false;
+            const keyAuth = mountForm.type === 'sftp' && mountForm.config.auth_method === 'private_key';
+            if (!keyAuth && !mountForm.config.pass.trim() && !mountForm.hasStoredPass) return false;
+            if (keyAuth && ((!mountForm.config.private_key.trim() && !mountForm.hasPrivateKey) || (!mountForm.config.public_key.trim() && !mountForm.hasPublicKey))) return false;
             return true;
         });
 
@@ -790,7 +837,9 @@ const UserProfile = {
             if (!mountForm.name.trim()) return false;
             if (mountForm.type === 'local') return !!mountForm.config.path.trim();
             if (!mountForm.config.host.trim() || !mountForm.config.user.trim()) return false;
-            if (!mountForm.config.pass.trim() && !mountForm.hasStoredPass) return false;
+            const keyAuth = mountForm.type === 'sftp' && mountForm.config.auth_method === 'private_key';
+            if (!keyAuth && !mountForm.config.pass.trim() && !mountForm.hasStoredPass) return false;
+            if (keyAuth && ((!mountForm.config.private_key.trim() && !mountForm.hasPrivateKey) || (!mountForm.config.public_key.trim() && !mountForm.hasPublicKey))) return false;
             return true;
         });
 
@@ -805,6 +854,8 @@ const UserProfile = {
                 mountForm.name = fullMount.name || '';
                 mountForm.type = fullMount.type || 'local';
                 mountForm.hasStoredPass = !!fullMount.has_pass;
+                mountForm.hasPrivateKey = !!fullMount.has_private_key;
+                mountForm.hasPublicKey = !!fullMount.has_public_key;
 
                 mountForm.config.path = fullMount.config?.path || '';
                 mountForm.config.host = fullMount.config?.host || '';
@@ -813,6 +864,11 @@ const UserProfile = {
                 mountForm.config.pass = '';
                 mountForm.config.root = fullMount.config?.root || '/';
                 mountForm.config.host_key_fingerprint = fullMount.config?.host_key_fingerprint || '';
+                mountForm.config.auth_method = fullMount.config?.auth_method || 'password';
+                mountForm.config.private_key = '';
+                mountForm.config.public_key = '';
+                mountForm.config.private_key_passphrase = '';
+                mountForm.config.tls_spki_pin = fullMount.config?.tls_spki_pin || '';
             } catch (e) {
                 console.error(e);
                 setMountMessage('error', e.message || (t('mount_edit_failed') || 'Failed to load mount details'));
@@ -1090,9 +1146,13 @@ const UserProfile = {
             if (val === 'sftp' && (!mountForm.config.port || mountForm.config.port === 21)) mountForm.config.port = 22;
             if (val === 'local') {
                 mountForm.hasStoredPass = false;
+                mountForm.hasPrivateKey = false;
+                mountForm.hasPublicKey = false;
                 mountForm.config.pass = '';
+                mountForm.config.auth_method = 'password';
             } else if (prev === 'local' && mountMode.value === 'edit') {
                 mountForm.hasStoredPass = false;
+                mountForm.hasPrivateKey = false;
             }
         });
 

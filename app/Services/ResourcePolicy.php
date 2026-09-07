@@ -26,6 +26,48 @@ final class ResourcePolicy
         return $this->integer('EXTPLORER_MAX_DIRECTORY_ENTRIES', 10000, 1, 1000000);
     }
 
+    public function maxSearchResults(): int
+    {
+        return $this->integer('EXTPLORER_MAX_SEARCH_RESULTS', 10000, 1, 1000000);
+    }
+
+    public function maxOperationSeconds(): int
+    {
+        return $this->integer('EXTPLORER_MAX_OPERATION_SECONDS', 120, 1, 3600);
+    }
+
+    public function startOperation(): OperationBudget
+    {
+        return new OperationBudget($this->maxOperationSeconds());
+    }
+
+    public function configuredInteger(string $key, int $default, int $minimum, int $maximum): int
+    {
+        return $this->integer($key, $default, $minimum, $maximum);
+    }
+
+    public function maxConfiguredMegabytes(string $key, int $default, int $minimum, int $maximum): int
+    {
+        return $this->megabytes($key, $default, $minimum, $maximum);
+    }
+
+    public function assertCountWithin(string $operation, int $count, int $limit): void
+    {
+        if ($count > $limit) {
+            throw new RuntimeException("{$operation} exceeds the configured resource limit.");
+        }
+    }
+
+    public function assertDirectoryEntries(int $count): void
+    {
+        $this->assertCountWithin('Directory listing', $count, $this->maxDirectoryEntries());
+    }
+
+    public function assertSearchResults(int $count): void
+    {
+        $this->assertCountWithin('Search results', $count, $this->maxSearchResults());
+    }
+
     public function maxArchiveEntries(): int
     {
         return $this->integer('EXTPLORER_ARCHIVE_MAX_ENTRIES', 100000, 1, 1000000);
@@ -63,8 +105,10 @@ final class ResourcePolicy
         }
 
         $limit = $maxBytes ?? $this->maxDownloadBytes();
+        $budget = $this->startOperation();
         $copied = 0;
         while (!feof($source)) {
+            $budget->tick();
             $chunk = fread($source, 1024 * 1024);
             if ($chunk === false) {
                 throw new RuntimeException('Unable to read stream.');

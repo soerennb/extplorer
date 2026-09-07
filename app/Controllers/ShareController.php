@@ -396,13 +396,47 @@ class ShareController extends BaseController
                     return $this->fail('Target directory does not exist.');
                 }
 
-                if (!$file->move($targetDir, $name)) {
+                $quarantine = new \App\Services\UploadQuarantineService();
+                if ($quarantine->enabled()) {
+                    // The public share upload is moved to a private staging
+                    // file first; it is never visible in the share before a
+                    // scanner has explicitly approved it.
+                    $incoming = $quarantine->incomingPath();
+                    try {
+                        if (!$file->move(dirname($incoming), basename($incoming), false)) {
+                            return $this->fail('Unable to stage uploaded file for security scanning.', 500);
+                        }
+                        $pending = $quarantine->stage($incoming, $targetDir . DIRECTORY_SEPARATOR . $name, [
+                            'owner' => 'Public',
+                            'filename' => $name,
+                            'relative_path' => $subPath,
+                            'share_hash' => $hash,
+                            'conflict' => 'replace',
+                            'source' => 'public-share-upload',
+                        ]);
+                    } finally {
+                        if (is_file($incoming)) {
+                            @unlink($incoming);
+                        }
+                    }
+                } elseif (!$file->move($targetDir, $name)) {
                     return $this->fail('Unable to store uploaded file.', 500);
                 }
             } finally {
                 $this->closeShareUploadLock($lock);
             }
             $postPolicy = $this->buildUploadPolicy($settings, $basePath, $share);
+
+            if (($pending['status'] ?? '') === 'pending') {
+                LogService::log('Share Upload Quarantined', $hash, 'File: ' . $subPath . '/' . $name, 'Public');
+                return $this->respond([
+                    'status' => 'pending_scan',
+                    'quarantine_id' => $pending['id'],
+                    'name' => $name,
+                    'path' => $subPath,
+                    'upload_policy' => $postPolicy,
+                ], 202);
+            }
 
             return $this->respond([
                 'status' => 'success',
@@ -527,6 +561,7 @@ class ShareController extends BaseController
 
         $bytes = 0;
         $files = 0;
+        $budget = (new ResourcePolicy())->startOperation();
 
         try {
             $iterator = new \RecursiveIteratorIterator(
@@ -534,6 +569,7 @@ class ShareController extends BaseController
             );
 
             foreach ($iterator as $item) {
+                $budget->tick();
                 if ($item->isLink()) {
                     throw new \RuntimeException('Share usage cannot be calculated for symbolic links.');
                 }
@@ -556,6 +592,7 @@ class ShareController extends BaseController
     private function zipDirectory(string $sourceDir, string $destinationZip): void
     {
         $policy = new ResourcePolicy();
+        $budget = $policy->startOperation();
         $entries = 0;
         $bytes = 0;
         $zip = new \ZipArchive();
@@ -572,6 +609,7 @@ class ShareController extends BaseController
         );
 
         foreach ($iterator as $item) {
+            $budget->tick();
             $entries++;
             $bytes += $item->isFile() ? max(0, (int)($item->getSize() ?: 0)) : 0;
             if ($entries > $policy->maxArchiveEntries() || $bytes > $policy->maxArchiveBytes()) {

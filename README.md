@@ -29,7 +29,7 @@ To run eXtplorer 3, your server must meet the following requirements:
     *   `gd` (Required for image thumbnails)
     *   `zip` (Required for ZIP archive support)
     *   `phar` (Required for TAR/GZ support)
-    *   `ftp` (Optional, for remote FTP management)
+    *   `ftp` (Optional, for FTPS/FTP management; strict mode requires FTPS or SFTP)
     *   `ssh2` (Optional, for SFTP management)
 *   **Web Server:** Apache (with `mod_rewrite` enabled) or Nginx.
 
@@ -137,6 +137,8 @@ Settings synced into `writable/config/settings.php` (apply once on first run, or
 - `EXTPLORER_MOUNT_ROOT_ALLOWLIST` (comma- or newline-separated)
 - `EXTPLORER_MOUNT_REMOTE_HOST_ALLOWLIST` (comma- or newline-separated)
 - `EXTPLORER_REMOTE_SECURITY_MODE=compat|strict` (strict rejects plaintext FTP and requires SFTP host-key fingerprints)
+- `EXTPLORER_MAX_SEARCH_RESULTS` and `EXTPLORER_MAX_OPERATION_SECONDS` for bounded recursive operations
+- `EXTPLORER_UPLOAD_SCAN_MODE=off|external` for external upload quarantine, plus its quarantine capacity/TTL settings
 
 The old names `app.baseURL`, `app_baseURL`, `WRITEPATH`, `encryption.key` and `EXTPLORER_ADMIN_PASS` remain accepted
 as migration aliases. New deployments should use the `EXTPLORER_*` names. Missing bootstrap secrets and migration/configuration

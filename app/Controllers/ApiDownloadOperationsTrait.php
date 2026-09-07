@@ -168,6 +168,7 @@ trait ApiDownloadOperationsTrait
         if (!can('read')) return $this->failForbidden();
         $query = $this->request->getGet('q');
         if (!$query) return $this->fail('Query required');
+        if (!is_string($query) || mb_strlen($query) > 128) return $this->fail('Query is too long.');
 
         try {
             $results = $this->fs->search($query);
@@ -203,6 +204,9 @@ trait ApiDownloadOperationsTrait
         $cwd = $json->cwd ?? '';
 
         if (empty($paths)) return $this->fail('No files selected');
+        if (!is_array($paths) || count($paths) > (new \App\Services\ResourcePolicy())->maxDirectoryEntries()) {
+            return $this->fail('Too many files selected.', 413);
+        }
 
         try {
             // Prepend CWD to paths if necessary, assuming paths are relative to CWD

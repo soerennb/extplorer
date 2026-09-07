@@ -6,6 +6,7 @@ use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 use App\Services\ShareService;
 use App\Services\UploadSessionService;
+use App\Services\UploadQuarantineService;
 
 class CheckShareExpiration extends BaseCommand
 {
@@ -20,10 +21,11 @@ class CheckShareExpiration extends BaseCommand
         $shareService = new ShareService();
         $stats = $shareService->processCleanup();
         $uploadSessions = (new UploadSessionService())->cleanupExpired();
+        $quarantine = (new UploadQuarantineService())->cleanupExpired();
 
         CLI::write(
             "Done. Expired shares: {$stats['expired']}. Warned: {$stats['warned']}. "
-            . "Expired upload sessions: {$uploadSessions}.",
+            . "Expired upload sessions: {$uploadSessions}. Expired quarantined uploads: {$quarantine}.",
             'green'
         );
     }

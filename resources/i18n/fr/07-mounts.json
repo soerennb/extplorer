@@ -37,5 +37,16 @@
     "mount_remove_failed": "Échec de la suppression du mount.",
     "mount_remove_confirm": "Ce mount sera supprimé.",
     "mount_test_success": "Connexion réussie.",
-    "mount_test_failed": "Connexion échouée."
+    "mount_test_failed": "Connexion échouée.",
+    "mount_auth_method": "Authentification",
+    "mount_auth_password": "Mot de passe",
+    "mount_auth_private_key": "Clé publique",
+    "mount_private_key": "Clé privée",
+    "mount_private_key_keep": "Laissez vide pour conserver la clé actuelle",
+    "mount_public_key": "Clé publique",
+    "mount_public_key_keep": "Laissez vide pour conserver la clé actuelle",
+    "mount_private_key_passphrase": "Phrase secrète de la clé privée",
+    "mount_tls_spki_pin": "Empreinte SPKI SHA-256 FTPS (facultative)",
+    "mount_tls_spki_pin_hint": "Le magasin CA du système est vérifié en mode strict ; l’empreinte porte sur la clé publique.",
+    "mount_error_keys": "Les clés privée et publique sont requises."
 }

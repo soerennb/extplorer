@@ -13,7 +13,17 @@ class Ssh2Adapter implements IFileSystem
     private $sftp;
     private string $root;
 
-    public function __construct(string $host, string $user, string $pass, int $port = 22, string $root = '/', string $hostKeyFingerprint = '')
+    public function __construct(
+        string $host,
+        string $user,
+        string $pass,
+        int $port = 22,
+        string $root = '/',
+        string $hostKeyFingerprint = '',
+        string $privateKey = '',
+        string $publicKey = '',
+        string $privateKeyPassphrase = ''
+    )
     {
         if (!function_exists('ssh2_connect')) {
             throw new Exception("SSH2 extension not installed");
@@ -32,13 +42,49 @@ class Ssh2Adapter implements IFileSystem
 
         $policy->assertSshFingerprint($this->conn, $hostKeyFingerprint);
 
-        if (!@ssh2_auth_password($this->conn, $user, $pass)) {
-            throw new Exception("SSH Authentication failed for user: $user");
+        if ($privateKey !== '' || $publicKey !== '') {
+            $this->authenticateWithKey($user, $privateKey, $publicKey, $privateKeyPassphrase);
+        } elseif (!@ssh2_auth_password($this->conn, $user, $pass)) {
+            throw new Exception('SSH authentication failed.');
         }
 
         $this->sftp = ssh2_sftp($this->conn);
         if (!$this->sftp) throw new Exception("Could not initialize SFTP subsystem");
 
+    }
+
+    private function authenticateWithKey(string $user, string $privateKey, string $publicKey, string $passphrase): void
+    {
+        if ($privateKey === '' || $publicKey === '') {
+            throw new Exception('SFTP private and public keys are required.');
+        }
+        if (!function_exists('ssh2_auth_pubkey_file')) {
+            throw new Exception('SFTP public-key authentication is not available on this server.');
+        }
+
+        $privatePath = $this->writeTemporaryKey($privateKey, 'extplorer-private-');
+        $publicPath = $this->writeTemporaryKey($publicKey, 'extplorer-public-');
+        try {
+            if (!@ssh2_auth_pubkey_file($this->conn, $user, $publicPath, $privatePath, $passphrase !== '' ? $passphrase : null)) {
+                throw new Exception('SFTP public-key authentication failed.');
+            }
+        } finally {
+            @unlink($privatePath);
+            @unlink($publicPath);
+        }
+    }
+
+    private function writeTemporaryKey(string $contents, string $prefix): string
+    {
+        $path = tempnam(sys_get_temp_dir(), $prefix);
+        if ($path === false || file_put_contents($path, $contents, LOCK_EX) !== strlen($contents)) {
+            if (is_string($path)) {
+                @unlink($path);
+            }
+            throw new Exception('Unable to prepare SFTP key material.');
+        }
+        chmod($path, 0600);
+        return $path;
     }
 
     private function resolvePath(string $path): string
@@ -54,14 +100,20 @@ class Ssh2Adapter implements IFileSystem
 
     public function listDirectory(string $path, bool $showHidden = true): array
     {
+        $budget = (new ResourcePolicy())->startOperation();
         $fullPath = $this->resolvePath($path);
         $handle = opendir($fullPath);
         if (!$handle) return [];
 
         $results = [];
         while (false !== ($file = readdir($handle))) {
+            $budget->tick();
             if ($file === '.' || $file === '..') continue;
             if (!$showHidden && str_starts_with($file, '.')) continue;
+            if (count($results) >= (new ResourcePolicy())->maxDirectoryEntries()) {
+                closedir($handle);
+                throw new Exception('Directory listing exceeds the configured resource limit.');
+            }
 
             $itemPath = $fullPath . '/' . $file;
             $relPath = ($path === '' || $path === '/' ? '' : trim($path, '/') . '/') . $file;
@@ -88,11 +140,21 @@ class Ssh2Adapter implements IFileSystem
 
     public function readFile(string $path): string
     {
-        return file_get_contents($this->resolvePath($path));
+        $stream = $this->openReadStream($path);
+        try {
+            return (new ResourcePolicy())->readStream($stream);
+        } finally {
+            fclose($stream);
+        }
     }
 
     public function openReadStream(string $path)
     {
+        $policy = new ResourcePolicy();
+        $stat = @ssh2_sftp_stat($this->sftp, $this->remotePath($path));
+        if (is_array($stat) && (int)$stat['size'] > $policy->maxDownloadBytes()) {
+            throw new Exception('Remote file exceeds the configured download limit.');
+        }
         $stream = fopen($this->resolvePath($path), 'rb');
         if ($stream === false) {
             throw new Exception("Could not open SFTP file: {$path}");

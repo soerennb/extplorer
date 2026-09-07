@@ -79,7 +79,8 @@ class AuthFilter implements FilterInterface
                     (string)$connection['mode'],
                     (string)($connection['host'] ?? ''),
                     (int)($connection['port'] ?? 0),
-                    (string)($connection['host_key_fingerprint'] ?? '')
+                    (string)($connection['host_key_fingerprint'] ?? ''),
+                    (string)($connection['mode'] ?? '') === 'ftps' && !empty($connection['tls_verified'])
                 );
                 return true;
             } catch (\Throwable $exception) {

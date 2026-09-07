@@ -44,6 +44,30 @@ class RemoteSecurityPolicyTest extends CIUnitTestCase
         (new RemoteSecurityPolicy())->assertProtocolAllowed('sftp');
     }
 
+    public function testStrictModeRequiresVerifiedFtpsCertificate(): void
+    {
+        putenv('EXTPLORER_REMOTE_SECURITY_MODE=strict');
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('certificate verification is required');
+        (new RemoteSecurityPolicy())->assertProtocolAllowed('ftps');
+    }
+
+    public function testStrictModeAcceptsFtpsOnlyAfterVerification(): void
+    {
+        putenv('EXTPLORER_REMOTE_SECURITY_MODE=strict');
+        (new RemoteSecurityPolicy())->assertProtocolAllowed('ftps', ['tls_verified' => true]);
+        $this->assertTrue(true);
+    }
+
+    public function testSpkiPinAcceptsHexAndBase64Forms(): void
+    {
+        $policy = new RemoteSecurityPolicy();
+        $expected = str_repeat('00', 32);
+        $this->assertSame($expected, $policy->normalizeTlsSpkiPin($expected));
+        $this->assertSame($expected, $policy->normalizeTlsSpkiPin('sha256/' . base64_encode(str_repeat("\0", 32))));
+    }
+
     public function testCompatibilityModeAcceptsLegacyRemoteConfiguration(): void
     {
         putenv('EXTPLORER_REMOTE_SECURITY_MODE=compat');

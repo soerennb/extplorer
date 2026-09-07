@@ -3,6 +3,7 @@ FROM php:8.5.9-fpm-alpine3.24 AS builder
 ARG APP_VERSION=dev
 
 RUN apk add --no-cache \
+        ca-certificates \
         icu-libs \
         libpng \
         libzip \
@@ -46,9 +47,11 @@ ARG APP_VERSION=dev
 ENV EXTPLORER_IMAGE_VERSION=${APP_VERSION}
 
 RUN apk add --no-cache \
+        ca-certificates \
         icu-libs \
         libpng \
         libzip \
+        libssh2 \
         sqlite-libs \
         su-exec \
     && apk add --no-cache --virtual .build-deps \
@@ -56,12 +59,16 @@ RUN apk add --no-cache \
         icu-dev \
         libpng-dev \
         libzip-dev \
+        libssh2-dev \
         sqlite-dev \
         mariadb-connector-c-dev \
     && cd /tmp \
     && printf '\n\n\n\n\n' | pecl install redis-6.3.0 \
     && docker-php-ext-enable redis \
+    && printf '\n\n\n\n\n' | pecl install ssh2-1.5.0 \
+    && docker-php-ext-enable ssh2 \
     && docker-php-ext-install -j"$(nproc)" \
+        ftp \
         intl \
         gd \
         zip \

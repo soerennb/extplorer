@@ -75,6 +75,34 @@ trait ApiTransferOperationsTrait
                 ]);
             }
 
+            $quarantine = new \App\Services\UploadQuarantineService();
+            if ($quarantine->enabled()) {
+                $incoming = $quarantine->incomingPath();
+                try {
+                    if (!$file->move(dirname($incoming), basename($incoming), false)) {
+                        throw new Exception('Unable to stage uploaded file for security scanning.');
+                    }
+                    $pending = $quarantine->stage($incoming, $target['dir'] . DIRECTORY_SEPARATOR . $target['filename'], [
+                        'owner' => (string)session('username'),
+                        'filename' => $target['filename'],
+                        'relative_path' => $target['relativePath'],
+                        'conflict' => $conflict,
+                        'source' => 'authenticated-upload',
+                    ]);
+                } finally {
+                    if (is_file($incoming)) {
+                        @unlink($incoming);
+                    }
+                }
+                LogService::log('Upload Quarantined', $path, 'File: ' . $target['relativePath']);
+                return $this->respond([
+                    'status' => 'pending_scan',
+                    'quarantine_id' => $pending['id'],
+                    'filename' => $target['filename'],
+                    'path' => $target['relativePath'],
+                ], 202);
+            }
+
             if (!$file->move($target['dir'], $target['filename'], true)) {
                 throw new Exception('Unable to store uploaded file.');
             }
@@ -195,7 +223,33 @@ trait ApiTransferOperationsTrait
                 ]);
             }
 
+            $quarantine = new \App\Services\UploadQuarantineService();
             $finalPath = $target['dir'] . DIRECTORY_SEPARATOR . $target['filename'];
+            if ($quarantine->enabled()) {
+                $incoming = $quarantine->incomingPath();
+                try {
+                    $sessions->assemble($session['id'], $incoming);
+                    $pending = $quarantine->stage($incoming, $finalPath, [
+                        'owner' => $owner,
+                        'filename' => $target['filename'],
+                        'relative_path' => $target['relativePath'],
+                        'conflict' => $conflict,
+                        'source' => 'legacy-chunked-upload',
+                    ]);
+                } finally {
+                    if (is_file($incoming)) {
+                        @unlink($incoming);
+                    }
+                }
+                LogService::log('Upload Quarantined', $targetPath, 'File: ' . $target['relativePath']);
+                return $this->respond([
+                    'status' => 'pending_scan',
+                    'quarantine_id' => $pending['id'],
+                    'filename' => $target['filename'],
+                    'path' => $target['relativePath'],
+                ], 202);
+            }
+
             $sessions->assemble($session['id'], $finalPath);
             LogService::log('Upload (Chunked)', $targetPath, 'File: ' . $target['relativePath']);
             return $this->respond([
@@ -313,7 +367,34 @@ trait ApiTransferOperationsTrait
                 ]);
             }
 
-            $service->assemble($id, $target['dir'] . DIRECTORY_SEPARATOR . $target['filename']);
+            $quarantine = new \App\Services\UploadQuarantineService();
+            $finalPath = $target['dir'] . DIRECTORY_SEPARATOR . $target['filename'];
+            if ($quarantine->enabled()) {
+                $incoming = $quarantine->incomingPath();
+                try {
+                    $service->assemble($id, $incoming);
+                    $pending = $quarantine->stage($incoming, $finalPath, [
+                        'owner' => (string)session('username'),
+                        'filename' => $target['filename'],
+                        'relative_path' => $target['relativePath'],
+                        'conflict' => (string)$manifest['conflict'],
+                        'source' => 'resumable-upload',
+                    ]);
+                } finally {
+                    if (is_file($incoming)) {
+                        @unlink($incoming);
+                    }
+                }
+                LogService::log('Upload Quarantined', (string)$manifest['target_path'], 'File: ' . $target['relativePath']);
+                return $this->respond([
+                    'status' => 'pending_scan',
+                    'quarantine_id' => $pending['id'],
+                    'filename' => $target['filename'],
+                    'path' => $target['relativePath'],
+                ], 202);
+            }
+
+            $service->assemble($id, $finalPath);
             LogService::log('Upload (Resumable)', (string)$manifest['target_path'], 'File: ' . $target['relativePath']);
             return $this->respond([
                 'status' => 'assembled',

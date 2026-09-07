@@ -25,9 +25,12 @@ class LogService
             'timestamp' => time(),
             'user' => $username ?? session('username') ?? 'System',
             'action' => $action,
-            'path' => $path,
-            'details' => $details,
-            'ip' => $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'
+            'path' => self::redact($path),
+            'details' => self::redact($details),
+            'ip' => self::clientIp(),
+            'schema_version' => 1,
+            'event_id' => bin2hex(random_bytes(16)),
+            'request_id' => self::requestId(),
         ];
         
         AtomicFileStore::transaction(self::filePath(), function (array &$logs) use ($entry, $retention): void {
@@ -38,6 +41,20 @@ class LogService
                 $logs = array_slice($logs, 0, $retention);
             }
         });
+    }
+
+    /**
+     * Write a structured security/operations event while retaining the
+     * legacy activity-log fields used by the UI.
+     *
+     * @param array<string, mixed> $context
+     */
+    public static function event(string $event, string $outcome, array $context = [], ?string $username = null): void
+    {
+        $path = is_string($context['path'] ?? null) ? (string)$context['path'] : '';
+        unset($context['path']);
+        $context['outcome'] = $outcome;
+        self::log($event, $path, (string)json_encode(self::redactValue($context), JSON_UNESCAPED_SLASHES), $username);
     }
 
     public static function getLogs(): array
@@ -144,5 +161,45 @@ class LogService
     private static function saveLogs(array $logs): void
     {
         AtomicFileStore::write(self::filePath(), $logs);
+    }
+
+    private static function clientIp(): string
+    {
+        $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+        return filter_var($ip, FILTER_VALIDATE_IP) !== false ? $ip : '0.0.0.0';
+    }
+
+    private static function requestId(): string
+    {
+        $candidate = (string)($_SERVER['HTTP_X_REQUEST_ID'] ?? '');
+        if ($candidate !== '' && strlen($candidate) <= 128 && preg_match('/\A[a-zA-Z0-9._:-]+\z/', $candidate) === 1) {
+            return $candidate;
+        }
+        return bin2hex(random_bytes(16));
+    }
+
+    private static function redact(string $value): string
+    {
+        $value = (string)preg_replace(
+            '/(password|passphrase|secret|token|authorization|private[_-]?key|encryption[_-]?key)\s*[=:]\s*[^,\s;]+/i',
+            '$1=[REDACTED]',
+            $value
+        );
+        return strlen($value) > 2000 ? substr($value, 0, 2000) . '…' : $value;
+    }
+
+    private static function redactValue(mixed $value, ?string $key = null): mixed
+    {
+        if ($key !== null && preg_match('/password|passphrase|secret|token|authorization|private[_-]?key|encryption[_-]?key/i', $key) === 1) {
+            return '[REDACTED]';
+        }
+        if (is_array($value)) {
+            $redacted = [];
+            foreach ($value as $childKey => $childValue) {
+                $redacted[(string)$childKey] = self::redactValue($childValue, (string)$childKey);
+            }
+            return $redacted;
+        }
+        return is_string($value) ? self::redact($value) : $value;
     }
 }

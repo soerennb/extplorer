@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\MountService;
 use App\Services\LogService;
+use App\Services\StepUpAuthenticationService;
 
 class MountController extends BaseController
 {
@@ -37,8 +38,19 @@ class MountController extends BaseController
         }
     }
 
+    public function health($id = null)
+    {
+        if (!$id) return $this->fail('ID required');
+        try {
+            return $this->respond($this->mountService->getMountHealth($id, (string)session('username')));
+        } catch (\Throwable $exception) {
+            return $this->fail($exception->getMessage());
+        }
+    }
+
     public function create()
     {
+        if (($stepUp = $this->requireStepUp('mount.create')) !== true) return $stepUp;
         $json = $this->request->getJSON();
         $name = $json->name ?? '';
         $type = $json->type ?? 'local';
@@ -59,6 +71,7 @@ class MountController extends BaseController
 
     public function update($id = null)
     {
+        if (($stepUp = $this->requireStepUp('mount.update')) !== true) return $stepUp;
         if (!$id) {
             return $this->fail('ID required');
         }
@@ -83,6 +96,7 @@ class MountController extends BaseController
 
     public function test()
     {
+        if (($stepUp = $this->requireStepUp('mount.test')) !== true) return $stepUp;
         $json = $this->request->getJSON();
         $id = $json->id ?? null;
         $name = $json->name ?? '';
@@ -97,12 +111,16 @@ class MountController extends BaseController
             $result = $this->mountService->testMount(session('username'), $id, $name, $type, (array)$config);
             return $this->respond($result);
         } catch (\Exception $e) {
+            if ($id !== null) {
+                $this->mountService->recordMountHealth($id, (string)session('username'), false, $e->getMessage());
+            }
             return $this->fail($e->getMessage());
         }
     }
 
     public function delete($id = null)
     {
+        if (($stepUp = $this->requireStepUp('mount.delete')) !== true) return $stepUp;
         if (!$id) return $this->fail('ID required');
 
         try {
@@ -112,5 +130,17 @@ class MountController extends BaseController
         } catch (\Exception $e) {
             return $this->fail($e->getMessage());
         }
+    }
+
+    private function requireStepUp(string $action)
+    {
+        if ((new StepUpAuthenticationService())->consume($this->request, $action)) {
+            return true;
+        }
+
+        return $this->fail([
+            'error' => 'Additional authentication is required.',
+            'action' => $action,
+        ], 428, 'step_up_required');
     }
 }

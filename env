@@ -31,6 +31,9 @@ CI_ENVIRONMENT = development
 # EXTPLORER_MAX_CONTENT_MB = 16
 # EXTPLORER_REMOTE_TIMEOUT_SECONDS = 15
 # EXTPLORER_MAX_DIRECTORY_ENTRIES = 10000
+# EXTPLORER_MAX_SEARCH_RESULTS = 10000
+# EXTPLORER_MAX_OPERATION_SECONDS = 120
+# EXTPLORER_WEBDAV_MAX_DEPTH = 1
 # EXTPLORER_ARCHIVE_MAX_ENTRIES = 100000
 # EXTPLORER_ARCHIVE_MAX_EXPANDED_MB = 2048
 # EXTPLORER_ARCHIVE_MAX_RATIO = 200
@@ -40,6 +43,9 @@ CI_ENVIRONMENT = development
 # app.forceGlobalSecureRequests = false
 # app.CSPEnabled = false
 # EXTPLORER_TRUSTED_PROXY_IPS = '10.0.0.10,10.0.0.0/24' # never use 0.0.0.0/0
+# EXTPLORER_HSTS_MAX_AGE = 31536000
+# EXTPLORER_HSTS_INCLUDE_SUBDOMAINS = 0
+# EXTPLORER_SESSION_MATCH_IP = 0 # opt-in; can log users out when their IP changes
 
 #--------------------------------------------------------------------
 # DATABASE
@@ -96,6 +102,14 @@ CI_ENVIRONMENT = development
 # EXTPLORER_REMOTE_ENDPOINT_ALLOWLIST = 'sftp://files.example.com:22'
 # EXTPLORER_REMOTE_ALLOW_PRIVATE_TARGETS = 0
 # EXTPLORER_REMOTE_SECURITY_MODE = 'strict' # strict or compat
+# EXTPLORER_FTPS_CA_FILE = '/etc/ssl/certs/ca-certificates.crt'
+
+# Upload quarantine. In external mode uploads stay private until a worker
+# marks them clean with: php spark uploads:scan-result ID clean.
+# EXTPLORER_UPLOAD_SCAN_MODE = 'off' # off or external
+# EXTPLORER_UPLOAD_QUARANTINE_MAX_MB = 2048
+# EXTPLORER_UPLOAD_QUARANTINE_MAX_FILES = 1000
+# EXTPLORER_UPLOAD_QUARANTINE_TTL_SECONDS = 86400
 
 #--------------------------------------------------------------------
 # SESSION

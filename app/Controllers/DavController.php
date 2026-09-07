@@ -7,6 +7,8 @@ use App\Services\Dav\SafeDirectory;
 use App\Models\UserModel;
 use App\Services\Dav\AuthBackend;
 use App\Services\VFS\PathPolicy;
+use App\Services\LogService;
+use App\Services\ResourcePolicy;
 use Sabre\DAV\Auth\Plugin as AuthPlugin;
 use Exception;
 
@@ -28,28 +30,31 @@ class DavController extends BaseController
     {
         $method = strtoupper($this->request->getMethod());
         if (!in_array($method, $this->allowedMethods, true)) {
-            return $this->response
-                ->setStatusCode(405)
-                ->setHeader('Allow', implode(', ', $this->allowedMethods))
-                ->setBody('WebDAV method is not allowed.');
+            return $this->denyDav(405, 'WebDAV method is not allowed.', $method);
+        }
+
+        if (!$this->requestLimitsAllow($method)) {
+            return $this->response;
         }
 
         // 0. Global Switch
         $settings = new \App\Services\SettingsService();
         if (!$settings->get('webdav_enabled', true)) {
-            return $this->response->setStatusCode(403)->setBody('WebDAV access is disabled.');
+            return $this->denyDav(403, 'WebDAV access is disabled.', 'disabled');
         }
 
         // 1. Security Check: Rate Limiting
         $throttler = \Config\Services::throttler();
-        if ($throttler->check('dav-' . hash('sha256', $this->request->getIPAddress()), 120, MINUTE) === false) {
-            return $this->response->setStatusCode(429)->setBody('Too many requests.');
+        $rate = in_array($method, ['PUT', 'DELETE', 'MKCOL', 'MOVE', 'COPY', 'PROPPATCH', 'LOCK', 'UNLOCK'], true) ? 60 : 120;
+        $rateKey = 'dav-' . $method . '-' . hash('sha256', $this->request->getIPAddress());
+        if ($throttler->check($rateKey, $rate, MINUTE) === false) {
+            return $this->denyDav(429, 'Too many requests.', 'rate-limit');
         }
 
         // 2. Security Check: HTTPS Enforcement (Optional but recommended)
         // If not already handled by a global filter
         if (ENVIRONMENT !== 'development' && !$this->request->isSecure()) {
-            return $this->response->setStatusCode(403)->setBody('HTTPS is required for WebDAV.');
+            return $this->denyDav(403, 'HTTPS is required for WebDAV.', 'https-required');
         }
 
         // 3. Setup Auth Backend
@@ -58,6 +63,10 @@ class DavController extends BaseController
         // 4. Determine User and Root Path BEFORE starting SabreDAV
         $authHeader = $this->request->getServer('HTTP_AUTHORIZATION');
         $userData = null;
+
+        if (is_string($authHeader) && strlen($authHeader) > 8192) {
+            return $this->denyDav(400, 'Invalid WebDAV authentication header.', 'auth-header-size');
+        }
 
         if ($authHeader && stripos($authHeader, 'Basic ') === 0) {
             $credentials = base64_decode(substr($authHeader, 6), true);
@@ -80,6 +89,7 @@ class DavController extends BaseController
         }
 
         if (!$userData) {
+            LogService::log('WebDAV Auth Required', 'dav', 'Missing or invalid credentials', 'Public');
             return $this->response
                 ->setStatusCode(401)
                 ->setHeader('WWW-Authenticate', 'Basic realm="eXtplorer3 WebDAV"')
@@ -128,6 +138,77 @@ class DavController extends BaseController
         
         // Return empty response because SabreDAV already outputted everything
         return $this->response;
+    }
+
+    private function requestLimitsAllow(string $method): bool
+    {
+        $policy = new ResourcePolicy();
+        $contentLength = trim($this->request->getHeaderLine('Content-Length'));
+        if ($contentLength !== '' && (!ctype_digit($contentLength) || (int)$contentLength > $this->maxDavBodyBytes())) {
+            $this->response = $this->denyDav(413, 'WebDAV request body exceeds the configured limit.', 'body-size');
+            return false;
+        }
+
+        $depth = strtolower(trim($this->request->getHeaderLine('Depth')));
+        $maxDepth = $policy->configuredInteger('EXTPLORER_WEBDAV_MAX_DEPTH', 1, 0, 10);
+        if ($depth === 'infinity' || ($depth !== '' && ctype_digit($depth) && (int)$depth > $maxDepth)) {
+            $this->response = $this->denyDav(413, 'WebDAV request depth exceeds the configured limit.', 'depth');
+            return false;
+        }
+        if ($depth !== '' && $depth !== 'infinity' && !ctype_digit($depth)) {
+            $this->response = $this->denyDav(400, 'Invalid WebDAV Depth header.', 'depth-header');
+            return false;
+        }
+
+        foreach (['If', 'Destination'] as $header) {
+            if (strlen($this->request->getHeaderLine($header)) > 8192) {
+                $this->response = $this->denyDav(400, 'WebDAV request header is too large.', strtolower($header));
+                return false;
+            }
+        }
+
+        $destination = trim($this->request->getHeaderLine('Destination'));
+        if ($destination !== '') {
+            $parsed = parse_url($destination);
+            if (!is_array($parsed)
+                || !isset($parsed['path'])
+                || !str_starts_with((string)$parsed['path'], '/')
+                || isset($parsed['user'], $parsed['pass'], $parsed['query'], $parsed['fragment'])) {
+                $this->response = $this->denyDav(400, 'Invalid WebDAV destination.', 'destination');
+                return false;
+            }
+
+            if (isset($parsed['host'])) {
+                $requestUri = $this->request->getUri();
+                $destinationHost = strtolower((string)$parsed['host']);
+                $requestHost = strtolower($requestUri->getHost());
+                $destinationPort = isset($parsed['port']) ? (int)$parsed['port'] : null;
+                if ($destinationHost !== $requestHost
+                    || ($destinationPort !== null && $destinationPort !== $requestUri->getPort())) {
+                    $this->response = $this->denyDav(400, 'Cross-origin WebDAV destinations are not allowed.', 'destination-origin');
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private function maxDavBodyBytes(): int
+    {
+        $settings = (new \App\Services\SettingsService())->getSettings();
+        $maxMb = (int)($settings['upload_max_file_mb'] ?? 100);
+        return max(1, $maxMb) * 1024 * 1024;
+    }
+
+    private function denyDav(int $status, string $message, string $reason)
+    {
+        LogService::log('WebDAV Request Denied', 'dav', $reason, 'Public');
+        $response = $this->response->setStatusCode($status)->setBody($message);
+        if ($status === 405) {
+            $response->setHeader('Allow', implode(', ', $this->allowedMethods));
+        }
+        return $response;
     }
 
     private function hasRequiredDavPermissions(UserModel $userModel, string $username): bool

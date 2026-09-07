@@ -37,5 +37,16 @@
     "mount_remove_failed": "Mount konnte nicht entfernt werden.",
     "mount_remove_confirm": "Dieser Mount wird entfernt.",
     "mount_test_success": "Verbindung erfolgreich.",
-    "mount_test_failed": "Verbindung fehlgeschlagen."
+    "mount_test_failed": "Verbindung fehlgeschlagen.",
+    "mount_auth_method": "Authentifizierung",
+    "mount_auth_password": "Passwort",
+    "mount_auth_private_key": "Öffentlicher Schlüssel",
+    "mount_private_key": "Privater Schlüssel",
+    "mount_private_key_keep": "Leer lassen, um den aktuellen Schlüssel zu behalten",
+    "mount_public_key": "Öffentlicher Schlüssel",
+    "mount_public_key_keep": "Leer lassen, um den aktuellen Schlüssel zu behalten",
+    "mount_private_key_passphrase": "Passphrase des privaten Schlüssels",
+    "mount_tls_spki_pin": "FTPS-SPKI-SHA-256-Pin (optional)",
+    "mount_tls_spki_pin_hint": "Der System-CA-Speicher wird im strengen Modus geprüft; der Pin hasht den öffentlichen Schlüssel.",
+    "mount_error_keys": "Privater und öffentlicher Schlüssel sind erforderlich."
 }

@@ -361,40 +361,85 @@ const _hoisted_175 = {
 }
 const _hoisted_176 = ["onUpdate:modelValue"]
 const _hoisted_177 = { class: "form-text" }
-const _hoisted_178 = { class: "row g-2 mt-1" }
-const _hoisted_179 = { class: "col-md-6" }
+const _hoisted_178 = {
+  key: 1,
+  class: "row g-2 mt-1"
+}
+const _hoisted_179 = { class: "col-12" }
 const _hoisted_180 = {
+  class: "form-label small",
+  for: "mount-tls-spki-pin"
+}
+const _hoisted_181 = ["onUpdate:modelValue"]
+const _hoisted_182 = { class: "form-text" }
+const _hoisted_183 = {
+  key: 2,
+  class: "row g-2 mt-1"
+}
+const _hoisted_184 = { class: "col-md-4" }
+const _hoisted_185 = {
+  class: "form-label small",
+  for: "mount-auth-method"
+}
+const _hoisted_186 = ["onUpdate:modelValue"]
+const _hoisted_187 = { value: "password" }
+const _hoisted_188 = { value: "private_key" }
+const _hoisted_189 = {
+  key: 3,
+  class: "row g-2 mt-1"
+}
+const _hoisted_190 = { class: "col-md-6" }
+const _hoisted_191 = {
+  class: "form-label small",
+  for: "mount-private-key"
+}
+const _hoisted_192 = ["onUpdate:modelValue", "placeholder"]
+const _hoisted_193 = { class: "col-md-6" }
+const _hoisted_194 = {
+  class: "form-label small",
+  for: "mount-public-key"
+}
+const _hoisted_195 = ["onUpdate:modelValue", "placeholder"]
+const _hoisted_196 = { class: "col-12" }
+const _hoisted_197 = {
+  class: "form-label small",
+  for: "mount-private-key-passphrase"
+}
+const _hoisted_198 = ["onUpdate:modelValue"]
+const _hoisted_199 = { class: "row g-2 mt-1" }
+const _hoisted_200 = { class: "col-md-6" }
+const _hoisted_201 = {
   class: "form-label small",
   for: "mount-user"
 }
-const _hoisted_181 = ["onUpdate:modelValue", "placeholder"]
-const _hoisted_182 = {
+const _hoisted_202 = ["onUpdate:modelValue", "placeholder"]
+const _hoisted_203 = {
   key: 0,
   class: "invalid-feedback d-block"
 }
-const _hoisted_183 = { class: "col-md-6" }
-const _hoisted_184 = {
+const _hoisted_204 = { class: "col-md-6" }
+const _hoisted_205 = {
   class: "form-label small",
   for: "mount-pass"
 }
-const _hoisted_185 = ["onUpdate:modelValue", "placeholder"]
-const _hoisted_186 = {
+const _hoisted_206 = ["onUpdate:modelValue", "placeholder", "disabled"]
+const _hoisted_207 = {
   key: 0,
   class: "invalid-feedback d-block"
 }
-const _hoisted_187 = {
+const _hoisted_208 = {
   key: 1,
   class: "form-text small"
 }
-const _hoisted_188 = { class: "mt-3 d-flex flex-wrap justify-content-end gap-2" }
-const _hoisted_189 = ["onClick", "disabled"]
-const _hoisted_190 = {
+const _hoisted_209 = { class: "mt-3 d-flex flex-wrap justify-content-end gap-2" }
+const _hoisted_210 = ["onClick", "disabled"]
+const _hoisted_211 = {
   key: 0,
   class: "spinner-border spinner-border-sm me-1",
   "aria-hidden": "true"
 }
-const _hoisted_191 = ["onClick", "disabled"]
-const _hoisted_192 = {
+const _hoisted_212 = ["onClick", "disabled"]
+const _hoisted_213 = {
   key: 0,
   class: "spinner-border spinner-border-sm me-1",
   "aria-hidden": "true"
@@ -1094,44 +1139,121 @@ return function render(_ctx, _cache) {
                                     ])
                                   ]))
                                 : _createCommentVNode("v-if", true),
-                              _createElementVNode("div", _hoisted_178, [
-                                _createElementVNode("div", _hoisted_179, [
-                                  _createElementVNode("label", _hoisted_180, _toDisplayString(t('mount_user') || 'Username'), 1 /* TEXT */),
+                              (mountForm.type === 'ftps')
+                                ? (_openBlock(), _createElementBlock("div", _hoisted_178, [
+                                    _createElementVNode("div", _hoisted_179, [
+                                      _createElementVNode("label", _hoisted_180, _toDisplayString(t('mount_tls_spki_pin') || 'FTPS certificate SHA-256 pin (optional)'), 1 /* TEXT */),
+                                      _withDirectives(_createElementVNode("input", {
+                                        id: "mount-tls-spki-pin",
+                                        type: "text",
+                                        class: "form-control form-control-sm",
+                                        "onUpdate:modelValue": $event => ((mountForm.config.tls_spki_pin) = $event),
+                                        placeholder: "AA:BB:...",
+                                        autocomplete: "off",
+                                        spellcheck: "false"
+                                      }, null, 8 /* PROPS */, _hoisted_181), [
+                                        [_vModelText, mountForm.config.tls_spki_pin]
+                                      ]),
+                                      _createElementVNode("div", _hoisted_182, _toDisplayString(t('mount_tls_spki_pin_hint') || 'The system CA store is always checked in strict mode.'), 1 /* TEXT */)
+                                    ])
+                                  ]))
+                                : _createCommentVNode("v-if", true),
+                              (mountForm.type === 'sftp')
+                                ? (_openBlock(), _createElementBlock("div", _hoisted_183, [
+                                    _createElementVNode("div", _hoisted_184, [
+                                      _createElementVNode("label", _hoisted_185, _toDisplayString(t('mount_auth_method') || 'Authentication'), 1 /* TEXT */),
+                                      _withDirectives(_createElementVNode("select", {
+                                        id: "mount-auth-method",
+                                        class: "form-select form-select-sm",
+                                        "onUpdate:modelValue": $event => ((mountForm.config.auth_method) = $event)
+                                      }, [
+                                        _createElementVNode("option", _hoisted_187, _toDisplayString(t('mount_auth_password') || 'Password'), 1 /* TEXT */),
+                                        _createElementVNode("option", _hoisted_188, _toDisplayString(t('mount_auth_private_key') || 'Public key'), 1 /* TEXT */)
+                                      ], 8 /* PROPS */, _hoisted_186), [
+                                        [_vModelSelect, mountForm.config.auth_method]
+                                      ])
+                                    ])
+                                  ]))
+                                : _createCommentVNode("v-if", true),
+                              (mountForm.type === 'sftp' && mountForm.config.auth_method === 'private_key')
+                                ? (_openBlock(), _createElementBlock("div", _hoisted_189, [
+                                    _createElementVNode("div", _hoisted_190, [
+                                      _createElementVNode("label", _hoisted_191, _toDisplayString(t('mount_private_key') || 'Private key'), 1 /* TEXT */),
+                                      _withDirectives(_createElementVNode("textarea", {
+                                        id: "mount-private-key",
+                                        class: "form-control form-control-sm font-monospace",
+                                        rows: "4",
+                                        "onUpdate:modelValue": $event => ((mountForm.config.private_key) = $event),
+                                        placeholder: mountForm.hasPrivateKey ? (t('mount_private_key_keep') || 'Leave blank to keep current key') : '-----BEGIN OPENSSH PRIVATE KEY-----'
+                                      }, null, 8 /* PROPS */, _hoisted_192), [
+                                        [_vModelText, mountForm.config.private_key]
+                                      ])
+                                    ]),
+                                    _createElementVNode("div", _hoisted_193, [
+                                      _createElementVNode("label", _hoisted_194, _toDisplayString(t('mount_public_key') || 'Public key'), 1 /* TEXT */),
+                                      _withDirectives(_createElementVNode("textarea", {
+                                        id: "mount-public-key",
+                                        class: "form-control form-control-sm font-monospace",
+                                        rows: "4",
+                                        "onUpdate:modelValue": $event => ((mountForm.config.public_key) = $event),
+                                        placeholder: mountForm.hasPublicKey ? (t('mount_public_key_keep') || 'Leave blank to keep current key') : 'ssh-ed25519 AAAA...'
+                                      }, null, 8 /* PROPS */, _hoisted_195), [
+                                        [_vModelText, mountForm.config.public_key]
+                                      ])
+                                    ]),
+                                    _createElementVNode("div", _hoisted_196, [
+                                      _createElementVNode("label", _hoisted_197, _toDisplayString(t('mount_private_key_passphrase') || 'Private-key passphrase'), 1 /* TEXT */),
+                                      _withDirectives(_createElementVNode("input", {
+                                        id: "mount-private-key-passphrase",
+                                        type: "password",
+                                        class: "form-control form-control-sm",
+                                        "onUpdate:modelValue": $event => ((mountForm.config.private_key_passphrase) = $event),
+                                        autocomplete: "new-password"
+                                      }, null, 8 /* PROPS */, _hoisted_198), [
+                                        [_vModelText, mountForm.config.private_key_passphrase]
+                                      ])
+                                    ])
+                                  ]))
+                                : _createCommentVNode("v-if", true),
+                              _createElementVNode("div", _hoisted_199, [
+                                _createElementVNode("div", _hoisted_200, [
+                                  _createElementVNode("label", _hoisted_201, _toDisplayString(t('mount_user') || 'Username'), 1 /* TEXT */),
                                   _withDirectives(_createElementVNode("input", {
                                     id: "mount-user",
                                     type: "text",
                                     class: _normalizeClass(["form-control form-control-sm", mountErrors.user ? 'is-invalid' : '']),
                                     "onUpdate:modelValue": $event => ((mountForm.config.user) = $event),
                                     placeholder: t('mount_user_placeholder') || 'user'
-                                  }, null, 10 /* CLASS, PROPS */, _hoisted_181), [
+                                  }, null, 10 /* CLASS, PROPS */, _hoisted_202), [
                                     [_vModelText, mountForm.config.user]
                                   ]),
                                   (mountErrors.user)
-                                    ? (_openBlock(), _createElementBlock("div", _hoisted_182, _toDisplayString(mountErrors.user), 1 /* TEXT */))
+                                    ? (_openBlock(), _createElementBlock("div", _hoisted_203, _toDisplayString(mountErrors.user), 1 /* TEXT */))
                                     : _createCommentVNode("v-if", true)
                                 ]),
-                                _createElementVNode("div", _hoisted_183, [
-                                  _createElementVNode("label", _hoisted_184, _toDisplayString(t('mount_pass') || 'Password'), 1 /* TEXT */),
+                                _createElementVNode("div", _hoisted_204, [
+                                  _createElementVNode("label", _hoisted_205, _toDisplayString(t('mount_pass') || 'Password'), 1 /* TEXT */),
                                   _withDirectives(_createElementVNode("input", {
                                     id: "mount-pass",
                                     type: "password",
                                     class: _normalizeClass(["form-control form-control-sm", mountErrors.pass ? 'is-invalid' : '']),
                                     "onUpdate:modelValue": $event => ((mountForm.config.pass) = $event),
                                     placeholder: mountForm.hasStoredPass ? (t('mount_pass_keep') || 'Leave blank to keep current password') : (t('password_placeholder') || '••••••••'),
-                                    autocomplete: "new-password"
-                                  }, null, 10 /* CLASS, PROPS */, _hoisted_185), [
+                                    autocomplete: "new-password",
+                                    disabled: mountForm.type === 'sftp' && mountForm.config.auth_method === 'private_key'
+                                  }, null, 10 /* CLASS, PROPS */, _hoisted_206), [
                                     [_vModelText, mountForm.config.pass]
                                   ]),
                                   (mountErrors.pass)
-                                    ? (_openBlock(), _createElementBlock("div", _hoisted_186, _toDisplayString(mountErrors.pass), 1 /* TEXT */))
+                                    ? (_openBlock(), _createElementBlock("div", _hoisted_207, _toDisplayString(mountErrors.pass), 1 /* TEXT */))
                                     : (mountForm.hasStoredPass)
-                                      ? (_openBlock(), _createElementBlock("div", _hoisted_187, _toDisplayString(t('mount_pass_keep_hint') || 'Leave the password empty to keep the existing one.'), 1 /* TEXT */))
+                                      ? (_openBlock(), _createElementBlock("div", _hoisted_208, _toDisplayString(t('mount_pass_keep_hint') || 'Leave the password empty to keep the existing one.'), 1 /* TEXT */))
                                       : _createCommentVNode("v-if", true)
                                 ])
                               ])
                             ]))
                           : _createCommentVNode("v-if", true),
-                        _createElementVNode("div", _hoisted_188, [
+                        _createElementVNode("div", _hoisted_209, [
                           _createElementVNode("button", {
                             type: "button",
                             class: "btn btn-outline-secondary btn-sm",
@@ -1139,10 +1261,10 @@ return function render(_ctx, _cache) {
                             disabled: mountTesting || mountSaving || !canTestMount
                           }, [
                             mountTesting
-                              ? (_openBlock(), _createElementBlock("span", _hoisted_190))
+                              ? (_openBlock(), _createElementBlock("span", _hoisted_211))
                               : _createCommentVNode("v-if", true),
                             _createTextVNode(" " + _toDisplayString(t('test_connection') || 'Test connection'), 1 /* TEXT */)
-                          ], 8 /* PROPS */, _hoisted_189),
+                          ], 8 /* PROPS */, _hoisted_210),
                           _createElementVNode("button", {
                             type: "button",
                             class: "btn btn-primary btn-sm",
@@ -1150,10 +1272,10 @@ return function render(_ctx, _cache) {
                             disabled: mountSaving || !canSubmitMount
                           }, [
                             mountSaving
-                              ? (_openBlock(), _createElementBlock("span", _hoisted_192))
+                              ? (_openBlock(), _createElementBlock("span", _hoisted_213))
                               : _createCommentVNode("v-if", true),
                             _createTextVNode(" " + _toDisplayString(mountMode === 'edit' ? (t('mount_save') || 'Save Mount') : (t('mount_add') || 'Add Mount')), 1 /* TEXT */)
-                          ], 8 /* PROPS */, _hoisted_191)
+                          ], 8 /* PROPS */, _hoisted_212)
                         ])
                       ])
                     ])
@@ -1200,7 +1322,9 @@ return function render(_ctx, _cache) {
             name: '',
             type: 'local',
             hasStoredPass: false,
-            config: { path: '', host: '', port: 21, user: '', pass: '', root: '/', host_key_fingerprint: '' },
+            hasPrivateKey: false,
+            hasPublicKey: false,
+            config: { path: '', host: '', port: 21, user: '', pass: '', root: '/', host_key_fingerprint: '', auth_method: 'password', private_key: '', public_key: '', private_key_passphrase: '', tls_spki_pin: '' },
         });
 
         const forcePasswordChange = ref(!!window.forcePasswordChange);
@@ -1322,6 +1446,8 @@ return function render(_ctx, _cache) {
             mountForm.name = '';
             mountForm.type = 'local';
             mountForm.hasStoredPass = false;
+            mountForm.hasPrivateKey = false;
+            mountForm.hasPublicKey = false;
             mountForm.config.path = '';
             mountForm.config.host = '';
             mountForm.config.port = 21;
@@ -1329,6 +1455,11 @@ return function render(_ctx, _cache) {
             mountForm.config.pass = '';
             mountForm.config.root = '/';
             mountForm.config.host_key_fingerprint = '';
+            mountForm.config.auth_method = 'password';
+            mountForm.config.private_key = '';
+            mountForm.config.public_key = '';
+            mountForm.config.private_key_passphrase = '';
+            mountForm.config.tls_spki_pin = '';
         };
 
         const setMountMessage = (type, text) => {
@@ -1405,8 +1536,13 @@ return function render(_ctx, _cache) {
                     mountErrors.user = t('mount_error_user') || 'Username is required.';
                     valid = false;
                 }
-                if (!mountForm.config.pass.trim() && !mountForm.hasStoredPass) {
+                const keyAuth = mountForm.type === 'sftp' && mountForm.config.auth_method === 'private_key';
+                if (!keyAuth && !mountForm.config.pass.trim() && !mountForm.hasStoredPass) {
                     mountErrors.pass = t('mount_error_pass') || 'Password is required.';
+                    valid = false;
+                }
+                if (keyAuth && ((!mountForm.config.private_key.trim() && !mountForm.hasPrivateKey) || (!mountForm.config.public_key.trim() && !mountForm.hasPublicKey))) {
+                    mountErrors.pass = t('mount_error_keys') || 'Private and public keys are required.';
                     valid = false;
                 }
             }
@@ -1418,7 +1554,9 @@ return function render(_ctx, _cache) {
             if (!mountForm.name.trim()) return false;
             if (mountForm.type === 'local') return !!mountForm.config.path.trim();
             if (!mountForm.config.host.trim() || !mountForm.config.user.trim()) return false;
-            if (!mountForm.config.pass.trim() && !mountForm.hasStoredPass) return false;
+            const keyAuth = mountForm.type === 'sftp' && mountForm.config.auth_method === 'private_key';
+            if (!keyAuth && !mountForm.config.pass.trim() && !mountForm.hasStoredPass) return false;
+            if (keyAuth && ((!mountForm.config.private_key.trim() && !mountForm.hasPrivateKey) || (!mountForm.config.public_key.trim() && !mountForm.hasPublicKey))) return false;
             return true;
         });
 
@@ -1426,7 +1564,9 @@ return function render(_ctx, _cache) {
             if (!mountForm.name.trim()) return false;
             if (mountForm.type === 'local') return !!mountForm.config.path.trim();
             if (!mountForm.config.host.trim() || !mountForm.config.user.trim()) return false;
-            if (!mountForm.config.pass.trim() && !mountForm.hasStoredPass) return false;
+            const keyAuth = mountForm.type === 'sftp' && mountForm.config.auth_method === 'private_key';
+            if (!keyAuth && !mountForm.config.pass.trim() && !mountForm.hasStoredPass) return false;
+            if (keyAuth && ((!mountForm.config.private_key.trim() && !mountForm.hasPrivateKey) || (!mountForm.config.public_key.trim() && !mountForm.hasPublicKey))) return false;
             return true;
         });
 
@@ -1441,6 +1581,8 @@ return function render(_ctx, _cache) {
                 mountForm.name = fullMount.name || '';
                 mountForm.type = fullMount.type || 'local';
                 mountForm.hasStoredPass = !!fullMount.has_pass;
+                mountForm.hasPrivateKey = !!fullMount.has_private_key;
+                mountForm.hasPublicKey = !!fullMount.has_public_key;
 
                 mountForm.config.path = fullMount.config?.path || '';
                 mountForm.config.host = fullMount.config?.host || '';
@@ -1449,6 +1591,11 @@ return function render(_ctx, _cache) {
                 mountForm.config.pass = '';
                 mountForm.config.root = fullMount.config?.root || '/';
                 mountForm.config.host_key_fingerprint = fullMount.config?.host_key_fingerprint || '';
+                mountForm.config.auth_method = fullMount.config?.auth_method || 'password';
+                mountForm.config.private_key = '';
+                mountForm.config.public_key = '';
+                mountForm.config.private_key_passphrase = '';
+                mountForm.config.tls_spki_pin = fullMount.config?.tls_spki_pin || '';
             } catch (e) {
                 console.error(e);
                 setMountMessage('error', e.message || (t('mount_edit_failed') || 'Failed to load mount details'));
@@ -1726,9 +1873,13 @@ return function render(_ctx, _cache) {
             if (val === 'sftp' && (!mountForm.config.port || mountForm.config.port === 21)) mountForm.config.port = 22;
             if (val === 'local') {
                 mountForm.hasStoredPass = false;
+                mountForm.hasPrivateKey = false;
+                mountForm.hasPublicKey = false;
                 mountForm.config.pass = '';
+                mountForm.config.auth_method = 'password';
             } else if (prev === 'local' && mountMode.value === 'edit') {
                 mountForm.hasStoredPass = false;
+                mountForm.hasPrivateKey = false;
             }
         });
 

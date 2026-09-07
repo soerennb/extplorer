@@ -2,6 +2,7 @@
 
 namespace App\Services\VFS;
 
+use App\Services\ResourcePolicy;
 use Exception;
 
 class VirtualAdapter implements IFileSystem
@@ -33,12 +34,14 @@ class VirtualAdapter implements IFileSystem
 
     public function listDirectory(string $path, bool $showHidden = true): array
     {
+        $budget = (new ResourcePolicy())->startOperation();
         $path = trim($path, '/\\');
         
         if ($path === '') {
             // Root: List mounts
             $result = [];
             foreach ($this->mounts as $alias => $adapter) {
+                $budget->tick();
                 $type = 'local';
                 if ($adapter instanceof FtpAdapter) $type = $adapter->isSecure() ? 'ftps' : 'ftp';
                 if ($adapter instanceof Ssh2Adapter) $type = 'ssh2';
@@ -69,6 +72,7 @@ class VirtualAdapter implements IFileSystem
         if (!$adapter) throw new Exception("Path not found: $path");
 
         $items = $adapter->listDirectory($relPath, $showHidden);
+        (new ResourcePolicy())->assertDirectoryEntries(count($items));
         
         // Fix up paths to include the mount alias
         // $path here is full virtual path e.g. "Personal/subdir"
@@ -82,6 +86,7 @@ class VirtualAdapter implements IFileSystem
         $alias = explode('/', $path, 2)[0];
 
         foreach ($items as &$item) {
+            $budget->tick();
             // If adapter returns paths starting with slash, trim it
             $p = ltrim($item['path'], '/');
             $item['path'] = $alias . '/' . $p;
@@ -174,6 +179,7 @@ class VirtualAdapter implements IFileSystem
 
     public function copy(string $from, string $to): bool
     {
+        $budget = (new ResourcePolicy())->startOperation();
         [$adapterFrom, $pathFrom] = $this->resolveMount($from);
         [$adapterTo, $pathTo] = $this->resolveMount($to);
 
@@ -187,11 +193,12 @@ class VirtualAdapter implements IFileSystem
             return $adapterFrom->copy($pathFrom, $pathTo);
         }
 
-        return $this->copyAcrossAdapters($adapterFrom, $pathFrom, $adapterTo, $pathTo);
+        return $this->copyAcrossAdapters($adapterFrom, $pathFrom, $adapterTo, $pathTo, $budget);
     }
 
-    private function copyAcrossAdapters(IFileSystem $adapterFrom, string $pathFrom, IFileSystem $adapterTo, string $pathTo): bool
+    private function copyAcrossAdapters(IFileSystem $adapterFrom, string $pathFrom, IFileSystem $adapterTo, string $pathTo, ?\App\Services\OperationBudget $budget = null): bool
     {
+        $budget?->tick();
         $meta = $adapterFrom->getMetadata($pathFrom);
         if (!$meta) {
             throw new Exception("Source not found");
@@ -206,8 +213,9 @@ class VirtualAdapter implements IFileSystem
             }
 
             foreach ($adapterFrom->listDirectory($pathFrom) as $item) {
+                $budget?->tick();
                 $childTarget = $this->joinRelativePath($pathTo, $item['name']);
-                $this->copyAcrossAdapters($adapterFrom, $item['path'], $adapterTo, $childTarget);
+                $this->copyAcrossAdapters($adapterFrom, $item['path'], $adapterTo, $childTarget, $budget);
             }
 
             return true;
@@ -315,13 +323,17 @@ class VirtualAdapter implements IFileSystem
 
     public function search(string $query): array
     {
+        $budget = (new ResourcePolicy())->startOperation();
         $allResults = [];
         foreach ($this->mounts as $alias => $adapter) {
             try {
+                $budget->tick();
                 $results = $adapter->search($query);
                 foreach ($results as $item) {
+                    $budget->tick();
                     $item['path'] = $alias . '/' . ltrim($item['path'], '/');
                     $allResults[] = $item;
+                    (new ResourcePolicy())->assertSearchResults(count($allResults));
                 }
             } catch (Exception $e) {
                 // Ignore errors from specific mounts (e.g. FTP)

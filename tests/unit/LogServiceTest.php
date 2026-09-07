@@ -106,6 +106,26 @@ class LogServiceTest extends CIUnitTestCase
         $this->assertSame(1, $result['totalPages']);
     }
 
+    public function testStructuredEventsRedactSecretsAndCarryCorrelationFields(): void
+    {
+        $this->writeProtectedJson($this->logsPath, []);
+        $_SERVER['HTTP_X_REQUEST_ID'] = 'request-test-123';
+
+        LogService::event('Remote connection', 'denied', [
+            'path' => '/remote',
+            'password' => 'do-not-store',
+            'private_key' => '-----BEGIN PRIVATE KEY-----',
+            'reason' => 'policy',
+        ], 'alice');
+
+        $entry = LogService::getLogs()[0];
+        $this->assertSame(1, $entry['schema_version']);
+        $this->assertSame('request-test-123', $entry['request_id']);
+        $this->assertStringNotContainsString('do-not-store', $entry['details']);
+        $this->assertStringNotContainsString('BEGIN PRIVATE KEY', $entry['details']);
+        unset($_SERVER['HTTP_X_REQUEST_ID']);
+    }
+
     private function writeProtectedJson(string $path, array $data): void
     {
         $content = '<?php die("Access denied"); ?>' . PHP_EOL . json_encode($data, JSON_PRETTY_PRINT);

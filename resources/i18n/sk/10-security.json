@@ -41,5 +41,9 @@
     "recovery_codes_desc": "Uložte tieto kódy na bezpečnom mieste. Môžete ich použiť, ak stratíte prístup k svojmu zariadeniu.",
     "recovery_codes_once": "Tieto kódy sa budú zobrazovať len raz.",
     "password_optional": "Heslo (voliteľné)",
-    "password_protected": "Chránené heslom"
+    "password_protected": "Chránené heslom",
+    "step_up_title": "Potvrďte svoju identitu",
+    "step_up_description": "Pre pokračovanie zadajte svoje aktuálne heslo.",
+    "step_up_confirm": "Pokračovať",
+    "step_up_password_required": "Vyžaduje sa aktuálne heslo."
 }

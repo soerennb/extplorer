@@ -41,5 +41,9 @@
     "recovery_codes_desc": "Enregistrez ces codes dans un endroit sûr. Vous pouvez les utiliser si vous perdez l'accès à votre appareil.",
     "recovery_codes_once": "Ces codes ne seront affichés qu'une seule fois.",
     "password_optional": "Mot de passe (Optionnel)",
-    "password_protected": "Protégé par mot de passe"
+    "password_protected": "Protégé par mot de passe",
+    "step_up_title": "Confirmez votre identité",
+    "step_up_description": "Saisissez votre mot de passe actuel pour continuer.",
+    "step_up_confirm": "Continuer",
+    "step_up_password_required": "Le mot de passe actuel est requis."
 }

@@ -53,4 +53,11 @@ final class ResourcePolicyTest extends CIUnitTestCase
         $this->expectException(RuntimeException::class);
         (new ResourcePolicy())->maxDownloadBytes();
     }
+
+    public function testOperationBudgetRejectsExpiredOperations(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('at least one second');
+        (new \App\Services\OperationBudget(0))->tick();
+    }
 }

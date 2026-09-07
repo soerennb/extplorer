@@ -42,13 +42,19 @@ final class RemoteEndpointPolicy
     /**
      * @return array{protocol: string, host: string, connect_host: string, port: int}
      */
-    public function authorize(string $protocol, string $host, int $port, string $fingerprint = ''): array
+    public function authorize(
+        string $protocol,
+        string $host,
+        int $port,
+        string $fingerprint = '',
+        bool $tlsVerified = false
+    ): array
     {
         $requestedProtocol = strtolower(trim($protocol));
         $requestedHost = $this->normalizeHost($host);
 
         try {
-            return $this->authorizeEndpoint($requestedProtocol, $requestedHost, $port, $fingerprint);
+            return $this->authorizeEndpoint($requestedProtocol, $requestedHost, $port, $fingerprint, $tlsVerified);
         } catch (\Throwable $exception) {
             LogService::log(
                 'Remote Endpoint Denied',
@@ -60,7 +66,7 @@ final class RemoteEndpointPolicy
     }
 
     /** @return array{protocol: string, host: string, connect_host: string, port: int} */
-    private function authorizeEndpoint(string $protocol, string $host, int $port, string $fingerprint): array
+    private function authorizeEndpoint(string $protocol, string $host, int $port, string $fingerprint, bool $tlsVerified): array
     {
         if ($protocol === 'ssh2') {
             $protocol = 'sftp';
@@ -75,6 +81,7 @@ final class RemoteEndpointPolicy
 
         (new RemoteSecurityPolicy())->assertProtocolAllowed($protocol, [
             'host_key_fingerprint' => $fingerprint,
+            'tls_verified' => $tlsVerified,
         ]);
 
         if (!$this->endpointIsAllowlisted($protocol, $host, $port)) {

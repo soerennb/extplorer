@@ -92,7 +92,7 @@ class Session extends BaseConfig
      * when auto-regenerating the session ID. When set to FALSE, the data
      * will be later deleted by the garbage collector.
      */
-    public bool $regenerateDestroy = false;
+    public bool $regenerateDestroy = true;
 
     /**
      * --------------------------------------------------------------------------
@@ -163,6 +163,15 @@ class Session extends BaseConfig
             }
         } else {
             $this->savePath = (string)(getenv('EXTPLORER_SESSION_PATH') ?: WRITEPATH . 'session');
+        }
+
+        $matchIp = getenv('EXTPLORER_SESSION_MATCH_IP');
+        if ($matchIp !== false && trim($matchIp) !== '') {
+            $parsed = filter_var($matchIp, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($parsed === null) {
+                throw new \RuntimeException('EXTPLORER_SESSION_MATCH_IP must be boolean.');
+            }
+            $this->matchIP = $parsed;
         }
     }
 }

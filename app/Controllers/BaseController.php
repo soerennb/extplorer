@@ -49,5 +49,17 @@ abstract class BaseController extends Controller
             ->setHeader('X-Content-Type-Options', 'nosniff')
             ->setHeader('X-Frame-Options', 'SAMEORIGIN')
             ->setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+        if (ENVIRONMENT === 'production' && $request->isSecure()) {
+            $maxAge = (int)(getenv('EXTPLORER_HSTS_MAX_AGE') ?: 31536000);
+            if ($maxAge < 0 || $maxAge > 63072000) {
+                $maxAge = 31536000;
+            }
+            $hsts = 'max-age=' . $maxAge;
+            if (filter_var(getenv('EXTPLORER_HSTS_INCLUDE_SUBDOMAINS'), FILTER_VALIDATE_BOOLEAN)) {
+                $hsts .= '; includeSubDomains';
+            }
+            $this->response->setHeader('Strict-Transport-Security', $hsts);
+        }
     }
 }

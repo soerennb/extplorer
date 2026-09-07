@@ -12,19 +12,7 @@ class Login extends BaseController
 {
     private function protectConnectionSecret(string $secret): string
     {
-        if ($secret === '') {
-            return '';
-        }
-
-        try {
-            $ciphertext = \Config\Services::encrypter()->encrypt($secret);
-            if ((bool)config('Encryption')->rawData) {
-                $ciphertext = base64_encode($ciphertext);
-            }
-            return 'enc:' . $ciphertext;
-        } catch (\Throwable $e) {
-            throw new \RuntimeException('Could not secure remote connection credentials.');
-        }
+        return (new \App\Services\RemoteCredentialService())->protect($secret);
     }
 
     public function index()
@@ -75,20 +63,30 @@ class Login extends BaseController
             $hostValue = $this->request->getPost('remote_host');
             $portValue = $this->request->getPost('remote_port');
             $fingerprintValue = $this->request->getPost('remote_host_key_fingerprint');
+            $tlsPinValue = $this->request->getPost('remote_tls_spki_pin');
+            $authMethodValue = $this->request->getPost('remote_auth_method');
+            $privateKeyValue = $this->request->getPost('remote_private_key');
+            $publicKeyValue = $this->request->getPost('remote_public_key');
+            $passphraseValue = $this->request->getPost('remote_private_key_passphrase');
             $host = is_string($hostValue) ? strtolower(trim($hostValue)) : '';
             $port = is_scalar($portValue) ? (int)$portValue : 0;
             $username = trim($username);
             $fingerprint = is_string($fingerprintValue) ? trim($fingerprintValue) : '';
+            $tlsPin = is_string($tlsPinValue) ? trim($tlsPinValue) : '';
+            $authMethod = is_string($authMethodValue) ? trim($authMethodValue) : 'password';
+            $privateKey = is_string($privateKeyValue) ? $privateKeyValue : '';
+            $publicKey = is_string($publicKeyValue) ? $publicKeyValue : '';
+            $passphrase = is_string($passphraseValue) ? $passphraseValue : '';
 
             try {
                 (new RemoteEndpointPolicy())->assertDirectLoginEnabled();
-                $this->validateRemoteConnectionInput($mode, $host, $port, $username, $password);
+                $this->validateRemoteConnectionInput($mode, $host, $port, $username, $password, $authMethod, $privateKey, $publicKey);
             } catch (\Throwable $e) {
                 return redirect()->back()->with('error', $this->remoteConnectionErrorMessage($e, $loginMessages));
             }
             
             try {
-                $this->openRemoteConnection($mode, $host, $username, $password, $port, $fingerprint);
+                $this->openRemoteConnection($mode, $host, $username, $password, $port, $fingerprint, $tlsPin, $authMethod, $privateKey, $publicKey, $passphrase);
                 
                 $auth = new AuthenticationService();
                 $auth->startRemoteSession($username, [
@@ -98,6 +96,12 @@ class Login extends BaseController
                     'user' => $username,
                     'pass' => $this->protectConnectionSecret($password),
                     'host_key_fingerprint' => $fingerprint,
+                    'tls_spki_pin' => $tlsPin,
+                    'tls_verified' => $mode === 'ftps',
+                    'auth_method' => $authMethod,
+                    'private_key' => $this->protectConnectionSecret($privateKey),
+                    'public_key' => $this->protectConnectionSecret($publicKey),
+                    'private_key_passphrase' => $this->protectConnectionSecret($passphrase),
                     'direct_login' => true,
                 ]);
                 $remember = new RememberMeService();
@@ -161,18 +165,28 @@ class Login extends BaseController
         $portValue = $this->request->getPost('remote_port');
         $usernameValue = $this->request->getPost('username');
         $passwordValue = $this->request->getPost('password');
+        $fingerprintValue = $this->request->getPost('remote_host_key_fingerprint');
+        $tlsPinValue = $this->request->getPost('remote_tls_spki_pin');
+        $authMethodValue = $this->request->getPost('remote_auth_method');
+        $privateKeyValue = $this->request->getPost('remote_private_key');
+        $publicKeyValue = $this->request->getPost('remote_public_key');
+        $passphraseValue = $this->request->getPost('remote_private_key_passphrase');
         $mode = is_string($modeValue) ? trim($modeValue) : '';
         $host = is_string($hostValue) ? strtolower(trim($hostValue)) : '';
         $port = is_scalar($portValue) ? (int)$portValue : 0;
         $username = is_string($usernameValue) ? trim($usernameValue) : '';
         $password = is_string($passwordValue) ? $passwordValue : '';
+        $fingerprint = is_string($fingerprintValue) ? trim($fingerprintValue) : '';
+        $tlsPin = is_string($tlsPinValue) ? trim($tlsPinValue) : '';
+        $authMethod = is_string($authMethodValue) ? trim($authMethodValue) : 'password';
+        $privateKey = is_string($privateKeyValue) ? $privateKeyValue : '';
+        $publicKey = is_string($publicKeyValue) ? $publicKeyValue : '';
+        $passphrase = is_string($passphraseValue) ? $passphraseValue : '';
 
         try {
             (new RemoteEndpointPolicy())->assertDirectLoginEnabled();
-            $this->validateRemoteConnectionInput($mode, $host, $port, $username, $password);
-            $fingerprintValue = $this->request->getPost('remote_host_key_fingerprint');
-            $fingerprint = is_string($fingerprintValue) ? trim($fingerprintValue) : '';
-            $this->openRemoteConnection($mode, $host, $username, $password, $port, $fingerprint);
+            $this->validateRemoteConnectionInput($mode, $host, $port, $username, $password, $authMethod, $privateKey, $publicKey);
+            $this->openRemoteConnection($mode, $host, $username, $password, $port, $fingerprint, $tlsPin, $authMethod, $privateKey, $publicKey, $passphrase);
 
             return $this->response->setJSON([
                 'ok' => true,
@@ -302,6 +316,14 @@ class Login extends BaseController
             'login_remote_host_key_fingerprint',
             'login_remote_host_key_fingerprint_hint',
             'login_remote_port',
+            'login_remote_auth_method',
+            'login_remote_auth_password',
+            'login_remote_auth_private_key',
+            'login_remote_private_key',
+            'login_remote_public_key',
+            'login_remote_private_key_passphrase',
+            'login_remote_tls_spki_pin',
+            'login_remote_tls_spki_pin_hint',
             'test_connection',
             'login_remote_test_hint',
             'login_remote_testing',
@@ -352,14 +374,35 @@ class Login extends BaseController
         return $messages;
     }
 
-    private function validateRemoteConnectionInput(string $mode, string $host, int $port, string $username, string $password): void
+    private function validateRemoteConnectionInput(
+        string $mode,
+        string $host,
+        int $port,
+        string $username,
+        string $password,
+        string $authMethod = 'password',
+        string $privateKey = '',
+        string $publicKey = ''
+    ): void
     {
         if (!in_array($mode, ['ftp', 'ftps', 'sftp'], true)) {
             throw new \InvalidArgumentException('Select FTP, FTPS or SFTP before testing the connection.');
         }
 
-        if ($host === '' || $username === '' || $password === '') {
-            throw new \InvalidArgumentException('Remote host, username and password are required.');
+        if ($host === '' || $username === '') {
+            throw new \InvalidArgumentException('Remote host and username are required.');
+        }
+        if (!in_array($authMethod, ['password', 'private_key'], true)) {
+            throw new \InvalidArgumentException('Remote authentication method is invalid.');
+        }
+        if ($authMethod === 'password' && $password === '') {
+            throw new \InvalidArgumentException('Remote password is required.');
+        }
+        if ($authMethod === 'private_key' && ($mode !== 'sftp' || $privateKey === '' || $publicKey === '')) {
+            throw new \InvalidArgumentException('SFTP private and public keys are required.');
+        }
+        if (strlen($privateKey) > 1024 * 1024 || strlen($publicKey) > 1024 * 1024) {
+            throw new \InvalidArgumentException('SFTP key material is too large.');
         }
 
         if ($port < 1 || $port > 65535) {
@@ -367,14 +410,26 @@ class Login extends BaseController
         }
     }
 
-    private function openRemoteConnection(string $mode, string $host, string $username, string $password, int $port, string $fingerprint = ''): void
+    private function openRemoteConnection(
+        string $mode,
+        string $host,
+        string $username,
+        string $password,
+        int $port,
+        string $fingerprint = '',
+        string $tlsPin = '',
+        string $authMethod = 'password',
+        string $privateKey = '',
+        string $publicKey = '',
+        string $passphrase = ''
+    ): void
     {
         if ($mode === 'ftp' || $mode === 'ftps') {
-            new \App\Services\VFS\FtpAdapter($host, $username, $password, $port, '/', $mode === 'ftps');
+            new \App\Services\VFS\FtpAdapter($host, $username, $password, $port, '/', $mode === 'ftps', $tlsPin);
             return;
         }
 
-        new \App\Services\VFS\Ssh2Adapter($host, $username, $password, $port, '/', $fingerprint);
+        new \App\Services\VFS\Ssh2Adapter($host, $username, $password, $port, '/', $fingerprint, $authMethod === 'private_key' ? $privateKey : '', $authMethod === 'private_key' ? $publicKey : '', $passphrase);
     }
 
     private function remoteConnectionErrorMessage(\Throwable $e, ?array $messages = null): string
@@ -386,7 +441,7 @@ class Login extends BaseController
             return $messages['login_remote_select_protocol'];
         }
 
-        if (str_contains($message, 'Remote host, username and password')) {
+        if (str_contains($message, 'Remote host and username') || str_contains($message, 'Remote password') || str_contains($message, 'private and public keys')) {
             return $messages['login_remote_required'];
         }
 

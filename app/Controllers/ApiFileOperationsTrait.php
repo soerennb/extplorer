@@ -106,13 +106,17 @@ trait ApiFileOperationsTrait
         if (!$path) return $this->fail('Path required');
 
         try {
+            $content = (string)($content ?? '');
+            if (strlen($content) > (new ResourcePolicy())->maxContentBytes()) {
+                return $this->fail('File exceeds the configured content limit.', 413);
+            }
             // Versioning: Backup existing file before saving
             $username = session('username');
             $fullPath = $this->fs->resolvePath($path);
             $versionService = new \App\Services\VersionService($username);
             $versionService->createVersion($fullPath, $path);
 
-            if (!$this->fs->writeFile($path, (string)($content ?? ''))) {
+            if (!$this->fs->writeFile($path, $content)) {
                 throw new Exception('Unable to save file.');
             }
             LogService::log('Save File', $path);

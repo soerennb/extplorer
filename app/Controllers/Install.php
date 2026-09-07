@@ -87,7 +87,7 @@ class Install extends BaseController
             'checks' => $checks,
             'claimTokenPath' => 'writable/.extplorer-install-token',
             'formReady' => $this->checksReady($checks),
-            'username' => 'admin',
+            'username' => trim((string)(getenv('EXTPLORER_ADMIN_USER') ?: 'admin')),
         ]);
     }
 

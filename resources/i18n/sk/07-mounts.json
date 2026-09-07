@@ -37,5 +37,16 @@
     "mount_remove_failed": "Nepodarilo sa odstrániť pripojenie.",
     "mount_remove_confirm": "Toto pripojenie bude odstránené.",
     "mount_test_success": "Pripojenie bolo úspešné.",
-    "mount_test_failed": "Pripojenie zlyhalo."
+    "mount_test_failed": "Pripojenie zlyhalo.",
+    "mount_auth_method": "Overenie",
+    "mount_auth_password": "Heslo",
+    "mount_auth_private_key": "Verejný kľúč",
+    "mount_private_key": "Súkromný kľúč",
+    "mount_private_key_keep": "Ponechajte prázdne pre zachovanie aktuálneho kľúča",
+    "mount_public_key": "Verejný kľúč",
+    "mount_public_key_keep": "Ponechajte prázdne pre zachovanie aktuálneho kľúča",
+    "mount_private_key_passphrase": "Heslová fráza súkromného kľúča",
+    "mount_tls_spki_pin": "FTPS SPKI SHA-256 odtlačok (voliteľné)",
+    "mount_tls_spki_pin_hint": "Úložisko systémových CA sa v prísnom režime overuje; odtlačok sa počíta z verejného kľúča.",
+    "mount_error_keys": "Súkromný a verejný kľúč sú povinné."
 }

@@ -68,6 +68,7 @@ $routes->group('api', function($routes) {
     // Mounts
     $routes->get('mounts', 'MountController::index');
     $routes->get('mounts/(:segment)', 'MountController::show/$1');
+    $routes->get('mounts/(:segment)/health', 'MountController::health/$1');
     $routes->post('mounts', 'MountController::create');
     $routes->post('mounts/test', 'MountController::test');
     $routes->put('mounts/(:segment)', 'MountController::update/$1');
@@ -95,6 +96,8 @@ $routes->group('api', function($routes) {
     $routes->post('settings', 'SettingsController::update');
     $routes->post('settings/test-email', 'SettingsController::testEmail');
     $routes->post('settings/validate-email', 'SettingsController::validateEmail');
+
+    $routes->post('security/step-up', 'StepUpController::create');
 
     $routes->get('system', 'UserAdminController::systemInfo');
     $routes->get('logs', 'UserAdminController::getLogs');

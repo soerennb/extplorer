@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Controllers\UserAdminController;
 use App\Models\UserModel;
+use App\Services\StepUpAuthenticationService;
 use Config\Services;
 use CodeIgniter\Test\CIUnitTestCase;
 
@@ -16,6 +17,7 @@ class UserAdminGuardrailsTest extends CIUnitTestCase
     private ?string $usersBackup = null;
     private ?string $rolesBackup = null;
     private ?string $groupsBackup = null;
+    private array $sessionBackup = [];
 
     protected function setUp(): void
     {
@@ -30,8 +32,12 @@ class UserAdminGuardrailsTest extends CIUnitTestCase
         $this->rolesBackup = is_file($this->rolesFile) ? file_get_contents($this->rolesFile) : null;
         $this->groupsBackup = is_file($this->groupsFile) ? file_get_contents($this->groupsFile) : null;
 
-        session()->set('permissions', ['admin_users']);
-        session()->set('username', 'admin');
+        $this->sessionBackup = session()->get();
+        session()->set([
+            'permissions' => ['admin_users'],
+            'username' => 'admin',
+            'isLoggedIn' => true,
+        ]);
 
         $this->seedRbacData();
     }
@@ -41,6 +47,13 @@ class UserAdminGuardrailsTest extends CIUnitTestCase
         $this->restoreFile($this->usersFile, $this->usersBackup);
         $this->restoreFile($this->rolesFile, $this->rolesBackup);
         $this->restoreFile($this->groupsFile, $this->groupsBackup);
+        $currentSession = session()->get();
+        if (is_array($currentSession) && $currentSession !== []) {
+            session()->remove(array_keys($currentSession));
+        }
+        if ($this->sessionBackup !== []) {
+            session()->set($this->sessionBackup);
+        }
 
         parent::tearDown();
     }
@@ -62,6 +75,7 @@ class UserAdminGuardrailsTest extends CIUnitTestCase
 
     public function testDeleteRoleBlockedWhenRoleIsInUse(): void
     {
+        $this->authorizeStepUp('role.delete');
         $controller = new UserAdminController();
         $this->initController($controller);
         $response = $controller->deleteRole('editor');
@@ -76,6 +90,7 @@ class UserAdminGuardrailsTest extends CIUnitTestCase
 
     public function testDeleteGroupBlockedWhenGroupIsAssigned(): void
     {
+        $this->authorizeStepUp('group.delete');
         $controller = new UserAdminController();
         $this->initController($controller);
         $response = $controller->deleteGroup('team');
@@ -91,6 +106,7 @@ class UserAdminGuardrailsTest extends CIUnitTestCase
 
     public function testDeleteProtectedRoleBlockedEvenWhenUnused(): void
     {
+        $this->authorizeStepUp('role.delete');
         $model = new UserModel();
         $roles = $model->getRoles();
         $roles['admin'] = ['*', 'admin_settings'];
@@ -123,6 +139,18 @@ class UserAdminGuardrailsTest extends CIUnitTestCase
         ];
 
         $users = [
+            [
+                'username' => 'admin',
+                'password_hash' => password_hash('password123', PASSWORD_DEFAULT),
+                'role' => 'admin',
+                'home_dir' => '/',
+                'groups' => [],
+                'allowed_extensions' => '',
+                'blocked_extensions' => '',
+                '2fa_secret' => null,
+                '2fa_enabled' => false,
+                'recovery_codes' => [],
+            ],
             [
                 'username' => 'alice',
                 'password_hash' => password_hash('password123', PASSWORD_DEFAULT),
@@ -173,5 +201,11 @@ class UserAdminGuardrailsTest extends CIUnitTestCase
             Services::response(),
             Services::logger()
         );
+    }
+
+    private function authorizeStepUp(string $action): void
+    {
+        $token = (new StepUpAuthenticationService())->issue($action, 'password123');
+        Services::request()->setHeader('X-Extplorer-Step-Up', $token);
     }
 }

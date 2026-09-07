@@ -147,10 +147,38 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
                                     <input type="number" name="remote_port" id="remote_port" class="form-control" value="21" min="1" max="65535" inputmode="numeric" autocomplete="off">
                                 </div>
                             </div>
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-4">
+                                    <label class="form-label" for="remote_auth_method"><?= esc($lt('login_remote_auth_method', 'Authentication')) ?></label>
+                                    <select name="remote_auth_method" id="remote_auth_method" class="form-select">
+                                        <option value="password"><?= esc($lt('login_remote_auth_password', 'Password')) ?></option>
+                                        <option value="private_key"><?= esc($lt('login_remote_auth_private_key', 'SFTP public key')) ?></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="remote_key_fields" class="row g-3 mt-1 d-none">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="remote_private_key"><?= esc($lt('login_remote_private_key', 'Private key')) ?></label>
+                                    <textarea name="remote_private_key" id="remote_private_key" class="form-control font-monospace" rows="4" autocomplete="off" spellcheck="false" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="remote_public_key"><?= esc($lt('login_remote_public_key', 'Public key')) ?></label>
+                                    <textarea name="remote_public_key" id="remote_public_key" class="form-control font-monospace" rows="4" autocomplete="off" spellcheck="false" placeholder="ssh-ed25519 AAAA..."></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="remote_private_key_passphrase"><?= esc($lt('login_remote_private_key_passphrase', 'Private-key passphrase')) ?></label>
+                                    <input type="password" name="remote_private_key_passphrase" id="remote_private_key_passphrase" class="form-control" autocomplete="new-password">
+                                </div>
+                            </div>
                             <div class="mt-3">
                                 <label class="form-label" for="remote_host_key_fingerprint"><?= esc($lt('login_remote_host_key_fingerprint', 'SFTP host-key fingerprint (required for SFTP)')) ?></label>
                                 <input type="text" name="remote_host_key_fingerprint" id="remote_host_key_fingerprint" class="form-control" placeholder="SHA256:..." autocomplete="off" spellcheck="false">
                                 <div class="form-text"><?= esc($lt('login_remote_host_key_fingerprint_hint', 'Use the SHA-256 fingerprint supplied by the server administrator.')) ?></div>
+                            </div>
+                            <div class="mt-3">
+                                <label class="form-label" for="remote_tls_spki_pin"><?= esc($lt('login_remote_tls_spki_pin', 'FTPS certificate SHA-256 pin (optional)')) ?></label>
+                                <input type="text" name="remote_tls_spki_pin" id="remote_tls_spki_pin" class="form-control" placeholder="AA:BB:..." autocomplete="off" spellcheck="false">
+                                <div class="form-text"><?= esc($lt('login_remote_tls_spki_pin_hint', 'The system CA store is always checked in strict mode.')) ?></div>
                             </div>
                             <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
                                 <button type="button" class="btn btn-outline-primary btn-sm" id="test_remote_connection">
@@ -187,6 +215,9 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
         const loginMessages = <?= json_encode($login_t ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const remoteFields = document.getElementById('remote_fields');
         const port = document.getElementById('remote_port');
+        const authMethod = document.getElementById('remote_auth_method');
+        const keyFields = document.getElementById('remote_key_fields');
+        const loginPassword = document.getElementById('login_password');
         const modes = document.querySelectorAll('input[name="mode"]');
         const form = document.querySelector('form');
         const testButton = document.getElementById('test_remote_connection');
@@ -203,6 +234,14 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
             if (val === 'ftp') port.value = 21;
             if (val === 'ftps') port.value = 990;
             if (val === 'sftp') port.value = 22;
+            if (val !== 'sftp' && authMethod) authMethod.value = 'password';
+            const keyAuth = val === 'sftp' && authMethod && authMethod.value === 'private_key';
+            if (keyFields) keyFields.classList.toggle('d-none', !keyAuth);
+            if (loginPassword) {
+                loginPassword.required = !keyAuth;
+                loginPassword.disabled = keyAuth;
+                if (keyAuth) loginPassword.value = '';
+            }
             if (rememberMe && rememberMeHint) {
                 const localMode = val === 'local';
                 rememberMe.disabled = !localMode;
@@ -226,6 +265,10 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
 
         modes.forEach((el) => {
             el.addEventListener('change', () => updateRemoteFields(el.value));
+        });
+        if (authMethod) authMethod.addEventListener('change', () => {
+            const selected = document.querySelector('input[name="mode"]:checked');
+            updateRemoteFields(selected ? selected.value : 'local');
         });
 
         if (testButton) testButton.addEventListener('click', async () => {

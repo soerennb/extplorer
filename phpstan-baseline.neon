@@ -1,0 +1,1615 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method App\\Commands\\StorageBackup\:\:run\(\) never returns void so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Commands/StorageBackup.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Commands/StorageCheck.php
+
+		-
+			message: '#^Method App\\Commands\\StorageCheck\:\:run\(\) never returns void so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Commands/StorageCheck.php
+
+		-
+			message: '#^Method App\\Commands\\StorageRestore\:\:run\(\) never returns void so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Commands/StorageRestore.php
+
+		-
+			message: '#^Method App\\Commands\\StorageVerify\:\:run\(\) never returns void so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Commands/StorageVerify.php
+
+		-
+			message: '#^Method App\\Commands\\SystemReadiness\:\:run\(\) never returns void so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Commands/SystemReadiness.php
+
+		-
+			message: '#^Method App\\Commands\\UploadScanResult\:\:run\(\) never returns void so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Commands/UploadScanResult.php
+
+		-
+			message: '#^Constant WRITEPATH not found\.$#'
+			identifier: constant.notFound
+			count: 2
+			path: app/Common.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/App.php
+
+		-
+			message: '#^Constant APPPATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/Autoload.php
+
+		-
+			message: '#^Constant WRITEPATH not found\.$#'
+			identifier: constant.notFound
+			count: 2
+			path: app/Config/Cache.php
+
+		-
+			message: '#^Constant ROOTPATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/Constants.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/Cookie.php
+
+		-
+			message: '#^Constant APPPATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/Database.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/Database.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Config/Database.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/Events.php
+
+		-
+			message: '#^Function is_cli not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Config/Events.php
+
+		-
+			message: '#^Function service not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Config/Events.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Config/Events.php
+
+		-
+			message: '#^Constant APPPATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/Exceptions.php
+
+		-
+			message: '#^Constant FCPATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/I18n.php
+
+		-
+			message: '#^Constant ROOTPATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/I18n.php
+
+		-
+			message: '#^Property Config\\Kint\:\:\$plugins has unknown class Kint\\Parser\\ConstructablePluginInterface as its type\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Config/Kint.php
+
+		-
+			message: '#^Property Config\\Kint\:\:\$richObjectPlugins has unknown class Kint\\Renderer\\Rich\\ValuePluginInterface as its type\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Config/Kint.php
+
+		-
+			message: '#^Property Config\\Kint\:\:\$richTabPlugins has unknown class Kint\\Renderer\\Rich\\TabPluginInterface as its type\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Config/Kint.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/Logger.php
+
+		-
+			message: '#^Constant FCPATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/Publisher.php
+
+		-
+			message: '#^Constant ROOTPATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/Publisher.php
+
+		-
+			message: '#^Constant APPPATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/Routing.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/Security.php
+
+		-
+			message: '#^Constant WRITEPATH not found\.$#'
+			identifier: constant.notFound
+			count: 2
+			path: app/Config/Session.php
+
+		-
+			message: '#^Constant SYSTEMPATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Config/Toolbar.php
+
+		-
+			message: '#^PHPDoc type array\<string, \(callable\(mixed\)\: mixed\)\|\(list\<callable\(mixed\)\: mixed&string\>\)\> of property Config\\View\:\:\$plugins is not covariant with PHPDoc type array\<string, \(callable\(mixed \.\.\.\)\: mixed\)\|\(list\<callable\(mixed \.\.\.\)\: mixed&string\>\)\> of overridden property CodeIgniter\\Config\\View\:\:\$plugins\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Config/View.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/ApiBaseController.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Controllers/ApiBaseController.php
+
+		-
+			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
+			identifier: method.notFound
+			count: 7
+			path: app/Controllers/ApiController.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 5
+			path: app/Controllers/ApiController.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 23
+			path: app/Controllers/ApiController.php
+
+		-
+			message: '#^Regex pattern is invalid\: Unknown modifier ''\]'' in pattern\: /\\A\[A\-Za\-z\]\:\[\\\\/\]/$#'
+			identifier: regexp.pattern
+			count: 1
+			path: app/Controllers/ApiController.php
+
+		-
+			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Controllers/ApiDownloadController.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Controllers/ApiDownloadController.php
+
+		-
+			message: '#^Offset 0 on array\{0\: int\<0, max\>, 1\: int\<0, max\>, 2\: int, 3\: string, mime\: string, channels\?\: int, bits\?\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/ApiDownloadOperationsTrait.php
+
+		-
+			message: '#^Offset 1 on array\{0\: int\<0, max\>, 1\: int\<0, max\>, 2\: int, 3\: string, mime\: string, channels\?\: int, bits\?\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/ApiDownloadOperationsTrait.php
+
+		-
+			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Controllers/ApiFileController.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 9
+			path: app/Controllers/ApiFileController.php
+
+		-
+			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Controllers/ApiShareController.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/ApiShareController.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Controllers/ApiShareController.php
+
+		-
+			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Controllers/ApiTransferController.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/ApiTransferController.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 11
+			path: app/Controllers/ApiTransferController.php
+
+		-
+			message: '#^Regex pattern is invalid\: Unknown modifier ''\]'' in pattern\: /\\A\[A\-Za\-z\]\:\[\\\\/\]/$#'
+			identifier: regexp.pattern
+			count: 1
+			path: app/Controllers/ApiTransferController.php
+
+		-
+			message: '#^Offset ''filename'' on array\{dirname\?\: string, basename\: string, extension\?\: string, filename\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/ApiTransferOperationsTrait.php
+
+		-
+			message: '#^Call to an undefined method CodeIgniter\\HTTP\\RequestInterface\:\:isSecure\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Controllers/BaseController.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Controllers/BaseController.php
+
+		-
+			message: '#^Function helper not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/BaseController.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Controllers/DavController.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Controllers/DavController.php
+
+		-
+			message: '#^Function site_url not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/DavController.php
+
+		-
+			message: '#^Function base_url not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/Home.php
+
+		-
+			message: '#^Function redirect not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/Home.php
+
+		-
+			message: '#^Function view not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Controllers/Home.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Controllers/Install.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Controllers/Install.php
+
+		-
+			message: '#^Function redirect not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Controllers/Install.php
+
+		-
+			message: '#^Function view not found\.$#'
+			identifier: function.notFound
+			count: 6
+			path: app/Controllers/Install.php
+
+		-
+			message: '#^Constant ROOTPATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Controllers/Login.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/Login.php
+
+		-
+			message: '#^Function csrf_hash not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Controllers/Login.php
+
+		-
+			message: '#^Function csrf_token not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Controllers/Login.php
+
+		-
+			message: '#^Function redirect not found\.$#'
+			identifier: function.notFound
+			count: 11
+			path: app/Controllers/Login.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/Login.php
+
+		-
+			message: '#^Function view not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/Login.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/Login.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<non\-falsy\-string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Controllers/Login.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/MountController.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 8
+			path: app/Controllers/MountController.php
+
+		-
+			message: '#^Parameter \#1 \$data of method App\\Controllers\\MountController\:\:respond\(\) expects array\<string, mixed\>\|string\|null, list given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Controllers/MountController.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/ProfileController.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 13
+			path: app/Controllers/ProfileController.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/SettingsController.php
+
+		-
+			message: '#^Call to an undefined method CodeIgniter\\HTTP\\CLIRequest\|CodeIgniter\\HTTP\\IncomingRequest\:\:negotiateLanguage\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Controllers/ShareController.php
+
+		-
+			message: '#^Constant FCPATH not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Controllers/ShareController.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 7
+			path: app/Controllers/ShareController.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/ShareController.php
+
+		-
+			message: '#^Function redirect not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Controllers/ShareController.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 4
+			path: app/Controllers/ShareController.php
+
+		-
+			message: '#^Function view not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Controllers/ShareController.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/StepUpController.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Controllers/TransferController.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/TransferController.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 10
+			path: app/Controllers/TransferController.php
+
+		-
+			message: '#^Function site_url not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/TransferController.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<mixed\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Controllers/TransferController.php
+
+		-
+			message: '#^Parameter \#1 \$data of method App\\Controllers\\TransferController\:\:respond\(\) expects array\<string, mixed\>\|string\|null, list\<array\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Controllers/TransferController.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Controllers/UserAdminController.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/UserAdminController.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Controllers/UserAdminController.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Debug/FriendlyExceptionHandler.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Filters/AuthFilter.php
+
+		-
+			message: '#^Function redirect not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Filters/AuthFilter.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 11
+			path: app/Filters/AuthFilter.php
+
+		-
+			message: '#^Function site_url not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Filters/AuthFilter.php
+
+		-
+			message: '#^Method App\\Filters\\AuthFilter\:\:after\(\) should return CodeIgniter\\HTTP\\ResponseInterface\|null but return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: app/Filters/AuthFilter.php
+
+		-
+			message: '#^Function csrf_hash not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Filters/CsrfHeaderFilter.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Filters/InstallFilter.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Filters/InstallFilter.php
+
+		-
+			message: '#^Function redirect not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Filters/InstallFilter.php
+
+		-
+			message: '#^Method App\\Filters\\InstallFilter\:\:after\(\) should return CodeIgniter\\HTTP\\ResponseInterface\|null but return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: app/Filters/InstallFilter.php
+
+		-
+			message: '#^Method App\\Filters\\InstallFilter\:\:before\(\) should return CodeIgniter\\HTTP\\RequestInterface\|CodeIgniter\\HTTP\\ResponseInterface\|string\|null but empty return statement found\.$#'
+			identifier: return.empty
+			count: 1
+			path: app/Filters/InstallFilter.php
+
+		-
+			message: '#^Method App\\Filters\\InstallFilter\:\:before\(\) should return CodeIgniter\\HTTP\\RequestInterface\|CodeIgniter\\HTTP\\ResponseInterface\|string\|null but return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: app/Filters/InstallFilter.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Helpers/auth_helper.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Models/UserModel.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/AtomicFileStore.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 6
+			path: app/Services/AuthenticationService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Services/DataMigrationService.php
+
+		-
+			message: '#^Variable \$sourceData on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: app/Services/DataMigrationService.php
+
+		-
+			message: '#^Function esc not found\.$#'
+			identifier: function.notFound
+			count: 4
+			path: app/Services/EmailService.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 4
+			path: app/Services/EmailService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Services/InstallStateService.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, 200\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Services/LogService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/LogService.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/LogService.php
+
+		-
+			message: '#^Static method App\\Services\\LogService\:\:saveLogs\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Services/LogService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 5
+			path: app/Services/MountService.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Services/MountService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/RememberMeService.php
+
+		-
+			message: '#^Method App\\Services\\RememberMeService\:\:loadTokens\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Services/RememberMeService.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/RememberMeService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Services/RemoteCredentialService.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Services/RemoteSecurityPolicy.php
+
+		-
+			message: '#^Parameter \#1 \$session of function ssh2_fingerprint expects resource, object given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/RemoteSecurityPolicy.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/SettingsService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 4
+			path: app/Services/ShareService.php
+
+		-
+			message: '#^Function esc not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/ShareService.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/ShareService.php
+
+		-
+			message: '#^Function db_connect not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/State/DatabaseStateBackend.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/State/StorageSchemaService.php
+
+		-
+			message: '#^Function db_connect not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/State/StorageSchemaService.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 8
+			path: app/Services/StepUpAuthenticationService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 5
+			path: app/Services/StorageArchiveService.php
+
+		-
+			message: '#^Offset ''opsys'' on array\{name\: string, index\: int, crc\: int, size\: int, mtime\: int, comp_size\: int, comp_method\: int, encryption_method\: int\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/StorageArchiveService.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/StorageArchiveService.php
+
+		-
+			message: '#^Result of \|\| is always true\.$#'
+			identifier: booleanOr.alwaysTrue
+			count: 1
+			path: app/Services/StorageArchiveService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between 0 and 3 will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/StorageArchiveService.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Services/StorageArchiveService.php
+
+		-
+			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/TrashService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/TrashService.php
+
+		-
+			message: '#^Property App\\Services\\TrashService\:\:\$username is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Services/TrashService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Services/UploadQuarantineService.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/UploadQuarantineService.php
+
+		-
+			message: '#^Result of \|\| is always true\.$#'
+			identifier: booleanOr.alwaysTrue
+			count: 1
+			path: app/Services/UploadQuarantineService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between null and null will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 1
+			path: app/Services/UploadQuarantineService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Services/UploadSessionService.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/UploadSessionService.php
+
+		-
+			message: '#^Property App\\Services\\VFS\\FtpAdapter\:\:\$host is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Services/VFS/FtpAdapter.php
+
+		-
+			message: '#^Property App\\Services\\VFS\\FtpAdapter\:\:\$port is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Services/VFS/FtpAdapter.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Services/VFS/LocalAdapter.php
+
+		-
+			message: '#^Method App\\Services\\VFS\\LocalAdapter\:\:isWithinRoot\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Services/VFS/LocalAdapter.php
+
+		-
+			message: '#^Offset ''external_attributes'' on array\{name\: string, index\: int, crc\: int, size\: int, mtime\: int, comp_size\: int, comp_method\: int, encryption_method\: int\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/VFS/LocalAdapter.php
+
+		-
+			message: '#^Offset ''opsys'' on array\{name\: string, index\: int, crc\: int, size\: int, mtime\: int, comp_size\: int, comp_method\: int, encryption_method\: int\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/VFS/LocalAdapter.php
+
+		-
+			message: '#^Result of \|\| is always true\.$#'
+			identifier: booleanOr.alwaysTrue
+			count: 1
+			path: app/Services/VFS/LocalAdapter.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between 0 and 3 will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/VFS/LocalAdapter.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between 0 and 0 will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 1
+			path: app/Services/VFS/LocalAdapter.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Services/VFS/LocalAdapter.php
+
+		-
+			message: '#^Function ssh2_connect invoked with 5 parameters, 1\-4 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Services/VFS/Ssh2Adapter.php
+
+		-
+			message: '#^Parameter \#1 \$connection of method App\\Services\\RemoteSecurityPolicy\:\:assertSshFingerprint\(\) expects object, resource given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/VFS/Ssh2Adapter.php
+
+		-
+			message: '#^Parameter \#3 \$methods of function ssh2_connect expects array, null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/VFS/Ssh2Adapter.php
+
+		-
+			message: '#^Parameter \#4 \$callbacks of function ssh2_connect expects array, null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/VFS/Ssh2Adapter.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Services/VFS/VfsFactory.php
+
+		-
+			message: '#^Function log_message not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Services/VFS/VfsFactory.php
+
+		-
+			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/VersionService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/VersionService.php
+
+		-
+			message: '#^Property App\\Services\\VersionService\:\:\$username is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Services/VersionService.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Views/admin.php
+
+		-
+			message: '#^Function base_url not found\.$#'
+			identifier: function.notFound
+			count: 17
+			path: app/Views/admin.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 9
+			path: app/Views/admin.php
+
+		-
+			message: '#^Function csp_script_nonce not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Views/admin.php
+
+		-
+			message: '#^Function csp_style_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/admin.php
+
+		-
+			message: '#^Function csrf_hash not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/admin.php
+
+		-
+			message: '#^Function csrf_token not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/admin.php
+
+		-
+			message: '#^Function service not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/admin.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Views/admin.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Views/app.php
+
+		-
+			message: '#^Function base_url not found\.$#'
+			identifier: function.notFound
+			count: 24
+			path: app/Views/app.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 11
+			path: app/Views/app.php
+
+		-
+			message: '#^Function csp_script_nonce not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Views/app.php
+
+		-
+			message: '#^Function csp_style_nonce not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Views/app.php
+
+		-
+			message: '#^Function csrf_hash not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/app.php
+
+		-
+			message: '#^Function csrf_token not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/app.php
+
+		-
+			message: '#^Function service not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/app.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 5
+			path: app/Views/app.php
+
+		-
+			message: '#^Function view not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/app.php
+
+		-
+			message: '#^Variable \$webdavEnabled might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Views/app.php
+
+		-
+			message: '#^Variable \$code might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Views/errors/cli/error_404.php
+
+		-
+			message: '#^Variable \$message might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Views/errors/cli/error_404.php
+
+		-
+			message: '#^Function clean_path not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Views/errors/cli/error_exception.php
+
+		-
+			message: '#^Parameter \#1 \$string of function str_pad expects string, \(float\|int\) given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Views/errors/cli/error_exception.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Views/errors/cli/error_exception.php
+
+		-
+			message: '#^Variable \$exception might not be defined\.$#'
+			identifier: variable.undefined
+			count: 4
+			path: app/Views/errors/cli/error_exception.php
+
+		-
+			message: '#^Variable \$message might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Views/errors/cli/error_exception.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Views/errors/html/error_400.php
+
+		-
+			message: '#^Function csp_style_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/errors/html/error_400.php
+
+		-
+			message: '#^Function esc not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/errors/html/error_400.php
+
+		-
+			message: '#^Function lang not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Views/errors/html/error_400.php
+
+		-
+			message: '#^Variable \$message might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Views/errors/html/error_400.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Views/errors/html/error_404.php
+
+		-
+			message: '#^Function csp_style_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/errors/html/error_404.php
+
+		-
+			message: '#^Function esc not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/errors/html/error_404.php
+
+		-
+			message: '#^Function lang not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Views/errors/html/error_404.php
+
+		-
+			message: '#^Variable \$message might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Views/errors/html/error_404.php
+
+		-
+			message: '#^Calling static\:\:describeMemory\(\) outside of class scope\.$#'
+			identifier: outOfClass.static
+			count: 2
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Calling static\:\:highlightFile\(\) outside of class scope\.$#'
+			identifier: outOfClass.static
+			count: 2
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Function clean_path not found\.$#'
+			identifier: function.notFound
+			count: 5
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Function csp_script_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Function csp_style_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Function esc not found\.$#'
+			identifier: function.notFound
+			count: 47
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Function service not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Variable \$exception might not be defined\.$#'
+			identifier: variable.undefined
+			count: 5
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Variable \$file might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Variable \$line might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Variable \$title might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Variable \$trace might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Views/errors/html/error_exception.php
+
+		-
+			message: '#^Function csp_style_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/errors/html/production.php
+
+		-
+			message: '#^Function lang not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Views/errors/html/production.php
+
+		-
+			message: '#^Function base_url not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/install/error.php
+
+		-
+			message: '#^Function csp_style_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/install/error.php
+
+		-
+			message: '#^Function esc not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/install/error.php
+
+		-
+			message: '#^Function site_url not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/install/error.php
+
+		-
+			message: '#^Function base_url not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/install/index.php
+
+		-
+			message: '#^Function csp_style_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/install/index.php
+
+		-
+			message: '#^Function csrf_field not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/install/index.php
+
+		-
+			message: '#^Function esc not found\.$#'
+			identifier: function.notFound
+			count: 4
+			path: app/Views/install/index.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Views/install/index.php
+
+		-
+			message: '#^Function site_url not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/install/index.php
+
+		-
+			message: '#^Variable \$checks might not be defined\.$#'
+			identifier: variable.undefined
+			count: 6
+			path: app/Views/install/index.php
+
+		-
+			message: '#^Function base_url not found\.$#'
+			identifier: function.notFound
+			count: 4
+			path: app/Views/login.php
+
+		-
+			message: '#^Function csp_script_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/login.php
+
+		-
+			message: '#^Function csp_style_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/login.php
+
+		-
+			message: '#^Function csrf_field not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/login.php
+
+		-
+			message: '#^Function esc not found\.$#'
+			identifier: function.notFound
+			count: 41
+			path: app/Views/login.php
+
+		-
+			message: '#^Function old not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/login.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Views/login.php
+
+		-
+			message: '#^Function site_url not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Views/login.php
+
+		-
+			message: '#^Variable \$login_t on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: app/Views/login.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Views/shared.php
+
+		-
+			message: '#^Function base_url not found\.$#'
+			identifier: function.notFound
+			count: 7
+			path: app/Views/shared.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/shared.php
+
+		-
+			message: '#^Function csp_script_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/shared.php
+
+		-
+			message: '#^Function csp_style_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/shared.php
+
+		-
+			message: '#^Function esc not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/shared.php
+
+		-
+			message: '#^Function view not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/shared.php
+
+		-
+			message: '#^Variable \$hash might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Views/shared.php
+
+		-
+			message: '#^Variable \$is_file might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: app/Views/shared.php
+
+		-
+			message: '#^Variable \$share might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Views/shared.php
+
+		-
+			message: '#^Variable \$translations on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: app/Views/shared.php
+
+		-
+			message: '#^Function base_url not found\.$#'
+			identifier: function.notFound
+			count: 3
+			path: app/Views/shared_password.php
+
+		-
+			message: '#^Function csp_style_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/shared_password.php
+
+		-
+			message: '#^Function csrf_field not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/shared_password.php
+
+		-
+			message: '#^Function esc not found\.$#'
+			identifier: function.notFound
+			count: 7
+			path: app/Views/shared_password.php
+
+		-
+			message: '#^Function session not found\.$#'
+			identifier: function.notFound
+			count: 2
+			path: app/Views/shared_password.php
+
+		-
+			message: '#^Function site_url not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/shared_password.php
+
+		-
+			message: '#^Variable \$hash might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Views/shared_password.php
+
+		-
+			message: '#^Constant ENVIRONMENT not found\.$#'
+			identifier: constant.notFound
+			count: 1
+			path: app/Views/welcome_message.php
+
+		-
+			message: '#^Function csp_script_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/welcome_message.php
+
+		-
+			message: '#^Function csp_style_nonce not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/welcome_message.php

@@ -6,6 +6,7 @@ use App\Models\UserModel;
 use App\Services\LogService;
 use App\Services\AuthenticationService;
 use App\Services\PasswordPolicy;
+use App\Services\StepUpAuthenticationService;
 use App\Services\VFS\PathPolicy;
 
 class UserAdminController extends BaseController
@@ -31,6 +32,18 @@ class UserAdminController extends BaseController
         return true;
     }
 
+    private function requireStepUp(string $action)
+    {
+        if ((new StepUpAuthenticationService($this->userModel))->consume($this->request, $action)) {
+            return true;
+        }
+
+        return $this->fail([
+            'error' => 'Additional authentication is required.',
+            'action' => $action,
+        ], 428, 'step_up_required');
+    }
+
     // --- Roles ---
 
     public function getRoles()
@@ -42,6 +55,7 @@ class UserAdminController extends BaseController
     public function saveRole()
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
+        if (($stepUp = $this->requireStepUp('role.save')) !== true) return $stepUp;
         $json = $this->request->getJSON();
         $name = $json->name ?? '';
         $permissions = $json->permissions ?? [];
@@ -77,6 +91,7 @@ class UserAdminController extends BaseController
     public function deleteRole($name = null)
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
+        if (($stepUp = $this->requireStepUp('role.delete')) !== true) return $stepUp;
         if (!$name) return $this->fail('Role name required');
 
         $roles = $this->userModel->getRoles();
@@ -136,6 +151,7 @@ class UserAdminController extends BaseController
     public function saveGroup()
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
+        if (($stepUp = $this->requireStepUp('group.save')) !== true) return $stepUp;
         $json = $this->request->getJSON();
         $name = $json->name ?? '';
         $roles = $json->roles ?? [];
@@ -165,6 +181,7 @@ class UserAdminController extends BaseController
     public function deleteGroup($name = null)
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
+        if (($stepUp = $this->requireStepUp('group.delete')) !== true) return $stepUp;
         if (!$name) return $this->fail('Group name required');
 
         $groups = $this->userModel->getGroups();
@@ -216,6 +233,7 @@ class UserAdminController extends BaseController
     public function create()
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
+        if (($stepUp = $this->requireStepUp('user.create')) !== true) return $stepUp;
 
         $json = $this->request->getJSON();
         $username = $json->username ?? '';
@@ -260,6 +278,7 @@ class UserAdminController extends BaseController
     public function update($username = null)
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
+        if (($stepUp = $this->requireStepUp('user.update')) !== true) return $stepUp;
         if (!$username) return $this->fail('Username required');
         if (!$this->userModel->isValidUsername($username)) return $this->fail('Invalid username format');
 
@@ -341,6 +360,7 @@ class UserAdminController extends BaseController
     public function delete($username = null)
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
+        if (($stepUp = $this->requireStepUp('user.delete')) !== true) return $stepUp;
         if (!$username) return $this->fail('Username required');
         if (!$this->userModel->isValidUsername($username)) return $this->fail('Invalid username format');
 

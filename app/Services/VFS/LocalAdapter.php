@@ -11,6 +11,7 @@ class LocalAdapter implements IFileSystem
 {
     private string $rootPath;
     private ResourcePolicy $resourcePolicy;
+    private ?\App\Services\OperationBudget $operationBudget = null;
     private int $archiveEntries = 0;
     private int $archiveBytes = 0;
 
@@ -46,25 +47,34 @@ class LocalAdapter implements IFileSystem
             throw new Exception("Directory not found: $path");
         }
 
-        $items = scandir($fullPath);
         $result = [];
+        $handle = opendir($fullPath);
+        if ($handle === false) {
+            throw new Exception("Unable to read directory: $path");
+        }
 
-        foreach ($items as $item) {
-            if ($item === '.' || $item === '..') {
-                continue;
-            }
+        try {
+            while (($item = readdir($handle)) !== false) {
+                if ($item === '.' || $item === '..') {
+                    continue;
+                }
 
-            if (!$showHidden && str_starts_with($item, '.')) {
-                continue;
-            }
+                if (!$showHidden && str_starts_with($item, '.')) {
+                    continue;
+                }
+                if (count($result) >= $this->resourcePolicy->maxDirectoryEntries()) {
+                    throw new Exception('Directory listing exceeds the configured resource limit.');
+                }
 
-            $itemPath = $fullPath . DIRECTORY_SEPARATOR . $item;
-            if (is_link($itemPath)) {
-                continue;
+                $itemPath = $fullPath . DIRECTORY_SEPARATOR . $item;
+                if (is_link($itemPath)) {
+                    continue;
+                }
+                $relativePath = $path === '/' || $path === '' ? $item : $path . '/' . $item;
+                $result[] = $this->getMetadataInternal($itemPath, $relativePath);
             }
-            $relativePath = $path === '/' || $path === '' ? $item : $path . '/' . $item;
-            
-            $result[] = $this->getMetadataInternal($itemPath, $relativePath);
+        } finally {
+            closedir($handle);
         }
 
         return $result;
@@ -76,12 +86,15 @@ class LocalAdapter implements IFileSystem
         if (!is_file($fullPath)) {
             throw new Exception("File not found: $path");
         }
-        $content = file_get_contents($fullPath);
-        if ($content === false) {
+        $stream = fopen($fullPath, 'rb');
+        if ($stream === false) {
             throw new Exception("Unable to read file: $path");
         }
-
-        return $content;
+        try {
+            return $this->resourcePolicy->readStream($stream);
+        } finally {
+            fclose($stream);
+        }
     }
 
     public function openReadStream(string $path)
@@ -242,6 +255,7 @@ class LocalAdapter implements IFileSystem
 
     public function archive(array $sources, string $destination): bool
     {
+        $this->operationBudget = $this->resourcePolicy->startOperation();
         $this->archiveEntries = 0;
         $this->archiveBytes = 0;
         $fullDest = $this->resolvePath($destination);
@@ -293,10 +307,12 @@ class LocalAdapter implements IFileSystem
 
     private function addDirToZip(ZipArchive $zip, string $dir, string $localPath)
     {
+        $this->operationBudget?->tick();
         $this->reserveArchive();
         $zip->addEmptyDir($localPath);
         $files = scandir($dir);
         foreach ($files as $file) {
+            $this->operationBudget?->tick();
             if ($file === '.' || $file === '..') continue;
             $fullPath = $dir . DIRECTORY_SEPARATOR . $file;
             $newLocalPath = $localPath . '/' . $file;
@@ -331,6 +347,7 @@ class LocalAdapter implements IFileSystem
             \RecursiveIteratorIterator::SELF_FIRST
         );
         foreach ($iterator as $item) {
+            $this->operationBudget?->tick();
             if ($item->isLink()) {
                 throw new Exception('Refusing to archive symbolic links.');
             }
@@ -569,11 +586,17 @@ class LocalAdapter implements IFileSystem
 
     public function search(string $query): array
     {
+        $budget = $this->resourcePolicy->startOperation();
         $results = [];
         $dir = new \RecursiveDirectoryIterator($this->rootPath, \RecursiveDirectoryIterator::SKIP_DOTS);
         $iterator = new \RecursiveIteratorIterator($dir, \RecursiveIteratorIterator::SELF_FIRST);
 
+        $visited = 0;
         foreach ($iterator as $file) {
+            $budget->tick();
+            if (++$visited > $this->resourcePolicy->maxDirectoryEntries()) {
+                throw new Exception('Search exceeds the configured resource limit.');
+            }
             if ($file->isLink()) {
                 continue;
             }
@@ -587,6 +610,7 @@ class LocalAdapter implements IFileSystem
                     $relativePath = str_replace('\\', '/', $relativePath);
                     
                     $results[] = $this->getMetadataInternal($fullPath, $relativePath);
+                    $this->resourcePolicy->assertSearchResults(count($results));
                 }
             }
         }
@@ -595,11 +619,17 @@ class LocalAdapter implements IFileSystem
 
     public function getDirectorySize(string $path): int
     {
+        $budget = $this->resourcePolicy->startOperation();
         $fullPath = $this->resolvePath($path);
         if (!is_dir($fullPath)) return 0;
 
         $size = 0;
+        $visited = 0;
         foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($fullPath, \RecursiveDirectoryIterator::SKIP_DOTS)) as $file) {
+            $budget->tick();
+            if (++$visited > $this->resourcePolicy->maxDirectoryEntries()) {
+                throw new Exception('Directory size exceeds the configured resource limit.');
+            }
             if ($file->isLink()) {
                 continue;
             }

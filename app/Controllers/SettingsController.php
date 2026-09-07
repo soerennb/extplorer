@@ -6,6 +6,7 @@ use App\Services\SettingsService;
 use App\Services\EmailService;
 use App\Services\LogService;
 use App\Services\RemoteEndpointPolicy;
+use App\Services\StepUpAuthenticationService;
 
 class SettingsController extends BaseController
 {
@@ -25,6 +26,18 @@ class SettingsController extends BaseController
             return $this->failForbidden('Access denied');
         }
         return true;
+    }
+
+    private function requireStepUp(string $action)
+    {
+        if ((new StepUpAuthenticationService())->consume($this->request, $action)) {
+            return true;
+        }
+
+        return $this->fail([
+            'error' => 'Additional authentication is required.',
+            'action' => $action,
+        ], 428, 'step_up_required');
     }
 
     public function index()
@@ -53,6 +66,7 @@ class SettingsController extends BaseController
     public function update()
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
+        if (($stepUp = $this->requireStepUp('settings.update')) !== true) return $stepUp;
 
         $json = $this->request->getJSON(true);
         if (!$json) return $this->fail('Invalid JSON');

@@ -14,7 +14,15 @@ class FtpAdapter implements IFileSystem
     private int $port;
     private bool $secure;
 
-    public function __construct(string $host, string $user, string $pass, int $port = 21, string $root = '/', bool $secure = false)
+    public function __construct(
+        string $host,
+        string $user,
+        string $pass,
+        int $port = 21,
+        string $root = '/',
+        bool $secure = false,
+        string $tlsSpkiPin = ''
+    )
     {
         if (!$secure && !function_exists('ftp_connect')) {
             throw new Exception("FTP extension not installed");
@@ -27,7 +35,15 @@ class FtpAdapter implements IFileSystem
         $this->secure = $secure;
         $this->root = RemotePathPolicy::normalizeRoot($root);
 
-        $endpoint = (new RemoteEndpointPolicy())->authorize($secure ? 'ftps' : 'ftp', $host, $port);
+        $endpoint = (new RemoteEndpointPolicy())->authorize($secure ? 'ftps' : 'ftp', $host, $port, '', $secure);
+        if ($secure) {
+            (new \App\Services\RemoteSecurityPolicy())->verifyFtpsCertificate(
+                $endpoint['host'],
+                $endpoint['connect_host'],
+                $port,
+                ['spki_pin' => $tlsSpkiPin]
+            );
+        }
         $this->host = $endpoint['host'];
 
         $connectHost = $endpoint['connect_host'];
@@ -73,12 +89,15 @@ class FtpAdapter implements IFileSystem
 
     public function listDirectory(string $path, bool $showHidden = true): array
     {
+        $budget = (new ResourcePolicy())->startOperation();
         $fullPath = $this->resolvePath($path);
         $raw = ftp_rawlist($this->conn, $fullPath);
         if ($raw === false) return [];
+        (new ResourcePolicy())->assertDirectoryEntries(count($raw));
 
         $results = [];
         foreach ($raw as $line) {
+            $budget->tick();
             $data = $this->parseRawList($line);
             if (!$data || $data['name'] === '.' || $data['name'] === '..') continue;
             if (!$showHidden && str_starts_with($data['name'], '.')) continue;
@@ -121,22 +140,40 @@ class FtpAdapter implements IFileSystem
 
     public function readFile(string $path): string
     {
+        $policy = new ResourcePolicy();
+        $this->assertRemoteSize($path, $policy->maxContentBytes());
         $temp = fopen('php://temp', 'r+');
-        if (ftp_fget($this->conn, $temp, $this->resolvePath($path), FTP_BINARY)) {
-            rewind($temp);
-            return stream_get_contents($temp);
+        if ($temp === false) {
+            throw new Exception('Unable to allocate a bounded FTP content buffer.');
         }
+        if (ftp_fget($this->conn, $temp, $this->resolvePath($path), FTP_BINARY)) {
+            $stats = fstat($temp);
+            if (is_array($stats) && (int)$stats['size'] > $policy->maxContentBytes()) {
+                fclose($temp);
+                throw new Exception('Remote file exceeds the configured content limit.');
+            }
+            rewind($temp);
+            return $policy->readStream($temp);
+        }
+        fclose($temp);
         throw new Exception("Could not read FTP file: $path");
     }
 
     public function openReadStream(string $path)
     {
+        $policy = new ResourcePolicy();
+        $this->assertRemoteSize($path, $policy->maxDownloadBytes());
         $temp = tmpfile();
         if ($temp === false || !ftp_fget($this->conn, $temp, $this->resolvePath($path), FTP_BINARY)) {
             if (is_resource($temp)) {
                 fclose($temp);
             }
             throw new Exception("Could not open FTP file: {$path}");
+        }
+        $stats = fstat($temp);
+        if (is_array($stats) && (int)$stats['size'] > $policy->maxDownloadBytes()) {
+            fclose($temp);
+            throw new Exception('Remote file exceeds the configured download limit.');
         }
         rewind($temp);
         return $temp;
@@ -272,6 +309,14 @@ class FtpAdapter implements IFileSystem
     private function normalizeRelativePath(string $path): string
     {
         return RemotePathPolicy::normalizeRelative($path);
+    }
+
+    private function assertRemoteSize(string $path, int $limit): void
+    {
+        $size = @ftp_size($this->conn, $this->resolvePath($path));
+        if ($size >= 0 && $size > $limit) {
+            throw new Exception('Remote file exceeds the configured resource limit.');
+        }
     }
 
     public function getMetadata(string $path): ?array

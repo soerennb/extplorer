@@ -37,5 +37,16 @@
     "mount_remove_failed": "Failed to remove mount.",
     "mount_remove_confirm": "This mount will be removed.",
     "mount_test_success": "Connection successful.",
-    "mount_test_failed": "Connection failed."
+    "mount_test_failed": "Connection failed.",
+    "mount_auth_method": "Authentication",
+    "mount_auth_password": "Password",
+    "mount_auth_private_key": "Public key",
+    "mount_private_key": "Private key",
+    "mount_private_key_keep": "Leave blank to keep current key",
+    "mount_public_key": "Public key",
+    "mount_public_key_keep": "Leave blank to keep current key",
+    "mount_private_key_passphrase": "Private-key passphrase",
+    "mount_tls_spki_pin": "FTPS SPKI SHA-256 pin (optional)",
+    "mount_tls_spki_pin_hint": "The system CA store is always checked in strict mode; the pin hashes the public key.",
+    "mount_error_keys": "Private and public keys are required."
 }

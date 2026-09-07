@@ -8,28 +8,7 @@ class VfsFactory
 {
     private static function revealConnectionSecret(string $secret): string
     {
-        if ($secret === '') {
-            return '';
-        }
-
-        if (!str_starts_with($secret, 'enc:')) {
-            return $secret;
-        }
-
-        $payload = substr($secret, 4);
-        if ((bool)config('Encryption')->rawData) {
-            $decoded = base64_decode($payload, true);
-            if ($decoded === false) {
-                return '';
-            }
-            $payload = $decoded;
-        }
-
-        try {
-            return (string)\Config\Services::encrypter()->decrypt($payload);
-        } catch (\Throwable $e) {
-            return '';
-        }
+        return (new \App\Services\RemoteCredentialService())->reveal($secret);
     }
 
     public static function createFileSystem(?string $username = null, array $connection = []): IFileSystem
@@ -48,19 +27,26 @@ class VfsFactory
                 $password,
                 $connection['port'],
                 '/',
-                $mode === 'ftps'
+                $mode === 'ftps',
+                (string)($connection['tls_spki_pin'] ?? '')
             );
         }
 
         if ($mode === 'sftp') {
             $password = self::revealConnectionSecret((string)($connection['pass'] ?? ''));
+            $privateKey = self::revealConnectionSecret((string)($connection['private_key'] ?? ''));
+            $publicKey = self::revealConnectionSecret((string)($connection['public_key'] ?? ''));
+            $passphrase = self::revealConnectionSecret((string)($connection['private_key_passphrase'] ?? ''));
             return new Ssh2Adapter(
                 $connection['host'],
                 $connection['user'],
                 $password,
                 $connection['port'],
                 '/',
-                (string)($connection['host_key_fingerprint'] ?? '')
+                (string)($connection['host_key_fingerprint'] ?? ''),
+                $privateKey,
+                $publicKey,
+                $passphrase
             );
         }
 
@@ -115,7 +101,8 @@ class VfsFactory
                             $config['pass'] ?? '',
                             (int)($config['port'] ?? 21),
                             $config['root'] ?? '/',
-                            $mount['type'] === 'ftps'
+                            $mount['type'] === 'ftps',
+                            (string)($config['tls_spki_pin'] ?? '')
                         );
                         $vfs->mount($mount['name'], $adapter, ['is_external' => true]);
                     }
@@ -127,7 +114,10 @@ class VfsFactory
                             $config['pass'] ?? '',
                             (int)($config['port'] ?? 22),
                             $config['root'] ?? '/',
-                            (string)($config['host_key_fingerprint'] ?? '')
+                            (string)($config['host_key_fingerprint'] ?? ''),
+                            self::revealConnectionSecret((string)($config['private_key'] ?? '')),
+                            self::revealConnectionSecret((string)($config['public_key'] ?? '')),
+                            self::revealConnectionSecret((string)($config['private_key_passphrase'] ?? ''))
                         );
                         $vfs->mount($mount['name'], $adapter, ['is_external' => true]);
                     }

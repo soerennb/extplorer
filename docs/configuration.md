@@ -42,15 +42,35 @@ thumbnail decoding and storage backups. Configure them with
 `EXTPLORER_BACKUP_MAX_MB`. Directory listings are capped by
 `EXTPLORER_MAX_DIRECTORY_ENTRIES` (default 10,000), editor reads by
 `EXTPLORER_MAX_CONTENT_MB` (default 16 MB), and outbound connection setup by
-`EXTPLORER_REMOTE_TIMEOUT_SECONDS` (default 15 seconds). The defaults are
+`EXTPLORER_REMOTE_TIMEOUT_SECONDS` (default 15 seconds) and
+`EXTPLORER_MAX_OPERATION_SECONDS` (default 120 seconds) bound outbound and
+recursive operations. Search results are capped by
+`EXTPLORER_MAX_SEARCH_RESULTS` (default 10,000). The defaults are
 intentionally finite and should be reviewed together with PHP/Nginx upload
 and timeout settings.
 
-For public deployments, an optional antivirus stage can scan files in
-`writable/uploads` (for example with ClamAV) before they are made available to
-other users. eXtplorer does not execute an arbitrary scanner command from an
-HTTP request; integrate the scanner as a separate upload-volume worker or
-reverse-proxy pipeline and quarantine files until the scan succeeds.
+WebDAV request depth is limited to one level by default. Configure
+`EXTPLORER_WEBDAV_MAX_DEPTH` when clients require a deeper listing, but keep
+the value finite; `Depth: infinity` is always rejected to avoid unbounded
+recursive requests. Cross-origin `Destination` headers are rejected.
+
+For public deployments, set `EXTPLORER_UPLOAD_SCAN_MODE=external` to keep both
+authenticated and public-share uploads out of the managed file tree until an
+external scanner approves them. Pending payloads and JSON manifests are stored
+in `writable/uploads/quarantine` with mode `0700`. A native worker or separate
+container can watch pending manifests and finalize a result without an HTTP
+scanner command:
+
+```bash
+php spark uploads:scan-result QUARANTINE_ID clean --reason 'clamav: OK'
+```
+
+Use `infected`, `error` or `expired` to reject a payload. Quarantine capacity
+and retention are bounded by `EXTPLORER_UPLOAD_QUARANTINE_MAX_MB`,
+`EXTPLORER_UPLOAD_QUARANTINE_MAX_FILES` and
+`EXTPLORER_UPLOAD_QUARANTINE_TTL_SECONDS`. The default is `off` for backward
+compatibility. A scanner must treat the payload as untrusted bytes and must
+not execute it. WebDAV and direct downloads never expose the quarantine path.
 
 `sqlite` is intended for one application instance. Database-backed sessions
 require MySQL/MariaDB or PostgreSQL because CodeIgniter does not provide a
@@ -109,6 +129,9 @@ rolls back staged files if activation fails.
 The following controls are enabled in the application and should be considered part of your operational baseline:
 
 - HTTPS and secure cookies are enforced in production mode.
+- Session IDs are regenerated on login and old IDs are destroyed. Set
+  `EXTPLORER_SESSION_MATCH_IP=1` only when stable client IPs are guaranteed;
+  otherwise normal mobile/proxy IP changes would invalidate sessions.
 - CSRF token randomization and regeneration are enabled.
 - Public share endpoints have throttling:
   - Share password auth: `10 requests/minute` per `share + IP`
@@ -137,14 +160,18 @@ The following controls are enabled in the application and should be considered p
   environment-only escape hatch for controlled internal networks and must be
   paired with a narrow exact allowlist.
 - Strict remote security is the default: plain FTP is disabled and SFTP
-  requires a pinned host-key fingerprint. FTPS remains disabled until
-  certificate verification is configured. Set
+  requires a pinned host-key fingerprint. FTPS requires a verified TLS
+certificate and can additionally use `EXTPLORER_FTPS_CA_FILE` or a
+  connection SPKI pin (hex SHA-256 or `sha256/<base64>`). Set
   `EXTPLORER_REMOTE_SECURITY_MODE=compat` only for a documented migration.
 - Set `EXTPLORER_REMOTE_TIMEOUT_SECONDS` to bound outbound connection setup
   and use network-level egress filtering as a second enforcement layer.
 - Only explicitly configured reverse proxies may supply forwarded headers.
   Set `EXTPLORER_TRUSTED_PROXY_IPS` to concrete proxy IPs/CIDRs; never trust
   forwarded headers from arbitrary clients.
+- In production, HTTPS responses include HSTS with
+  `EXTPLORER_HSTS_MAX_AGE` (default one year). `EXTPLORER_HSTS_INCLUDE_SUBDOMAINS=1`
+  is opt-in because it also affects sibling hostnames.
 - In Compose, an unset `EXTPLORER_REMOTE_LOGIN_ENABLED` intentionally leaves
   the persisted administrator setting in control. Set `0` to enforce a
   platform-level deny regardless of the UI setting.

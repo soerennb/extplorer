@@ -21,6 +21,42 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  secret-scan:
+    name: Secret scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Scan repository history for secrets
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  runtime-policy:
+    name: Container runtime policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate Compose and runtime hardening
+        run: |
+          docker compose config --quiet
+          test "$(docker compose config --format json | jq -r '.services["extplorer-app"].user')" = "82:82"
+          test "$(docker compose config --format json | jq -r '.services["extplorer-app"].read_only')" = "true"
+          test "$(docker compose config --format json | jq -r '.services["extplorer-web"].read_only')" = "true"
+          test "$(docker compose config --format json | jq -r '.services["extplorer-web"].healthcheck.test[1]')" = "wget -q -O /dev/null http://127.0.0.1/health"
+          ! rg -n 'EXTPLORER_(ADMIN_PASS|ENCRYPTION_KEY|SMTP_PASS|DB_PASSWORD|REDIS_PASSWORD):' docker-compose*.yml
+
   composer:
     name: Composer advisories
     runs-on: ubuntu-latest

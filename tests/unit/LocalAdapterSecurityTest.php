@@ -89,4 +89,25 @@ class LocalAdapterSecurityTest extends CIUnitTestCase
         @rmdir($sourceDir);
         @rmdir($root);
     }
+
+    public function testDirectoryListingStopsBeforeMaterializingAllEntries(): void
+    {
+        $root = sys_get_temp_dir() . '/extplorer_listing_limit_' . uniqid('', true);
+        mkdir($root, 0755, true);
+        $previous = getenv('EXTPLORER_MAX_DIRECTORY_ENTRIES');
+        putenv('EXTPLORER_MAX_DIRECTORY_ENTRIES=1');
+        file_put_contents($root . '/one.txt', 'one');
+        file_put_contents($root . '/two.txt', 'two');
+
+        try {
+            $this->expectException(\Exception::class);
+            $this->expectExceptionMessage('Directory listing exceeds');
+            (new LocalAdapter($root))->listDirectory('/');
+        } finally {
+            $previous === false ? putenv('EXTPLORER_MAX_DIRECTORY_ENTRIES') : putenv('EXTPLORER_MAX_DIRECTORY_ENTRIES=' . $previous);
+            @unlink($root . '/one.txt');
+            @unlink($root . '/two.txt');
+            @rmdir($root);
+        }
+    }
 }

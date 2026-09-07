@@ -48,9 +48,11 @@ class MountService
                 if (!in_array($type, ['ftp', 'ftps', 'sftp', 'ssh2'], true)) {
                     continue;
                 }
-                $pass = $mount['config']['pass'] ?? null;
-                if (is_string($pass) && $pass !== '' && !$this->isEncryptedSecret($pass)) {
-                    $mounts[$id]['config']['pass'] = $this->encryptSecret($pass);
+                foreach (['pass', 'private_key', 'public_key', 'private_key_passphrase'] as $secretName) {
+                    $secret = $mount['config'][$secretName] ?? null;
+                    if (is_string($secret) && $secret !== '' && !$this->isEncryptedSecret($secret)) {
+                        $mounts[$id]['config'][$secretName] = $this->encryptSecret($secret);
+                    }
                 }
             }
         });
@@ -87,6 +89,35 @@ class MountService
         return $stripped[$id];
     }
 
+    /** Return the last observed mount state without contacting the endpoint. */
+    public function getMountHealth(string $id, string $username): array
+    {
+        $mount = $this->getMountForUser($id, $username, false);
+        $health = is_array($mount['health'] ?? null) ? $mount['health'] : [];
+        return [
+            'id' => $mount['id'] ?? $id,
+            'name' => $mount['name'] ?? '',
+            'type' => $mount['type'] ?? '',
+            'status' => (string)($health['status'] ?? 'unknown'),
+            'checked_at' => (int)($health['checked_at'] ?? 0),
+            'error' => (string)($health['error'] ?? ''),
+        ];
+    }
+
+    public function recordMountHealth(string $id, string $username, bool $healthy, string $error = ''): void
+    {
+        AtomicFileStore::transaction($this->mountsFile, function (array &$mounts) use ($id, $username, $healthy, $error): void {
+            if (!isset($mounts[$id]) || (($mounts[$id]['user'] ?? '') !== $username && !can('admin_users'))) {
+                return;
+            }
+            $mounts[$id]['health'] = [
+                'status' => $healthy ? 'healthy' : 'unhealthy',
+                'checked_at' => time(),
+                'error' => substr($error, 0, 500),
+            ];
+        });
+    }
+
     public function addMount(string $username, string $name, string $type, array $config): string
     {
         // Permission Check
@@ -108,6 +139,7 @@ class MountService
                 'type' => $type,
                 'config' => $config,
                 'created_at' => time(),
+                'health' => ['status' => 'healthy', 'checked_at' => time(), 'error' => ''],
             ];
             return $id;
         });
@@ -131,8 +163,8 @@ class MountService
 
         $name = $this->sanitizeMountName($name);
         $this->assertMountNameAvailable($mounts, $existing['user'], $name, $id);
-        $existingEncryptedPass = (string)($existing['config']['pass'] ?? '');
-        [$type, $config] = $this->validateAndNormalizeMount($type, $config, $existingEncryptedPass, true);
+        $existingConfig = is_array($existing['config'] ?? null) ? $existing['config'] : [];
+        [$type, $config] = $this->validateAndNormalizeMount($type, $config, $existingConfig, true);
         $this->validateConnectivity($type, $config);
 
         $updated = AtomicFileStore::transaction($this->mountsFile, function (array &$mounts) use ($id, $username, $name, $type, $config): array {
@@ -152,6 +184,7 @@ class MountService
                 'config' => $config,
                 'created_at' => $current['created_at'] ?? time(),
                 'updated_at' => time(),
+                'health' => ['status' => 'healthy', 'checked_at' => time(), 'error' => ''],
             ];
             return $mounts[$id];
         });
@@ -165,21 +198,25 @@ class MountService
             throw new \Exception("Permission denied: Cannot mount external paths.");
         }
 
-        $existingEncryptedPass = '';
+        $existingConfig = [];
         if ($id) {
-            $existing = $this->getMountForUser($id, $username, true);
-            $existingEncryptedPass = (string)($existing['config']['pass'] ?? '');
+            $existing = $this->getStoredMountForUser($id, $username);
+            $existingConfig = is_array($existing['config'] ?? null) ? $existing['config'] : [];
         }
 
         $name = $this->sanitizeMountName($name);
         $mounts = $this->getMounts();
         $this->assertMountNameAvailable($mounts, $username, $name, $id);
-        [$type, $config] = $this->validateAndNormalizeMount($type, $config, $existingEncryptedPass, true);
+        [$type, $config] = $this->validateAndNormalizeMount($type, $config, $existingConfig, true);
         $this->validateConnectivity($type, $config);
 
         $configForResponse = $config;
-        if (isset($configForResponse['pass'])) {
-            unset($configForResponse['pass']);
+        foreach (['pass', 'private_key', 'public_key', 'private_key_passphrase'] as $secretName) {
+            unset($configForResponse[$secretName]);
+        }
+
+        if ($id !== null) {
+            $this->recordMountHealth($id, $username, true);
         }
 
         return [
@@ -187,6 +224,9 @@ class MountService
             'name' => $name,
             'type' => $type,
             'config' => $configForResponse,
+            'has_pass' => !empty($config['pass']),
+            'has_private_key' => !empty($config['private_key']),
+            'has_public_key' => !empty($config['public_key']),
         ];
     }
 
@@ -214,6 +254,21 @@ class MountService
     private function getEncrypter(): EncrypterInterface
     {
         return \Config\Services::encrypter();
+    }
+
+    private function getStoredMountForUser(string $id, string $username): array
+    {
+        $mounts = $this->getMounts();
+        if (!isset($mounts[$id])) {
+            throw new \Exception('Mount not found.');
+        }
+
+        $mount = $mounts[$id];
+        if (($mount['user'] ?? '') !== $username && !can('admin_users')) {
+            throw new \Exception('Permission denied.');
+        }
+
+        return $mount;
     }
 
     private function isEncryptedSecret($value): bool
@@ -268,6 +323,12 @@ class MountService
             if (is_string($pass) && $pass !== '') {
                 $mounts[$id]['config']['pass'] = $this->decryptSecret($pass);
             }
+            foreach (['private_key', 'public_key', 'private_key_passphrase'] as $secretName) {
+                $secret = $mount['config'][$secretName] ?? null;
+                if (is_string($secret) && $secret !== '') {
+                    $mounts[$id]['config'][$secretName] = $this->decryptSecret($secret);
+                }
+            }
         }
         return $mounts;
     }
@@ -279,6 +340,15 @@ class MountService
             $mounts[$id]['has_pass'] = $hasPass;
             if ($hasPass) {
                 unset($mounts[$id]['config']['pass']);
+            }
+            $hasPrivateKey = isset($mounts[$id]['config']['private_key'])
+                && (string)$mounts[$id]['config']['private_key'] !== '';
+            $mounts[$id]['has_private_key'] = $hasPrivateKey;
+            $hasPublicKey = isset($mounts[$id]['config']['public_key'])
+                && (string)$mounts[$id]['config']['public_key'] !== '';
+            $mounts[$id]['has_public_key'] = $hasPublicKey;
+            foreach (['private_key', 'public_key', 'private_key_passphrase'] as $secretName) {
+                unset($mounts[$id]['config'][$secretName]);
             }
         }
         return $mounts;
@@ -326,7 +396,7 @@ class MountService
     private function validateAndNormalizeMount(
         string $type,
         array $config,
-        string $existingEncryptedPass = '',
+        array $existingConfig = [],
         bool $allowExistingPass = false
     ): array {
         $type = strtolower($type);
@@ -359,6 +429,10 @@ class MountService
             $host = strtolower(trim((string)($config['host'] ?? '')));
             $user = trim((string)($config['user'] ?? ''));
             $passInput = (string)($config['pass'] ?? '');
+            $authMethod = strtolower(trim((string)($config['auth_method'] ?? ($existingConfig['auth_method'] ?? 'password'))));
+            $privateKeyInput = (string)($config['private_key'] ?? '');
+            $publicKeyInput = (string)($config['public_key'] ?? '');
+            $passphraseInput = (string)($config['private_key_passphrase'] ?? '');
             $portDefault = $type === 'sftp' ? 22 : ($type === 'ftps' ? 990 : 21);
             $port = (int)($config['port'] ?? $portDefault);
             $root = trim((string)($config['root'] ?? '/'));
@@ -369,6 +443,12 @@ class MountService
             if ($user === '') {
                 throw new \Exception("Remote username is required.");
             }
+            if (!in_array($authMethod, ['password', 'private_key'], true)) {
+                throw new \Exception('Remote authentication method is invalid.');
+            }
+            if ($type !== 'sftp' && $authMethod !== 'password') {
+                throw new \Exception('Private-key authentication is only supported for SFTP.');
+            }
             if ($port < 1 || $port > 65535) {
                 throw new \Exception("Remote port is invalid.");
             }
@@ -376,31 +456,91 @@ class MountService
                 throw new \Exception("Encryption key not configured. Set Config\\Encryption::\$key before adding remote mounts.");
             }
 
+            $storedPass = (string)($existingConfig['pass'] ?? '');
+            $storedPrivateKey = (string)($existingConfig['private_key'] ?? '');
+            $storedPublicKey = (string)($existingConfig['public_key'] ?? '');
+            $storedPassphrase = (string)($existingConfig['private_key_passphrase'] ?? '');
+
             $plainPass = $passInput;
             $encryptedPass = '';
             if ($plainPass !== '') {
                 $encryptedPass = $this->encryptSecret($plainPass);
-            } elseif ($allowExistingPass && $existingEncryptedPass !== '') {
-                $plainPass = $this->decryptSecret($existingEncryptedPass);
-                $encryptedPass = $existingEncryptedPass;
+            } elseif ($allowExistingPass && $storedPass !== '') {
+                $plainPass = $this->decryptSecret($storedPass);
+                $encryptedPass = $storedPass;
             }
 
-            if ($plainPass === '') {
+            $plainPrivateKey = $privateKeyInput;
+            $encryptedPrivateKey = '';
+            if ($plainPrivateKey !== '') {
+                $encryptedPrivateKey = $this->encryptSecret($plainPrivateKey);
+            } elseif ($allowExistingPass && $storedPrivateKey !== '') {
+                $plainPrivateKey = $this->decryptSecret($storedPrivateKey);
+                $encryptedPrivateKey = $storedPrivateKey;
+            }
+
+            $plainPublicKey = $publicKeyInput;
+            $encryptedPublicKey = '';
+            if ($plainPublicKey !== '') {
+                $encryptedPublicKey = $this->encryptSecret($plainPublicKey);
+            } elseif ($allowExistingPass && $storedPublicKey !== '') {
+                $plainPublicKey = $this->decryptSecret($storedPublicKey);
+                $encryptedPublicKey = $storedPublicKey;
+            }
+
+            $plainPassphrase = $passphraseInput;
+            $encryptedPassphrase = '';
+            if ($plainPassphrase !== '') {
+                $encryptedPassphrase = $this->encryptSecret($plainPassphrase);
+            } elseif ($allowExistingPass && $storedPassphrase !== '') {
+                $plainPassphrase = $this->decryptSecret($storedPassphrase);
+                $encryptedPassphrase = $storedPassphrase;
+            }
+
+            if ($authMethod === 'password' && $plainPass === '') {
                 throw new \Exception("Remote password is required.");
+            }
+            if ($authMethod === 'private_key' && ($plainPrivateKey === '' || $plainPublicKey === '')) {
+                throw new \Exception('SFTP private and public keys are required.');
+            }
+            if (strlen($plainPrivateKey) > 1024 * 1024 || strlen($plainPublicKey) > 1024 * 1024) {
+                throw new \Exception('SFTP key material is too large.');
             }
 
             $config['host'] = $host;
             $config['user'] = $user;
             $config['port'] = $port;
             $config['root'] = $root === '' ? '/' : $root;
+            $config['auth_method'] = $authMethod;
             if ($type === 'sftp') {
                 $config['host_key_fingerprint'] = trim((string)($config['host_key_fingerprint'] ?? ''));
+                $config['tls_spki_pin'] = '';
+            } elseif ($type === 'ftps') {
+                $rawPin = trim((string)($config['tls_spki_pin'] ?? ''));
+                $config['tls_spki_pin'] = (new RemoteSecurityPolicy())->normalizeTlsSpkiPin($rawPin);
+                if ($rawPin !== '' && $config['tls_spki_pin'] === '') {
+                    throw new \Exception('FTPS SPKI pin must be a SHA-256 fingerprint or sha256/ base64 pin.');
+                }
+                unset($config['host_key_fingerprint']);
             } else {
                 unset($config['host_key_fingerprint']);
+                unset($config['tls_spki_pin']);
             }
-            (new RemoteEndpointPolicy())->authorize($type, $host, $port, (string)($config['host_key_fingerprint'] ?? ''));
+            (new RemoteEndpointPolicy())->authorize(
+                $type,
+                $host,
+                $port,
+                (string)($config['host_key_fingerprint'] ?? ''),
+                $type === 'ftps'
+            );
             $config['pass'] = $encryptedPass;
+            $config['private_key'] = $encryptedPrivateKey;
+            $config['public_key'] = $encryptedPublicKey;
+            $config['private_key_passphrase'] = $encryptedPassphrase;
             $config['__plain_pass'] = $plainPass;
+            $config['__plain_private_key'] = $plainPrivateKey;
+            $config['__plain_public_key'] = $plainPublicKey;
+            $config['__plain_passphrase'] = $plainPassphrase;
             return [$type, $config];
         }
 
@@ -444,7 +584,11 @@ class MountService
         }
 
         $plainPass = (string)($config['__plain_pass'] ?? '');
+        $plainPrivateKey = (string)($config['__plain_private_key'] ?? '');
+        $plainPublicKey = (string)($config['__plain_public_key'] ?? '');
+        $plainPassphrase = (string)($config['__plain_passphrase'] ?? '');
         unset($config['__plain_pass']);
+        unset($config['__plain_private_key'], $config['__plain_public_key'], $config['__plain_passphrase']);
 
         $host = (string)($config['host'] ?? '');
         $user = (string)($config['user'] ?? '');
@@ -452,11 +596,21 @@ class MountService
         $root = (string)($config['root'] ?? '/');
 
         if ($type === 'ftp' || $type === 'ftps') {
-            new FtpAdapter($host, $user, $plainPass, $port, $root, $type === 'ftps');
+            new FtpAdapter($host, $user, $plainPass, $port, $root, $type === 'ftps', (string)($config['tls_spki_pin'] ?? ''));
             return;
         }
 
-        new Ssh2Adapter($host, $user, $plainPass, $port, $root, (string)($config['host_key_fingerprint'] ?? ''));
+        new Ssh2Adapter(
+            $host,
+            $user,
+            $plainPass,
+            $port,
+            $root,
+            (string)($config['host_key_fingerprint'] ?? ''),
+            $plainPrivateKey,
+            $plainPublicKey,
+            $plainPassphrase
+        );
     }
 
 }
