@@ -73,6 +73,79 @@ class RemoteEndpointPolicyTest extends CIUnitTestCase
             ->authorize('ftp', 'files.example.com', 21);
     }
 
+    public function testEveryResolvedAddressMustPassTheTargetPolicy(): void
+    {
+        putenv('EXTPLORER_REMOTE_SECURITY_MODE=compat');
+        putenv('EXTPLORER_REMOTE_ENDPOINT_ALLOWLIST=ftp://files.example.com:21');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('reserved target');
+        (new RemoteEndpointPolicy(static fn(string $host): array => ['8.8.8.8', '127.0.0.1']))
+            ->authorize('ftp', 'files.example.com', 21);
+    }
+
+    /**
+     * @dataProvider reservedAndPrivateIpv6Provider
+     */
+    public function testReservedAndPrivateIpv6TargetsAreRejected(string $ip, string $message): void
+    {
+        putenv('EXTPLORER_REMOTE_SECURITY_MODE=compat');
+        putenv('EXTPLORER_REMOTE_ENDPOINT_ALLOWLIST=sftp://[files.example.com]:22');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage($message);
+        (new RemoteEndpointPolicy(static fn(string $host): array => [$ip]))
+            ->authorize('sftp', 'files.example.com', 22);
+    }
+
+    public static function reservedAndPrivateIpv6Provider(): array
+    {
+        return [
+            'loopback' => ['::1', 'reserved target'],
+            'link local' => ['fe80::1', 'reserved target'],
+            'multicast' => ['ff02::1', 'reserved target'],
+            'unique local' => ['fc00::1', 'private target'],
+        ];
+    }
+
+    public function testIpv4MappedPrivateTargetsAreCheckedAsIpv4(): void
+    {
+        putenv('EXTPLORER_REMOTE_SECURITY_MODE=compat');
+        putenv('EXTPLORER_REMOTE_ENDPOINT_ALLOWLIST=ftp://files.example.com:21');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('private target');
+        (new RemoteEndpointPolicy(static fn(string $host): array => ['::ffff:10.0.0.5']))
+            ->authorize('ftp', 'files.example.com', 21);
+    }
+
+    public function testAuthorizedAddressIsPinnedFromOneResolverResult(): void
+    {
+        putenv('EXTPLORER_REMOTE_SECURITY_MODE=compat');
+        putenv('EXTPLORER_REMOTE_ENDPOINT_ALLOWLIST=ftp://files.example.com:21');
+        $resolverCalls = 0;
+        $policy = new RemoteEndpointPolicy(static function (string $host) use (&$resolverCalls): array {
+            $resolverCalls++;
+            return ['8.8.8.8', '8.8.4.4'];
+        });
+
+        $endpoint = $policy->authorize('ftp', 'files.example.com', 21);
+
+        $this->assertSame(1, $resolverCalls);
+        $this->assertSame('8.8.8.8', $endpoint['connect_host']);
+    }
+
+    public function testPublicIpv6EndpointIsNormalizedAndPinned(): void
+    {
+        putenv('EXTPLORER_REMOTE_SECURITY_MODE=compat');
+        putenv('EXTPLORER_REMOTE_ENDPOINT_ALLOWLIST=sftp://[files.example.com]:22');
+        $policy = new RemoteEndpointPolicy(static fn(string $host): array => ['2001:4860:4860::8888']);
+
+        $endpoint = $policy->authorize('sftp', 'files.example.com', 22);
+
+        $this->assertSame('2001:4860:4860::8888', $endpoint['connect_host']);
+    }
+
     public function testDirectRemoteLoginIsDisabledByDefaultAndCanBeExplicitlyEnabled(): void
     {
         $policy = new RemoteEndpointPolicy();

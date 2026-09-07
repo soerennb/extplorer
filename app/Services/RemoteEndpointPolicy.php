@@ -213,7 +213,7 @@ final class RemoteEndpointPolicy
         if (str_starts_with($host, '[') && str_ends_with($host, ']')) {
             $host = substr($host, 1, -1);
         }
-        return $host;
+        return $this->normalizeIp($host) ?? $host;
     }
 
     private function isValidHost(string $host): bool
@@ -228,13 +228,27 @@ final class RemoteEndpointPolicy
     /** @return list<string> */
     private function resolveHostIps(string $host): array
     {
-        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
-            return [$host];
+        if ($ip = $this->normalizeIp($host)) {
+            return [$ip];
         }
 
         if ($this->resolver !== null) {
             $resolved = ($this->resolver)($host);
-            return is_array($resolved) ? array_values(array_filter($resolved, static fn($ip): bool => filter_var($ip, FILTER_VALIDATE_IP) !== false)) : [];
+            if (!is_array($resolved)) {
+                return [];
+            }
+
+            $ips = [];
+            foreach ($resolved as $candidate) {
+                if (!is_string($candidate)) {
+                    continue;
+                }
+                $normalized = $this->normalizeIp($candidate);
+                if ($normalized !== null) {
+                    $ips[] = $normalized;
+                }
+            }
+            return array_values(array_unique($ips));
         }
 
         $ips = [];
@@ -242,8 +256,11 @@ final class RemoteEndpointPolicy
         if (is_array($records)) {
             foreach ($records as $record) {
                 foreach (['ip', 'ipv6'] as $key) {
-                    if (isset($record[$key]) && filter_var($record[$key], FILTER_VALIDATE_IP) !== false) {
-                        $ips[] = $record[$key];
+                    if (isset($record[$key]) && is_string($record[$key])) {
+                        $normalized = $this->normalizeIp($record[$key]);
+                        if ($normalized !== null) {
+                            $ips[] = $normalized;
+                        }
                     }
                 }
             }
@@ -251,13 +268,38 @@ final class RemoteEndpointPolicy
 
         if ($ips === []) {
             foreach (gethostbynamel($host) ?: [] as $ip) {
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
-                    $ips[] = $ip;
+                $normalized = $this->normalizeIp((string)$ip);
+                if ($normalized !== null) {
+                    $ips[] = $normalized;
                 }
             }
         }
 
         return array_values(array_unique($ips));
+    }
+
+    private function normalizeIp(string $ip): ?string
+    {
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            return null;
+        }
+
+        $packed = inet_pton($ip);
+        if ($packed === false) {
+            return null;
+        }
+
+        // Treat IPv4-mapped IPv6 addresses as IPv4 before applying private
+        // and reserved-range checks. PHP's filter flags otherwise classify
+        // mapped addresses inconsistently across versions.
+        if (strlen($packed) === 16
+            && substr($packed, 0, 10) === str_repeat("\0", 10)
+            && substr($packed, 10, 2) === "\xff\xff") {
+            $packed = substr($packed, 12);
+        }
+
+        $normalized = inet_ntop($packed);
+        return $normalized === false ? null : strtolower($normalized);
     }
 
     private function privateTargetsEnabled(): bool
