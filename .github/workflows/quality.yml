@@ -330,7 +330,7 @@ jobs:
       - name: Verify secret bootstrap drops to non-root FPM
         run: |
           app_container="$(docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml ps -q extplorer-app)"
-          docker top "$app_container" -eo user | awk 'NR > 1 {print $1}' | sort -u | grep -qx 82
+          docker top "$app_container" -eo user,pid,args | awk 'NR > 1 {print $1}' | sort -u | grep -qx 82
 
       - name: Verify atomic code release rollback
         run: |
