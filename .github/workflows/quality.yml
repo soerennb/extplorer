@@ -122,6 +122,7 @@ jobs:
         env:
           EXTPLORER_WRITE_PATH: ${{ runner.temp }}/extplorer-writable
           EXTPLORER_DB_HOST: 127.0.0.1
+          EXTPLORER_DB_PORT: ${{ matrix.backend == 'postgres' && '5432' || '3306' }}
           EXTPLORER_DB_NAME: extplorer
           EXTPLORER_DB_USER: ${{ matrix.backend == 'mysql' && 'root' || 'postgres' }}
           EXTPLORER_DB_PASSWORD: ${{ matrix.backend == 'mysql' && 'root' || 'postgres' }}
