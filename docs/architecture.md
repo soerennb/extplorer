@@ -79,10 +79,20 @@ Vue's reactivity system. CSP rules require external scripts/styles or an explici
 
 ## 7. CI and Beads Tracking
 
-The `Quality` and `Security audit` workflows ignore changes that are limited to `.beads/**`. This keeps Beads status
-commits from consuming the full application, container and dependency test matrix. Manual runs, scheduled security audits,
-reusable `workflow_call` invocations and commits containing any non-Beads change remain enabled.
+`Quality` and `Security audit` use positive application, dependency, Docker and workflow path filters. Changes limited to
+`.beads/**` therefore start no executable CI jobs. Documentation-only changes run the separate `Secret scanning` workflow,
+while application and infrastructure changes run the complete relevant matrix. `bd dolt push` updates the Beads remote and
+does not create a GitHub push event.
 
-When these workflows are configured as required pull-request checks in GitHub, path-filtered workflows can remain pending
-when skipped. In that setup, either do not require these two checks for Beads-only pull requests or keep pull-request
-validation enabled and apply the optimization only to direct Beads pushes on `main`.
+Quality owns the complete functional, compatibility, frontend, Docker E2E and container vulnerability gates. Security owns
+dependency audits and runtime-policy checks on relevant changes; its focused security regression suite and independent
+container scan remain available through the weekly schedule and manual dispatch. Secret scanning is independent so it also
+covers documentation changes without starting the full test matrix.
+
+Release tags first verify successful Quality, Security and Secret scanning runs for the exact SHA on `main`. If those checks
+exist, the release reuses them; otherwise it executes the full reusable gates before publishing. Archive and container
+publishing are blocked unless either path succeeds.
+
+The repository ruleset currently does not require individual path-filtered checks. If required checks are introduced later,
+use a stable aggregate gate rather than making skipped path-filtered workflows required, because GitHub can leave skipped
+checks pending.

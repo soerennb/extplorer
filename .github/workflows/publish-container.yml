@@ -1,12 +1,28 @@
-name: Publish existing container tag
+name: Publish container image
 
 on:
+  workflow_call:
+    inputs:
+      release_tag:
+        description: Immutable Git tag to publish (for example v3.0.0-beta.5)
+        required: true
+        type: string
+      force_qemu:
+        description: Build arm64 through QEMU instead of the native arm64 runner
+        required: false
+        default: false
+        type: boolean
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Existing immutable release tag to publish (for example v3.0.0-beta.3)"
+        description: Existing immutable release tag to publish (for example v3.0.0-beta.5)
         required: true
         type: string
+      force_qemu:
+        description: Build arm64 through QEMU instead of the native arm64 runner
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -16,11 +32,24 @@ concurrency:
   group: publish-container-${{ inputs.release_tag }}
   cancel-in-progress: false
 
+env:
+  IMAGE_NAME: ghcr.io/soerennb/extplorer3
+
 jobs:
-  container:
-    name: Publish container image
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+  build:
+    name: Build ${{ matrix.arch }} image
+    runs-on: ${{ inputs.force_qemu && 'ubuntu-24.04' || matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
     steps:
       - name: Checkout release tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -31,13 +60,17 @@ jobs:
         id: version
         env:
           RELEASE_TAG: ${{ inputs.release_tag }}
+        shell: bash
         run: |
-          set -eu
-          APP_VERSION="${RELEASE_TAG#v}"
-          php scripts/check-release-version.php "$APP_VERSION"
-          echo "version=$APP_VERSION" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          expected_version="${RELEASE_TAG#v}"
+          actual_version="$(sed -nE "s/^[[:space:]]*public[[:space:]]+string[[:space:]]+\\\$version[[:space:]]*=[[:space:]]*'([^']+)';/\1/p" app/Config/App.php)"
+          test -n "$actual_version"
+          test "$actual_version" = "$expected_version"
+          echo "version=$expected_version" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU
+        if: inputs.force_qemu && matrix.arch == 'arm64'
         uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
 
       - name: Set up Docker Buildx
@@ -53,16 +86,96 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push image
+      - name: Build and push by digest
+        id: build
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
-          push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platform }}
           build-args: APP_VERSION=${{ steps.version.outputs.version }}
-          tags: ghcr.io/soerennb/extplorer3:${{ steps.version.outputs.version }}
           labels: org.opencontainers.image.version=${{ steps.version.outputs.version }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=extplorer-image-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=extplorer-image-${{ matrix.arch }}
           provenance: mode=max
           sbom: true
+
+      - name: Record image digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p digests
+          digest="${{ steps.build.outputs.digest }}"
+          test -n "$digest"
+          touch "digests/${digest#sha256:}"
+
+      - name: Upload image digest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: container-digest-${{ matrix.arch }}
+          path: digests/
+          if-no-files-found: error
+          retention-days: 1
+
+  manifest:
+    name: Create multi-architecture manifest
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Download amd64 digest
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: container-digest-amd64
+          path: digests
+
+      - name: Download arm64 digest
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: container-digest-arm64
+          path: digests
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Create and verify manifest tags
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          major="${version%%.*}"
+          remainder="${version#*.}"
+          minor="${remainder%%.*}"
+          source_images=()
+          for digest_file in digests/*; do
+            source_images+=("${IMAGE_NAME}@sha256:$(basename "$digest_file")")
+          done
+          test "${#source_images[@]}" -eq 2
+
+          tags=(
+            "${IMAGE_NAME}:${version}"
+            "${IMAGE_NAME}:${major}.${minor}"
+            "${IMAGE_NAME}:${major}"
+          )
+          case "$version" in
+            *-*) ;;
+            *) tags+=("${IMAGE_NAME}:latest") ;;
+          esac
+
+          for tag in "${tags[@]}"; do
+            docker buildx imagetools create --tag "$tag" "${source_images[@]}"
+          done
+
+          docker buildx imagetools inspect "${IMAGE_NAME}:${version}" \
+            | tee manifest.txt
+          grep -q 'linux/amd64' manifest.txt
+          grep -q 'linux/arm64' manifest.txt

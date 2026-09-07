@@ -2,13 +2,63 @@ name: Security audit
 
 on:
   pull_request:
-    paths-ignore:
-      - '.beads/**'
+    paths:
+      - 'app/**'
+      - 'public/**'
+      - 'resources/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'writable/**'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.node-version'
+      - '.nvmrc'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'docker/**'
+      - 'docker-compose*.yml'
+      - 'nginx.conf.example'
+      - 'spark'
+      - 'env'
+      - 'preload.php'
+      - '.htaccess'
+      - 'build.sh'
+      - 'phpstan*'
+      - 'phpunit*'
+      - '.github/workflows/**'
+      - '.github/actions/**'
   push:
     branches:
       - main
-    paths-ignore:
-      - '.beads/**'
+    paths:
+      - 'app/**'
+      - 'public/**'
+      - 'resources/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'writable/**'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.node-version'
+      - '.nvmrc'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'docker/**'
+      - 'docker-compose*.yml'
+      - 'nginx.conf.example'
+      - 'spark'
+      - 'env'
+      - 'preload.php'
+      - '.htaccess'
+      - 'build.sh'
+      - 'phpstan*'
+      - 'phpunit*'
+      - '.github/workflows/**'
+      - '.github/actions/**'
   schedule:
     - cron: "17 4 * * 1"
   workflow_dispatch:
@@ -18,12 +68,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: security-audit
-  cancel-in-progress: true
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
 
 jobs:
   security-regression:
     name: Native security regression suite
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -37,6 +88,13 @@ jobs:
           extensions: curl, dom, gd, intl, mbstring, sqlite3, xml, zip
           tools: composer:2.10.2
           coverage: none
+
+      - name: Cache Composer downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
 
       - name: Install locked dependencies
         run: composer install --no-interaction --prefer-dist
@@ -52,24 +110,20 @@ jobs:
           tests/unit/LocalAdapterSecurityTest.php
           tests/unit/InstallStateServiceTest.php
 
-  secret-scan:
-    name: Secret scanning
+  workflow-policy:
+    name: Workflow policy
     runs-on: ubuntu-latest
-    timeout-minutes: 8
-    permissions:
-      contents: read
-      pull-requests: read
-      statuses: write
+    timeout-minutes: 5
     steps:
-      - name: Checkout full history
+      - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
 
-      - name: Scan repository history for secrets
-        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Lint GitHub workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          "$(go env GOPATH)/bin/actionlint"
 
   runtime-policy:
     name: Container runtime policy
@@ -88,10 +142,10 @@ jobs:
           test "$(docker compose config --format json | jq -r '.services["extplorer-web"].healthcheck.test[1]')" = "wget -q -O /dev/null http://127.0.0.1/health"
           ! rg -n 'EXTPLORER_(ADMIN_PASS|ENCRYPTION_KEY|SMTP_PASS|DB_PASSWORD|REDIS_PASSWORD):' docker-compose*.yml
 
-  composer:
-    name: Composer advisories
+  dependency-audit:
+    name: Dependency advisories
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -103,39 +157,20 @@ jobs:
           tools: composer:2.10.2
           coverage: none
 
-      - name: Validate Composer configuration
-        run: composer validate --strict --no-check-publish
-
       - name: Audit locked dependencies
         run: composer audit --locked --no-interaction
-
-  frontend:
-    name: NPM advisories and generated assets
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .node-version
-          cache: npm
 
-      - name: Install locked dependencies
-        run: npm ci
-
-      - name: Audit locked dependencies
-        run: npm audit --audit-level=high
-
-      - name: Verify frontend compilation
-        run: |
-          npm run build:js
-          git diff --exit-code -- public/assets/js/compiled public/assets/js/vue.runtime.global.prod.js
+      - name: Audit locked NPM dependencies
+        run: npm audit --package-lock-only --audit-level=high
 
   container:
     name: Container vulnerability scan
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -153,8 +188,8 @@ jobs:
           load: true
           tags: extplorer3:security
           build-args: APP_VERSION=security
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=extplorer-image-amd64
+          cache-to: type=gha,mode=max,scope=extplorer-image-amd64
 
       - name: Scan image for high and critical vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0

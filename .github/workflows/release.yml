@@ -7,22 +7,82 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
-  statuses: write
+  actions: read
+  checks: read
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
+  release-preflight:
+    name: Verify existing gates for release SHA
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      checks_reusable: ${{ steps.checks.outputs.checks_reusable }}
+      checked_sha: ${{ steps.checks.outputs.checked_sha }}
+    steps:
+      - name: Verify successful main checks
+        id: checks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          API_URL: ${{ github.api_url }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "checked_sha=$RELEASE_SHA" >> "$GITHUB_OUTPUT"
+
+          if ! runs_json="$(curl --fail --silent --show-error \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "$API_URL/repos/$REPOSITORY/actions/runs?head_sha=$RELEASE_SHA&per_page=100")"; then
+            echo "Unable to query GitHub Actions runs; falling back to full release gates." >&2
+            echo "checks_reusable=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          required_workflows='["Quality", "Security audit", "Secret scanning"]'
+          if jq -e --argjson required "$required_workflows" '
+            ([.workflow_runs[]
+              | select(.event == "push" and .head_branch == "main" and .conclusion == "success")
+              | .name] | unique) as $successful
+            | ($required - $successful) | length == 0
+          ' <<< "$runs_json" >/dev/null; then
+            echo "checks_reusable=true" >> "$GITHUB_OUTPUT"
+            echo "Reusable checks found for $RELEASE_SHA."
+          else
+            echo "checks_reusable=false" >> "$GITHUB_OUTPUT"
+            echo "Missing successful same-SHA checks; full release gates will run."
+          fi
+
   quality:
     name: Quality gate
+    needs: release-preflight
+    if: needs.release-preflight.outputs.checks_reusable != 'true'
     uses: ./.github/workflows/quality.yml
 
   security:
     name: Security gate
-    needs: quality
+    needs: [release-preflight, quality]
+    if: >-
+      always() &&
+      needs.release-preflight.outputs.checks_reusable != 'true' &&
+      needs.quality.result == 'success'
     uses: ./.github/workflows/security.yml
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+
+  secret:
+    name: Secret gate
+    needs: release-preflight
+    if: needs.release-preflight.outputs.checks_reusable != 'true'
+    uses: ./.github/workflows/secret-scan.yml
     permissions:
       contents: read
       pull-requests: read
@@ -30,7 +90,18 @@ jobs:
 
   archive:
     name: Create deployable archive
-    needs: [quality, security]
+    needs: [release-preflight, quality, security, secret]
+    if: >-
+      always() &&
+      needs.release-preflight.result == 'success' &&
+      (
+        needs.release-preflight.outputs.checks_reusable == 'true' ||
+        (
+          needs.quality.result == 'success' &&
+          needs.security.result == 'success' &&
+          needs.secret.result == 'success'
+        )
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -45,6 +116,13 @@ jobs:
           php-version: "8.5"
           extensions: zip, json, gd, ftp
           tools: composer:2.10.2
+
+      - name: Cache Composer downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
 
       - name: Verify release version
         run: |
@@ -75,7 +153,7 @@ jobs:
           cp -r public release/
           cp -r vendor release/
           cp LICENSE.md README.md .htaccess nginx.conf.example release/
-          cd release && zip -r ../eXtplorer-$VERSION-release.zip .
+          cd release && zip -r "../eXtplorer-${VERSION}-release.zip" .
 
       - name: Verify archive and create checksum
         run: |
@@ -93,62 +171,21 @@ jobs:
 
   container:
     name: Publish container image
-    needs: [quality, security]
-    runs-on: ubuntu-latest
-    # The arm64 build compiles PHP extensions through QEMU. Keep enough room
-    # for a cold cache while still bounding a genuinely stuck build.
-    timeout-minutes: 60
+    needs: [release-preflight, quality, security, secret]
+    if: >-
+      always() &&
+      needs.release-preflight.result == 'success' &&
+      (
+        needs.release-preflight.outputs.checks_reusable == 'true' ||
+        (
+          needs.quality.result == 'success' &&
+          needs.security.result == 'success' &&
+          needs.secret.result == 'success'
+        )
+      )
+    uses: ./.github/workflows/publish-container.yml
+    with:
+      release_tag: ${{ github.ref_name }}
     permissions:
       contents: read
       packages: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Verify release version
-        run: |
-          APP_VERSION="${GITHUB_REF_NAME#v}"
-          php scripts/check-release-version.php "$APP_VERSION"
-          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
-
-      - name: Ensure Ace assets
-        run: bash ./scripts/ensure-ace-assets.sh
-
-      - name: Log in to GHCR
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Generate image metadata
-        id: metadata
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
-        with:
-          images: ghcr.io/soerennb/extplorer3
-          flavor: latest=false
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
-
-      - name: Build and push image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
-        with:
-          context: .
-          push: true
-          platforms: linux/amd64,linux/arm64
-          build-args: APP_VERSION=${{ env.APP_VERSION }}
-          tags: ${{ steps.metadata.outputs.tags }}
-          labels: ${{ steps.metadata.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: mode=max
-          sbom: true

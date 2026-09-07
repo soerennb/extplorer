@@ -1,0 +1,74 @@
+name: Storage backend check
+description: Install the application and verify one selected persistent backend.
+
+inputs:
+  backend:
+    description: Storage backend to verify (mysql, postgres or redis).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Setup PHP
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+      with:
+        php-version: "8.2"
+        extensions: curl, dom, gd, intl, mbstring, mysqli, pdo_mysql, pdo_pgsql, pgsql, redis, sqlite3, xml, zip
+        tools: composer:2.10.2
+        coverage: none
+
+    - name: Cache Composer downloads
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.composer/cache/files
+        key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+        restore-keys: composer-${{ runner.os }}-
+
+    - name: Install PHP dependencies
+      shell: bash
+      run: composer install --no-interaction --prefer-dist
+
+    - name: Verify selected backend
+      shell: bash
+      env:
+        BACKEND: ${{ inputs.backend }}
+        EXTPLORER_WRITE_PATH: ${{ runner.temp }}/extplorer-writable
+        EXTPLORER_DB_HOST: 127.0.0.1
+        EXTPLORER_DB_NAME: extplorer
+        EXTPLORER_DB_USER: ${{ inputs.backend == 'mysql' && 'root' || 'postgres' }}
+        EXTPLORER_DB_PASSWORD: ${{ inputs.backend == 'mysql' && 'root' || 'postgres' }}
+        EXTPLORER_REDIS_HOST: 127.0.0.1
+        EXTPLORER_REDIS_PORT: 6379
+      run: |
+        set -euo pipefail
+        mkdir -p "$EXTPLORER_WRITE_PATH"
+        case "$BACKEND" in
+          mysql)
+            export EXTPLORER_DB_DRIVER=MySQLi
+            export EXTPLORER_DB_PORT=3306
+            export EXTPLORER_STATE_DRIVER=database
+            export EXTPLORER_SESSION_DRIVER=database
+            export EXTPLORER_CACHE_DRIVER=file
+            ;;
+          postgres)
+            export EXTPLORER_DB_DRIVER=Postgre
+            export EXTPLORER_DB_PORT=5432
+            export EXTPLORER_STATE_DRIVER=database
+            export EXTPLORER_SESSION_DRIVER=database
+            export EXTPLORER_CACHE_DRIVER=file
+            ;;
+          redis)
+            export EXTPLORER_STATE_DRIVER=file
+            export EXTPLORER_SESSION_DRIVER=redis
+            export EXTPLORER_CACHE_DRIVER=redis
+            ;;
+          *)
+            echo "Unsupported storage backend: $BACKEND" >&2
+            exit 1
+            ;;
+        esac
+        php spark security:migrate
+        php spark storage:check
+        if [ "$BACKEND" = redis ]; then
+          EXTPLORER_RUN_REDIS_SESSION_TEST=1 vendor/bin/phpunit --no-coverage tests/integration/RedisSessionSharingTest.php
+        fi
