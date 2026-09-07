@@ -1,4 +1,4 @@
-FROM php:8.5.9-fpm-alpine3.24 AS builder
+FROM php:8.5.10-fpm-alpine3.24 AS builder
 
 ARG APP_VERSION=dev
 
@@ -41,7 +41,7 @@ RUN find /app -type f ! -path '/app/writable/*' -print0 \
     | sha256sum \
     | awk '{print $1}' > /image-content-sha256
 
-FROM php:8.5.9-fpm-alpine3.24
+FROM php:8.5.10-fpm-alpine3.24
 
 ARG APP_VERSION=dev
 ENV EXTPLORER_IMAGE_VERSION=${APP_VERSION}
