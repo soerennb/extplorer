@@ -54,6 +54,8 @@ CI_ENVIRONMENT = development
 # EXTPLORER_DB_NAME = extplorer
 # EXTPLORER_DB_USER = extplorer
 # EXTPLORER_DB_PASSWORD_FILE = '/run/secrets/extplorer-db-password'
+# EXTPLORER_DB_CHARSET = utf8mb4 # PostgreSQL defaults to utf8 automatically
+# EXTPLORER_DB_COLLATION = utf8mb4_general_ci # Leave empty for PostgreSQL/SQLite
 # EXTPLORER_DB_PREFIX = ''
 # EXTPLORER_SESSION_TABLE = ci_sessions
 

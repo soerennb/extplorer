@@ -57,7 +57,10 @@ shares or configuration. Run `php spark storage:check` after changing a
 backend. A selected but unavailable backend is a startup error and is never
 silently replaced by file or dummy storage.
 
-Database credentials can be supplied with `EXTPLORER_DB_*` variables. Use
+Database credentials can be supplied with `EXTPLORER_DB_*` variables. The
+default charset is `utf8mb4` for MySQL/MariaDB and `utf8` for PostgreSQL or
+SQLite; set `EXTPLORER_DB_CHARSET` and `EXTPLORER_DB_COLLATION` only when the
+database requires a different, validated identifier. Use
 `EXTPLORER_DB_PASSWORD_FILE` and `EXTPLORER_REDIS_PASSWORD_FILE` instead of
 putting secrets directly into the environment where possible. SQLite defaults
 to `writable/extplorer.sqlite` when `EXTPLORER_STATE_DRIVER=sqlite` and no

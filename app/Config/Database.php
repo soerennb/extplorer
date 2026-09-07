@@ -212,6 +212,8 @@ class Database extends Config
         } else {
             $password = getenv('EXTPLORER_DB_PASSWORD') ?: getenv('database.default.password') ?: $this->default['password'];
         }
+        $charset = $this->databaseCharset($driver);
+        $collation = $this->databaseCollation($driver, $charset);
 
         $this->default = array_replace($this->default, [
             'DSN' => (string)(getenv('EXTPLORER_DB_DSN') ?: $this->default['DSN']),
@@ -222,6 +224,8 @@ class Database extends Config
             'password' => $password,
             'DBDriver' => $driver,
             'DBPrefix' => getenv('EXTPLORER_DB_PREFIX') ?: getenv('database.default.DBPrefix') ?: $this->default['DBPrefix'],
+            'charset' => $charset,
+            'DBCollat' => $collation,
         ]);
 
         // Ensure that we always set the database group to 'tests' if
@@ -240,5 +244,40 @@ class Database extends Config
             'postgres', 'postgresql' => 'Postgre',
             default => $driver,
         };
+    }
+
+    private function databaseCharset(string $driver): string
+    {
+        $configured = getenv('EXTPLORER_DB_CHARSET');
+        $charset = ($configured === false || trim($configured) === '')
+            ? match ($driver) {
+                'Postgre', 'SQLite3' => 'utf8',
+                default => 'utf8mb4',
+            }
+            : trim($configured);
+
+        if (preg_match('/\A[A-Za-z0-9_-]+\z/', $charset) !== 1) {
+            throw new \RuntimeException('EXTPLORER_DB_CHARSET contains invalid characters.');
+        }
+
+        return $charset;
+    }
+
+    private function databaseCollation(string $driver, string $charset): string
+    {
+        $configured = getenv('EXTPLORER_DB_COLLATION');
+        $collation = ($configured === false || trim($configured) === '')
+            ? ($driver === 'MySQLi' ? match ($charset) {
+                'utf8' => 'utf8_general_ci',
+                'utf8mb4' => 'utf8mb4_general_ci',
+                default => '',
+            } : '')
+            : trim($configured);
+
+        if ($collation !== '' && preg_match('/\A[A-Za-z0-9_-]+\z/', $collation) !== 1) {
+            throw new \RuntimeException('EXTPLORER_DB_COLLATION contains invalid characters.');
+        }
+
+        return $collation;
     }
 }
