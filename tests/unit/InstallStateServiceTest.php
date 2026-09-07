@@ -101,6 +101,51 @@ class InstallStateServiceTest extends CIUnitTestCase
         $service->claim($token, 'another-admin', 'another-password');
     }
 
+    public function testExpiredTokenCannotBeUsedForAnInstallationClaim(): void
+    {
+        $service = new InstallStateService();
+        $service->ensureClaimToken();
+        $tokenPath = config('Storage')->root . '/.extplorer-install-token';
+        $token = trim((string)file_get_contents($tokenPath));
+        touch($tokenPath, time() - InstallStateService::CLAIM_TOKEN_TTL - 1);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('missing or expired');
+        $service->claim($token, 'expired-admin', 'first-password');
+    }
+
+    public function testCompletionMarkerWithoutAnAdministratorCannotOpenTheInstaller(): void
+    {
+        $markerPath = config('Storage')->root . '/installed.lock';
+        file_put_contents($markerPath, "incomplete\n", LOCK_EX);
+
+        $service = new InstallStateService();
+
+        $this->assertSame(InstallStateService::STATUS_REPAIR, $service->status());
+        $this->expectException(RuntimeException::class);
+        $service->ensureClaimToken();
+    }
+
+    public function testInstallerSourceContainsOnlyTheTokenPathAndNeverTheTokenValue(): void
+    {
+        $source = (string)file_get_contents(ROOTPATH . 'app/Views/install/index.php');
+
+        $this->assertStringContainsString('claimTokenPath', $source);
+        $this->assertStringNotContainsString('<?= $claimToken ?>', $source);
+        $this->assertDoesNotMatchRegularExpression('/name="claim_token"[^>]+value=/s', $source);
+        $this->assertStringNotContainsString('file_get_contents', $source);
+    }
+
+    public function testWebServerExamplesDenyTheWritableTokenPath(): void
+    {
+        $nginx = (string)file_get_contents(ROOTPATH . 'docker/nginx/default.conf');
+        $writableHtaccess = (string)file_get_contents(ROOTPATH . 'writable/.htaccess');
+
+        $this->assertStringContainsString('location ~ ^/(writable|app|tests|vendor|spark)', $nginx);
+        $this->assertStringContainsString('deny all;', $nginx);
+        $this->assertStringContainsString('Require all denied', $writableHtaccess);
+    }
+
     public function testExistingUsersWithoutMarkerAreRepairStateAndCannotBeClaimed(): void
     {
         $model = new UserModel();
