@@ -291,9 +291,7 @@ final class UploadSessionService
             $expectedSize = $manifest['total_size'];
             $actualSize = 0;
             $directory = dirname($destination);
-            if (!is_dir($directory)) {
-                throw new RuntimeException('Upload destination does not exist.');
-            }
+            $this->assertSafeDestinationDirectory($directory);
 
             $temporary = tempnam($directory, '.extplorer-upload-');
             if ($temporary === false) {
@@ -332,7 +330,12 @@ final class UploadSessionService
                     throw new RuntimeException('Assembled upload size does not match the declared size.');
                 }
 
-                if (!rename($temporary, $destination)) {
+                // Re-check immediately before activation. The application-level
+                // path policy validates the managed root; this additional check
+                // prevents a direct service/CLI caller from activating through
+                // a symlinked directory.
+                $this->assertSafeDestinationDirectory($directory);
+                if (is_link($destination) || !rename($temporary, $destination)) {
                     throw new RuntimeException('Unable to activate assembled upload.');
                 }
 
@@ -464,5 +467,20 @@ final class UploadSessionService
         }
 
         @rmdir($directory);
+    }
+
+    private function assertSafeDestinationDirectory(string $directory): void
+    {
+        if (!is_dir($directory) || is_link($directory) || realpath($directory) !== $directory) {
+            throw new RuntimeException('Upload destination does not exist or uses a symbolic link.');
+        }
+
+        $current = $directory;
+        while ($current !== dirname($current)) {
+            if (is_link($current)) {
+                throw new RuntimeException('Upload destination uses a symbolic link.');
+            }
+            $current = dirname($current);
+        }
     }
 }

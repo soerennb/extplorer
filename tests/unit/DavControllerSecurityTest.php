@@ -4,7 +4,11 @@ namespace Tests\Unit;
 
 use App\Controllers\DavController;
 use App\Services\Dav\SafeDirectory;
+use CodeIgniter\HTTP\IncomingRequest;
+use CodeIgniter\HTTP\URI;
+use CodeIgniter\HTTP\UserAgent;
 use CodeIgniter\Test\CIUnitTestCase;
+use Config\Services;
 
 class DavControllerSecurityTest extends CIUnitTestCase
 {
@@ -45,5 +49,36 @@ class DavControllerSecurityTest extends CIUnitTestCase
             rmdir($outside);
             rmdir($root);
         }
+    }
+
+    public function testRequestLimitsRejectUnsafeWebDavHeaders(): void
+    {
+        $cases = [
+            ['Depth', 'infinity', 413],
+            ['Depth', 'invalid', 400],
+            ['Content-Length', (string)(101 * 1024 * 1024), 413],
+            ['Destination', 'https://evil.example/dav/target.txt', 400],
+        ];
+
+        foreach ($cases as [$header, $value, $status]) {
+            $request = new IncomingRequest(config('App'), new URI('https://files.example.test/dav'), null, new UserAgent());
+            $request->setHeader($header, $value);
+            $controller = new DavController();
+            $controller->initController($request, Services::response(), Services::logger());
+
+            $this->assertFalse($this->callPrivate($controller, 'requestLimitsAllow', ['PROPFIND']), $header . ' should be rejected');
+            $this->assertSame($status, Services::response()->getStatusCode(), $header . ' status');
+        }
+    }
+
+    public function testRequestLimitsAllowBoundedSameOriginWebDavRequest(): void
+    {
+        $request = new IncomingRequest(config('App'), new URI('https://files.example.test/dav'), null, new UserAgent());
+        $request->setHeader('Depth', '1');
+        $request->setHeader('Destination', 'https://files.example.test/dav/target.txt');
+        $controller = new DavController();
+        $controller->initController($request, Services::response(), Services::logger());
+
+        $this->assertTrue($this->callPrivate($controller, 'requestLimitsAllow', ['MOVE']));
     }
 }

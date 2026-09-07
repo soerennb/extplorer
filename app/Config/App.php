@@ -290,6 +290,8 @@ class App extends BaseConfig
         }
 
         $maximum = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false ? 128 : 32;
-        return (int)$prefix >= 0 && (int)$prefix <= $maximum;
+        // A zero-length prefix trusts every possible source and defeats the
+        // purpose of an explicit proxy allowlist.
+        return (int)$prefix > 0 && (int)$prefix <= $maximum;
     }
 }

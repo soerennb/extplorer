@@ -112,6 +112,70 @@ class UploadSessionServiceTest extends CIUnitTestCase
         $service->get($expired['id']);
     }
 
+    public function testAssemblyRejectsSymlinkedDestinationDirectory(): void
+    {
+        if (!function_exists('symlink')) {
+            $this->markTestSkipped('Symlinks are required for the path regression test.');
+        }
+
+        $service = new UploadSessionService($this->root, 'test-key');
+        $created = $service->create('alice', '/', '', 'file.txt', 3, 64 * 1024, 1);
+        file_put_contents($service->chunkPath($created['id'], 0), 'abc');
+        $service->storeChunk($created['id'], 0, 3);
+        $outside = $this->root . '/outside';
+        mkdir($outside, 0700, true);
+        $link = $this->root . '/linked-destination';
+        symlink($outside, $link);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('symbolic link');
+        $service->assemble($created['id'], $link . '/file.txt');
+    }
+
+    public function testConcurrentAssemblyActivatesOnlyOneDestination(): void
+    {
+        if (!function_exists('pcntl_fork')) {
+            $this->markTestSkipped('pcntl is required for the concurrency regression test.');
+        }
+
+        $service = new UploadSessionService($this->root, 'test-key');
+        $created = $service->create('alice', '/', '', 'file.txt', 6, 64 * 1024, 2);
+        file_put_contents($service->chunkPath($created['id'], 0), 'abc');
+        file_put_contents($service->chunkPath($created['id'], 1), 'def');
+        $service->storeChunk($created['id'], 0, 3);
+        $service->storeChunk($created['id'], 1, 3);
+        $childDestination = $this->root . '/child-result.txt';
+        $childResult = $this->root . '/child-assembly-result';
+
+        $pid = pcntl_fork();
+        $this->assertNotSame(-1, $pid);
+        if ($pid === 0) {
+            try {
+                (new UploadSessionService($this->root, 'test-key'))->assemble($created['id'], $childDestination);
+                file_put_contents($childResult, 'success');
+            } catch (\Throwable $exception) {
+                file_put_contents($childResult, 'failure:' . $exception->getMessage());
+            }
+            exit(0);
+        }
+
+        $parentDestination = $this->root . '/parent-result.txt';
+        $parentResult = 'failure';
+        try {
+            $service->assemble($created['id'], $parentDestination);
+            $parentResult = 'success';
+        } catch (\Throwable) {
+            // Exactly one assembler is expected to win.
+        }
+        pcntl_waitpid($pid, $status);
+
+        $childOutcome = (string)file_get_contents($childResult);
+        $successes = ($parentResult === 'success' ? 1 : 0) + ($childOutcome === 'success' ? 1 : 0);
+        $this->assertSame(1, $successes);
+        $activated = $parentResult === 'success' ? $parentDestination : $childDestination;
+        $this->assertSame('abcdef', file_get_contents($activated));
+    }
+
     private function removeDirectory(string $directory): void
     {
         if (!is_dir($directory)) return;

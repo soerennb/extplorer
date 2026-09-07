@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
+  statuses: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -17,9 +19,18 @@ jobs:
     name: Quality gate
     uses: ./.github/workflows/quality.yml
 
+  security:
+    name: Security gate
+    needs: quality
+    uses: ./.github/workflows/security.yml
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+
   archive:
     name: Create deployable archive
-    needs: quality
+    needs: [quality, security]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -82,7 +93,7 @@ jobs:
 
   container:
     name: Publish container image
-    needs: quality
+    needs: [quality, security]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

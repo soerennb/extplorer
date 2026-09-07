@@ -45,6 +45,7 @@ trait ApiDownloadOperationsTrait
                     ->download($tempZip, null)
                     ->setFileName(DownloadHeaders::filename($zipName))
                     ->setHeader('Content-Type', 'application/zip')
+                    ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('attachment', $zipName))
                     ->setHeader('X-Content-Type-Options', 'nosniff');
             }
 
@@ -86,6 +87,8 @@ trait ApiDownloadOperationsTrait
                 return $this->response
                     ->download($fullPath, null)
                     ->setFileName(DownloadHeaders::filename($filename))
+                    ->setHeader('Content-Type', $mime)
+                    ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('attachment', $filename))
                     ->setHeader('X-Content-Type-Options', 'nosniff');
             }
 

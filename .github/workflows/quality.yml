@@ -155,6 +155,9 @@ jobs:
           fi
           php spark security:migrate
           php spark storage:check
+          if [ "${{ matrix.backend }}" = "redis" ]; then
+            EXTPLORER_RUN_REDIS_SESSION_TEST=1 vendor/bin/phpunit --no-coverage tests/integration/RedisSessionSharingTest.php
+          fi
 
   frontend:
     name: Frontend build and CSP source checks
