@@ -95,7 +95,9 @@ jobs:
     name: Publish container image
     needs: [quality, security]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The arm64 build compiles PHP extensions through QEMU. Keep enough room
+    # for a cold cache while still bounding a genuinely stuck build.
+    timeout-minutes: 60
     permissions:
       contents: read
       packages: write
@@ -146,6 +148,7 @@ jobs:
           build-args: APP_VERSION=${{ env.APP_VERSION }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
+          progress: plain
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: mode=max
