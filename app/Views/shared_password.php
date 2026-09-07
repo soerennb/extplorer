@@ -35,7 +35,7 @@
             <p class="text-muted small mb-4"><?= esc($st('shared_password_protected', 'This share is protected.')) ?></p>
             
             <?php if (session()->getFlashdata('error')): ?>
-                <div class="alert alert-danger small"><?= session()->getFlashdata('error') ?></div>
+                <div class="alert alert-danger small"><?= esc(session()->getFlashdata('error')) ?></div>
             <?php endif; ?>
 
             <form action="<?= site_url('s/' . $hash . '/auth') ?>" method="post">

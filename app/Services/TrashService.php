@@ -62,18 +62,21 @@ class TrashService
             throw new Exception("Failed to move item to trash.");
         }
 
-        // Update Index
-        $index = $this->getIndex();
-        $index[$id] = [
-            'id' => $id,
-            'originalPath' => $relativePath,
-            'name' => basename($relativePath),
-            'deletedAt' => time(),
-            'type' => is_dir($trashPath) ? 'dir' : 'file',
-            'size' => is_dir($trashPath) ? 0 : filesize($trashPath) // Simple size
-        ];
-        
-        $this->saveIndex($index);
+        try {
+            AtomicFileStore::transaction($this->getIndexFile(), function (array &$index) use ($id, $relativePath, $trashPath): void {
+                $index[$id] = [
+                    'id' => $id,
+                    'originalPath' => $relativePath,
+                    'name' => basename($relativePath),
+                    'deletedAt' => time(),
+                    'type' => is_dir($trashPath) ? 'dir' : 'file',
+                    'size' => is_dir($trashPath) ? 0 : filesize($trashPath),
+                ];
+            });
+        } catch (\Throwable $exception) {
+            rename($trashPath, $fullPath);
+            throw $exception;
+        }
     }
 
     /**
@@ -81,38 +84,33 @@ class TrashService
      */
     public function restore(string $id, \App\Services\VFS\IFileSystem $fs): void
     {
-        $index = $this->getIndex();
-        if (!isset($index[$id])) {
-            throw new Exception("Item not found in trash index.");
-        }
+        AtomicFileStore::transaction($this->getIndexFile(), function (array &$index) use ($id, $fs): void {
+            if (!isset($index[$id])) {
+                throw new Exception("Item not found in trash index.");
+            }
 
-        $item = $index[$id];
-        $trashPath = $this->trashRoot . DIRECTORY_SEPARATOR . $id;
-        
-        // Resolve restoration path via VFS to ensure security/home-jail
-        $targetPath = $fs->resolvePath($item['originalPath']);
+            $item = $index[$id];
+            $trashPath = $this->trashRoot . DIRECTORY_SEPARATOR . $id;
+            $targetPath = $fs->resolvePath((string)$item['originalPath']);
 
-        // Handle collision: if target exists, append " (Restored)"
-        if (file_exists($targetPath)) {
-            $info = pathinfo($targetPath);
-            $ext = isset($info['extension']) ? '.' . $info['extension'] : '';
-            $base = $info['filename'];
-            $targetPath = $info['dirname'] . DIRECTORY_SEPARATOR . $base . ' (Restored)' . $ext;
-        }
+            if (file_exists($targetPath)) {
+                $info = pathinfo($targetPath);
+                $ext = isset($info['extension']) ? '.' . $info['extension'] : '';
+                $base = $info['filename'];
+                $targetPath = $info['dirname'] . DIRECTORY_SEPARATOR . $base . ' (Restored)' . $ext;
+            }
 
-        // Ensure parent directory exists
-        $parentDir = dirname($targetPath);
-        if (!is_dir($parentDir)) {
-            mkdir($parentDir, 0755, true);
-        }
+            $parentDir = dirname($targetPath);
+            if (!is_dir($parentDir) && !mkdir($parentDir, 0755, true) && !is_dir($parentDir)) {
+                throw new Exception("Failed to create restore directory.");
+            }
 
-        if (!rename($trashPath, $targetPath)) {
-            throw new Exception("Failed to restore item.");
-        }
+            if (!rename($trashPath, $targetPath)) {
+                throw new Exception("Failed to restore item.");
+            }
 
-        // Remove from index
-        unset($index[$id]);
-        $this->saveIndex($index);
+            unset($index[$id]);
+        });
     }
 
     /**
@@ -120,24 +118,13 @@ class TrashService
      */
     public function deletePermanently(string $id): void
     {
-        $index = $this->getIndex();
-        if (!isset($index[$id])) {
-            // Check if file exists even if index is missing (cleanup)
-             $trashPath = $this->trashRoot . DIRECTORY_SEPARATOR . $id;
-             if (file_exists($trashPath)) {
-                 $this->recursiveDelete($trashPath);
-             }
-             return;
-        }
-
-        $trashPath = $this->trashRoot . DIRECTORY_SEPARATOR . $id;
-        
-        if (file_exists($trashPath)) {
-            $this->recursiveDelete($trashPath);
-        }
-
-        unset($index[$id]);
-        $this->saveIndex($index);
+        AtomicFileStore::transaction($this->getIndexFile(), function (array &$index) use ($id): void {
+            $trashPath = $this->trashRoot . DIRECTORY_SEPARATOR . $id;
+            if (file_exists($trashPath)) {
+                $this->recursiveDelete($trashPath);
+            }
+            unset($index[$id]);
+        });
     }
 
     /**
@@ -145,14 +132,15 @@ class TrashService
      */
     public function emptyTrash(): void
     {
-        $index = $this->getIndex();
-        foreach ($index as $id => $item) {
-            $trashPath = $this->trashRoot . DIRECTORY_SEPARATOR . $id;
-            if (file_exists($trashPath)) {
-                $this->recursiveDelete($trashPath);
+        AtomicFileStore::transaction($this->getIndexFile(), function (array &$index): void {
+            foreach ($index as $id => $item) {
+                $trashPath = $this->trashRoot . DIRECTORY_SEPARATOR . $id;
+                if (file_exists($trashPath)) {
+                    $this->recursiveDelete($trashPath);
+                }
             }
-        }
-        $this->saveIndex([]);
+            $index = [];
+        });
     }
 
     /**

@@ -6,6 +6,7 @@ use Sabre\DAV\Server;
 use Sabre\DAV\FS\Directory;
 use App\Models\UserModel;
 use App\Services\Dav\AuthBackend;
+use App\Services\VFS\PathPolicy;
 use Sabre\DAV\Auth\Plugin as AuthPlugin;
 use Exception;
 
@@ -140,30 +141,10 @@ class DavController extends BaseController
 
     private function resolveSafeDavRootPath(string $baseRoot, string $homeDir): string
     {
-        $baseRoot = rtrim((string)realpath($baseRoot), DIRECTORY_SEPARATOR);
-        if ($baseRoot === '') {
-            throw new Exception('Invalid WebDAV base root.');
+        try {
+            return PathPolicy::resolve($baseRoot, $homeDir);
+        } catch (\Throwable $e) {
+            throw new Exception('Invalid WebDAV home directory.', 0, $e);
         }
-
-        $home = str_replace('..', '', $homeDir);
-        $home = trim($home, "/\\");
-
-        $rootPath = $baseRoot;
-        if ($home !== '') {
-            $rootPath .= DIRECTORY_SEPARATOR . $home;
-        }
-
-        $rootReal = realpath($rootPath);
-        if ($rootReal === false) {
-            return $rootPath;
-        }
-
-        $basePrefix = $baseRoot . DIRECTORY_SEPARATOR;
-        $resolvedPrefix = rtrim($rootReal, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-        if ($rootReal !== $baseRoot && !str_starts_with($resolvedPrefix, $basePrefix)) {
-            throw new Exception('Invalid WebDAV home directory.');
-        }
-
-        return $rootReal;
     }
 }

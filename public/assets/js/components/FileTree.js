@@ -43,7 +43,7 @@ const FileTree = {
         },
         getIcon(item) {
             if (item.is_mount && item.is_external) {
-                if (item.mount_type === 'ftp' || item.mount_type === 'ssh2') return 'ri-cloud-fill text-info';
+                if (item.mount_type === 'ftp' || item.mount_type === 'ftps' || item.mount_type === 'ssh2' || item.mount_type === 'sftp') return 'ri-cloud-fill text-info';
                 return 'ri-hard-drive-2-fill text-primary';
             }
             return this.isOpen ? 'ri-folder-open-fill tree-folder' : 'ri-folder-fill tree-folder';

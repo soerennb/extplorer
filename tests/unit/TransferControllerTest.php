@@ -63,5 +63,21 @@ class TransferControllerTest extends CIUnitTestCase
         $result = $this->callPrivate($controller, 'normalizeSessionId', ['abc-123_!?']);
         $this->assertSame('abc123', $result);
     }
-}
 
+    public function testTransferFilenameRejectsPathAndControlCharacters(): void
+    {
+        $controller = new TransferController();
+
+        $this->expectException(\RuntimeException::class);
+        $this->callPrivate($controller, 'sanitizeTransferFilename', ["..\\secret\n.txt"]);
+    }
+
+    public function testTransferFilenameKeepsOnlyTheFinalPathComponent(): void
+    {
+        $controller = new TransferController();
+
+        $result = $this->callPrivate($controller, 'sanitizeTransferFilename', ['/tmp/example.txt']);
+
+        $this->assertSame('example.txt', $result);
+    }
+}

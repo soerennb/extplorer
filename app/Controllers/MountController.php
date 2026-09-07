@@ -2,13 +2,12 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\API\ResponseTrait;
 use App\Services\MountService;
 use App\Services\LogService;
 
 class MountController extends BaseController
 {
-    use ResponseTrait;
+    use ApiResponseTrait;
 
     private MountService $mountService;
 

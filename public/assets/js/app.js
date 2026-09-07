@@ -1,6 +1,7 @@
 const { createApp, computed, onMounted, ref, watch, nextTick } = Vue;
 
 const app = createApp({
+    render: appTemplateRender,
     components: {
         FileTree,
         UserAdmin,
@@ -490,18 +491,32 @@ const app = createApp({
                         store.uploadProgress = 100;
                     } else {
                         const total = Math.ceil(file.size / CHUNK_SIZE);
+                        const uploadSession = await Api.post('upload/session', {
+                            filename: file.name,
+                            path,
+                            relativePath: '',
+                            totalSize: file.size,
+                            chunkSize: CHUNK_SIZE,
+                            totalChunks: total,
+                            conflict: 'replace'
+                        });
+                        const uploadSessionId = uploadSession.id;
+                        if (!uploadSessionId) {
+                            throw new Error('Upload session could not be created.');
+                        }
+
                         for (let i = 0; i < total; i++) {
                             const chunk = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-                            const fd = new FormData(); fd.append('file', chunk); fd.append('filename', file.name);
-                            fd.append('chunkIndex', i); fd.append('totalChunks', total); fd.append('path', path);
+                            const fd = new FormData(); fd.append('file', chunk);
                             const headers = { 'X-Requested-With': 'XMLHttpRequest' };
                             if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
-                            const res = await fetch(window.baseUrl + 'api/upload_chunk', { method: 'POST', headers, body: fd });
+                            const res = await fetch(window.baseUrl + 'api/upload/session/' + encodeURIComponent(uploadSessionId) + '/chunk/' + i, { method: 'PUT', headers, body: fd });
                             if (!res.ok) {
                                 throw new Error(await Api.readErrorMessage(res, 'Upload chunk failed'));
                             }
                             store.uploadProgress = Math.round(((i + 1) / total) * 100);
                         }
+                        await Api.post(`upload/session/${encodeURIComponent(uploadSessionId)}/complete`);
                     }
                     store.uploadCurrent++;
                 }
@@ -891,6 +906,18 @@ const app = createApp({
             }
         };
         const hideContextMenu = () => contextMenu.visible = false;
+        const logout = () => {
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = window.baseUrl + 'logout';
+            const token = document.createElement('input');
+            token.type = 'hidden';
+            token.name = window.csrfTokenName;
+            token.value = window.csrfHash;
+            form.appendChild(token);
+            document.body.appendChild(form);
+            form.submit();
+        };
         const cmAction = (a) => {
             hideContextMenu(); const f = contextMenu.file; if (!f) return;
             const actions = { 
@@ -967,7 +994,7 @@ const app = createApp({
             toggleDetailsPane, closeDetailsPane, toggleBookmark,
             emptyStateIcon, emptyStateTitle, emptyStateDescription,
             isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer, openTransferWithFile, openShare, openHistory,
-            contextMenu, showContextMenu, hideContextMenu, cmAction,
+            contextMenu, showContextMenu, hideContextMenu, logout, cmAction,
             previewState, nextPreview, prevPreview, showWebDav, copyWebDavUrl, webDavUrl,
             dragIndicatorMode, onDragStart, onDragEnd, onDragOver, onDragLeave, onDrop,
             setSort, isImage, isArchive, getThumbUrl,
@@ -976,6 +1003,7 @@ const app = createApp({
             editorFile, propFile, propertiesTargetSummary, saveChown, calcDirSize,
             toggleTrash, restoreSelected, deletePermanent, emptyTrash,
             username: window.username,
+            baseUrl: window.baseUrl,
             connectionMode: window.connectionMode,
             appVersion: window.appVersion,
             webdavEnabled: window.webdavEnabled,

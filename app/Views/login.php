@@ -85,7 +85,7 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
                 </div>
 
                 <?php if (session()->getFlashdata('error')): ?>
-                    <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
+                    <div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div>
                 <?php endif; ?>
                 <?php if (!empty($expired)): ?>
                     <div class="alert alert-warning"><?= esc($lt('login_session_expired_hint', 'Your session has expired. Sign in again to continue where you left off.')) ?></div>
@@ -118,6 +118,8 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
                             <label class="btn btn-outline-primary" for="mode_local"><?= esc($lt('login_mode_local', 'Local')) ?></label>
                             <input type="radio" class="btn-check" name="mode" id="mode_ftp" value="ftp">
                             <label class="btn btn-outline-primary" for="mode_ftp">FTP</label>
+                            <input type="radio" class="btn-check" name="mode" id="mode_ftps" value="ftps">
+                            <label class="btn btn-outline-primary" for="mode_ftps">FTPS</label>
                             <input type="radio" class="btn-check" name="mode" id="mode_sftp" value="sftp">
                             <label class="btn btn-outline-primary" for="mode_sftp">SFTP</label>
                         </div>
@@ -139,6 +141,11 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
                                     <label class="form-label" for="remote_port"><?= esc($lt('login_remote_port', 'Port')) ?></label>
                                     <input type="number" name="remote_port" id="remote_port" class="form-control" value="21" min="1" max="65535" inputmode="numeric" autocomplete="off">
                                 </div>
+                            </div>
+                            <div class="mt-3">
+                                <label class="form-label" for="remote_host_key_fingerprint"><?= esc($lt('login_remote_host_key_fingerprint', 'SFTP host-key fingerprint (optional in compatibility mode)')) ?></label>
+                                <input type="text" name="remote_host_key_fingerprint" id="remote_host_key_fingerprint" class="form-control" placeholder="SHA256:..." autocomplete="off" spellcheck="false">
+                                <div class="form-text"><?= esc($lt('login_remote_host_key_fingerprint_hint', 'Use the SHA-256 fingerprint supplied by the server administrator.')) ?></div>
                             </div>
                             <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
                                 <button type="button" class="btn btn-outline-primary btn-sm" id="test_remote_connection">
@@ -165,18 +172,13 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg w-100" data-testid="login-submit"><?= esc($lt('login_submit', 'Login')) ?></button>
-                    <?php if (!empty($show_default_creds)): ?>
-                    <div class="text-center mt-3 text-muted small">
-                        <?= esc($lt('login_default_local', 'Default Local: admin / admin')) ?>
-                    </div>
-                    <?php endif; ?>
                 </form>
             </div>
         </div>
     </div>
 
     <script <?= csp_script_nonce() ?>>
-        const loginMessages = <?= json_encode($login_t ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+        const loginMessages = <?= json_encode($login_t ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const remoteFields = document.getElementById('remote_fields');
         const port = document.getElementById('remote_port');
         const modes = document.querySelectorAll('input[name="mode"]');
@@ -187,12 +189,13 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
         const rememberMeHint = document.getElementById('remember_me_hint');
 
         function updateRemoteFields(val) {
-            if (val === 'ftp' || val === 'sftp') {
+            if (val === 'ftp' || val === 'ftps' || val === 'sftp') {
                 remoteFields.classList.add('show');
             } else {
                 remoteFields.classList.remove('show');
             }
             if (val === 'ftp') port.value = 21;
+            if (val === 'ftps') port.value = 990;
             if (val === 'sftp') port.value = 22;
             if (rememberMe && rememberMeHint) {
                 const localMode = val === 'local';
@@ -225,7 +228,7 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
             setRemoteStatus('info', loginMessages.login_remote_testing);
 
             try {
-                const res = await fetch('<?= site_url('login/test-remote') ?>', {
+                const res = await fetch(<?= json_encode(site_url('login/test-remote'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>, {
                     method: 'POST',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     body: data

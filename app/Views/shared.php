@@ -134,76 +134,62 @@
         <div class="shared-header">
             <div>
                 <div class="shared-brand">
-                    <img src="<?= base_url('logo-dark.svg') ?>" height="32" alt="eXtplorer logo">
+                    <img :src="baseUrl + 'logo-dark.svg'" height="32" alt="eXtplorer logo">
                     <div>
-                        <h5 class="shared-title"><?= esc($shareTitle) ?></h5>
-                        <p class="shared-subtitle text-muted small"><?= esc($st('shared_via', 'Shared via eXtplorer')) ?></p>
+                        <h5 class="shared-title">{{ shareTitle }}</h5>
+                        <p class="shared-subtitle text-muted small">{{ t('shared_via', 'Shared via eXtplorer') }}</p>
                     </div>
                 </div>
                 <div class="shared-meta">
                     <span class="badge shared-meta-pill">
-                        <i class="ri-shield-check-line me-1"></i><?= esc($shareModeLabel) ?>
+                        <i class="ri-shield-check-line me-1"></i>{{ shareModeLabel }}
                     </span>
-                    <?php if ($shareExpiresAt): ?>
-                        <span class="badge shared-meta-pill">
-                            <i class="ri-timer-line me-1"></i><?= esc($st('shared_expires', 'Expires')) ?> <?= esc(date('Y-m-d', (int)$shareExpiresAt)) ?>
-                        </span>
-                    <?php else: ?>
-                        <span class="badge shared-meta-pill">
-                            <i class="ri-infinity-line me-1"></i><?= esc($st('shared_no_expiry', 'No expiry')) ?>
-                        </span>
-                    <?php endif; ?>
-                    <?php if ($shareSender): ?>
-                        <span class="badge shared-meta-pill">
-                            <i class="ri-mail-line me-1"></i><?= esc($shareSender) ?>
-                        </span>
-                    <?php elseif ($shareCreatedBy): ?>
-                        <span class="badge shared-meta-pill">
-                            <i class="ri-user-3-line me-1"></i><?= esc($shareCreatedBy) ?>
-                        </span>
-                    <?php endif; ?>
-                    <?php if (!$is_file): ?>
-                        <span v-if="!loading" class="badge shared-meta-pill">
-                            <i class="ri-folders-line me-1"></i>{{ summaryText }}
-                        </span>
-                    <?php endif; ?>
+                    <span v-if="shareExpiresAt" class="badge shared-meta-pill">
+                        <i class="ri-timer-line me-1"></i>{{ t('shared_expires', 'Expires') }} {{ shareExpiresDate }}
+                    </span>
+                    <span v-else class="badge shared-meta-pill">
+                        <i class="ri-infinity-line me-1"></i>{{ t('shared_no_expiry', 'No expiry') }}
+                    </span>
+                    <span v-if="shareSender" class="badge shared-meta-pill">
+                        <i class="ri-mail-line me-1"></i>{{ shareSender }}
+                    </span>
+                    <span v-else-if="shareCreatedBy" class="badge shared-meta-pill">
+                        <i class="ri-user-3-line me-1"></i>{{ shareCreatedBy }}
+                    </span>
+                    <span v-if="!isFile && !loading" class="badge shared-meta-pill">
+                        <i class="ri-folders-line me-1"></i>{{ summaryText }}
+                    </span>
                 </div>
             </div>
             <div class="shared-actions">
-                <?php if ($is_file): ?>
-                <a href="<?= site_url('s/' . $hash . '/download') ?>" class="btn btn-primary btn-sm">
-                    <i class="ri-download-line me-1"></i><?= esc($st('shared_download', 'Download')) ?>
+                <a v-if="isFile" :href="baseUrl + 's/' + hash + '/download'" class="btn btn-primary btn-sm">
+                    <i class="ri-download-line me-1"></i>{{ t('shared_download', 'Download') }}
                 </a>
-                <?php elseif (isset($share['mode']) && $share['mode'] === 'upload'): ?>
-                    <span class="badge bg-warning text-dark"><?= esc($st('shared_upload_only', 'Upload Only')) ?></span>
-                <?php else: ?>
-                    <a href="<?= site_url('s/' . $hash . '/download') ?>" class="btn btn-primary btn-sm">
-                        <i class="ri-download-2-line me-1"></i><?= esc($st('shared_download_all', 'Download All')) ?>
+                <span v-else-if="uploadMode" class="badge bg-warning text-dark">{{ t('shared_upload_only', 'Upload Only') }}</span>
+                <a v-else :href="baseUrl + 's/' + hash + '/download'" class="btn btn-primary btn-sm">
+                        <i class="ri-download-2-line me-1"></i>{{ t('shared_download_all', 'Download All') }}
                     </a>
-                <?php endif; ?>
             </div>
         </div>
 
         <div class="file-list">
-            <?php if ($is_file): ?>
-                <div class="preview-box">
+            <div v-if="isFile" class="preview-box">
                     <i class="ri-file-text-line preview-icon"></i>
-                    <h4 class="mt-3"><?= esc($filename) ?></h4>
-                    <p class="text-muted"><?= number_format($size / 1024, 2) ?> KB</p>
-                    <a href="<?= site_url('s/' . $hash . '/download') ?>" class="btn btn-primary mt-3"><?= esc($st('shared_download_file', 'Download File')) ?></a>
+                    <h4 class="mt-3">{{ filename }}</h4>
+                    <p class="text-muted">{{ formatSize(size) }}</p>
+                    <a :href="baseUrl + 's/' + hash + '/download'" class="btn btn-primary mt-3">{{ t('shared_download_file', 'Download File') }}</a>
                 </div>
-            <?php else: ?>
+            <template v-else>
                 <div v-if="loading" class="text-center mt-5"><div class="spinner-border text-primary"></div></div>
                 <div v-else>
-                    <?php if ($isUploadMode): ?>
-                        <div class="shared-upload-panel" role="status" aria-live="polite">
+                        <div v-if="uploadMode" class="shared-upload-panel" role="status" aria-live="polite">
                             <div class="shared-upload-panel-icon">
                                 <i class="ri-upload-cloud-2-line"></i>
                             </div>
                             <div>
-                                <div class="shared-upload-panel-title"><?= esc($st('shared_upload_panel_title', 'Upload-Only Share')) ?></div>
-                                <div class="small"><?= esc($st('shared_upload_panel_desc', 'You can upload files to this share. Files already here may not be downloadable.')) ?></div>
-                                <div class="shared-upload-panel-note"><?= esc($st('shared_upload_panel_note', 'You can drag and drop files here.')) ?></div>
+                            <div class="shared-upload-panel-title">{{ t('shared_upload_panel_title', 'Upload-Only Share') }}</div>
+                            <div class="small">{{ t('shared_upload_panel_desc', 'You can upload files to this share. Files already here may not be downloadable.') }}</div>
+                            <div class="shared-upload-panel-note">{{ t('shared_upload_panel_note', 'You can drag and drop files here.') }}</div>
                                 <div
                                     class="shared-dropzone"
                                     :class="{ active: dropzoneActive }"
@@ -281,7 +267,6 @@
                                 </div>
                             </div>
                         </div>
-                    <?php endif; ?>
                     <div class="shared-breadcrumbs">
                         <template v-for="(crumb, idx) in breadcrumbs" :key="crumb.path || 'root'">
                             <button type="button" class="btn btn-link btn-sm text-decoration-none" @click="navigateTo(crumb.path)">
@@ -357,7 +342,7 @@
                         <p class="small text-muted mb-0" v-else>{{ t('shared_empty_folder_empty', 'This folder is empty.') }}</p>
                     </div>
                 </div>
-            <?php endif; ?>
+            </template>
         </div>
 
         <!-- Preview Modal -->
@@ -382,20 +367,28 @@
         </div>
     </div>
 
-    <?php if (!$is_file): ?>
-    <script src="<?= base_url('assets/js/vue.global.prod.js') ?>"></script>
+    <script src="<?= base_url('assets/js/vue.runtime.global.prod.js') ?>"></script>
     <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/shared-render.js?v=' . config('App')->version) ?>"></script>
     <script <?= csp_script_nonce() ?>>
         const { createApp, ref, reactive, computed, onMounted } = Vue;
-        const hash = "<?= $hash ?>";
-        const baseUrl = "<?= base_url() ?>";
-        const isFile = <?= $is_file ? 'true' : 'false' ?>;
-        const share = <?= json_encode($share, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
-        const locale = "<?= esc($locale) ?>";
-        const translations = <?= json_encode($translations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+        const hash = <?= json_encode($hash, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const baseUrl = <?= json_encode(base_url(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const isFile = <?= json_encode((bool)$is_file) ?>;
+        const share = <?= json_encode($share, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const locale = <?= json_encode($locale, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const translations = <?= json_encode($translations, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const uploadMaxFileMb = <?= (int)$uploadMaxFileMb ?>;
-        const uploadMode = <?= $isUploadMode ? 'true' : 'false' ?>;
-        const uploadPolicy = <?= json_encode($uploadPolicy, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+        const uploadMode = <?= json_encode((bool)$isUploadMode) ?>;
+        const uploadPolicy = <?= json_encode($uploadPolicy, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const shareTitle = <?= json_encode($shareTitle, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const shareModeLabel = <?= json_encode($shareModeLabel, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const shareExpiresAt = <?= json_encode((bool)$shareExpiresAt) ?>;
+        const shareExpiresDate = <?= json_encode($shareExpiresAt ? date('Y-m-d', (int)$shareExpiresAt) : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const shareSender = <?= json_encode($shareSender ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const shareCreatedBy = <?= json_encode($shareCreatedBy ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const filename = <?= json_encode($filename ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const size = <?= json_encode((int)($size ?? 0)) ?>;
 
         const t = (key, fallback = '', params = null) => {
             let value = translations[key];
@@ -411,6 +404,7 @@
         };
 
         createApp({
+            render: sharedAppTemplateRender,
             setup() {
                 const files = ref([]);
                 const loading = ref(false);
@@ -989,6 +983,17 @@
 
                 return {
                     share,
+                    baseUrl,
+                    hash,
+                    isFile,
+                    shareTitle,
+                    shareModeLabel,
+                    shareExpiresAt,
+                    shareExpiresDate,
+                    shareSender,
+                    shareCreatedBy,
+                    filename,
+                    size,
                     locale,
                     t,
                     uploadMode,
@@ -1043,6 +1048,5 @@
             }
         }).mount('#app');
     </script>
-    <?php endif; ?>
 </body>
 </html>

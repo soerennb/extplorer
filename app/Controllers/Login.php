@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Models\UserModel;
 use App\Services\RememberMeService;
 use App\Services\SettingsService;
+use App\Services\AuthenticationService;
+use App\Services\LogService;
 
 class Login extends BaseController
 {
@@ -31,13 +33,10 @@ class Login extends BaseController
             return redirect()->to('/');
         }
         $userModel = new UserModel();
-        $admin = $userModel->getUser('admin');
-        $showDefaultCreds = $admin && password_verify('admin', $admin['password_hash']);
         $locale = $this->preferredLoginLocale();
         $translations = $this->loginTranslations($locale);
 
         return view('login', [
-            'show_default_creds' => $showDefaultCreds,
             'expired' => $this->request->getGet('expired') === '1',
             'return_to' => $this->safeReturnPath((string)($this->request->getGet('return') ?? '/')),
             'login_locale' => $locale,
@@ -49,7 +48,8 @@ class Login extends BaseController
     {
         $loginMessages = $this->loginTranslations($this->preferredLoginLocale());
         $throttler = \Config\Services::throttler();
-        if ($throttler->check(md5($this->request->getIPAddress()), 5, 60) === false) {
+        $ipKey = 'login:ip:' . hash('sha256', $this->request->getIPAddress());
+        if ($throttler->check($ipKey, 5, 60) === false) {
             return redirect()->back()->with('error', $loginMessages['login_too_many_attempts']);
         }
 
@@ -59,36 +59,38 @@ class Login extends BaseController
         $rememberRequested = $this->request->getPost('remember_me') === '1';
         $returnTo = $this->safeReturnPath((string)($this->request->getPost('return') ?? '/'));
 
-        if ($mode === 'ftp' || $mode === 'sftp') {
+        $usernameKey = trim((string)$username);
+        if ($usernameKey !== '') {
+            $userKey = 'login:user:' . hash('sha256', strtolower($usernameKey));
+            if ($throttler->check($userKey, 5, 300) === false) {
+                return redirect()->back()->with('error', $loginMessages['login_too_many_attempts']);
+            }
+        }
+
+        if (in_array($mode, ['ftp', 'ftps', 'sftp'], true)) {
             $host = strtolower(trim((string)$this->request->getPost('remote_host')));
             $port = (int)$this->request->getPost('remote_port');
             $username = trim((string)$username);
             $password = (string)$password;
+            $fingerprint = trim((string)$this->request->getPost('remote_host_key_fingerprint'));
 
             try {
                 $this->validateRemoteConnectionInput($mode, $host, $port, $username, $password);
-                $this->assertRemoteHostAllowed($host);
+                $host = $this->assertRemoteHostAllowed($host);
             } catch (\Throwable $e) {
                 return redirect()->back()->withInput()->with('error', $this->remoteConnectionErrorMessage($e, $loginMessages));
             }
             
             try {
-                $this->openRemoteConnection($mode, $host, $username, $password, $port);
+                $this->openRemoteConnection($mode, $host, $username, $password, $port, $fingerprint);
                 
-                session()->regenerate();
-                session()->set([
-                    'isLoggedIn' => true,
-                    'username' => $username,
-                    'role' => 'user',
-                    'home_dir' => '/',
-                    'permissions' => ['read', 'write', 'upload', 'delete', 'chmod'],
-                    'connection' => [
-                        'mode' => $mode,
-                        'host' => $host,
-                        'port' => $port,
-                        'user' => $username,
-                        'pass' => $this->protectConnectionSecret($password)
-                    ]
+                $auth = new AuthenticationService();
+                $auth->startRemoteSession($username, [
+                    'mode' => $mode,
+                    'host' => $host,
+                    'port' => $port,
+                    'user' => $username,
+                    'pass' => $this->protectConnectionSecret($password),
                 ]);
                 $remember = new RememberMeService();
                 $response = redirect()->to($returnTo);
@@ -114,15 +116,9 @@ class Login extends BaseController
                 $secret = $userModel->get2faSecret($username);
                 
                 if (!$service->verifyCode($secret, $code)) {
-                     // Check recovery codes
-                     $validRecovery = false;
-                     $recoveryCodes = $userModel->getRecoveryCodes($username);
-                     
-                     if (in_array($code, $recoveryCodes)) {
-                         $validRecovery = true;
-                         // Remove used code
-                         $recoveryCodes = array_diff($recoveryCodes, [$code]);
-                         $userModel->updateUser($username, ['recovery_codes' => array_values($recoveryCodes)]);
+                     $validRecovery = $userModel->consumeRecoveryCode($username, trim((string)$code));
+                     if ($validRecovery) {
+                         LogService::log('Use recovery code', '', 'Recovery code consumed', $username);
                      }
                      
                      if (!$validRecovery) {
@@ -131,19 +127,8 @@ class Login extends BaseController
                 }
             }
 
-            $permissions = $userModel->getPermissions($username);
-            session()->regenerate();
-            session()->set([
-                'isLoggedIn' => true,
-                'username' => $user['username'],
-                'role' => $user['role'],
-                'home_dir' => $user['home_dir'],
-                'allowed_extensions' => $user['allowed_extensions'] ?? '',
-                'blocked_extensions' => $user['blocked_extensions'] ?? '',
-                'permissions' => $permissions,
-                'connection' => ['mode' => 'local'],
-                'force_password_change' => ($user['username'] === 'admin' && password_verify('admin', $user['password_hash']))
-            ]);
+            $user = $userModel->getUser($username) ?? $user;
+            (new AuthenticationService($userModel))->startLocalSession($user);
 
             $remember = new RememberMeService();
             $response = redirect()->to($returnTo);
@@ -170,8 +155,9 @@ class Login extends BaseController
 
         try {
             $this->validateRemoteConnectionInput($mode, $host, $port, $username, $password);
-            $this->assertRemoteHostAllowed($host);
-            $this->openRemoteConnection($mode, $host, $username, $password, $port);
+            $host = $this->assertRemoteHostAllowed($host);
+            $fingerprint = trim((string)$this->request->getPost('remote_host_key_fingerprint'));
+            $this->openRemoteConnection($mode, $host, $username, $password, $port, $fingerprint);
 
             return $this->response->setJSON([
                 'ok' => true,
@@ -197,10 +183,8 @@ class Login extends BaseController
 
     public function logout()
     {
-        $remember = new RememberMeService();
         $response = redirect()->to('/login');
-        $remember->forget($this->request, $response);
-        session()->destroy();
+        (new AuthenticationService())->logout($this->request, $response);
         return $response;
     }
 
@@ -300,6 +284,8 @@ class Login extends BaseController
             'login_remote_host',
             'login_remote_host_hint',
             'login_remote_host_placeholder',
+            'login_remote_host_key_fingerprint',
+            'login_remote_host_key_fingerprint_hint',
             'login_remote_port',
             'test_connection',
             'login_remote_test_hint',
@@ -321,7 +307,6 @@ class Login extends BaseController
             'remember_me_hint',
             'remember_me_local_only',
             'login_submit',
-            'login_default_local',
             'login_session_expired_hint',
         ];
 
@@ -351,8 +336,8 @@ class Login extends BaseController
 
     private function validateRemoteConnectionInput(string $mode, string $host, int $port, string $username, string $password): void
     {
-        if (!in_array($mode, ['ftp', 'sftp'], true)) {
-            throw new \InvalidArgumentException('Select FTP or SFTP before testing the connection.');
+        if (!in_array($mode, ['ftp', 'ftps', 'sftp'], true)) {
+            throw new \InvalidArgumentException('Select FTP, FTPS or SFTP before testing the connection.');
         }
 
         if ($host === '' || $username === '' || $password === '') {
@@ -364,14 +349,14 @@ class Login extends BaseController
         }
     }
 
-    private function openRemoteConnection(string $mode, string $host, string $username, string $password, int $port): void
+    private function openRemoteConnection(string $mode, string $host, string $username, string $password, int $port, string $fingerprint = ''): void
     {
-        if ($mode === 'ftp') {
-            new \App\Services\VFS\FtpAdapter($host, $username, $password, $port);
+        if ($mode === 'ftp' || $mode === 'ftps') {
+            new \App\Services\VFS\FtpAdapter($host, $username, $password, $port, '/', $mode === 'ftps');
             return;
         }
 
-        new \App\Services\VFS\Ssh2Adapter($host, $username, $password, $port);
+        new \App\Services\VFS\Ssh2Adapter($host, $username, $password, $port, '/', $fingerprint);
     }
 
     private function remoteConnectionErrorMessage(\Throwable $e, ?array $messages = null): string
@@ -379,7 +364,7 @@ class Login extends BaseController
         $messages ??= $this->loginTranslations($this->preferredLoginLocale());
         $message = $e->getMessage();
 
-        if (str_contains($message, 'Select FTP or SFTP')) {
+        if (str_contains($message, 'Select FTP')) {
             return $messages['login_remote_select_protocol'];
         }
 
@@ -410,7 +395,7 @@ class Login extends BaseController
         return $message ?: $messages['login_remote_test_failed_generic'];
     }
 
-    private function assertRemoteHostAllowed(string $host, ?array $allowlist = null): void
+    private function assertRemoteHostAllowed(string $host, ?array $allowlist = null): string
     {
         if ($allowlist === null) {
             $settingsService = new SettingsService();
@@ -429,12 +414,22 @@ class Login extends BaseController
             if (!$this->hostMatchesAllowlist($host, $allowlist)) {
                 throw new \RuntimeException('Remote host is not allowlisted.');
             }
-            return;
+            $ips = $this->resolveHostIps($host);
+            if ($ips === []) {
+                throw new \RuntimeException('Remote host could not be resolved.');
+            }
+            return $ips[0];
         }
 
         if ($this->isPrivateOrReservedHost($host)) {
             throw new \RuntimeException('Remote host resolves to a private or reserved target.');
         }
+
+        $ips = $this->resolveHostIps($host);
+        if ($ips === []) {
+            throw new \RuntimeException('Remote host could not be resolved.');
+        }
+        return $ips[0];
     }
 
     private function hostMatchesAllowlist(string $host, array $allowlist): bool

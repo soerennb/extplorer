@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Services\VFS\FtpAdapter;
 use App\Services\VFS\Ssh2Adapter;
+use App\Services\RemoteSecurityPolicy;
 use CodeIgniter\Encryption\EncrypterInterface;
 
 class MountService
@@ -37,27 +38,22 @@ class MountService
      */
     public function migrateSecrets(): void
     {
-        $mounts = $this->getMounts();
         if (!$this->canEncrypt()) {
             return;
         }
 
-        $dirty = false;
-        foreach ($mounts as $id => $mount) {
-            $type = strtolower((string)($mount['type'] ?? ''));
-            if (!in_array($type, ['ftp', 'sftp', 'ssh2'], true)) {
-                continue;
+        AtomicFileStore::transaction($this->mountsFile, function (array &$mounts): void {
+            foreach ($mounts as $id => $mount) {
+                $type = strtolower((string)($mount['type'] ?? ''));
+                if (!in_array($type, ['ftp', 'ftps', 'sftp', 'ssh2'], true)) {
+                    continue;
+                }
+                $pass = $mount['config']['pass'] ?? null;
+                if (is_string($pass) && $pass !== '' && !$this->isEncryptedSecret($pass)) {
+                    $mounts[$id]['config']['pass'] = $this->encryptSecret($pass);
+                }
             }
-            $pass = $mount['config']['pass'] ?? null;
-            if (is_string($pass) && $pass !== '' && !$this->isEncryptedSecret($pass)) {
-                $mounts[$id]['config']['pass'] = $this->encryptSecret($pass);
-                $dirty = true;
-            }
-        }
-
-        if ($dirty) {
-            $this->saveMounts($mounts);
-        }
+        });
     }
 
     public function getUserMounts(string $username, bool $includeSecrets = false): array
@@ -99,24 +95,22 @@ class MountService
         }
 
         $name = $this->sanitizeMountName($name);
-        $mounts = $this->getMounts();
-        $this->assertMountNameAvailable($mounts, $username, $name);
         [$type, $config] = $this->validateAndNormalizeMount($type, $config);
         $this->validateConnectivity($type, $config);
 
-        $id = uniqid('mnt_');
-        
-        $mounts[$id] = [
-            'id' => $id,
-            'user' => $username,
-            'name' => $name,
-            'type' => $type,
-            'config' => $config,
-            'created_at' => time()
-        ];
-
-        $this->saveMounts($mounts);
-        return $id;
+        return AtomicFileStore::transaction($this->mountsFile, function (array &$mounts) use ($username, $name, $type, $config): string {
+            $this->assertMountNameAvailable($mounts, $username, $name);
+            $id = 'mnt_' . bin2hex(random_bytes(12));
+            $mounts[$id] = [
+                'id' => $id,
+                'user' => $username,
+                'name' => $name,
+                'type' => $type,
+                'config' => $config,
+                'created_at' => time(),
+            ];
+            return $id;
+        });
     }
 
     public function updateMount(string $id, string $username, string $name, string $type, array $config): array
@@ -141,18 +135,27 @@ class MountService
         [$type, $config] = $this->validateAndNormalizeMount($type, $config, $existingEncryptedPass, true);
         $this->validateConnectivity($type, $config);
 
-        $mounts[$id] = [
-            'id' => $id,
-            'user' => $existing['user'],
-            'name' => $name,
-            'type' => $type,
-            'config' => $config,
-            'created_at' => $existing['created_at'] ?? time(),
-            'updated_at' => time(),
-        ];
-
-        $this->saveMounts($mounts);
-        $stripped = $this->stripMountSecrets([$id => $mounts[$id]]);
+        $updated = AtomicFileStore::transaction($this->mountsFile, function (array &$mounts) use ($id, $username, $name, $type, $config): array {
+            if (!isset($mounts[$id])) {
+                throw new \Exception("Mount not found.");
+            }
+            $current = $mounts[$id];
+            if (($current['user'] ?? '') !== $username && !can('admin_users')) {
+                throw new \Exception("Permission denied.");
+            }
+            $this->assertMountNameAvailable($mounts, (string)$current['user'], $name, $id);
+            $mounts[$id] = [
+                'id' => $id,
+                'user' => $current['user'],
+                'name' => $name,
+                'type' => $type,
+                'config' => $config,
+                'created_at' => $current['created_at'] ?? time(),
+                'updated_at' => time(),
+            ];
+            return $mounts[$id];
+        });
+        $stripped = $this->stripMountSecrets([$id => $updated]);
         return $stripped[$id];
     }
 
@@ -189,19 +192,17 @@ class MountService
 
     public function removeMount(string $id, string $username): bool
     {
-        $mounts = $this->getMounts();
-        if (!isset($mounts[$id])) return false;
+        return AtomicFileStore::transaction($this->mountsFile, function (array &$mounts) use ($id, $username): bool {
+            if (!isset($mounts[$id])) return false;
 
-        $mount = $mounts[$id];
-        
-        // Ownership check (or admin)
-        if ($mount['user'] !== $username && !can('admin_users')) {
-            throw new \Exception("Permission denied.");
-        }
+            $mount = $mounts[$id];
+            if (($mount['user'] ?? '') !== $username && !can('admin_users')) {
+                throw new \Exception("Permission denied.");
+            }
 
-        unset($mounts[$id]);
-        $this->saveMounts($mounts);
-        return true;
+            unset($mounts[$id]);
+            return true;
+        });
     }
 
     private function canEncrypt(): bool
@@ -350,11 +351,15 @@ class MountService
             return [$type, $config];
         }
 
-        if ($type === 'ftp' || $type === 'sftp') {
+        if ($type === 'ssh2') {
+            $type = 'sftp';
+        }
+
+        if (in_array($type, ['ftp', 'ftps', 'sftp'], true)) {
             $host = strtolower(trim((string)($config['host'] ?? '')));
             $user = trim((string)($config['user'] ?? ''));
             $passInput = (string)($config['pass'] ?? '');
-            $portDefault = $type === 'sftp' ? 22 : 21;
+            $portDefault = $type === 'sftp' ? 22 : ($type === 'ftps' ? 990 : 21);
             $port = (int)($config['port'] ?? $portDefault);
             $root = trim((string)($config['root'] ?? '/'));
 
@@ -367,7 +372,8 @@ class MountService
             if ($port < 1 || $port > 65535) {
                 throw new \Exception("Remote port is invalid.");
             }
-            $this->assertRemoteHostAllowed($host);
+            $config['__connect_host'] = $this->assertRemoteHostAllowed($host);
+            (new RemoteSecurityPolicy())->assertProtocolAllowed($type, $config);
             if (!$this->canEncrypt()) {
                 throw new \Exception("Encryption key not configured. Set Config\\Encryption::\$key before adding remote mounts.");
             }
@@ -389,6 +395,11 @@ class MountService
             $config['user'] = $user;
             $config['port'] = $port;
             $config['root'] = $root === '' ? '/' : $root;
+            if ($type === 'sftp') {
+                $config['host_key_fingerprint'] = trim((string)($config['host_key_fingerprint'] ?? ''));
+            } else {
+                unset($config['host_key_fingerprint']);
+            }
             $config['pass'] = $encryptedPass;
             $config['__plain_pass'] = $plainPass;
             return [$type, $config];
@@ -397,7 +408,7 @@ class MountService
         throw new \Exception("Unknown mount type.");
     }
 
-    private function assertRemoteHostAllowed(string $host): void
+    private function assertRemoteHostAllowed(string $host): string
     {
         $settingsService = new SettingsService();
         $allowlist = array_merge(
@@ -413,12 +424,22 @@ class MountService
             if (!$this->hostMatchesAllowlist($host, $allowlist)) {
                 throw new \Exception("Remote host is not allowlisted.");
             }
-            return;
+            $ips = $this->resolveHostIps($host);
+            if ($ips === []) {
+                throw new \Exception("Remote host could not be resolved.");
+            }
+            return $ips[0];
         }
 
         if ($this->isPrivateOrReservedHost($host)) {
             throw new \Exception("Remote host resolves to a private or reserved target.");
         }
+
+        $ips = $this->resolveHostIps($host);
+        if ($ips === []) {
+            throw new \Exception("Remote host could not be resolved.");
+        }
+        return $ips[0];
     }
 
     private function hostMatchesAllowlist(string $host, array $allowlist): bool
@@ -641,18 +662,20 @@ class MountService
         }
 
         $plainPass = (string)($config['__plain_pass'] ?? '');
+        $connectHost = (string)($config['__connect_host'] ?? ($config['host'] ?? ''));
         unset($config['__plain_pass']);
+        unset($config['__connect_host']);
 
         $host = (string)($config['host'] ?? '');
         $user = (string)($config['user'] ?? '');
         $port = (int)($config['port'] ?? ($type === 'sftp' ? 22 : 21));
         $root = (string)($config['root'] ?? '/');
 
-        if ($type === 'ftp') {
-            new FtpAdapter($host, $user, $plainPass, $port, $root);
+        if ($type === 'ftp' || $type === 'ftps') {
+            new FtpAdapter($connectHost, $user, $plainPass, $port, $root, $type === 'ftps');
             return;
         }
 
-        new Ssh2Adapter($host, $user, $plainPass, $port, $root);
+        new Ssh2Adapter($connectHost, $user, $plainPass, $port, $root, (string)($config['host_key_fingerprint'] ?? ''));
     }
 }

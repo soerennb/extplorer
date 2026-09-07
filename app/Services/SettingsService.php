@@ -28,11 +28,9 @@ class SettingsService
      */
     public function saveSettings(array $settings): void
     {
-        // Sanitize or validate if necessary
-        $current = $this->getSettings();
-        $newSettings = array_merge($current, $settings);
-
-        AtomicFileStore::write($this->settingsFile, $newSettings);
+        AtomicFileStore::transaction($this->settingsFile, function (array &$current) use ($settings): void {
+            $current = array_merge($this->getDefaultSettings(), $current, $settings);
+        }, $this->getDefaultSettings());
     }
 
     public function get(string $key, $default = null)

@@ -167,7 +167,8 @@ const UploadModal = {
                     errorMessage: check === true ? '' : check,
                     resultPath: '',
                     controller: null,
-                    xhr: null
+                    xhr: null,
+                    uploadSessionId: null
                 });
             }
         };
@@ -191,6 +192,10 @@ const UploadModal = {
         const cancelFile = (item) => {
             if (item.xhr) item.xhr.abort();
             if (item.controller) item.controller.abort();
+            if (item.uploadSessionId) {
+                Api.delete(`upload/session/${encodeURIComponent(item.uploadSessionId)}`).catch(() => {});
+                item.uploadSessionId = null;
+            }
             item.status = 'canceled';
             item.errorMessage = t('upload_canceled', 'Canceled');
         };
@@ -277,21 +282,29 @@ const UploadModal = {
             const total = Math.ceil(item.file.size / CHUNK_SIZE);
             item.controller = new AbortController();
 
+            const session = await Api.post('upload/session', {
+                filename: item.file.name,
+                path,
+                relativePath: item.relativePath,
+                totalSize: item.file.size,
+                chunkSize: CHUNK_SIZE,
+                totalChunks: total,
+                conflict: conflictMode.value
+            });
+            item.uploadSessionId = session.id;
+            if (!item.uploadSessionId) {
+                throw new Error('Upload session could not be created.');
+            }
+
             for (let i = 0; i < total; i++) {
                 const chunk = item.file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
                 const fd = new FormData();
                 fd.append('file', chunk);
-                fd.append('filename', item.file.name);
-                fd.append('chunkIndex', i);
-                fd.append('totalChunks', total);
-                fd.append('path', path);
-                fd.append('relativePath', item.relativePath);
-                fd.append('conflict', conflictMode.value);
 
                 const headers = { 'X-Requested-With': 'XMLHttpRequest' };
                 if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
-                const res = await fetch(window.baseUrl + 'api/upload_chunk', {
-                    method: 'POST',
+                const res = await fetch(window.baseUrl + 'api/upload/session/' + encodeURIComponent(item.uploadSessionId) + '/chunk/' + i, {
+                    method: 'PUT',
                     headers,
                     body: fd,
                     signal: item.controller.signal
@@ -306,12 +319,11 @@ const UploadModal = {
                 }
 
                 item.progress = Math.round(((i + 1) / total) * 100);
-                if (i === total - 1) {
-                    return payload || {};
-                }
             }
 
-            return {};
+            const result = await Api.post(`upload/session/${encodeURIComponent(item.uploadSessionId)}/complete`);
+            item.uploadSessionId = null;
+            return result || {};
         };
 
         const startUpload = async () => {
@@ -342,6 +354,7 @@ const UploadModal = {
                 } finally {
                     item.controller = null;
                     item.xhr = null;
+                    item.uploadSessionId = null;
                 }
             }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services\VFS;
 
+use App\Services\RemoteSecurityPolicy;
 use Exception;
 
 class FtpAdapter implements IFileSystem
@@ -10,17 +11,24 @@ class FtpAdapter implements IFileSystem
     private string $root;
     private string $host;
     private int $port;
+    private bool $secure;
 
-    public function __construct(string $host, string $user, string $pass, int $port = 21, string $root = '/')
+    public function __construct(string $host, string $user, string $pass, int $port = 21, string $root = '/', bool $secure = false)
     {
-        if (!function_exists('ftp_connect')) {
+        if (!$secure && !function_exists('ftp_connect')) {
             throw new Exception("FTP extension not installed");
+        }
+        if ($secure && !function_exists('ftp_ssl_connect')) {
+            throw new Exception("FTPS is not available on this server");
         }
         $this->host = $host;
         $this->port = $port;
-        $this->root = '/' . trim($root, '/');
+        $this->secure = $secure;
+        $this->root = RemotePathPolicy::normalizeRoot($root);
 
-        $this->conn = ftp_connect($host, $port);
+        (new RemoteSecurityPolicy())->assertProtocolAllowed($secure ? 'ftps' : 'ftp');
+
+        $this->conn = $secure ? ftp_ssl_connect($host, $port) : ftp_connect($host, $port);
         if (!$this->conn) throw new Exception("Could not connect to FTP host: $host");
 
         if (!@ftp_login($this->conn, $user, $pass)) {
@@ -37,7 +45,18 @@ class FtpAdapter implements IFileSystem
 
     private function resolvePath(string $path): string
     {
-        return $this->root . ($this->root === '/' ? '' : '/') . trim($path, '/');
+        return $this->remotePath($path);
+    }
+
+    public function isSecure(): bool
+    {
+        return $this->secure;
+    }
+
+    private function remotePath(string $path): string
+    {
+        $relative = RemotePathPolicy::normalizeRelative($path);
+        return $this->root . ($this->root === '/' ? '' : '/') . $relative;
     }
 
     public function listDirectory(string $path, bool $showHidden = true): array
@@ -149,7 +168,7 @@ class FtpAdapter implements IFileSystem
 
     public function rename(string $from, string $to): bool
     {
-        return ftp_rename($this->conn, $this->resolvePath($from), $this->resolvePath($to));
+        return ftp_rename($this->conn, $this->remotePath($from), $this->remotePath($to));
     }
 
     public function move(string $from, string $to): bool
@@ -221,7 +240,7 @@ class FtpAdapter implements IFileSystem
 
     private function normalizeRelativePath(string $path): string
     {
-        return trim(str_replace('\\', '/', $path), '/');
+        return RemotePathPolicy::normalizeRelative($path);
     }
 
     public function getMetadata(string $path): ?array
@@ -239,7 +258,7 @@ class FtpAdapter implements IFileSystem
     public function chmod(string $path, int $mode, bool $recursive = false): bool
     {
         if ($recursive) throw new Exception("Recursive chmod not supported on FTP");
-        return (bool)ftp_chmod($this->conn, $mode, $this->resolvePath($path));
+        return (bool)ftp_chmod($this->conn, $mode, $this->remotePath($path));
     }
 
     public function chown(string $path, $user, $group, bool $recursive = false): bool

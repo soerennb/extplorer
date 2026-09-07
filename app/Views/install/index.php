@@ -18,9 +18,9 @@
             <h2 class="text-center mb-4">eXtplorer 3 Setup</h2>
             
             <?php if (!empty($error)): ?>
-                <div class="alert alert-danger"><?= $error ?></div>
+                <div class="alert alert-danger"><?= esc($error) ?></div>
             <?php elseif (session()->getFlashdata('error')): ?>
-                <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
+                <div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div>
             <?php endif; ?>
 
             <div class="mb-4">

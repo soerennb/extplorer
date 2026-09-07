@@ -80,19 +80,19 @@
     </div>
 
     <script <?= csp_script_nonce() ?>>
-        window.baseUrl = "<?= base_url() ?>";
-        window.appVersion = "<?= config('App')->version ?>";
-        window.appEnvironment = "<?= ENVIRONMENT ?>";
-        window.userRole = "<?= session('role') ?>";
-        window.username = "<?= session('username') ?>";
-        window.userPermissions = <?= json_encode(session('permissions') ?? []) ?>;
-        window.csrfTokenName = "<?= csrf_token() ?>";
-        window.csrfHash = "<?= csrf_hash() ?>";
-        window.cspStyleNonce = "<?= service('csp')->getStyleNonce() ?>";
+        window.baseUrl = <?= json_encode(base_url(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.appVersion = <?= json_encode(config('App')->version, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.appEnvironment = <?= json_encode(ENVIRONMENT, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.userRole = <?= json_encode(session('role') ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.username = <?= json_encode(session('username') ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.userPermissions = <?= json_encode(session('permissions') ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.csrfTokenName = <?= json_encode(csrf_token(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.csrfHash = <?= json_encode(csrf_hash(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.cspStyleNonce = <?= json_encode(service('csp')->getStyleNonce(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         window.adminPage = true;
     </script>
 
-    <script src="<?= base_url('assets/js/vue.global.js') ?>"></script>
+    <script src="<?= base_url('assets/js/vue.runtime.global.prod.js') ?>"></script>
     <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/sweetalert2.min.js') ?>"></script>
     <script <?= csp_script_nonce() ?>>
@@ -126,19 +126,19 @@
     </script>
     <script src="<?= base_url('assets/js/i18n.js') ?>"></script>
     <script src="<?= base_url('assets/js/api.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/components/AdminUsers.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/components/AdminGroups.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/components/AdminRoles.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/components/AdminLogs.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/components/AdminSettings.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/components/AdminSystem.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/components/AdminApp.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/AdminUsers.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/AdminGroups.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/AdminRoles.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/AdminLogs.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/AdminSettings.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/AdminSystem.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/AdminApp.js?v=' . config('App')->version) ?>"></script>
     <script <?= csp_script_nonce() ?>>
         (async function() {
             if (typeof i18n !== 'undefined' && typeof i18n.init === 'function') {
                 await i18n.init();
             }
-            const app = Vue.createApp({});
+            const app = Vue.createApp({ render: () => Vue.h(AdminApp) });
             app.component('admin-app', AdminApp);
             app.component('admin-users', AdminUsers);
             app.component('admin-groups', AdminGroups);

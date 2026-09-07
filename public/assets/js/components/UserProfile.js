@@ -422,6 +422,7 @@ const UserProfile = {
                                             <select id="mount-type" class="form-select form-select-sm" v-model="mountForm.type" :disabled="mountSaving">
                                                 <option value="local">{{ t('mount_type_local') || 'Local' }}</option>
                                                 <option value="ftp">{{ t('mount_type_ftp') || 'FTP' }}</option>
+                                                <option value="ftps">{{ t('mount_type_ftps') || 'FTPS' }}</option>
                                                 <option value="sftp">{{ t('mount_type_sftp') || 'SFTP' }}</option>
                                             </select>
                                         </div>
@@ -473,6 +474,13 @@ const UserProfile = {
                                                     v-model="mountForm.config.root"
                                                     :placeholder="t('mount_root_placeholder') || '/'"
                                                 >
+                                            </div>
+                                        </div>
+                                        <div class="row g-2 mt-1" v-if="mountForm.type === 'sftp'">
+                                            <div class="col-12">
+                                                <label class="form-label small" for="mount-host-key-fingerprint">{{ t('mount_host_key_fingerprint') || 'SFTP host-key fingerprint' }}</label>
+                                                <input id="mount-host-key-fingerprint" type="text" class="form-control form-control-sm" v-model="mountForm.config.host_key_fingerprint" placeholder="SHA256:..." autocomplete="off" spellcheck="false">
+                                                <div class="form-text">{{ t('mount_host_key_fingerprint_hint') || 'Required in strict remote security mode.' }}</div>
                                             </div>
                                         </div>
                                         <div class="row g-2 mt-1">
@@ -556,7 +564,7 @@ const UserProfile = {
             name: '',
             type: 'local',
             hasStoredPass: false,
-            config: { path: '', host: '', port: 21, user: '', pass: '', root: '/' },
+            config: { path: '', host: '', port: 21, user: '', pass: '', root: '/', host_key_fingerprint: '' },
         });
 
         const forcePasswordChange = ref(!!window.forcePasswordChange);
@@ -684,6 +692,7 @@ const UserProfile = {
             mountForm.config.user = '';
             mountForm.config.pass = '';
             mountForm.config.root = '/';
+            mountForm.config.host_key_fingerprint = '';
         };
 
         const setMountMessage = (type, text) => {
@@ -803,6 +812,7 @@ const UserProfile = {
                 mountForm.config.user = fullMount.config?.user || '';
                 mountForm.config.pass = '';
                 mountForm.config.root = fullMount.config?.root || '/';
+                mountForm.config.host_key_fingerprint = fullMount.config?.host_key_fingerprint || '';
             } catch (e) {
                 console.error(e);
                 setMountMessage('error', e.message || (t('mount_edit_failed') || 'Failed to load mount details'));
@@ -1041,6 +1051,7 @@ const UserProfile = {
 
         const mountTypeLabel = (type) => {
             if (type === 'ftp') return 'FTP';
+            if (type === 'ftps') return 'FTPS';
             if (type === 'sftp') return 'SFTP';
             return t('mount_type_local') || 'Local';
         };
@@ -1074,7 +1085,8 @@ const UserProfile = {
         watch(() => mountForm.type, (val, prev) => {
             resetMountMessages();
             clearMountErrors();
-            if (val === 'ftp' && (!mountForm.config.port || mountForm.config.port === 22)) mountForm.config.port = 21;
+            if (val === 'ftp' && (!mountForm.config.port || mountForm.config.port === 22 || mountForm.config.port === 990)) mountForm.config.port = 21;
+            if (val === 'ftps' && (!mountForm.config.port || mountForm.config.port === 21 || mountForm.config.port === 22)) mountForm.config.port = 990;
             if (val === 'sftp' && (!mountForm.config.port || mountForm.config.port === 21)) mountForm.config.port = 22;
             if (val === 'local') {
                 mountForm.hasStoredPass = false;

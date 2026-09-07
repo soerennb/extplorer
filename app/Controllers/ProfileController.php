@@ -2,12 +2,13 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\API\ResponseTrait;
 use App\Models\UserModel;
+use App\Services\AuthenticationService;
+use App\Services\LogService;
 
 class ProfileController extends BaseController
 {
-    use ResponseTrait;
+    use ApiResponseTrait;
 
     public function getDetails()
     {
@@ -39,6 +40,10 @@ class ProfileController extends BaseController
         $service = new \App\Services\TwoFactorService();
         $secret = $service->generateSecret();
         $qr = $service->getQrCodeUrl($username, $secret);
+        session()->set('pending_2fa', [
+            'secret' => $secret,
+            'expires_at' => time() + 300,
+        ]);
 
         return $this->respond([
             'secret' => $secret,
@@ -52,21 +57,34 @@ class ProfileController extends BaseController
         if (!$username) return $this->failForbidden('Not logged in');
 
         $json = $this->request->getJSON();
-        $secret = $json->secret ?? '';
-        $code = $json->code ?? '';
+        $code = trim((string)($json->code ?? ''));
+        $pending = session('pending_2fa');
+        $secret = is_array($pending) && (int)($pending['expires_at'] ?? 0) > time()
+            ? (string)($pending['secret'] ?? '')
+            : '';
 
-        if (!$secret || !$code) return $this->fail('Secret and Code required');
+        if (!$secret || !$code) return $this->fail('Two-factor setup expired. Start setup again.');
 
         $service = new \App\Services\TwoFactorService();
         if ($service->verifyCode($secret, $code)) {
             $userModel = new UserModel();
             $recoveryCodes = $service->generateRecoveryCodes();
             
-            $userModel->updateUser($username, [
+            if (!$userModel->updateUser($username, [
                 '2fa_secret' => $secret,
                 '2fa_enabled' => true,
                 'recovery_codes' => $recoveryCodes
-            ]);
+            ])) {
+                return $this->fail('Failed to enable two-factor authentication');
+            }
+
+            session()->remove('pending_2fa');
+            $updatedUser = $userModel->getUser($username);
+            if ($updatedUser) {
+                session()->set('auth_version', (int)$updatedUser['auth_version']);
+            }
+            (new AuthenticationService($userModel))->revokeUserTokens($username);
+            LogService::log('Enable 2FA', '', 'Authenticator enrollment completed');
             
             return $this->respond([
                 'status' => 'success',
@@ -110,11 +128,20 @@ class ProfileController extends BaseController
             return $this->fail('Re-authentication failed');
         }
 
-        $userModel->updateUser($username, [
+        if (!$userModel->updateUser($username, [
             '2fa_secret' => null,
             '2fa_enabled' => false,
             'recovery_codes' => []
-        ]);
+        ])) {
+            return $this->fail('Failed to disable two-factor authentication');
+        }
+
+        $updatedUser = $userModel->getUser($username);
+        if ($updatedUser) {
+            session()->set('auth_version', (int)$updatedUser['auth_version']);
+        }
+        (new AuthenticationService($userModel))->revokeUserTokens($username);
+        LogService::log('Disable 2FA', '', 'Authenticator enrollment removed');
 
         return $this->respond(['status' => 'success']);
     }
@@ -139,7 +166,16 @@ class ProfileController extends BaseController
         if (!$userModel->verifyUser($username, $oldPassword)) {
             return $this->fail('Current password is incorrect');
         }
-        if ($userModel->changePassword($username, $password)) {
+        if ($userModel->updateUser($username, [
+            'password' => $password,
+            'must_change_password' => false,
+        ])) {
+            $updatedUser = $userModel->getUser($username);
+            if ($updatedUser) {
+                session()->set('auth_version', (int)$updatedUser['auth_version']);
+            }
+            (new AuthenticationService($userModel))->revokeUserTokens($username);
+            LogService::log('Change password', '', 'Password changed');
             if (session('force_password_change')) {
                 session()->remove('force_password_change');
             }

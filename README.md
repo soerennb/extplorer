@@ -132,6 +132,7 @@ Settings synced into `writable/config/settings.php` (apply once on first run, or
 - `EXTPLORER_ALLOW_PUBLIC_UPLOADS`
 - `EXTPLORER_MOUNT_ROOT_ALLOWLIST` (comma- or newline-separated)
 - `EXTPLORER_MOUNT_REMOTE_HOST_ALLOWLIST` (comma- or newline-separated)
+- `EXTPLORER_REMOTE_SECURITY_MODE=compat|strict` (strict rejects plaintext FTP and requires SFTP host-key fingerprints)
 
 The old names `app.baseURL`, `app_baseURL`, `WRITEPATH`, `encryption.key` and `EXTPLORER_ADMIN_PASS` remain accepted
 as migration aliases. New deployments should use the `EXTPLORER_*` names. Missing bootstrap secrets and migration/configuration
@@ -142,6 +143,10 @@ errors make the app container fail; they are never treated as a successful initi
 `GET /health` is served statically by Nginx and does not invoke PHP, the database, a session, DNS or TLS. The app healthcheck
 also requires the readiness marker written only after storage migration, settings synchronization and admin bootstrap have
 completed. A healthy Nginx container therefore represents both routing and application readiness.
+
+Share cleanup is an explicit CLI job and is no longer triggered by arbitrary web requests. Run it manually with
+`docker compose run --rm --entrypoint php app /var/www/html/current/spark shares:cleanup`, or enable the optional worker with
+`docker compose --profile worker up -d cleanup`.
 
 ### Dokploy
 

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Services\VFS\LocalAdapter;
+use App\Services\VFS\PathPolicy;
 use Exception;
 
 class ShareService
@@ -32,13 +34,7 @@ class ShareService
      */
     public function createShare(string $path, string $user, ?string $password = null, ?int $expiresAt = null, string $mode = 'read', array $meta = []): array
     {
-        $shares = $this->getShares();
-        
-        // Generate a random hash (16 chars)
-        $hash = bin2hex(random_bytes(8));
-        while (isset($shares[$hash])) {
-            $hash = bin2hex(random_bytes(8));
-        }
+        $path = PathPolicy::normalizeRelative($path);
 
         $baseRoot = rtrim(config('Storage')->fileManagerRoot, '/\\') . '/';
         if (($meta['source'] ?? '') === 'transfer') {
@@ -47,34 +43,44 @@ class ShareService
         $targetPath = $baseRoot . $path;
         $type = is_dir($targetPath) ? 'dir' : (is_file($targetPath) ? 'file' : 'dir');
 
-        $share = [
-            'hash' => $hash,
-            'path' => $path,
-            'type' => $type,
-            'created_by' => $user,
-            'created_at' => time(),
-            'expires_at' => $expiresAt,
-            'password_hash' => $password ? password_hash($password, PASSWORD_DEFAULT) : null,
-            'mode' => $mode,
-            'downloads' => 0
-        ];
+        return AtomicFileStore::transaction($this->sharesFile, function (array &$shares) use (
+            $path,
+            $type,
+            $user,
+            $password,
+            $expiresAt,
+            $mode,
+            $meta
+        ): array {
+            // Generate a 128-bit opaque identifier while holding the state lock.
+            $hash = bin2hex(random_bytes(16));
+            while (isset($shares[$hash])) {
+                $hash = bin2hex(random_bytes(16));
+            }
 
-        // Merge extra metadata (e.g. transfer info)
-        $share = array_merge($share, $meta);
-
-        $shares[$hash] = $share;
-        $this->saveShares($shares);
-
-        return $share;
+            $share = array_merge([
+                'hash' => $hash,
+                'path' => $path,
+                'type' => $type,
+                'created_by' => $user,
+                'created_at' => time(),
+                'expires_at' => $expiresAt,
+                'password_hash' => $password ? password_hash($password, PASSWORD_DEFAULT) : null,
+                'mode' => $mode,
+                'downloads' => 0,
+            ], $meta);
+            $shares[$hash] = $share;
+            return $share;
+        });
     }
 
     public function incrementDownloads(string $hash): void
     {
-        $shares = $this->getShares();
-        if (isset($shares[$hash])) {
-            $shares[$hash]['downloads'] = ($shares[$hash]['downloads'] ?? 0) + 1;
-            $this->saveShares($shares);
-        }
+        AtomicFileStore::transaction($this->sharesFile, function (array &$shares) use ($hash): void {
+            if (isset($shares[$hash])) {
+                $shares[$hash]['downloads'] = ($shares[$hash]['downloads'] ?? 0) + 1;
+            }
+        });
     }
 
     /**
@@ -88,7 +94,7 @@ class ShareService
         }
 
         // Check Expiration
-        if ($share['expires_at'] && time() > $share['expires_at']) {
+        if (!empty($share['expires_at']) && time() >= (int)$share['expires_at']) {
             return null; // Or return 'expired' status if logic demands
         }
 
@@ -109,21 +115,20 @@ class ShareService
      */
     public function deleteShare(string $hash): bool
     {
-        $shares = $this->getShares();
-        if (!isset($shares[$hash])) return false;
-
-        unset($shares[$hash]);
-        $this->saveShares($shares);
-        return true;
+        return AtomicFileStore::transaction($this->sharesFile, function (array &$shares) use ($hash): bool {
+            if (!isset($shares[$hash])) return false;
+            unset($shares[$hash]);
+            return true;
+        });
     }
 
     public function updateShare(string $hash, array $data): void
     {
-        $shares = $this->getShares();
-        if (isset($shares[$hash])) {
-            $shares[$hash] = array_merge($shares[$hash], $data);
-            $this->saveShares($shares);
-        }
+        AtomicFileStore::transaction($this->sharesFile, function (array &$shares) use ($hash, $data): void {
+            if (isset($shares[$hash])) {
+                $shares[$hash] = array_merge($shares[$hash], $data);
+            }
+        });
     }
 
     public function getAllShares(): array
@@ -137,21 +142,25 @@ class ShareService
      */
     public function processCleanup(): array
     {
-        $shares = $this->getShares();
-        $now = time();
-        $expired = 0;
-        $warned = 0;
         $settingsService = new SettingsService();
-        $emailService = new EmailService();
+        return AtomicFileStore::transaction($this->sharesFile, function (array &$shares) use ($settingsService): array {
+            $now = time();
+            $expired = 0;
+            $warned = 0;
 
-        foreach ($shares as $hash => $share) {
+            foreach ($shares as $hash => $share) {
             // 1. Check Expiration
-            if ($share['expires_at'] && $now > $share['expires_at']) {
+            if (!empty($share['expires_at']) && $now >= (int)$share['expires_at']) {
                 // If it is a transfer, delete physical files
                 if (isset($share['source']) && $share['source'] === 'transfer') {
-                    $dir = config('Storage')->uploads . '/shares/' . $share['path'];
-                    if (is_dir($dir)) {
-                        $this->rrmdir($dir);
+                    try {
+                        $root = rtrim(config('Storage')->uploads, '/\\') . DIRECTORY_SEPARATOR . 'shares';
+                        $dir = (new LocalAdapter($root))->resolvePath((string)($share['path'] ?? ''));
+                        if (is_dir($dir)) {
+                            $this->rrmdir($dir);
+                        }
+                    } catch (\Throwable $e) {
+                        log_message('error', 'Unable to clean up expired transfer share: ' . $e->getMessage());
                     }
                 }
                 unset($shares[$hash]);
@@ -193,13 +202,10 @@ class ShareService
                     }
                 }
             }
-        }
+            }
 
-        if ($expired > 0 || $warned > 0) {
-            $this->saveShares($shares);
-        }
-
-        return ['expired' => $expired, 'warned' => $warned];
+            return ['expired' => $expired, 'warned' => $warned];
+        });
     }
 
     private function rrmdir($dir) {

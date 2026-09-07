@@ -15,16 +15,14 @@ class DavControllerSecurityTest extends CIUnitTestCase
         return $m->invokeArgs($obj, $args);
     }
 
-    public function testResolveSafeDavRootPathStaysInsideBaseRoot(): void
+    public function testResolveSafeDavRootPathRejectsTraversal(): void
     {
         $controller = new DavController();
         $baseRoot = config('Storage')->fileManagerRoot;
         @mkdir($baseRoot, 0755, true);
 
-        $path = (string)$this->callPrivate($controller, 'resolveSafeDavRootPath', [$baseRoot, '../../etc/passwd']);
-        $baseReal = rtrim((string)realpath($baseRoot), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-        $pathReal = rtrim((string)realpath($path) ?: $path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-
-        $this->assertStringStartsWith($baseReal, $pathReal);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Invalid WebDAV home directory');
+        $this->callPrivate($controller, 'resolveSafeDavRootPath', [$baseRoot, '../../etc/passwd']);
     }
 }

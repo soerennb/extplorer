@@ -75,21 +75,26 @@ class EmailService
             return false;
         }
 
-        $sender = $transfer['sender_email'] ?? 'Unknown';
-        $message = $transfer['message'] ?? '';
-        $subject = $transfer['subject'] ?? 'Files shared with you';
+        $sender = filter_var($transfer['sender_email'] ?? '', FILTER_VALIDATE_EMAIL) ?: 'Unknown';
+        $message = (string)($transfer['message'] ?? '');
+        $subject = preg_replace('/[\r\n]+/', ' ', (string)($transfer['subject'] ?? 'Files shared with you')) ?: 'Files shared with you';
+        $subject = mb_substr(trim($subject), 0, 200);
+        $safeSender = esc($sender);
+        $safeLink = esc($link);
         
         // Simple HTML Template
         $body = "
             <h2>You received files!</h2>
-            <p><strong>{$sender}</strong> sent you files via eXtplorer.</p>
+            <p><strong>{$safeSender}</strong> sent you files via eXtplorer.</p>
             <p><strong>Message:</strong><br>" . nl2br(esc($message)) . "</p>
-            <p><a href='{$link}' style='padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px;'>Download Files</a></p>
-            <p><small>Link: {$link}</small></p>
+            <p><a href='{$safeLink}' style='padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px;'>Download Files</a></p>
+            <p><small>Link: {$safeLink}</small></p>
         ";
 
         $this->email->setFrom($this->settingsService->get('email_from'), $this->settingsService->get('email_from_name'));
-        $this->email->setReplyTo($sender);
+        if (filter_var($sender, FILTER_VALIDATE_EMAIL)) {
+            $this->email->setReplyTo($sender);
+        }
         $this->email->setTo($transfer['recipient_email']);
         $this->email->setSubject($subject);
         $this->email->setMessage($body);

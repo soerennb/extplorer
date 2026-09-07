@@ -5,11 +5,13 @@ namespace App\Controllers;
 use App\Services\ShareService;
 use App\Services\LogService;
 use App\Services\VFS\LocalAdapter;
-use CodeIgniter\API\ResponseTrait;
+use App\Services\DownloadHeaders;
 
 class ShareController extends BaseController
 {
-    use ResponseTrait;
+    use ApiResponseTrait;
+
+    private const VERIFIED_SESSION_TTL = 1800;
 
     public function index(string $hash)
     {
@@ -26,20 +28,16 @@ class ShareController extends BaseController
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Link expired or invalid.");
         }
 
-        [, $basePath] = $this->resolveSharePaths($share);
-
         // Password Protection Check
-        if ($share['password_hash']) {
-            // Check if verified in session
-            $sessionKey = 'share_verified_' . $hash;
-            if (!session($sessionKey)) {
-                return view('shared_password', [
-                    'hash' => $hash,
-                    'locale' => $locale,
-                    'translations' => $translations,
-                ]);
-            }
+        if (!$this->isShareVerified($hash, $share)) {
+            return view('shared_password', [
+                'hash' => $hash,
+                'locale' => $locale,
+                'translations' => $translations,
+            ]);
         }
+
+        [, $basePath] = $this->resolveSharePaths($share);
 
         // Serve Content
         $root = $basePath;
@@ -154,8 +152,18 @@ class ShareController extends BaseController
         $translations = $this->loadTranslations($locale);
         $invalidPasswordMessage = $translations['shared_invalid_password'] ?? 'Invalid Password';
 
-        if ($service->verifyPassword($hash, $password)) {
-            session()->set('share_verified_' . $hash, true);
+        $share = $service->getShare($hash);
+        if ($share && $service->verifyPassword($hash, $password)) {
+            $expiresAt = (int)($share['expires_at'] ?? 0);
+            $verifiedUntil = time() + self::VERIFIED_SESSION_TTL;
+            if ($expiresAt > 0) {
+                $verifiedUntil = min($verifiedUntil, $expiresAt);
+            }
+
+            session()->set('share_verified_' . $hash, [
+                'verified_at' => time(),
+                'expires_at' => $verifiedUntil,
+            ]);
             return redirect()->to('/s/' . $hash);
         }
 
@@ -170,7 +178,7 @@ class ShareController extends BaseController
         if (!$share) return $this->failNotFound();
 
         // Password check
-        if ($share['password_hash'] && !session('share_verified_' . $hash)) {
+        if (!$this->isShareVerified($hash, $share)) {
             return $this->failForbidden();
         }
 
@@ -226,7 +234,7 @@ class ShareController extends BaseController
                 @unlink($tempZip);
             });
 
-            return $this->response->download($tempZip, null)->setFileName($zipName);
+            return $this->response->download($tempZip, null)->setFileName(DownloadHeaders::filename($zipName, 'shared.zip'));
         }
 
         if ($inline) {
@@ -234,11 +242,13 @@ class ShareController extends BaseController
 
             return $this->response
                 ->setHeader('Content-Type', $mime)
-                ->setHeader('Content-Disposition', 'inline; filename="' . basename($fullPath) . '"')
+                ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('inline', basename($fullPath)))
                 ->setBody(file_get_contents($fullPath));
         }
 
-        return $this->response->download($fullPath, null);
+        return $this->response
+            ->download($fullPath, null)
+            ->setFileName(DownloadHeaders::filename(basename($fullPath)));
     }
 
     // JSON API for the shared view (listing subfolders)
@@ -249,7 +259,7 @@ class ShareController extends BaseController
         if (!$share) return $this->failNotFound();
 
         // Password check
-        if ($share['password_hash'] && !session('share_verified_' . $hash)) {
+        if (!$this->isShareVerified($hash, $share)) {
             return $this->failForbidden();
         }
 
@@ -298,7 +308,7 @@ class ShareController extends BaseController
         }
 
         // Password check
-        if ($share['password_hash'] && !session('share_verified_' . $hash)) {
+        if (!$this->isShareVerified($hash, $share)) {
             LogService::log('Share Upload Forbidden', $hash, 'Upload blocked: password not verified', 'Public');
             return $this->failForbidden();
         }
@@ -350,29 +360,34 @@ class ShareController extends BaseController
                 }
             }
 
-            $quotaBytes = (int)$policy['quota_bytes'];
-            $quotaUsed = (int)$policy['quota_used_bytes'];
-            if ($quotaBytes > 0 && ($quotaUsed + $fileSize) > $quotaBytes) {
-                return $this->fail('Upload would exceed the share quota.', 400);
-            }
+            $name = $this->sanitizePublicUploadFilename((string)$file->getClientName());
+            $lock = $this->openShareUploadLock($hash);
+            try {
+                $policy = $this->buildUploadPolicy($settings, $basePath, $share);
+                $quotaBytes = (int)$policy['quota_bytes'];
+                $quotaUsed = (int)$policy['quota_used_bytes'];
+                if ($quotaBytes > 0 && ($quotaUsed + $fileSize) > $quotaBytes) {
+                    return $this->fail('Upload would exceed the share quota.', 400);
+                }
 
-            $maxFiles = (int)$policy['max_files'];
-            $filesUsed = (int)$policy['files_used'];
-            if ($maxFiles > 0 && ($filesUsed + 1) > $maxFiles) {
-                return $this->fail('Upload would exceed the maximum number of files for this share.', 400);
-            }
+                $maxFiles = (int)$policy['max_files'];
+                $filesUsed = (int)$policy['files_used'];
+                if ($maxFiles > 0 && ($filesUsed + 1) > $maxFiles) {
+                    return $this->fail('Upload would exceed the maximum number of files for this share.', 400);
+                }
 
-            $fs = new LocalAdapter($basePath);
-            $targetDir = $fs->resolvePath($subPath);
-            if (!is_dir($targetDir)) {
-                return $this->fail('Target directory does not exist.');
-            }
+                $fs = new LocalAdapter($basePath);
+                $targetDir = $fs->resolvePath($subPath);
+                if (!is_dir($targetDir)) {
+                    return $this->fail('Target directory does not exist.');
+                }
 
-            $name = basename(str_replace('\\', '/', (string)$file->getClientName()));
-            if ($name === '' || $name === '.' || $name === '..') {
-                return $this->fail('Invalid filename.', 400);
+                if (!$file->move($targetDir, $name)) {
+                    return $this->fail('Unable to store uploaded file.', 500);
+                }
+            } finally {
+                $this->closeShareUploadLock($lock);
             }
-            $file->move($targetDir, $name);
             $postPolicy = $this->buildUploadPolicy($settings, $basePath, $share);
 
             return $this->respond([
@@ -393,12 +408,13 @@ class ShareController extends BaseController
      */
     private function resolveSharePaths(array $share): array
     {
-        $rootBase = rtrim(config('Storage')->fileManagerRoot, '/\\') . '/';
+        $rootBase = rtrim(config('Storage')->fileManagerRoot, '/\\');
         if (isset($share['source']) && $share['source'] === 'transfer') {
-            $rootBase = rtrim(config('Storage')->uploads, '/\\') . '/shares/';
+            $rootBase = rtrim(config('Storage')->uploads, '/\\') . DIRECTORY_SEPARATOR . 'shares';
         }
 
-        return [$rootBase, $rootBase . ($share['path'] ?? '')];
+        $resolver = new LocalAdapter($rootBase);
+        return [$rootBase, $resolver->resolvePath((string)($share['path'] ?? ''))];
     }
 
     /**
@@ -504,6 +520,9 @@ class ShareController extends BaseController
             );
 
             foreach ($iterator as $item) {
+                if ($item->isLink()) {
+                    throw new \RuntimeException('Share usage cannot be calculated for symbolic links.');
+                }
                 if (!$item->isFile()) {
                     continue;
                 }
@@ -511,8 +530,7 @@ class ShareController extends BaseController
                 $bytes += (int)$item->getSize();
             }
         } catch (\Throwable $e) {
-            // If we cannot scan usage, fall back to zeros to avoid blocking uploads.
-            return ['bytes' => 0, 'files' => 0];
+            throw new \RuntimeException('Unable to verify share upload quota.', 0, $e);
         }
 
         return ['bytes' => $bytes, 'files' => $files];
@@ -540,6 +558,12 @@ class ShareController extends BaseController
             $full = $item->getPathname();
             $relative = substr($full, $baseLen);
 
+            if ($item->isLink()) {
+                $zip->close();
+                @unlink($destinationZip);
+                throw new \RuntimeException('Refusing to expose symbolic links in a public share archive.');
+            }
+
             if ($item->isDir()) {
                 $zip->addEmptyDir(str_replace(DIRECTORY_SEPARATOR, '/', $relative));
                 continue;
@@ -549,5 +573,67 @@ class ShareController extends BaseController
         }
 
         $zip->close();
+    }
+
+    private function isShareVerified(string $hash, array $share): bool
+    {
+        if (empty($share['password_hash'])) {
+            return true;
+        }
+
+        $value = session('share_verified_' . $hash);
+        if (!is_array($value)) {
+            return false;
+        }
+
+        $expiresAt = (int)($value['expires_at'] ?? 0);
+        if ($expiresAt <= time()) {
+            session()->remove('share_verified_' . $hash);
+            return false;
+        }
+
+        $shareExpiresAt = (int)($share['expires_at'] ?? 0);
+        if ($shareExpiresAt > 0 && $expiresAt > $shareExpiresAt) {
+            session()->remove('share_verified_' . $hash);
+            return false;
+        }
+
+        return true;
+    }
+
+    private function sanitizePublicUploadFilename(string $filename): string
+    {
+        $filename = basename(str_replace('\\', '/', $filename));
+        if ($filename === '' || $filename === '.' || $filename === '..') {
+            throw new \RuntimeException('Invalid filename.');
+        }
+
+        if (strlen($filename) > 255 || preg_match('/[\x00-\x1F\x7F]/', $filename)) {
+            throw new \RuntimeException('Invalid filename.');
+        }
+
+        return $filename;
+    }
+
+    /** @return resource */
+    private function openShareUploadLock(string $hash)
+    {
+        $lockPath = config('Storage')->runtime . DIRECTORY_SEPARATOR . 'share-upload-' . $hash . '.lock';
+        $lock = @fopen($lockPath, 'c');
+        if ($lock === false || !flock($lock, LOCK_EX)) {
+            if (is_resource($lock)) {
+                fclose($lock);
+            }
+            throw new \RuntimeException('Unable to reserve share upload quota.');
+        }
+
+        return $lock;
+    }
+
+    /** @param resource $lock */
+    private function closeShareUploadLock($lock): void
+    {
+        flock($lock, LOCK_UN);
+        fclose($lock);
     }
 }

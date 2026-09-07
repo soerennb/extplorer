@@ -45,25 +45,9 @@ abstract class BaseController extends Controller
             'Permissions-Policy',
             'geolocation=(), microphone=(), camera=(), payment=(), usb=(), fullscreen=(self)'
         );
-        
-        // --- Poor Man's Cron (Auto Cleanup) ---
-        // Run once per hour on a random request
-        $cronFile = config('Storage')->runtime . '/last_cleanup.txt';
-        $now = time();
-        $lastRun = file_exists($cronFile) ? (int)file_get_contents($cronFile) : 0;
-        
-        // 3600 seconds = 1 hour
-        if ($now - $lastRun > 3600) {
-            // Update timestamp first to prevent race conditions (simple lock)
-            file_put_contents($cronFile, $now);
-            
-            // Run logic (silently catch errors)
-            try {
-                $service = new \App\Services\ShareService();
-                $service->processCleanup();
-            } catch (\Exception $e) {
-                log_message('error', 'Auto Cleanup Failed: ' . $e->getMessage());
-            }
-        }
+        $this->response
+            ->setHeader('X-Content-Type-Options', 'nosniff')
+            ->setHeader('X-Frame-Options', 'SAMEORIGIN')
+            ->setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     }
 }

@@ -11,7 +11,7 @@ $routes->get('health', 'Health::index');
 $routes->get('login', 'Login::index');
 $routes->post('login/auth', 'Login::auth');
 $routes->post('login/test-remote', 'Login::testRemote');
-$routes->get('logout', 'Login::logout');
+$routes->post('logout', 'Login::logout');
 
 $routes->get('install', 'Install::index');
 $routes->post('install/create', 'Install::createAdmin');
@@ -36,6 +36,10 @@ $routes->group('api', function($routes) {
     $routes->post('cp', 'ApiController::cp');
     $routes->post('upload', 'ApiController::upload');
     $routes->post('upload_chunk', 'ApiController::uploadChunk');
+    $routes->post('upload/session', 'ApiController::uploadSessionCreate');
+    $routes->put('upload/session/(:segment)/chunk/(:num)', 'ApiController::uploadSessionChunk/$1/$2');
+    $routes->post('upload/session/(:segment)/complete', 'ApiController::uploadSessionComplete/$1');
+    $routes->delete('upload/session/(:segment)', 'ApiController::uploadSessionAbort/$1');
     $routes->get('download', 'ApiController::download');
     $routes->get('thumb', 'ApiController::thumb');
     $routes->get('search', 'ApiController::search');

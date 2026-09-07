@@ -13,7 +13,6 @@ class LogService
 
     public static function log(string $action, string $path = '', string $details = '', ?string $username = null)
     {
-        $logs = self::getLogs();
         $settingsService = new SettingsService();
         $retention = (int)($settingsService->get('log_retention_count', 500));
         if ($retention < 100) {
@@ -31,14 +30,14 @@ class LogService
             'ip' => $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'
         ];
         
-        array_unshift($logs, $entry);
-        
-        // Keep last N logs based on settings.
-        if (count($logs) > $retention) {
-            $logs = array_slice($logs, 0, $retention);
-        }
-        
-        self::saveLogs($logs);
+        AtomicFileStore::transaction(self::filePath(), function (array &$logs) use ($entry, $retention): void {
+            array_unshift($logs, $entry);
+
+            // Keep last N logs based on settings.
+            if (count($logs) > $retention) {
+                $logs = array_slice($logs, 0, $retention);
+            }
+        });
     }
 
     public static function getLogs(): array

@@ -27,9 +27,14 @@ class Encryption extends BaseConfig
     {
         parent::__construct();
 
-        $key = getenv('EXTPLORER_ENCRYPTION_KEY');
-        if ($key === false || trim($key) === '') {
-            $key = getenv('encryption.key');
+        $keyFile = getenv('EXTPLORER_ENCRYPTION_KEY_FILE');
+        if ($keyFile !== false && trim($keyFile) !== '') {
+            $key = \App\Services\SecretReader::file(trim($keyFile));
+        } else {
+            $key = getenv('EXTPLORER_ENCRYPTION_KEY');
+            if ($key === false || trim($key) === '') {
+                $key = getenv('encryption.key');
+            }
         }
         if ($key !== false && trim($key) !== '') {
             $this->key = trim($key);

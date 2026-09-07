@@ -2,13 +2,13 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\API\ResponseTrait;
 use App\Models\UserModel;
 use App\Services\LogService;
+use App\Services\AuthenticationService;
 
 class UserAdminController extends BaseController
 {
-    use ResponseTrait;
+    use ApiResponseTrait;
 
     private UserModel $userModel;
     /**
@@ -174,6 +174,7 @@ class UserAdminController extends BaseController
         // Remove sensitive data
         foreach ($users as &$user) {
             unset($user['password_hash']);
+            unset($user['2fa_secret'], $user['recovery_codes']);
         }
         return $this->respond($users);
     }
@@ -215,9 +216,34 @@ class UserAdminController extends BaseController
         if (!$username) return $this->fail('Username required');
         if (!$this->userModel->isValidUsername($username)) return $this->fail('Invalid username format');
 
-        $data = json_decode(json_encode($this->request->getJSON()), true);
+        $data = $this->request->getJSON(true);
+        if (!is_array($data)) {
+            return $this->fail('A JSON object is required');
+        }
+
+        $allowed = [
+            'role',
+            'home_dir',
+            'groups',
+            'allowed_extensions',
+            'blocked_extensions',
+            'disabled',
+            'locked_until',
+            'failed_login_count',
+            'password',
+        ];
+        $data = array_intersect_key($data, array_flip($allowed));
+        if (isset($data['password'])) {
+            if (!is_string($data['password']) || strlen($data['password']) < 8) {
+                return $this->fail('Password must be at least 8 characters long');
+            }
+            $data['must_change_password'] = true;
+        }
 
         if ($this->userModel->updateUser($username, $data)) {
+            if (isset($data['password']) || array_key_exists('disabled', $data) || array_key_exists('locked_until', $data)) {
+                (new AuthenticationService($this->userModel))->revokeUserTokens($username);
+            }
             LogService::log('Update User', $username);
             return $this->respond(['status' => 'success']);
         } else {
@@ -237,6 +263,7 @@ class UserAdminController extends BaseController
         }
 
         if ($this->userModel->deleteUser($username)) {
+            (new AuthenticationService($this->userModel))->revokeUserTokens($username);
             LogService::log('Delete User', $username);
             return $this->respond(['status' => 'success']);
         } else {

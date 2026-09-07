@@ -573,7 +573,7 @@
                 </button>
 
                 <a class="navbar-brand d-flex align-items-center" href="#">
-                    <img src="<?= base_url('logo-dark.svg') ?>" alt="Logo" class="navbar-logo">
+                    <img :src="baseUrl + 'logo-dark.svg'" alt="Logo" class="navbar-logo">
                 </a>
 
                 <div class="d-lg-none text-white mobile-current-path me-auto">
@@ -633,7 +633,7 @@
                         <ul class="dropdown-menu dropdown-menu-end shadow">
 	                            <li><a class="dropdown-item" href="#" @click.prevent="openProfile"><i class="ri-user-settings-line me-2"></i>{{ t('profile_settings') || 'Profile & Settings' }}</a></li>
 	                            <li v-if="isAdmin"><a class="dropdown-item" href="#" @click.prevent="openAdmin"><i class="ri-flashlight-line me-2"></i>Quick Admin</a></li>
-	                            <li v-if="isAdmin"><a class="dropdown-item" href="<?= base_url('admin') ?>"><i class="ri-settings-3-line me-2"></i> Admin Console</a></li>
+                            <li v-if="isAdmin"><a class="dropdown-item" :href="baseUrl + 'admin'"><i class="ri-settings-3-line me-2"></i> Admin Console</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><h6 class="dropdown-header">Appearance</h6></li>
                             <li><a class="dropdown-item" :class="{active: theme === 'light'}" href="#" @click.prevent="setTheme('light')">
@@ -646,7 +646,7 @@
                                 <i class="ri-computer-line me-2"></i> {{ t('theme_auto') }}
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="logout" data-testid="logout"><i class="ri-logout-box-r-line me-2"></i>{{ t('logout') || 'Logout' }}</a></li>
+                            <li><a class="dropdown-item text-danger" href="#" @click.prevent="logout" data-testid="logout"><i class="ri-logout-box-r-line me-2"></i>{{ t('logout') || 'Logout' }}</a></li>
                         </ul>
                     </div>
                 </div>
@@ -1479,20 +1479,20 @@
 
     <!-- Scripts -->
     <script <?= csp_script_nonce() ?>>
-        window.baseUrl = "<?= base_url() ?>";
-        window.appVersion = "<?= config('App')->version ?>";
-        window.appEnvironment = "<?= ENVIRONMENT ?>";
-        window.userRole = "<?= session('role') ?>";
-        window.username = "<?= session('username') ?>";
-        window.userPermissions = <?= json_encode(session('permissions') ?? []) ?>;
-        window.connectionMode = "<?= session('connection')['mode'] ?? 'local' ?>";
-        window.forcePasswordChange = <?= session('force_password_change') ? 'true' : 'false' ?>;
-        window.csrfTokenName = "<?= csrf_token() ?>";
-        window.csrfHash = "<?= csrf_hash() ?>";
+        window.baseUrl = <?= json_encode(base_url(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.appVersion = <?= json_encode(config('App')->version, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.appEnvironment = <?= json_encode(ENVIRONMENT, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.userRole = <?= json_encode(session('role') ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.username = <?= json_encode(session('username') ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.userPermissions = <?= json_encode(session('permissions') ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.connectionMode = <?= json_encode(session('connection')['mode'] ?? 'local', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.forcePasswordChange = <?= json_encode((bool)session('force_password_change')) ?>;
+        window.csrfTokenName = <?= json_encode(csrf_token(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.csrfHash = <?= json_encode(csrf_hash(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         window.webdavEnabled = <?= json_encode($webdavEnabled) ?>;
-        window.cspStyleNonce = "<?= service('csp')->getStyleNonce() ?>";
+        window.cspStyleNonce = <?= json_encode(service('csp')->getStyleNonce(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     </script>
-    <script src="<?= base_url('assets/js/vue.global.js') ?>"></script>
+    <script src="<?= base_url('assets/js/vue.runtime.global.prod.js') ?>"></script>
     <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/sweetalert2.min.js') ?>"></script>
     <script <?= csp_script_nonce() ?>>
@@ -1546,13 +1546,14 @@
     <script src="<?= base_url('assets/js/api.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/store.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/i18n.js') ?>"></script>
-    <script src="<?= base_url('assets/js/components/FileTree.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/components/UserAdmin.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/components/UserProfile.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/components/ShareModal.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/components/UploadModal.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/components/FileHistoryModal.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/components/TransferModal.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/FileTree.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/UserAdmin.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/UserProfile.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/ShareModal.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/UploadModal.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/FileHistoryModal.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/components/TransferModal.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/compiled/app-render.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/app.js?v=' . time()) ?>"></script>
 </body>
 </html>

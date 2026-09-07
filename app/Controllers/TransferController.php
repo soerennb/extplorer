@@ -2,7 +2,6 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\API\ResponseTrait;
 use App\Services\ShareService;
 use App\Services\EmailService;
 use App\Services\SettingsService;
@@ -11,7 +10,7 @@ use App\Services\VFS\VfsFactory;
 
 class TransferController extends BaseController
 {
-    use ResponseTrait;
+    use ApiResponseTrait;
 
     private ShareService $shareService;
     private EmailService $emailService;
@@ -33,8 +32,14 @@ class TransferController extends BaseController
         $sessionId = $this->normalizeSessionId((string)$this->request->getGet('sessionId'));
         $fileName = $this->request->getGet('fileName');
 
-        if (!$sessionId || !$fileName) {
+        if (!$sessionId || strlen($sessionId) < 16 || !$fileName) {
             return $this->fail('Missing parameters');
+        }
+
+        try {
+            $fileName = $this->sanitizeTransferFilename((string)$fileName);
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage());
         }
 
         $fileName = basename($fileName);
@@ -80,8 +85,8 @@ class TransferController extends BaseController
         }
 
         $tempDir = $this->getTransferTempDir($sessionId);
-        if (!is_dir($tempDir)) {
-            mkdir($tempDir, 0755, true);
+        if (!is_dir($tempDir) && !mkdir($tempDir, 0700, true) && !is_dir($tempDir)) {
+            return $this->fail('Server Error: Cannot create transfer storage.', 500);
         }
 
         $vfs = VfsFactory::createFileSystem(
@@ -105,8 +110,16 @@ class TransferController extends BaseController
             }
             
             // Read content from VFS and write to temp dir
-            $fileName = basename($path);
+            try {
+                $fileName = $this->sanitizeTransferFilename(basename(str_replace('\\', '/', (string)$path)));
+            } catch (\Throwable $e) {
+                return $this->fail($e->getMessage());
+            }
             $destPath = $tempDir . '/' . $fileName;
+
+            if (is_link($destPath)) {
+                return $this->fail('Invalid transfer storage.', 500);
+            }
 
             try {
                 $content = $vfs->readFile((string)$path);
@@ -147,8 +160,23 @@ class TransferController extends BaseController
         $fileOffset = (int)($this->request->getPost('fileOffset') ?? 0);
         $fileSize = (int)($this->request->getPost('fileSize') ?? 0);
 
-        if (!$file || !$sessionId || !$fileName) {
+        if (!$file || !$sessionId || strlen($sessionId) < 16 || !$fileName || $totalChunks < 1 || $totalChunks > 100000) {
             return $this->fail('Missing parameters');
+        }
+
+        try {
+            $fileName = $this->sanitizeTransferFilename((string)$fileName);
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage());
+        }
+
+        if (!$file->isValid() || $fileSize < 1 || $fileOffset < 0) {
+            return $this->fail('Invalid transfer chunk metadata.');
+        }
+
+        $chunkBytes = (int)$file->getSize();
+        if ($chunkBytes < 1 || $chunkBytes > 8 * 1024 * 1024 || $fileOffset + $chunkBytes > $fileSize) {
+            return $this->fail('Invalid transfer chunk size.');
         }
 
         $maxFileBytes = $this->getMaxUploadBytes();
@@ -156,55 +184,71 @@ class TransferController extends BaseController
             return $this->fail('File exceeds the configured upload size limit.');
         }
 
-        // Sanitize Filename
-        $fileName = basename($fileName);
         $tempDir = $this->getTransferTempDir($sessionId);
         
-        if (!is_dir($tempDir)) {
-            mkdir($tempDir, 0755, true);
+        if (!is_dir($tempDir) && !mkdir($tempDir, 0700, true) && !is_dir($tempDir)) {
+            return $this->fail('Server Error: Cannot create transfer storage.');
         }
 
         $tempPath = $tempDir . '/' . $fileName . '.part';
 
-        $existingSize = file_exists($tempPath) ? (int)filesize($tempPath) : 0;
-        if ($fileOffset < 0 || $fileOffset > $existingSize) {
-            return $this->fail('Upload offset mismatch; please resume the transfer.');
+        if (is_link($tempPath)) {
+            return $this->fail('Invalid transfer storage.');
         }
 
-        // Write at the provided byte offset to make resume safe.
-        $input = fopen($file->getTempName(), 'rb');
-        $data = stream_get_contents($input);
-        fclose($input);
-
-        $output = fopen($tempPath, 'c+b');
-        if ($output === false) {
-            return $this->fail('Server Error: Cannot write upload');
+        $lock = @fopen($tempPath . '.lock', 'c');
+        if ($lock === false || !flock($lock, LOCK_EX)) {
+            if (is_resource($lock)) fclose($lock);
+            return $this->fail('Server Error: Cannot lock transfer upload.');
         }
 
-        if (fseek($output, $fileOffset) !== 0) {
-            fclose($output);
-            return $this->fail('Server Error: Cannot seek upload');
-        }
-
-        fwrite($output, $data);
-        fflush($output);
-        fclose($output);
-
-        // Calculate size so far
-        $currentSize = filesize($tempPath);
-
-        // If last chunk, rename
-        if ($chunkIndex === $totalChunks - 1) {
-            if ($fileSize > 0 && $currentSize !== $fileSize) {
-                return $this->fail('Upload incomplete; please resume the transfer.');
+        try {
+            $existingSize = file_exists($tempPath) ? (int)filesize($tempPath) : 0;
+            if ($fileOffset !== $existingSize) {
+                return $this->fail('Upload offset mismatch; please resume the transfer.');
             }
-            rename($tempPath, $tempDir . '/' . $fileName);
-        }
 
-        return $this->respond([
-            'status' => 'success',
-            'uploaded' => $currentSize
-        ]);
+            $input = fopen($file->getTempName(), 'rb');
+            $output = fopen($tempPath, 'c+b');
+            if ($input === false || $output === false) {
+                if (is_resource($input)) fclose($input);
+                if (is_resource($output)) fclose($output);
+                return $this->fail('Server Error: Cannot write upload.');
+            }
+
+            if (fseek($output, $fileOffset) !== 0) {
+                fclose($input);
+                fclose($output);
+                return $this->fail('Server Error: Cannot seek upload.');
+            }
+
+            $copied = stream_copy_to_stream($input, $output);
+            fclose($input);
+            if ($copied !== $chunkBytes || !fflush($output)) {
+                fclose($output);
+                return $this->fail('Server Error: Cannot write complete upload chunk.');
+            }
+            fclose($output);
+
+            $currentSize = (int)filesize($tempPath);
+            if ($chunkIndex === $totalChunks - 1) {
+                if ($currentSize !== $fileSize) {
+                    return $this->fail('Upload incomplete; please resume the transfer.');
+                }
+                if (!rename($tempPath, $tempDir . '/' . $fileName)) {
+                    return $this->fail('Server Error: Cannot finalize upload.');
+                }
+            }
+
+            return $this->respond([
+                'status' => $chunkIndex === $totalChunks - 1 ? 'complete' : 'partial',
+                'uploaded' => $currentSize
+            ]);
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+            @unlink($tempPath . '.lock');
+        }
     }
 
     /**
@@ -229,8 +273,12 @@ class TransferController extends BaseController
         // Guard against event objects or other non-scalar values being passed from the UI.
         $sessionId = $this->normalizeSessionId(is_scalar($sessionIdRaw) ? (string)$sessionIdRaw : '');
         $recipients = $this->normalizeRecipients($json->recipients ?? []); // Array of emails
-        $subject = trim((string)($json->subject ?? ''));
-        $message = trim((string)($json->message ?? ''));
+        try {
+            $subject = $this->sanitizeEmailSubject((string)($json->subject ?? ''));
+            $message = $this->sanitizeEmailMessage((string)($json->message ?? ''));
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage());
+        }
         $expiryDays = $this->clampExpiryDays((int)($json->expiresIn ?? $this->settingsService->get('default_transfer_expiry')));
         $notifyDefault = (bool)$this->settingsService->get('transfer_default_notify_download', false);
         $notifyDownload = (bool)($json->notifyDownload ?? $notifyDefault);
@@ -254,8 +302,8 @@ class TransferController extends BaseController
         $relPath = $hash; // For transfers, path is just the Hash folder name in uploads/shares
         $absPath = config('Storage')->uploads . '/shares/' . $hash;
         
-        if (!mkdir($absPath, 0755, true)) {
-            return $this->fail('Server Error: Cannot create storage');
+        if (!mkdir($absPath, 0700, true) && !is_dir($absPath)) {
+            return $this->fail('Server Error: Cannot create storage', 500);
         }
 
         // Move files
@@ -267,9 +315,29 @@ class TransferController extends BaseController
             if (str_ends_with($f, '.part')) {
                 continue;
             }
-            rename($tempDir . '/' . $f, $absPath . '/' . $f);
-            $fileList[] = $f;
-            $totalSize += filesize($absPath . '/' . $f);
+            $source = $tempDir . '/' . $f;
+            if (is_link($source) || !is_file($source)) {
+                $this->rrmdir($absPath);
+                return $this->fail('Invalid transfer storage.', 500);
+            }
+            try {
+                $safeName = $this->sanitizeTransferFilename($f);
+            } catch (\Throwable $e) {
+                $this->rrmdir($absPath);
+                return $this->fail($e->getMessage());
+            }
+            $destination = $absPath . '/' . $safeName;
+            if (file_exists($destination) || is_link($destination) || !rename($source, $destination)) {
+                $this->rrmdir($absPath);
+                return $this->fail('Unable to finalize transfer file.', 500);
+            }
+            $size = filesize($destination);
+            if ($size === false) {
+                $this->rrmdir($absPath);
+                return $this->fail('Unable to read transfer file size.', 500);
+            }
+            $fileList[] = $safeName;
+            $totalSize += (int)$size;
         }
         $this->cleanupTempDir($tempDir);
 
@@ -317,7 +385,12 @@ class TransferController extends BaseController
 
         // We use $relPath as the 'path' in share. 
         // ShareController will need to know that source='transfer' means look in WRITEPATH/uploads/shares/
-        $share = $this->shareService->createShare($relPath, session('username'), null, $expiresAt, 'read', $meta);
+        try {
+            $share = $this->shareService->createShare($relPath, session('username'), null, $expiresAt, 'read', $meta);
+        } catch (\Throwable $e) {
+            $this->rrmdir($absPath);
+            return $this->fail($e->getMessage(), 500);
+        }
 
         // Send Emails
         $link = site_url('s/' . $share['hash']);
@@ -424,6 +497,19 @@ class TransferController extends BaseController
         return preg_replace('/[^a-zA-Z0-9]/', '', $sessionId) ?? '';
     }
 
+    private function sanitizeTransferFilename(string $fileName): string
+    {
+        $fileName = basename(str_replace('\\', '/', $fileName));
+        if ($fileName === '' || $fileName === '.' || $fileName === '..') {
+            throw new \RuntimeException('Invalid transfer filename.');
+        }
+        if (strlen($fileName) > 255 || preg_match('/[\x00-\x1F\x7F]/', $fileName)) {
+            throw new \RuntimeException('Invalid transfer filename.');
+        }
+
+        return $fileName;
+    }
+
     private function getTransferTempDir(string $sessionId): string
     {
         $user = (string)(session('username') ?? '');
@@ -442,6 +528,9 @@ class TransferController extends BaseController
 
         $normalized = [];
         foreach ($recipients as $recipient) {
+            if (!is_scalar($recipient)) {
+                continue;
+            }
             $email = strtolower(trim((string)$recipient));
             if ($email === '') {
                 continue;
@@ -456,6 +545,26 @@ class TransferController extends BaseController
         }
 
         return array_keys($normalized);
+    }
+
+    private function sanitizeEmailSubject(string $subject): string
+    {
+        $subject = trim((string)preg_replace('/[\r\n\x00-\x1F\x7F]+/', ' ', $subject));
+        if (mb_strlen($subject) > 200) {
+            throw new \RuntimeException('Email subject is too long.');
+        }
+
+        return $subject;
+    }
+
+    private function sanitizeEmailMessage(string $message): string
+    {
+        $message = trim($message);
+        if (mb_strlen($message) > 20_000) {
+            throw new \RuntimeException('Email message is too long.');
+        }
+
+        return $message;
     }
 
     private function clampExpiryDays(int $days): int

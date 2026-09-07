@@ -2,14 +2,15 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\API\ResponseTrait;
 use App\Services\VFS\LocalAdapter;
 use App\Services\LogService;
+use App\Services\UploadSessionService;
+use App\Services\DownloadHeaders;
 use Exception;
 
 class ApiController extends BaseController
 {
-    use ResponseTrait;
+    use ApiResponseTrait;
 
     private \App\Services\VFS\IFileSystem $fs;
 
@@ -75,7 +76,7 @@ class ApiController extends BaseController
                 'items' => $data,
                 'total' => $total
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -88,7 +89,7 @@ class ApiController extends BaseController
         try {
             $content = $this->fs->readFile($path);
             return $this->respond(['content' => $content]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -109,10 +110,12 @@ class ApiController extends BaseController
             $versionService = new \App\Services\VersionService($username);
             $versionService->createVersion($fullPath, $path);
 
-            $this->fs->writeFile($path, $content ?? '');
+            if (!$this->fs->writeFile($path, (string)($content ?? ''))) {
+                throw new Exception('Unable to save file.');
+            }
             LogService::log('Save File', $path);
             return $this->respond(['status' => 'success']);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -127,7 +130,7 @@ class ApiController extends BaseController
             $username = session('username');
             $versionService = new \App\Services\VersionService($username);
             return $this->respond(['versions' => $versionService->listVersions($path)]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -147,7 +150,7 @@ class ApiController extends BaseController
             $versionService->restoreVersion($path, $versionId, $this->fs);
             LogService::log('Restore Version', $path, 'Version: ' . $versionId);
             return $this->respond(['status' => 'success']);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -172,7 +175,7 @@ class ApiController extends BaseController
             
             LogService::log('Move to Trash', $path);
             return $this->respond(['status' => 'success']);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -184,7 +187,7 @@ class ApiController extends BaseController
             $username = session('username');
             $trashService = new \App\Services\TrashService($username);
             return $this->respond(['items' => $trashService->listItems()]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -203,7 +206,7 @@ class ApiController extends BaseController
             $trashService->restore($id, $this->fs);
             LogService::log('Restore from Trash', $id);
             return $this->respond(['status' => 'success']);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -222,7 +225,7 @@ class ApiController extends BaseController
             $trashService->deletePermanently($id);
             LogService::log('Permanent Delete', $id);
             return $this->respond(['status' => 'success']);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -236,7 +239,7 @@ class ApiController extends BaseController
             $trashService->emptyTrash();
             LogService::log('Empty Trash', 'All items');
             return $this->respond(['status' => 'success']);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -250,10 +253,12 @@ class ApiController extends BaseController
         if (!$path) return $this->fail('Path required');
 
         try {
-            $this->fs->createDirectory($path);
+            if (!$this->fs->createDirectory($path)) {
+                throw new Exception('Unable to create directory.');
+            }
             LogService::log('Create Directory', $path);
             return $this->respond(['status' => 'success']);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -268,10 +273,12 @@ class ApiController extends BaseController
         if (!$from || !$to) return $this->fail('From and To required');
 
         try {
-            $this->fs->move($from, $to);
+            if (!$this->fs->move($from, $to)) {
+                throw new Exception('Unable to move item.');
+            }
             LogService::log('Move', $from, 'To: ' . $to);
             return $this->respond(['status' => 'success']);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -286,10 +293,12 @@ class ApiController extends BaseController
         if (!$from || !$to) return $this->fail('From and To required');
 
         try {
-            $this->fs->copy($from, $to);
+            if (!$this->fs->copy($from, $to)) {
+                throw new Exception('Unable to copy item.');
+            }
             LogService::log('Copy', $from, 'To: ' . $to);
             return $this->respond(['status' => 'success']);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -343,7 +352,7 @@ class ApiController extends BaseController
 
         try {
             $name = $this->sanitizeUploadFilename((string)$file->getClientName());
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
         if (!$this->isExtensionAllowed($name)) {
@@ -373,14 +382,16 @@ class ApiController extends BaseController
                 ]);
             }
 
-            $file->move($target['dir'], $target['filename'], true);
+            if (!$file->move($target['dir'], $target['filename'], true)) {
+                throw new Exception('Unable to store uploaded file.');
+            }
             LogService::log('Upload', $path, 'File: ' . $target['relativePath']);
             return $this->respond([
                 'status' => 'success',
                 'filename' => $target['filename'],
                 'path' => $target['relativePath'],
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -393,6 +404,8 @@ class ApiController extends BaseController
         $filenameRaw = $this->request->getPost('filename');
         $chunkIndex = (int)$this->request->getPost('chunkIndex');
         $totalChunks = (int)$this->request->getPost('totalChunks');
+        $declaredSizeRaw = $this->request->getPost('fileSize');
+        $declaredSize = is_numeric($declaredSizeRaw) ? (int)$declaredSizeRaw : null;
         $targetPath = $this->request->getPost('path') ?? '/';
         if ($targetPath === '') {
             $targetPath = '/';
@@ -404,7 +417,7 @@ class ApiController extends BaseController
 
         try {
             $filename = $this->sanitizeUploadFilename((string)$filenameRaw);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
 
@@ -416,65 +429,222 @@ class ApiController extends BaseController
             return $this->fail("Uploading files with this extension is not allowed.");
         }
 
-        $settingsService = new \App\Services\SettingsService();
-        $settings = $settingsService->getSettings();
-        $chunkSize = (int)$file->getSize();
-        if ($this->exceedsMaxUploadSize($chunkSize, $settings)) {
-            $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
-            return $this->fail("Chunk exceeds the maximum allowed upload size of {$maxMb} MB.");
-        }
+        try {
+            $settings = (new \App\Services\SettingsService())->getSettings();
+            $chunkSize = (int)$file->getSize();
+            if ($this->exceedsMaxUploadSize($chunkSize, $settings)) {
+                $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
+                return $this->fail("Chunk exceeds the maximum allowed upload size of {$maxMb} MB.");
+            }
 
-        $tempDir = config('Storage')->uploads . '/chunks/' . md5(session_id() . $targetPath . '|' . $relativePath . '|' . $filename);
-        if (!is_dir($tempDir)) mkdir($tempDir, 0755, true);
-
-        $file->move($tempDir, $chunkIndex . '.part');
-
-        if ($chunkIndex === $totalChunks - 1) {
-            // Last chunk, assemble
+            $sessions = new UploadSessionService();
+            $owner = (string)session('username');
+            $legacyKey = $targetPath . '|' . $relativePath . '|' . $filename;
+            $session = $sessions->legacy(
+                $owner,
+                $legacyKey,
+                $targetPath,
+                (string)$relativePath,
+                $filename,
+                $totalChunks,
+                $declaredSize,
+                max(UploadSessionService::MIN_CHUNK_SIZE, 1024 * 1024),
+                $conflict
+            );
+            $manifest = $sessions->get($session['id']);
+            $sessions->assertOwner($manifest, $owner);
+            $stagingPath = $sessions->stagingPath($session['id']);
+            if (!$file->move(dirname($stagingPath), basename($stagingPath), false)) {
+                return $this->fail('Unable to store upload chunk.', 500);
+            }
             try {
-                $assembledSize = $this->calculateDirectorySize($tempDir);
-                if ($this->exceedsMaxUploadSize($assembledSize, $settings)) {
-                    $this->rrmdir($tempDir);
-                    $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
-                    return $this->fail("File exceeds the maximum allowed upload size of {$maxMb} MB.");
+                $sessions->storeChunkFromPath($session['id'], $chunkIndex, $stagingPath, $chunkSize);
+            } finally {
+                if (is_file($stagingPath)) {
+                    @unlink($stagingPath);
                 }
+            }
 
-                if ($this->wouldExceedUserQuota($assembledSize, $settings)) {
-                    $this->rrmdir($tempDir);
-                    return $this->fail('Upload would exceed the configured per-user storage quota.');
-                }
+            if ($chunkIndex !== $totalChunks - 1) {
+                return $this->respond(['status' => 'chunk_saved', 'index' => $chunkIndex]);
+            }
 
-                $target = $this->resolveUploadTarget($targetPath, $filename, (string)$relativePath, $conflict);
-                if ($target['skip']) {
-                    $this->rrmdir($tempDir);
-                    return $this->respond([
-                        'status' => 'skipped',
-                        'filename' => $target['filename'],
-                        'path' => $target['relativePath'],
-                    ]);
-                }
-
-                $finalPath = $target['dir'] . DIRECTORY_SEPARATOR . $target['filename'];
-                $out = fopen($finalPath, 'wb');
-                for ($i = 0; $i < $totalChunks; $i++) {
-                    $chunkPath = $tempDir . DIRECTORY_SEPARATOR . $i . '.part';
-                    fwrite($out, file_get_contents($chunkPath));
-                    unlink($chunkPath);
-                }
-                fclose($out);
-                rmdir($tempDir);
-                LogService::log('Upload (Chunked)', $targetPath, 'File: ' . $target['relativePath']);
+            $manifest = $sessions->get($session['id']);
+            $missing = $sessions->missingChunks($manifest);
+            if ($missing !== []) {
                 return $this->respond([
-                    'status' => 'assembled',
+                    'status' => 'chunk_saved',
+                    'index' => $chunkIndex,
+                    'missing' => $missing,
+                ], 202);
+            }
+
+            $settingsService = new \App\Services\SettingsService();
+            $settings = $settingsService->getSettings();
+            $assembledSize = array_sum(array_map('intval', $manifest['chunks'] ?? []));
+            if ($this->exceedsMaxUploadSize($assembledSize, $settings)) {
+                $sessions->abort($session['id']);
+                $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
+                return $this->fail("File exceeds the maximum allowed upload size of {$maxMb} MB.");
+            }
+            if ($this->wouldExceedUserQuota($assembledSize, $settings)) {
+                $sessions->abort($session['id']);
+                return $this->fail('Upload would exceed the configured per-user storage quota.');
+            }
+
+            $target = $this->resolveUploadTarget($targetPath, $filename, (string)$relativePath, $conflict);
+            if ($target['skip']) {
+                $sessions->abort($session['id']);
+                return $this->respond([
+                    'status' => 'skipped',
                     'filename' => $target['filename'],
                     'path' => $target['relativePath'],
                 ]);
-            } catch (Exception $e) {
-                return $this->fail($e->getMessage());
             }
+
+            $finalPath = $target['dir'] . DIRECTORY_SEPARATOR . $target['filename'];
+            $sessions->assemble($session['id'], $finalPath);
+            LogService::log('Upload (Chunked)', $targetPath, 'File: ' . $target['relativePath']);
+            return $this->respond([
+                'status' => 'assembled',
+                'filename' => $target['filename'],
+                'path' => $target['relativePath'],
+            ]);
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    public function uploadSessionCreate()
+    {
+        if (!can('upload')) return $this->failForbidden();
+
+        $json = $this->request->getJSON(true) ?? [];
+        $filename = (string)($json['filename'] ?? '');
+        $targetPath = (string)($json['path'] ?? '/');
+        $relativePath = (string)($json['relativePath'] ?? '');
+        $totalSize = filter_var($json['totalSize'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+        $chunkSize = (int)($json['chunkSize'] ?? 1024 * 1024);
+        $totalChunks = filter_var($json['totalChunks'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        $conflict = $this->normalizeUploadConflict((string)($json['conflict'] ?? 'replace'));
+
+        try {
+            $filename = $this->sanitizeUploadFilename($filename);
+            if (!$this->isExtensionAllowed($filename)) {
+                return $this->fail('Uploading files with this extension is not allowed.');
+            }
+            $this->fs->resolvePath($targetPath);
+            $this->sanitizeUploadRelativeSegments($relativePath);
+            $settings = (new \App\Services\SettingsService())->getSettings();
+            if ($totalSize === false || $this->exceedsMaxUploadSize((int)$totalSize, $settings)) {
+                return $this->fail('Upload exceeds the configured size limit.', 413);
+            }
+
+            $service = new UploadSessionService();
+            $session = $service->create(
+                (string)session('username'),
+                $targetPath,
+                $relativePath,
+                $filename,
+                (int)$totalSize,
+                $chunkSize,
+                $totalChunks === false ? null : (int)$totalChunks,
+                $conflict
+            );
+
+            return $this->respondCreated(['status' => 'created'] + $session);
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    public function uploadSessionChunk(string $id, int $index)
+    {
+        if (!can('upload')) return $this->failForbidden();
+
+        $file = $this->request->getFile('file');
+        if (!$file || !$file->isValid()) {
+            return $this->fail('Invalid upload chunk.');
         }
 
-        return $this->respond(['status' => 'chunk_saved', 'index' => $chunkIndex]);
+        try {
+            $service = new UploadSessionService();
+            $manifest = $service->get($id);
+            $service->assertOwner($manifest, (string)session('username'));
+            $size = (int)$file->getSize();
+            $stagingPath = $service->stagingPath($id);
+            if (!$file->move(dirname($stagingPath), basename($stagingPath), false)) {
+                return $this->fail('Unable to store upload chunk.', 500);
+            }
+            try {
+                $service->storeChunkFromPath($id, $index, $stagingPath, $size);
+            } finally {
+                if (is_file($stagingPath)) {
+                    @unlink($stagingPath);
+                }
+            }
+
+            return $this->respond(['status' => 'chunk_saved', 'index' => $index]);
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    public function uploadSessionComplete(string $id)
+    {
+        if (!can('upload')) return $this->failForbidden();
+
+        try {
+            $service = new UploadSessionService();
+            $manifest = $service->get($id);
+            $service->assertOwner($manifest, (string)session('username'));
+            $settings = (new \App\Services\SettingsService())->getSettings();
+            $size = array_sum(array_map('intval', $manifest['chunks'] ?? []));
+            if ($this->exceedsMaxUploadSize($size, $settings) || $this->wouldExceedUserQuota($size, $settings)) {
+                $service->abort($id);
+                return $this->fail('Upload exceeds the configured storage limit.', 413);
+            }
+
+            $target = $this->resolveUploadTarget(
+                (string)$manifest['target_path'],
+                (string)$manifest['filename'],
+                (string)$manifest['relative_path'],
+                (string)$manifest['conflict']
+            );
+            if ($target['skip']) {
+                $service->abort($id);
+                return $this->respond([
+                    'status' => 'skipped',
+                    'filename' => $target['filename'],
+                    'path' => $target['relativePath'],
+                ]);
+            }
+
+            $service->assemble($id, $target['dir'] . DIRECTORY_SEPARATOR . $target['filename']);
+            LogService::log('Upload (Resumable)', (string)$manifest['target_path'], 'File: ' . $target['relativePath']);
+            return $this->respond([
+                'status' => 'assembled',
+                'filename' => $target['filename'],
+                'path' => $target['relativePath'],
+            ]);
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage());
+        }
+    }
+
+    public function uploadSessionAbort(string $id)
+    {
+        if (!can('upload')) return $this->failForbidden();
+
+        try {
+            $service = new UploadSessionService();
+            $manifest = $service->get($id);
+            $service->assertOwner($manifest, (string)session('username'));
+            $service->abort($id);
+            return $this->respond(['status' => 'aborted']);
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage());
+        }
     }
 
     public function download()
@@ -486,52 +656,43 @@ class ApiController extends BaseController
         if (!$path) return $this->fail('Path required');
 
         try {
-            $fullPath = $this->fs->resolvePath($path);
-            
-            if (is_dir($fullPath)) {
-                // Folder Download -> Zip
-                $zipName = basename($fullPath) . '.zip';
-                $tempZip = config('Storage')->cache . '/' . uniqid('dl_') . '.zip';
-                
-                // Use the archive method logic directly or via FS
-                // Creating a one-off archive of this folder
-                $this->fs->archive([$path], $tempZip); // $path is relative, fs->archive resolves it
-                
-                return $this->response->download($tempZip, null)->setFileName($zipName);
-                // Note: CI4 download() usually deletes the file if third param is true? No, setFileName just sets header.
-                // We need to delete the temp file after send. 
-                // CI4 doesn't have native "delete after send" in download().
-                // We can register a shutdown function or use readfile() and unlink().
-                // Actually, let's try to output it directly.
-                // Re-implementation:
-                
-                /*
-                header('Content-Type: application/zip');
-                header('Content-Disposition: attachment; filename="'.$zipName.'"');
-                header('Content-Length: ' . filesize($tempZip));
-                readfile($tempZip);
-                unlink($tempZip);
-                exit; 
-                */
-                // But to be clean with CI4:
-                // Let's rely on garbage collection for cache dir or just leave it for now? 
-                // Better: Use a dedicated method.
-                
-                // Let's use the raw header approach for this special case to ensure unlink.
-                $this->response->setHeader('Content-Type', 'application/zip')
-                               ->setHeader('Content-Disposition', 'attachment; filename="'.$zipName.'"')
-                               ->setBody(file_get_contents($tempZip));
-                               
-                unlink($tempZip);
-                return $this->response;
+            $fullPath = null;
+            try {
+                $candidate = $this->fs->resolvePath($path);
+                if (is_file($candidate) || is_dir($candidate)) {
+                    $fullPath = $candidate;
+                }
+            } catch (\Throwable $e) {
+                // Remote adapters expose content through the VFS rather than
+                // a local physical path.
             }
 
-            if (!is_file($fullPath)) {
+            $metadata = $this->fs->getMetadata($path);
+            $isDirectory = ($metadata['type'] ?? null) === 'dir' || ($fullPath !== null && is_dir($fullPath));
+            if ($isDirectory) {
+                // Folder Download -> Zip
+                $folderName = basename(trim(str_replace('\\', '/', $path), '/')) ?: 'files';
+                $zipName = $folderName . '.zip';
+                $tempZip = config('Storage')->cache . '/dl_' . bin2hex(random_bytes(16)) . '.zip';
+                (new \App\Services\VfsArchiveService())->createZip($this->fs, [$path], $tempZip);
+                $body = file_get_contents($tempZip);
+                @unlink($tempZip);
+                if ($body === false) {
+                    throw new Exception('Unable to read download archive.');
+                }
+                return $this->response
+                    ->setHeader('Content-Type', 'application/zip')
+                    ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('attachment', $zipName))
+                    ->setBody($body);
+            }
+
+            if (!is_array($metadata)) {
                 return $this->failNotFound('File not found');
             }
 
             // Security: Only allow inline for safe media types
-            $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+            $filename = (string)($metadata['name'] ?? basename(trim(str_replace('\\', '/', $path), '/')));
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
             $safeInlineTypes = [
                 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg',
                 'pdf', 
@@ -544,16 +705,29 @@ class ApiController extends BaseController
             }
 
             if ($inline) {
-                $mime = mime_content_type($fullPath);
+                $mime = $fullPath !== null ? (mime_content_type($fullPath) ?: 'application/octet-stream') : ((string)($metadata['mime'] ?? 'application/octet-stream'));
+                $body = $fullPath !== null ? file_get_contents($fullPath) : $this->fs->readFile($path);
+                if ($body === false) {
+                    throw new Exception('Unable to read file.');
+                }
 
                 return $this->response
                     ->setHeader('Content-Type', $mime)
-                    ->setHeader('Content-Disposition', 'inline; filename="' . basename($fullPath) . '"')
-                    ->setBody(file_get_contents($fullPath));
+                    ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('inline', $filename))
+                    ->setBody($body);
             }
 
-            return $this->response->download($fullPath, null);
-        } catch (Exception $e) {
+            if ($fullPath !== null) {
+                return $this->response
+                    ->download($fullPath, null)
+                    ->setFileName(DownloadHeaders::filename($filename));
+            }
+
+            return $this->response
+                ->setHeader('Content-Type', (string)($metadata['mime'] ?? 'application/octet-stream'))
+                ->setHeader('Content-Disposition', DownloadHeaders::contentDisposition('attachment', $filename))
+                ->setBody($this->fs->readFile($path));
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -568,19 +742,32 @@ class ApiController extends BaseController
             $fullPath = $this->fs->resolvePath($path);
             if (!is_file($fullPath)) return $this->failNotFound();
 
+            $sourceSize = filesize($fullPath);
+            if ($sourceSize === false || $sourceSize > 25 * 1024 * 1024) {
+                return $this->fail('Image is too large to generate a thumbnail.', 413);
+            }
+
             // Cache file path (hash of full path + mtime to invalidate on change)
-            $cacheName = md5($fullPath . filemtime($fullPath)) . '.jpg';
+            $mtime = filemtime($fullPath);
+            if ($mtime === false) {
+                return $this->fail('Unable to inspect image.', 500);
+            }
+            $cacheName = md5($fullPath . $mtime) . '.jpg';
             $cacheDir = config('Storage')->cache . '/thumbs';
-            if (!is_dir($cacheDir)) mkdir($cacheDir, 0755, true);
+            if (!is_dir($cacheDir) && !mkdir($cacheDir, 0750, true) && !is_dir($cacheDir)) {
+                return $this->fail('Unable to create thumbnail cache.', 500);
+            }
             $cachePath = $cacheDir . DIRECTORY_SEPARATOR . $cacheName;
 
             // Generate if not exists
             if (!file_exists($cachePath)) {
                 $image = \Config\Services::image();
                 try {
-                    $image->withFile($fullPath)
-                          ->fit(100, 100, 'center')
-                          ->save($cachePath, 80);
+                    if (!$image->withFile($fullPath)
+                        ->fit(100, 100, 'center')
+                        ->save($cachePath, 80)) {
+                        return $this->fail('Unable to generate thumbnail.', 500);
+                    }
                 } catch (\CodeIgniter\Images\Exceptions\ImageException $e) {
                     // If not an image or processing fails, return a default placeholder or 404
                     // For simplicity, let's just fail, frontend will handle broken img
@@ -590,10 +777,14 @@ class ApiController extends BaseController
 
             // Serve
             $this->response->setHeader('Content-Type', 'image/jpeg');
-            $this->response->setBody(file_get_contents($cachePath));
+            $thumbnail = file_get_contents($cachePath);
+            if ($thumbnail === false) {
+                return $this->fail('Unable to read thumbnail.', 500);
+            }
+            $this->response->setBody($thumbnail);
             return $this->response;
 
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -610,7 +801,7 @@ class ApiController extends BaseController
                 'items' => $results,
                 'total' => count($results)
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -624,7 +815,7 @@ class ApiController extends BaseController
         try {
             $size = $this->fs->getDirectorySize($path);
             return $this->respond(['size' => $size]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -647,10 +838,12 @@ class ApiController extends BaseController
             // Let's assume `paths` are full relative paths (e.g. "folder/file.txt")
             
             $destination = ($cwd ? $cwd . '/' : '') . $name;
-            $this->fs->archive($paths, $destination);
+            if (!$this->fs->archive($paths, $destination)) {
+                throw new Exception('Unable to create archive.');
+            }
             LogService::log('Archive', $destination, 'Sources: ' . count($paths));
             return $this->respond(['status' => 'success']);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -666,10 +859,12 @@ class ApiController extends BaseController
 
         try {
             // Extract to current folder
-            $this->fs->extract($path, $cwd ?: '/');
+            if (!$this->fs->extract($path, $cwd ?: '/')) {
+                throw new Exception('Unable to extract archive.');
+            }
             LogService::log('Extract', $path, 'To: ' . ($cwd ?: '/'));
             return $this->respond(['status' => 'success']);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -700,7 +895,9 @@ class ApiController extends BaseController
 
                 foreach ($paths as $path) {
 
-                    if ($path) $this->fs->chmod($path, $octalMode, $recursive);
+                    if ($path && !$this->fs->chmod($path, $octalMode, $recursive)) {
+                        throw new Exception('Unable to change permissions.');
+                    }
 
                 }
 
@@ -708,7 +905,7 @@ class ApiController extends BaseController
 
                 return $this->respond(['status' => 'success']);
 
-            } catch (Exception $e) {
+            } catch (\Throwable $e) {
 
                 return $this->fail($e->getMessage());
 
@@ -729,11 +926,13 @@ class ApiController extends BaseController
 
         try {
             foreach ($paths as $path) {
-                if ($path) $this->fs->chown($path, $user, $group, $recursive);
+                if ($path && !$this->fs->chown($path, $user, $group, $recursive)) {
+                    throw new Exception('Unable to change ownership.');
+                }
             }
             LogService::log('Chown' . ($recursive ? ' (Recursive)' : ''), implode(', ', $paths), 'User: ' . $user . ', Group: ' . $group);
             return $this->respond(['status' => 'success']);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -748,7 +947,7 @@ class ApiController extends BaseController
             $settingsService = new \App\Services\SettingsService();
             $settings = $settingsService->getSettings();
             return $this->respond($this->buildSharePolicy($settings));
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -768,7 +967,7 @@ class ApiController extends BaseController
         // Verify existence within user jail
         try {
             $absolutePath = $this->fs->resolvePath($path); // Throws if invalid/traversal
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
 
@@ -795,7 +994,7 @@ class ApiController extends BaseController
             $share = $service->createShare($path, session('username'), $password, $expiresAt, $mode);
             LogService::log('Create Share', $path);
             return $this->respond(['status' => 'success', 'share' => $share]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -824,7 +1023,7 @@ class ApiController extends BaseController
                 return $this->respond(['status' => 'success']);
             }
             return $this->failForbidden();
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -837,7 +1036,7 @@ class ApiController extends BaseController
             $service = new \App\Services\ShareService();
             $shares = $service->listUserShares(session('username'));
             return $this->respond(['items' => $shares]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
     }
@@ -1043,6 +1242,9 @@ class ApiController extends BaseController
         if ($segments !== []) {
             foreach ($segments as $segment) {
                 $targetDir .= DIRECTORY_SEPARATOR . $segment;
+                if (is_link($targetDir)) {
+                    throw new Exception('Upload path contains a symbolic link.');
+                }
                 if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
                     throw new Exception('Unable to create upload folder.');
                 }
@@ -1051,7 +1253,7 @@ class ApiController extends BaseController
 
         $filename = $this->sanitizeUploadFilename($filename);
         $targetPath = $targetDir . DIRECTORY_SEPARATOR . $filename;
-        if (is_file($targetPath)) {
+        if (is_link($targetPath) || file_exists($targetPath)) {
             if ($conflict === 'skip') {
                 return [
                     'dir' => $targetDir,
@@ -1062,7 +1264,12 @@ class ApiController extends BaseController
             }
 
             if ($conflict === 'keep_both') {
+                if (!is_file($targetPath)) {
+                    throw new Exception('An upload directory already uses this name.');
+                }
                 $filename = $this->nextUploadFilename($targetDir, $filename);
+            } elseif (!is_file($targetPath)) {
+                throw new Exception('An upload directory already uses this name.');
             }
         }
 
@@ -1085,9 +1292,15 @@ class ApiController extends BaseController
         }
 
         $segments = [];
+        if (str_starts_with($relativePath, '/') || preg_match('/\A[A-Za-z]:[\\\/]/', $relativePath)) {
+            throw new Exception('Upload path must be relative.');
+        }
         foreach (explode('/', $relativePath) as $segment) {
-            if ($segment === '' || $segment === '.' || $segment === '..') {
+            if ($segment === '' || $segment === '.') {
                 continue;
+            }
+            if ($segment === '..') {
+                throw new Exception('Upload path traversal is not allowed.');
             }
             $segments[] = $this->sanitizeUploadFilename($segment);
         }
@@ -1111,7 +1324,7 @@ class ApiController extends BaseController
 
         for ($i = 1; $i < 1000; $i++) {
             $candidate = $base . ' (' . $i . ')' . $extension;
-            if (!is_file($targetDir . DIRECTORY_SEPARATOR . $candidate)) {
+            if (!file_exists($targetDir . DIRECTORY_SEPARATOR . $candidate) && !is_link($targetDir . DIRECTORY_SEPARATOR . $candidate)) {
                 return $candidate;
             }
         }
@@ -1121,6 +1334,11 @@ class ApiController extends BaseController
 
     private function wouldExceedUserQuota(int $incomingBytes, array $settings): bool
     {
+        $connection = session('connection');
+        if (($connection['mode'] ?? 'local') !== 'local') {
+            return false;
+        }
+
         $quotaMb = (int)($settings['quota_per_user_mb'] ?? 0);
         if ($quotaMb <= 0) {
             return false;
@@ -1139,41 +1357,46 @@ class ApiController extends BaseController
 
     private function getUserHomePath(): string
     {
-        $baseRoot = config('Storage')->fileManagerRoot;
         $homeDir = (string)(session('home_dir') ?? '/');
-        $homeDir = str_replace('..', '', $homeDir);
-        $homeDir = trim($homeDir, "/\\");
-
-        if ($homeDir === '') {
-            return $baseRoot;
-        }
-
-        return $baseRoot . DIRECTORY_SEPARATOR . $homeDir;
+        return (new LocalAdapter(config('Storage')->fileManagerRoot))->resolvePath($homeDir);
     }
 
     private function calculateDirectorySize(string $path, ?int $stopAtBytes = null): int
     {
+        if (is_link($path)) {
+            throw new Exception('Quota path contains a symbolic link.');
+        }
         if (!is_dir($path)) {
             return 0;
         }
 
-        $total = 0;
-        try {
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS)
-            );
+        $items = scandir($path);
+        if ($items === false) {
+            throw new Exception('Unable to scan quota path.');
+        }
 
-            foreach ($iterator as $file) {
-                if ($file instanceof \SplFileInfo && $file->isFile()) {
-                    $total += (int)$file->getSize();
-                    if ($stopAtBytes !== null && $total >= $stopAtBytes) {
-                        return $total;
-                    }
-                }
+        $total = 0;
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
             }
-        } catch (\Throwable $e) {
-            // On traversal errors, fall back to the current total.
-            return $total;
+            $child = $path . DIRECTORY_SEPARATOR . $item;
+            if (is_link($child)) {
+                throw new Exception('Quota path contains a symbolic link.');
+            }
+            if (is_dir($child)) {
+                $remaining = $stopAtBytes === null ? null : max(1, $stopAtBytes - $total);
+                $total += $this->calculateDirectorySize($child, $remaining);
+            } elseif (is_file($child)) {
+                $size = filesize($child);
+                if ($size === false) {
+                    throw new Exception('Unable to read quota file size.');
+                }
+                $total += (int)$size;
+            }
+            if ($stopAtBytes !== null && $total >= $stopAtBytes) {
+                return $total;
+            }
         }
 
         return $total;
@@ -1186,12 +1409,18 @@ class ApiController extends BaseController
             throw new Exception('Filename is required.');
         }
 
-        $name = basename(str_replace('\\', '/', $name));
-        if ($name === '' || $name === '.' || $name === '..') {
+        if (preg_match('/[\x00-\x1F\x7F]/', $name) === 1) {
+            throw new Exception('Filename contains invalid characters.');
+        }
+        if (preg_match('/[\/\\\\]/', $name)) {
             throw new Exception('Invalid filename.');
         }
+        if (strlen($name) > 255) {
+            throw new Exception('Filename is too long.');
+        }
 
-        if (preg_match('/[\/\\\\]/', $name)) {
+        $name = basename($name);
+        if ($name === '' || $name === '.' || $name === '..') {
             throw new Exception('Invalid filename.');
         }
 

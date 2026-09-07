@@ -52,8 +52,8 @@ class UserModel
     {
         $users = $this->getUsers();
         foreach ($users as $user) {
-            if ($user['username'] === $username) {
-                return $user;
+            if (($user['username'] ?? null) === $username) {
+                return $this->withAuthDefaults($user);
             }
         }
         return null;
@@ -62,9 +62,36 @@ class UserModel
     public function verifyUser(string $username, string $password): ?array
     {
         $user = $this->getUser($username);
-        if ($user && password_verify($password, $user['password_hash'])) {
-            return $user;
+        if (!$user || !is_string($user['password_hash'] ?? null)) {
+            return null;
         }
+
+        $now = time();
+        if (!empty($user['disabled']) || (int)($user['locked_until'] ?? 0) > $now) {
+            return null;
+        }
+
+        if (password_verify($password, $user['password_hash'])) {
+            return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username, $password): ?array {
+                foreach ($users as &$candidate) {
+                    if (($candidate['username'] ?? null) !== $username) {
+                        continue;
+                    }
+
+                    $candidate = $this->withAuthDefaults($candidate);
+                    $candidate['failed_login_count'] = 0;
+                    $candidate['locked_until'] = 0;
+                    if (password_needs_rehash($candidate['password_hash'], PASSWORD_DEFAULT)) {
+                        $candidate['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
+                    }
+                    return $candidate;
+                }
+
+                return null;
+            }, []);
+        }
+
+        $this->recordFailedLogin($username);
         return null;
     }
 
@@ -80,31 +107,52 @@ class UserModel
             return false;
         }
 
-        if ($this->getUser($username)) {
-            return false;
-        }
-        $users = $this->getUsers();
-        $users[] = [
-            'username' => $username,
-            'password_hash' => password_hash($password, PASSWORD_DEFAULT),
-            'role' => $role,
-            'home_dir' => $homeDir,
-            'groups' => $groups,
-            'allowed_extensions' => $allowedExt,
-            'blocked_extensions' => $blockedExt,
-            '2fa_secret' => null,
-            '2fa_enabled' => false,
-            'recovery_codes' => []
-        ];
-        $this->saveUsers($users);
-        return true;
+        return AtomicFileStore::transaction($this->usersFile, function (array &$users) use (
+            $username,
+            $password,
+            $role,
+            $homeDir,
+            $groups,
+            $allowedExt,
+            $blockedExt
+        ): bool {
+            foreach ($users as $user) {
+                if (($user['username'] ?? null) === $username) {
+                    return false;
+                }
+            }
+
+            $users[] = [
+                'username' => $username,
+                'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                'role' => $role,
+                'home_dir' => $homeDir,
+                'groups' => $groups,
+                'allowed_extensions' => $allowedExt,
+                'blocked_extensions' => $blockedExt,
+                '2fa_secret' => null,
+                '2fa_enabled' => false,
+                'recovery_codes' => [],
+                'must_change_password' => false,
+                'auth_version' => 1,
+                'disabled' => false,
+                'failed_login_count' => 0,
+                'locked_until' => 0,
+            ];
+            return true;
+        });
     }
 
     public function updateUser(string $username, array $data): bool
     {
-        $users = $this->getUsers();
-        foreach ($users as &$user) {
-            if ($user['username'] === $username) {
+        return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username, $data): bool {
+            foreach ($users as &$user) {
+                if (($user['username'] ?? null) !== $username) {
+                    continue;
+                }
+
+                $user = $this->withAuthDefaults($user);
+                $securityChanged = false;
                 if (isset($data['role'])) $user['role'] = $data['role'];
                 if (isset($data['home_dir'])) $user['home_dir'] = $data['home_dir'];
                 if (isset($data['groups'])) $user['groups'] = $data['groups'];
@@ -120,9 +168,13 @@ class UserModel
                     } else {
                         $user['2fa_secret'] = null;
                     }
+                    $securityChanged = true;
                 }
                 
-                if (array_key_exists('2fa_enabled', $data)) $user['2fa_enabled'] = $data['2fa_enabled'];
+                if (array_key_exists('2fa_enabled', $data)) {
+                    $user['2fa_enabled'] = (bool)$data['2fa_enabled'];
+                    $securityChanged = true;
+                }
                 
                 if (array_key_exists('recovery_codes', $data)) {
                     $val = $data['recovery_codes'];
@@ -132,16 +184,39 @@ class UserModel
                     } else {
                         $user['recovery_codes'] = [];
                     }
+                    $securityChanged = true;
+                }
+
+                if (array_key_exists('must_change_password', $data)) {
+                    $user['must_change_password'] = (bool)$data['must_change_password'];
                 }
 
                 if (!empty($data['password'])) {
                     $user['password_hash'] = password_hash($data['password'], PASSWORD_DEFAULT);
+                    $securityChanged = true;
                 }
-                $this->saveUsers($users);
+
+                if (array_key_exists('disabled', $data)) {
+                    $user['disabled'] = (bool)$data['disabled'];
+                    $securityChanged = true;
+                }
+                if (array_key_exists('locked_until', $data)) {
+                    $user['locked_until'] = max(0, (int)$data['locked_until']);
+                    $securityChanged = true;
+                }
+                if (array_key_exists('failed_login_count', $data)) {
+                    $user['failed_login_count'] = max(0, (int)$data['failed_login_count']);
+                }
+
+                if ($securityChanged) {
+                    $user['auth_version']++;
+                }
+
                 return true;
             }
-        }
-        return false;
+
+            return false;
+        });
     }
 
     public function changePassword(string $username, string $newPassword): bool
@@ -149,13 +224,90 @@ class UserModel
         return $this->updateUser($username, ['password' => $newPassword]);
     }
 
+    /**
+     * Adds explicit password-state metadata to users created by older releases.
+     * The historical default is detected only during the one-time migration,
+     * never as a branch in the authentication flow.
+     */
+    public function migratePasswordState(): int
+    {
+        return AtomicFileStore::transaction($this->usersFile, function (array &$users): int {
+            $changed = 0;
+            foreach ($users as &$user) {
+                $before = $user;
+                if (!array_key_exists('must_change_password', $user)) {
+                    $legacyDefault = ($user['username'] ?? '') === 'admin'
+                        && is_string($user['password_hash'] ?? null)
+                        && password_verify('admin', $user['password_hash']);
+                    $user['must_change_password'] = $legacyDefault;
+                }
+                $user = $this->withAuthDefaults($user);
+                if ($user !== $before) {
+                    $changed++;
+                }
+            }
+            unset($user);
+            return $changed;
+        });
+    }
+
     public function deleteUser(string $username): bool
     {
-        $users = $this->getUsers();
-        $newUsers = array_filter($users, fn($u) => $u['username'] !== $username);
-        if (count($users) === count($newUsers)) return false;
-        $this->saveUsers(array_values($newUsers));
-        return true;
+        return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username): bool {
+            $newUsers = array_filter($users, fn($user) => ($user['username'] ?? null) !== $username);
+            if (count($users) === count($newUsers)) return false;
+            $users = array_values($newUsers);
+            return true;
+        });
+    }
+
+    public function bumpAuthVersion(string $username): bool
+    {
+        return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username): bool {
+            foreach ($users as &$user) {
+                if (($user['username'] ?? null) !== $username) {
+                    continue;
+                }
+                $user = $this->withAuthDefaults($user);
+                $user['auth_version']++;
+                return true;
+            }
+            return false;
+        });
+    }
+
+    /**
+     * Atomically consumes one recovery code. The plaintext code is never
+     * persisted and a simultaneous request can consume it only once.
+     */
+    public function consumeRecoveryCode(string $username, string $code): bool
+    {
+        return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username, $code): bool {
+            foreach ($users as &$user) {
+                if (($user['username'] ?? null) !== $username) {
+                    continue;
+                }
+
+                $codes = $this->decodeRecoveryCodes($user['recovery_codes'] ?? []);
+                $index = array_search($code, $codes, true);
+                if ($index === false) {
+                    return false;
+                }
+
+                unset($codes[$index]);
+                $codes = array_values($codes);
+                if ($codes === []) {
+                    $user['recovery_codes'] = [];
+                } else {
+                    $enc = Services::encrypter();
+                    $user['recovery_codes'] = base64_encode($enc->encrypt(json_encode($codes, JSON_THROW_ON_ERROR)));
+                }
+                $user = $this->withAuthDefaults($user);
+                $user['auth_version']++;
+                return true;
+            }
+            return false;
+        });
     }
 
     public function get2faSecret(string $username): ?string
@@ -175,15 +327,53 @@ class UserModel
     {
         $user = $this->getUser($username);
         if (!$user || empty($user['recovery_codes'])) return [];
-        
-        try {
-            // Check if it's already an array (unencrypted legacy)
-            if (is_array($user['recovery_codes'])) return $user['recovery_codes'];
 
+        return $this->decodeRecoveryCodes($user['recovery_codes']);
+    }
+
+    private function withAuthDefaults(array $user): array
+    {
+        $user['must_change_password'] = (bool)($user['must_change_password'] ?? false);
+        $user['auth_version'] = max(1, (int)($user['auth_version'] ?? 1));
+        $user['disabled'] = (bool)($user['disabled'] ?? false);
+        $user['failed_login_count'] = max(0, (int)($user['failed_login_count'] ?? 0));
+        $user['locked_until'] = max(0, (int)($user['locked_until'] ?? 0));
+        return $user;
+    }
+
+    private function recordFailedLogin(string $username): void
+    {
+        AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username): void {
+            foreach ($users as &$user) {
+                if (($user['username'] ?? null) !== $username) {
+                    continue;
+                }
+
+                $user = $this->withAuthDefaults($user);
+                $user['failed_login_count']++;
+                if ($user['failed_login_count'] >= 5) {
+                    $user['locked_until'] = time() + 900;
+                }
+                return;
+            }
+        });
+    }
+
+    private function decodeRecoveryCodes(mixed $value): array
+    {
+        if (is_array($value)) {
+            return array_values(array_filter($value, 'is_string'));
+        }
+        if (!is_string($value) || $value === '') {
+            return [];
+        }
+
+        try {
             $enc = Services::encrypter();
-            $json = $enc->decrypt(base64_decode($user['recovery_codes']));
-            return json_decode($json, true) ?? [];
-        } catch (\Exception $e) {
+            $json = $enc->decrypt(base64_decode($value, true));
+            $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+            return is_array($decoded) ? array_values(array_filter($decoded, 'is_string')) : [];
+        } catch (\Throwable $e) {
             return [];
         }
     }

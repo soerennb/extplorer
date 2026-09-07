@@ -28,6 +28,7 @@ class ShareServiceTest extends CIUnitTestCase
         $share = $service->createShare('Documents/Report.pdf', 'admin');
 
         $this->assertNotEmpty($share['hash']);
+        $this->assertSame(32, strlen($share['hash']));
         $this->assertEquals('Documents/Report.pdf', $share['path']);
         $this->assertNull($share['password_hash']);
     }
@@ -56,6 +57,15 @@ class ShareServiceTest extends CIUnitTestCase
         
         // Test hashing
         $this->assertNotEquals('mysecret', $share['password_hash']);
+    }
+
+    public function testExpirationAtCurrentTimestampIsExpired(): void
+    {
+        $service = new ShareService($this->testFile);
+        $share = $service->createShare('AtBoundary', 'admin', null, time());
+
+        $this->assertNull($service->getShare($share['hash']));
+        $this->assertNotNull($service->getShareRaw($share['hash']));
     }
 
     public function testDeleteShare()

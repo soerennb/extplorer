@@ -39,6 +39,7 @@ services:
       EXTPLORER_APPLY_ENV: ${EXTPLORER_APPLY_ENV:-0}
       EXTPLORER_MOUNT_ROOT_ALLOWLIST: ${EXTPLORER_MOUNT_ROOT_ALLOWLIST:-}
       EXTPLORER_MOUNT_REMOTE_HOST_ALLOWLIST: ${EXTPLORER_MOUNT_REMOTE_HOST_ALLOWLIST:-}
+      EXTPLORER_REMOTE_SECURITY_MODE: ${EXTPLORER_REMOTE_SECURITY_MODE:-compat}
       EXTPLORER_ENCRYPTION_KEY: ${EXTPLORER_ENCRYPTION_KEY:-}
       EXTPLORER_ENCRYPTION_KEY_FILE: ${EXTPLORER_ENCRYPTION_KEY_FILE:-}
       EXTPLORER_EMAIL_PROTOCOL: ${EXTPLORER_EMAIL_PROTOCOL:-}
@@ -95,6 +96,28 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
+
+  cleanup:
+    image: ${EXTPLORER_IMAGE_REF:-ghcr.io/soerennb/extplorer3:latest}
+    pull_policy: always
+    profiles: ["worker"]
+    restart: unless-stopped
+    entrypoint: ["php"]
+    command: ["/var/www/html/current/spark", "shares:cleanup"]
+    volumes:
+      - extplorer_code:/var/www/html:ro
+      - extplorer_writable:/var/www/html/writable
+    environment:
+      CI_ENVIRONMENT: production
+      EXTPLORER_WRITE_PATH: /var/www/html/writable
+      EXTPLORER_ENCRYPTION_KEY: ${EXTPLORER_ENCRYPTION_KEY:-}
+      EXTPLORER_ENCRYPTION_KEY_FILE: ${EXTPLORER_ENCRYPTION_KEY_FILE:-}
+      EXTPLORER_REMOTE_SECURITY_MODE: ${EXTPLORER_REMOTE_SECURITY_MODE:-compat}
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    networks:
+      - extplorer-net
 
 networks:
   extplorer-net:

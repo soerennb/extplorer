@@ -40,7 +40,7 @@ class VirtualAdapter implements IFileSystem
             $result = [];
             foreach ($this->mounts as $alias => $adapter) {
                 $type = 'local';
-                if ($adapter instanceof FtpAdapter) $type = 'ftp';
+                if ($adapter instanceof FtpAdapter) $type = $adapter->isSecure() ? 'ftps' : 'ftp';
                 if ($adapter instanceof Ssh2Adapter) $type = 'ssh2';
 
                 $item = [
@@ -224,7 +224,7 @@ class VirtualAdapter implements IFileSystem
         if ($relPath === '') {
              // Metadata for the mount itself
              $type = 'local';
-             if ($adapter instanceof FtpAdapter) $type = 'ftp';
+             if ($adapter instanceof FtpAdapter) $type = $adapter->isSecure() ? 'ftps' : 'ftp';
              if ($adapter instanceof Ssh2Adapter) $type = 'ssh2';
 
              $item = [

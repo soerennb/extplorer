@@ -34,15 +34,21 @@ class VfsFactory
 
     public static function createFileSystem(?string $username = null, array $connection = []): IFileSystem
     {
+        if ($username === null || trim($username) === '') {
+            return new DeniedFileSystem();
+        }
+
         $mode = $connection['mode'] ?? 'local';
 
-        if ($mode === 'ftp') {
+        if ($mode === 'ftp' || $mode === 'ftps') {
             $password = self::revealConnectionSecret((string)($connection['pass'] ?? ''));
             return new FtpAdapter(
                 $connection['host'],
                 $connection['user'],
                 $password,
-                $connection['port']
+                $connection['port'],
+                '/',
+                $mode === 'ftps'
             );
         }
 
@@ -52,7 +58,9 @@ class VfsFactory
                 $connection['host'],
                 $connection['user'],
                 $password,
-                $connection['port']
+                $connection['port'],
+                '/',
+                (string)($connection['host_key_fingerprint'] ?? '')
             );
         }
 
@@ -60,18 +68,11 @@ class VfsFactory
         $baseRoot = config('Storage')->fileManagerRoot;
         if (!is_dir($baseRoot)) mkdir($baseRoot, 0755, true);
 
-        // If no user provided (e.g. public access?), just return root adapter?
-        // Or if we are in a context without a user model.
-        if (!$username) {
-            return new LocalAdapter($baseRoot);
-        }
-
         $userModel = new UserModel();
         $user = $userModel->getUser($username);
         
-        // Fallback if user not found (shouldn't happen in auth context)
         if (!$user) {
-            return new LocalAdapter($baseRoot);
+            return new DeniedFileSystem('Authenticated user no longer exists.');
         }
 
         // Determine Home Path
@@ -79,14 +80,7 @@ class VfsFactory
         // If it is '/', it maps to baseRoot.
         $userHome = $user['home_dir'] ?? '/';
         
-        // Sanitize
-        $userHome = str_replace('..', '', $userHome);
-        $userHome = trim($userHome, '/\\');
-
-        $homePath = $baseRoot;
-        if ($userHome) {
-            $homePath .= DIRECTORY_SEPARATOR . $userHome;
-        }
+        $homePath = (new LocalAdapter($baseRoot))->resolvePath($userHome);
 
         if (!is_dir($homePath)) {
             mkdir($homePath, 0755, true);
@@ -113,14 +107,15 @@ class VfsFactory
                         $adapter = new LocalAdapter($mount['config']['path']);
                         $vfs->mount($mount['name'], $adapter, ['is_external' => true]);
                     }
-                    if ($mount['type'] === 'ftp') {
+                    if ($mount['type'] === 'ftp' || $mount['type'] === 'ftps') {
                         $config = $mount['config'] ?? [];
                         $adapter = new FtpAdapter(
                             $config['host'] ?? '',
                             $config['user'] ?? '',
                             $config['pass'] ?? '',
                             (int)($config['port'] ?? 21),
-                            $config['root'] ?? '/'
+                            $config['root'] ?? '/',
+                            $mount['type'] === 'ftps'
                         );
                         $vfs->mount($mount['name'], $adapter, ['is_external' => true]);
                     }
@@ -131,7 +126,8 @@ class VfsFactory
                             $config['user'] ?? '',
                             $config['pass'] ?? '',
                             (int)($config['port'] ?? 22),
-                            $config['root'] ?? '/'
+                            $config['root'] ?? '/',
+                            (string)($config['host_key_fingerprint'] ?? '')
                         );
                         $vfs->mount($mount['name'], $adapter, ['is_external' => true]);
                     }
@@ -140,7 +136,9 @@ class VfsFactory
                     log_message('error', "Failed to load mount {$mount['name']}: " . $e->getMessage());
                 }
             }
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+            log_message('error', 'Failed to load user mounts: ' . $e->getMessage());
+        }
 
         // Optional: Mount Public if it exists
         $publicPath = config('Storage')->root . '/public';

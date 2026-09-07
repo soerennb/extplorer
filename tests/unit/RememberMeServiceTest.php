@@ -116,6 +116,20 @@ class RememberMeServiceTest extends CIUnitTestCase
         $this->assertArrayNotHasKey($selector, $this->readTokens());
     }
 
+    public function testAuthVersionChangeInvalidatesRememberedToken(): void
+    {
+        $service = new RememberMeService(new UserModel(), $this->tokensFile);
+        $response = Services::response();
+        $service->remember('alice', $response);
+        $cookie = $response->getCookie(RememberMeService::COOKIE_NAME)->getValue();
+
+        (new UserModel())->bumpAuthVersion('alice');
+        $_COOKIE[RememberMeService::COOKIE_NAME] = $cookie;
+
+        $this->assertFalse($service->restore(Services::request(), Services::response()));
+        $this->assertFalse((bool)session('isLoggedIn'));
+    }
+
     private function readTokens(): array
     {
         $content = file_get_contents($this->tokensFile);

@@ -27,21 +27,30 @@ class RememberMeService
 
     public function remember(string $username, ?ResponseInterface $response = null): void
     {
-        $this->removeUserTokens($username);
+        $user = $this->userModel->getUser($username);
+        if (!$user || !empty($user['disabled']) || (int)($user['locked_until'] ?? 0) > time()) {
+            return;
+        }
 
         $selector = bin2hex(random_bytes(12));
         $validator = bin2hex(random_bytes(32));
         $now = time();
 
-        $tokens = $this->loadTokens();
-        $tokens[$selector] = [
-            'username' => $username,
-            'validator_hash' => $this->hashValidator($validator),
-            'created_at' => $now,
-            'last_used_at' => null,
-            'expires_at' => $now + self::TOKEN_TTL,
-        ];
-        $this->saveTokens($tokens);
+        AtomicFileStore::transaction($this->tokensFile, function (array &$tokens) use ($username, $selector, $validator, $now, $user): void {
+            foreach ($tokens as $existingSelector => $entry) {
+                if (($entry['username'] ?? null) === $username) {
+                    unset($tokens[$existingSelector]);
+                }
+            }
+            $tokens[$selector] = [
+                'username' => $username,
+                'auth_version' => (int)($user['auth_version'] ?? 1),
+                'validator_hash' => $this->hashValidator($validator),
+                'created_at' => $now,
+                'last_used_at' => null,
+                'expires_at' => $now + self::TOKEN_TTL,
+            ];
+        });
 
         $this->setCookie($selector . ':' . $validator, $response);
     }
@@ -52,9 +61,9 @@ class RememberMeService
         if ($cookie !== null) {
             [$selector] = $this->splitCookie($cookie);
             if ($selector !== '') {
-                $tokens = $this->loadTokens();
-                unset($tokens[$selector]);
-                $this->saveTokens($tokens);
+                AtomicFileStore::transaction($this->tokensFile, function (array &$tokens) use ($selector): void {
+                    unset($tokens[$selector]);
+                });
             }
         }
 
@@ -74,39 +83,42 @@ class RememberMeService
             return false;
         }
 
-        $tokens = $this->loadTokens();
-        $entry = $tokens[$selector] ?? null;
+        $entry = AtomicFileStore::transaction($this->tokensFile, function (array &$tokens) use ($selector, $validator): ?array {
+            $entry = $tokens[$selector] ?? null;
+            if (!is_array($entry)) {
+                return null;
+            }
+
+            unset($tokens[$selector]);
+            if ((int)($entry['expires_at'] ?? 0) <= time()) {
+                return null;
+            }
+
+            $expected = (string)($entry['validator_hash'] ?? '');
+            if ($expected === '' || !hash_equals($expected, $this->hashValidator($validator))) {
+                return null;
+            }
+
+            return $entry;
+        }, []);
         if (!is_array($entry)) {
             $this->clearCookie($response);
             return false;
         }
 
-        if ((int)($entry['expires_at'] ?? 0) < time()) {
-            unset($tokens[$selector]);
-            $this->saveTokens($tokens);
-            $this->clearCookie($response);
-            return false;
-        }
-
-        $expected = (string)($entry['validator_hash'] ?? '');
-        if ($expected === '' || !hash_equals($expected, $this->hashValidator($validator))) {
-            unset($tokens[$selector]);
-            $this->saveTokens($tokens);
-            $this->clearCookie($response);
-            return false;
-        }
-
         $user = $this->userModel->getUser((string)($entry['username'] ?? ''));
-        if (!$user) {
-            unset($tokens[$selector]);
-            $this->saveTokens($tokens);
+        if (!$user || !empty($user['disabled']) || (int)($user['locked_until'] ?? 0) > time()) {
             $this->clearCookie($response);
             return false;
         }
 
-        unset($tokens[$selector]);
-        $this->saveTokens($tokens);
-        $this->startLocalSession($user);
+        $tokenVersion = (int)($entry['auth_version'] ?? 0);
+        if ($tokenVersion > 0 && $tokenVersion !== (int)($user['auth_version'] ?? 1)) {
+            $this->clearCookie($response);
+            return false;
+        }
+
+        (new AuthenticationService($this->userModel))->startLocalSession($user, true);
         $this->remember($user['username'], $response);
 
         return true;
@@ -114,30 +126,20 @@ class RememberMeService
 
     public function pruneExpired(): void
     {
-        $now = time();
-        $tokens = array_filter(
-            $this->loadTokens(),
-            static fn(array $entry): bool => (int)($entry['expires_at'] ?? 0) >= $now
-        );
-        $this->saveTokens($tokens);
+        AtomicFileStore::transaction($this->tokensFile, function (array &$tokens): void {
+            $this->pruneTokenArray($tokens);
+        });
     }
 
-    private function startLocalSession(array $user): void
+    public function revokeUser(string $username): void
     {
-        session()->regenerate();
-        session()->set([
-            'isLoggedIn' => true,
-            'username' => $user['username'],
-            'role' => $user['role'],
-            'home_dir' => $user['home_dir'],
-            'allowed_extensions' => $user['allowed_extensions'] ?? '',
-            'blocked_extensions' => $user['blocked_extensions'] ?? '',
-            'permissions' => $this->userModel->getPermissions($user['username']),
-            'connection' => ['mode' => 'local'],
-            'force_password_change' => ($user['username'] === 'admin' && password_verify('admin', $user['password_hash'])),
-            'remembered_login' => true,
-            'last_activity_ts' => time(),
-        ]);
+        AtomicFileStore::transaction($this->tokensFile, function (array &$tokens) use ($username): void {
+            foreach ($tokens as $selector => $entry) {
+                if (($entry['username'] ?? null) === $username) {
+                    unset($tokens[$selector]);
+                }
+            }
+        });
     }
 
     private function readCookie(?RequestInterface $request): ?string
@@ -200,15 +202,6 @@ class RememberMeService
             || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
     }
 
-    private function removeUserTokens(string $username): void
-    {
-        $tokens = array_filter(
-            $this->loadTokens(),
-            static fn(array $entry): bool => ($entry['username'] ?? null) !== $username
-        );
-        $this->saveTokens($tokens);
-    }
-
     private function loadTokens(): array
     {
         return AtomicFileStore::read($this->tokensFile);
@@ -224,7 +217,7 @@ class RememberMeService
     {
         $now = time();
         foreach ($tokens as $selector => $entry) {
-            if (!is_array($entry) || (int)($entry['expires_at'] ?? 0) < $now) {
+            if (!is_array($entry) || (int)($entry['expires_at'] ?? 0) <= $now) {
                 unset($tokens[$selector]);
             }
         }

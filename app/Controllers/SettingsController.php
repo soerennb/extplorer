@@ -2,14 +2,13 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\API\ResponseTrait;
 use App\Services\SettingsService;
 use App\Services\EmailService;
 use App\Services\LogService;
 
 class SettingsController extends BaseController
 {
-    use ResponseTrait;
+    use ApiResponseTrait;
 
     private SettingsService $settingsService;
 

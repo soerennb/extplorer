@@ -54,7 +54,7 @@ class ContentSecurityPolicy extends BaseConfig
      *
      * @var list<string>|string
      */
-    public $scriptSrc = ['self', 'unsafe-eval'];
+    public $scriptSrc = ['self'];
 
     /**
      * Lists allowed stylesheets' URLs.

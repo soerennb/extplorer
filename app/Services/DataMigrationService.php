@@ -9,7 +9,7 @@ use RuntimeException;
  */
 final class DataMigrationService
 {
-    public const CURRENT_VERSION = 2;
+    public const CURRENT_VERSION = 4;
 
     private string $migrationState;
     private string $backupDirectory;
@@ -23,8 +23,16 @@ final class DataMigrationService
 
     public function run(): int
     {
+        return AtomicFileStore::transaction(
+            $this->migrationState,
+            fn(array &$state): int => $this->runLocked($state),
+            ['version' => 0, 'applied' => []]
+        );
+    }
+
+    private function runLocked(array $state): int
+    {
         $this->ensureDirectories();
-        $state = AtomicFileStore::read($this->migrationState, ['version' => 0, 'applied' => []]);
         $version = (int)($state['version'] ?? 0);
         $applied = is_array($state['applied'] ?? null) ? $state['applied'] : [];
 
@@ -40,6 +48,20 @@ final class DataMigrationService
         if ($version < 2) {
             $version = 2;
             $applied[] = 'mount-secrets-v2';
+            $this->writeState($version, $applied);
+        }
+
+        if ($version < 3) {
+            (new \App\Models\UserModel())->migratePasswordState();
+            $version = 3;
+            $applied[] = 'explicit-password-state-v3';
+            $this->writeState($version, $applied);
+        }
+
+        if ($version < 4) {
+            (new \App\Models\UserModel())->migratePasswordState();
+            $version = 4;
+            $applied[] = 'account-auth-state-v4';
             $this->writeState($version, $applied);
         }
 

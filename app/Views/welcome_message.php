@@ -9,7 +9,7 @@
 
     <!-- STYLES -->
 
-    <style {csp-style-nonce}>
+    <style <?= csp_style_nonce() ?>>
         * {
             transition: background-color 300ms ease, color 300ms ease;
         }
@@ -314,7 +314,7 @@
 
 <!-- SCRIPTS -->
 
-<script {csp-script-nonce}>
+<script <?= csp_script_nonce() ?>>
     document.getElementById("menuToggle").addEventListener('click', toggleMenu);
     function toggleMenu() {
         var menuItems = document.getElementsByClassName('menu-item');

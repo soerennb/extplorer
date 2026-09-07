@@ -2,7 +2,6 @@
 
 namespace App\Services\VFS;
 
-use CodeIgniter\Files\File;
 use Exception;
 use ZipArchive;
 use PharData;
@@ -18,60 +17,21 @@ class LocalAdapter implements IFileSystem
             $rootPath = strtoupper($matches[1]) . ':/' . $matches[2];
         }
 
-        $this->rootPath = rtrim(realpath($rootPath), DIRECTORY_SEPARATOR);
-        if (!$this->rootPath || !is_dir($this->rootPath)) {
+        $realRoot = realpath($rootPath);
+        $this->rootPath = $realRoot === false ? '' : rtrim($realRoot, DIRECTORY_SEPARATOR);
+        if ($this->rootPath === '' || !is_dir($this->rootPath)) {
             throw new Exception("Invalid root path: $rootPath");
         }
     }
 
     public function resolvePath(string $path): string
     {
-        // Normalize slashes
-        $path = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
-        // Prevent traversing above root by stripping ..
-        $parts = array_filter(explode(DIRECTORY_SEPARATOR, $path), function ($p) {
-            return $p !== '' && $p !== '.' && $p !== '..';
-        });
-
-        $candidate = $this->rootPath . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $parts);
-
-        $this->assertWithinRoot($candidate);
-
-        $real = realpath($candidate);
-        if ($real !== false) {
-            return $real;
-        }
-
-        return $candidate;
-    }
-
-    private function assertWithinRoot(string $candidate): void
-    {
-        $root = rtrim($this->rootPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-
-        $check = $candidate;
-        while (!file_exists($check)) {
-            $parent = dirname($check);
-            if ($parent === $check) {
-                break;
-            }
-            $check = $parent;
-        }
-
-        $resolved = realpath($check);
-        if ($resolved === false) {
-            throw new Exception("Invalid path");
-        }
-
-        $resolved = rtrim($resolved, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-        if (!str_starts_with($resolved, $root)) {
-            throw new Exception("Path traversal blocked");
-        }
+        return PathPolicy::resolve($this->rootPath, $path);
     }
 
     private function isWithinRoot(string $fullPath): bool
     {
-        return str_starts_with($fullPath, $this->rootPath);
+        return PathPolicy::isWithinRoot($this->rootPath, $fullPath);
     }
 
     public function listDirectory(string $path, bool $showHidden = true): array
@@ -94,6 +54,9 @@ class LocalAdapter implements IFileSystem
             }
 
             $itemPath = $fullPath . DIRECTORY_SEPARATOR . $item;
+            if (is_link($itemPath)) {
+                continue;
+            }
             $relativePath = $path === '/' || $path === '' ? $item : $path . '/' . $item;
             
             $result[] = $this->getMetadataInternal($itemPath, $relativePath);
@@ -108,13 +71,38 @@ class LocalAdapter implements IFileSystem
         if (!is_file($fullPath)) {
             throw new Exception("File not found: $path");
         }
-        return file_get_contents($fullPath);
+        $content = file_get_contents($fullPath);
+        if ($content === false) {
+            throw new Exception("Unable to read file: $path");
+        }
+
+        return $content;
     }
 
     public function writeFile(string $path, string $content): bool
     {
         $fullPath = $this->resolvePath($path);
-        return file_put_contents($fullPath, $content) !== false;
+        $directory = dirname($fullPath);
+        if (!is_dir($directory)) {
+            return false;
+        }
+
+        $temporary = tempnam($directory, '.extplorer-write-');
+        if ($temporary === false) {
+            return false;
+        }
+
+        try {
+            if (file_put_contents($temporary, $content, LOCK_EX) === false) {
+                return false;
+            }
+
+            return rename($temporary, $fullPath);
+        } finally {
+            if (is_file($temporary)) {
+                @unlink($temporary);
+            }
+        }
     }
 
     public function delete(string $path): bool
@@ -205,12 +193,14 @@ class LocalAdapter implements IFileSystem
         return $normalized;
     }
 
-    private function recurseCopy(string $src, string $dst): bool 
-    { 
-        $dir = opendir($src); 
-        @mkdir($dst); 
-        while(false !== ( $file = readdir($dir)) ) { 
-            if (( $file != '.' ) && ( $file != '..' )) { 
+    private function recurseCopy(string $src, string $dst): bool
+    {
+        $dir = opendir($src);
+        if (!is_dir($dst) && !mkdir($dst, 0755, true) && !is_dir($dst)) {
+            return false;
+        }
+        while (false !== ($file = readdir($dir))) {
+            if ($file !== '.' && $file !== '..') {
                 $srcPath = $src . '/' . $file;
                 $dstPath = $dst . '/' . $file;
 
@@ -218,12 +208,17 @@ class LocalAdapter implements IFileSystem
                     throw new Exception('Refusing to copy symbolic links.');
                 }
 
-                if (is_dir($srcPath)) { 
-                    $this->recurseCopy($srcPath, $dstPath); 
-                } 
-                else { 
-                    copy($srcPath, $dstPath); 
-                } 
+                if (is_dir($srcPath)) {
+                    if (!$this->recurseCopy($srcPath, $dstPath)) {
+                        closedir($dir);
+                        return false;
+                    }
+                } else {
+                    if (!copy($srcPath, $dstPath)) {
+                        closedir($dir);
+                        return false;
+                    }
+                }
             } 
         } 
         closedir($dir);
@@ -507,6 +502,9 @@ class LocalAdapter implements IFileSystem
         $iterator = new \RecursiveIteratorIterator($dir, \RecursiveIteratorIterator::SELF_FIRST);
 
         foreach ($iterator as $file) {
+            if ($file->isLink()) {
+                continue;
+            }
             if (stripos($file->getFilename(), $query) !== false) {
                 // Calculate relative path
                 $fullPath = $file->getPathname();
@@ -529,7 +527,10 @@ class LocalAdapter implements IFileSystem
         if (!is_dir($fullPath)) return 0;
 
         $size = 0;
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($fullPath)) as $file) {
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($fullPath, \RecursiveDirectoryIterator::SKIP_DOTS)) as $file) {
+            if ($file->isLink()) {
+                continue;
+            }
             $size += $file->getSize();
         }
         return $size;
@@ -537,6 +538,10 @@ class LocalAdapter implements IFileSystem
 
     private function getMetadataInternal(string $fullPath, string $relativePath): array
     {
+        if (is_link($fullPath)) {
+            throw new Exception('Symbolic links are not supported.');
+        }
+
         $isDir = is_dir($fullPath);
         $owner = 'unknown';
         $group = 'unknown';

@@ -4,6 +4,7 @@ namespace App\Filters;
 
 use App\Services\SettingsService;
 use App\Services\RememberMeService;
+use App\Models\UserModel;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RequestInterface;
@@ -23,6 +24,11 @@ class AuthFilter implements FilterInterface
             return $this->handleExpiredSession($request, false);
         }
 
+        if (!$this->isCurrentLocalSessionValid()) {
+            $this->terminateSession($request);
+            return $this->handleExpiredSession($request, true);
+        }
+
         $settingsService = new SettingsService();
         $timeoutMinutes = (int)$settingsService->get('session_idle_timeout_minutes', 0);
         if ($timeoutMinutes <= 0) {
@@ -35,12 +41,7 @@ class AuthFilter implements FilterInterface
         $timeoutSeconds = $timeoutMinutes * 60;
 
         if ($lastActivity > 0 && ($now - $lastActivity) > $timeoutSeconds) {
-            session()->destroy();
-            $remember = new RememberMeService();
-            if ($remember->restore($request, Services::response())) {
-                return null;
-            }
-
+            $this->terminateSession($request);
             return $this->handleExpiredSession($request, true);
         }
 
@@ -56,6 +57,52 @@ class AuthFilter implements FilterInterface
     private function touchLastActivity(): void
     {
         session()->set('last_activity_ts', time());
+    }
+
+    private function isCurrentLocalSessionValid(): bool
+    {
+        $connection = session('connection');
+        if (($connection['mode'] ?? 'local') !== 'local') {
+            return true;
+        }
+
+        $username = (string)session('username');
+        if ($username === '') {
+            return false;
+        }
+
+        $user = (new UserModel())->getUser($username);
+        if (!$user || !empty($user['disabled']) || (int)($user['locked_until'] ?? 0) > time()) {
+            return false;
+        }
+
+        $sessionVersion = (int)session('auth_version');
+        $currentVersion = (int)($user['auth_version'] ?? 1);
+        if ($sessionVersion <= 0) {
+            session()->set('auth_version', $currentVersion);
+            return true;
+        }
+
+        return $sessionVersion === $currentVersion;
+    }
+
+    private function terminateSession(RequestInterface $request): void
+    {
+        $remember = new RememberMeService();
+        $remember->forget($request, Services::response());
+        session()->remove([
+            'isLoggedIn',
+            'username',
+            'role',
+            'home_dir',
+            'permissions',
+            'connection',
+            'auth_version',
+            'force_password_change',
+            'remembered_login',
+            'last_activity_ts',
+        ]);
+        session()->destroy();
     }
 
     private function handleExpiredSession(RequestInterface $request, bool $expired)

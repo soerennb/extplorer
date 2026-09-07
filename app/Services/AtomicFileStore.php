@@ -113,6 +113,45 @@ final class AtomicFileStore
         }
     }
 
+    /**
+     * Execute a read/modify/write operation while holding a sidecar lock.
+     *
+     * Atomic replacement alone prevents torn reads, but it cannot prevent two
+     * writers from both reading the same old state and losing one another's
+     * changes. The callback may mutate the data by reference and its return
+     * value is passed back to the caller.
+     */
+    public static function transaction(string $path, callable $callback, array $default = []): mixed
+    {
+        $directory = dirname($path);
+        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+            throw new RuntimeException("Unable to create state directory: {$directory}");
+        }
+
+        $lockPath = $path . '.lock';
+        $lock = fopen($lockPath, 'c');
+        if ($lock === false) {
+            throw new RuntimeException("Unable to open state lock: {$lockPath}");
+        }
+
+        try {
+            if (!flock($lock, LOCK_EX)) {
+                throw new RuntimeException("Unable to acquire state lock: {$lockPath}");
+            }
+
+            try {
+                $data = self::read($path, $default);
+                $result = $callback($data);
+                self::write($path, $data);
+                return $result;
+            } finally {
+                flock($lock, LOCK_UN);
+            }
+        } finally {
+            fclose($lock);
+        }
+    }
+
     public static function copyLegacy(string $source, string $target): void
     {
         $data = str_ends_with($source, '.json')

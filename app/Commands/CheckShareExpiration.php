@@ -5,8 +5,7 @@ namespace App\Commands;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 use App\Services\ShareService;
-use App\Services\EmailService;
-use App\Services\SettingsService;
+use App\Services\UploadSessionService;
 
 class CheckShareExpiration extends BaseCommand
 {
@@ -20,17 +19,12 @@ class CheckShareExpiration extends BaseCommand
 
         $shareService = new ShareService();
         $stats = $shareService->processCleanup();
+        $uploadSessions = (new UploadSessionService())->cleanupExpired();
 
-        CLI::write("Done. Expired: {$stats['expired']}. Warned: {$stats['warned']}.", 'green');
-    }
-
-    private function getAllShares($service)
-    {
-        // Deprecated, used internally by service now
-        return [];
-    }
-
-    private function rrmdir($dir) {
-        // Deprecated, used internally by service now
+        CLI::write(
+            "Done. Expired shares: {$stats['expired']}. Warned: {$stats['warned']}. "
+            . "Expired upload sessions: {$uploadSessions}.",
+            'green'
+        );
     }
 }

@@ -5,10 +5,13 @@
     "node": ">=20"
   },
   "scripts": {
+    "build:js": "node scripts/build-js.js",
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps chromium"
   },
   "devDependencies": {
-    "@playwright/test": "1.62.1"
+    "@playwright/test": "1.62.1",
+    "@vue/compiler-dom": "^3.5.41",
+    "vue": "^3.5.41"
   }
 }

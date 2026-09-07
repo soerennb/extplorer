@@ -31,6 +31,7 @@ class ApiControllerQuotaTest extends CIUnitTestCase
         @mkdir($this->homePath, 0755, true);
 
         session()->set('home_dir', $relativeHome);
+        session()->set('connection', ['mode' => 'local']);
     }
 
     protected function tearDown(): void
@@ -72,11 +73,13 @@ class ApiControllerQuotaTest extends CIUnitTestCase
         $this->assertFalse($smallOk);
     }
 
-    public function testSanitizeUploadFilenameStripsPath(): void
+    public function testSanitizeUploadFilenameRejectsPathComponents(): void
     {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Invalid filename');
+
         $controller = new ApiController();
-        $safe = $this->callPrivate($controller, 'sanitizeUploadFilename', ['../../evil.txt']);
-        $this->assertSame('evil.txt', $safe);
+        $this->callPrivate($controller, 'sanitizeUploadFilename', ['../../evil.txt']);
     }
 
     public function testSanitizeUploadFilenameRejectsDotEntries(): void
