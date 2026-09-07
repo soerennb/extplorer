@@ -135,14 +135,14 @@ class VfsFactory
                 } catch (\Throwable $e) {
                     $message = "Mount " . ($mountName !== '' ? $mountName : ($mountId !== '' ? $mountId : '[unknown]'))
                         . ' was disabled: ' . $e->getMessage();
-                    log_message('error', $message);
                     if ($mountId !== '') {
                         try {
                             $mountService->recordMountHealth($mountId, $username, false, $e->getMessage());
                         } catch (\Throwable $healthException) {
-                            log_message('error', 'Failed to record invalid mount health: ' . $healthException->getMessage());
+                            $message .= '; health record failed: ' . $healthException->getMessage();
                         }
                     }
+                    log_message('error', $message);
                 }
             }
         } catch (\Exception $e) {

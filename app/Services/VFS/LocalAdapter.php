@@ -357,6 +357,7 @@ class LocalAdapter implements IFileSystem
 
     public function extract(string $archive, string $destination): bool
     {
+        $this->operationBudget = $this->resourcePolicy->startOperation();
         $fullArchive = $this->resolvePath($archive);
         $fullDest = $this->resolvePath($destination);
         $ext = strtolower(pathinfo($fullArchive, PATHINFO_EXTENSION));
@@ -367,62 +368,70 @@ class LocalAdapter implements IFileSystem
 
         if ($ext === 'zip') {
             $zip = new ZipArchive();
-            if ($zip->open($fullArchive) === true) {
-                $expanded = 0;
-                for ($i = 0; $i < $zip->numFiles; $i++) {
-                    $entryName = (string)$zip->getNameIndex($i);
-                    $this->assertSafeArchiveEntryPath($entryName);
-                    $this->buildSafeExtractionPath($fullDest, $entryName);
-                    if ($this->isZipEntrySymlink($zip, $i)) {
-                        throw new Exception('Archive contains symbolic link entries.');
-                    }
-                    $stat = $zip->statIndex($i);
-                    $size = max(0, (int)($stat['size'] ?? 0));
-                    $compressed = max(0, (int)($stat['comp_size'] ?? 0));
-                    $expanded += $size;
-                    if ($i + 1 > $this->resourcePolicy->maxArchiveEntries()
-                        || $expanded > $this->resourcePolicy->maxArchiveBytes()
-                        || ($compressed > 0 && $size > $compressed * $this->resourcePolicy->maxArchiveRatio())) {
-                        throw new Exception('Archive exceeds the configured safety limits.');
-                    }
-                }
+            if ($zip->open($fullArchive) !== true) {
+                throw new Exception("Failed to open archive: {$archive}");
+            }
 
-                $zip->extractTo($fullDest);
+            $created = [];
+            try {
+                $this->ensureExtractionDirectory($fullDest, $created);
+                $this->preflightZipEntries($zip, $fullDest);
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    $this->operationBudget?->tick();
+                    $this->extractZipEntry($zip, $i, $fullDest, $created);
+                }
                 $zip->close();
                 return true;
+            } catch (\Throwable $exception) {
+                $zip->close();
+                $this->cleanupExtractionPaths($created);
+                throw $exception;
             }
         } else if ($ext === 'tar' || $ext === 'tar.gz') {
             $phar = new PharData($fullArchive);
-            return $this->extractTarSafely($phar, $fullDest);
+            $created = [];
+            try {
+                $this->ensureExtractionDirectory($fullDest, $created);
+                $result = $this->extractTarSafely($phar, $fullDest, $created);
+                return $result;
+            } catch (\Throwable $exception) {
+                $this->cleanupExtractionPaths($created);
+                throw $exception;
+            }
         }
 
         throw new Exception("Failed to open or unsupported archive: $archive");
     }
 
-    private function extractTarSafely(PharData $phar, string $destination): bool
+    private function extractTarSafely(PharData $phar, string $destination, array &$created): bool
     {
         $iterator = new \RecursiveIteratorIterator($phar, \RecursiveIteratorIterator::SELF_FIRST);
 
-        $entries = 0;
+        $entries = [];
         $expanded = 0;
+        $archivePrefix = 'phar://' . $phar->getPath() . '/';
         foreach ($iterator as $internalPath => $entry) {
             if (!$entry instanceof \PharFileInfo) {
                 continue;
             }
 
+            // Phar iterators expose a phar:// URI as their key. Use the
+            // archive-relative pathname so the path policy cannot be bypassed
+            // and extraction does not recreate the URI as a directory.
             $entryPath = (string)$internalPath;
-            $entries++;
+            if (str_starts_with($entryPath, $archivePrefix)) {
+                $entryPath = substr($entryPath, strlen($archivePrefix));
+            }
+            $entryPath = $this->assertSafeArchiveEntryPath($entryPath);
+            $entries[] = [$entryPath, $entry];
+            $entryCount = count($entries);
             $expanded += max(0, (int)$entry->getSize());
-            if ($entries > $this->resourcePolicy->maxArchiveEntries() || $expanded > $this->resourcePolicy->maxArchiveBytes()) {
+            if ($entryCount > $this->resourcePolicy->maxArchiveEntries() || $expanded > $this->resourcePolicy->maxArchiveBytes()) {
                 throw new Exception('Archive exceeds the configured safety limits.');
             }
-            $this->assertSafeArchiveEntryPath($entryPath);
-            $targetPath = $this->buildSafeExtractionPath($destination, $entryPath);
+            $this->buildSafeExtractionPath($destination, $entryPath);
 
             if ($entry->isDir()) {
-                if (!is_dir($targetPath) && !mkdir($targetPath, 0755, true) && !is_dir($targetPath)) {
-                    throw new Exception("Failed to create extraction directory: {$targetPath}");
-                }
                 continue;
             }
 
@@ -431,24 +440,136 @@ class LocalAdapter implements IFileSystem
                 throw new Exception('Archive contains symbolic link entries.');
             }
 
-            $parent = dirname($targetPath);
-            if (!is_dir($parent) && !mkdir($parent, 0755, true) && !is_dir($parent)) {
-                throw new Exception("Failed to create extraction directory: {$parent}");
+        }
+
+        foreach ($entries as [$entryPath, $entry]) {
+            $this->operationBudget?->tick();
+            $targetPath = $this->buildSafeExtractionPath($destination, $entryPath);
+            if ($entry->isDir()) {
+                $this->ensureExtractionDirectory($targetPath, $created);
+                continue;
+            }
+
+            $this->ensureExtractionDirectory(dirname($targetPath), $created);
+            if (is_link($targetPath) || (file_exists($targetPath) && is_dir($targetPath))) {
+                throw new Exception("Extraction target is not a regular file: {$targetPath}");
             }
 
             $readStream = $entry->openFile('r');
+            $newFile = !file_exists($targetPath);
+            if ($newFile) {
+                $created[] = $targetPath;
+            }
             $handle = fopen($targetPath, 'wb');
             if ($handle === false) {
                 throw new Exception("Failed to write extracted file: {$targetPath}");
             }
 
-            while (!$readStream->eof()) {
-                fwrite($handle, (string)$readStream->fread(8192));
+            try {
+                while (!$readStream->eof()) {
+                    $this->operationBudget?->tick();
+                    $chunk = $readStream->fread(8192);
+                    if ($chunk === false) {
+                        throw new Exception("Failed to read archive entry: {$entryPath}");
+                    }
+                    if ($chunk !== '' && fwrite($handle, $chunk) !== strlen($chunk)) {
+                        throw new Exception("Failed to write extracted file: {$targetPath}");
+                    }
+                }
+            } finally {
+                fclose($handle);
             }
-            fclose($handle);
         }
 
         return true;
+    }
+
+    private function preflightZipEntries(ZipArchive $zip, string $destination): void
+    {
+        $expanded = 0;
+        $paths = [];
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $this->operationBudget?->tick();
+            $rawName = $zip->getNameIndex($i);
+            if (!is_string($rawName)) {
+                throw new Exception('Archive contains an invalid entry name.');
+            }
+
+            $entryPath = $this->assertSafeArchiveEntryPath($rawName);
+            $isDirectory = str_ends_with(str_replace('\\', '/', $rawName), '/');
+            $this->buildSafeExtractionPath($destination, $entryPath);
+            $pathKey = strtolower($entryPath);
+            if (isset($paths[$pathKey]) && $paths[$pathKey] !== $isDirectory) {
+                throw new Exception('Archive contains conflicting entry paths.');
+            }
+            $paths[$pathKey] = $isDirectory;
+
+            if ($this->isZipEntrySymlink($zip, $i)) {
+                throw new Exception('Archive contains symbolic link entries.');
+            }
+            $stat = $zip->statIndex($i);
+            if (!is_array($stat)) {
+                throw new Exception('Archive contains an invalid entry.');
+            }
+            $size = max(0, (int)$stat['size']);
+            $compressed = max(0, (int)$stat['comp_size']);
+            $expanded += $size;
+            if ($i + 1 > $this->resourcePolicy->maxArchiveEntries()
+                || $expanded > $this->resourcePolicy->maxArchiveBytes()
+                || ($compressed > 0 && $size > $compressed * $this->resourcePolicy->maxArchiveRatio())) {
+                throw new Exception('Archive exceeds the configured safety limits.');
+            }
+        }
+    }
+
+    private function extractZipEntry(ZipArchive $zip, int $index, string $destination, array &$created): void
+    {
+        $rawName = $zip->getNameIndex($index);
+        if (!is_string($rawName)) {
+            throw new Exception('Archive contains an invalid entry name.');
+        }
+        $entryPath = $this->assertSafeArchiveEntryPath($rawName);
+        $targetPath = $this->buildSafeExtractionPath($destination, $entryPath);
+
+        if (str_ends_with(str_replace('\\', '/', $rawName), '/')) {
+            $this->ensureExtractionDirectory($targetPath, $created);
+            return;
+        }
+
+        $this->ensureExtractionDirectory(dirname($targetPath), $created);
+        if (is_link($targetPath) || (file_exists($targetPath) && is_dir($targetPath))) {
+            throw new Exception("Extraction target is not a regular file: {$targetPath}");
+        }
+
+        $stream = $zip->getStream($rawName);
+        if ($stream === false) {
+            throw new Exception("Failed to read archive entry: {$entryPath}");
+        }
+        $newFile = !file_exists($targetPath);
+        if ($newFile) {
+            $created[] = $targetPath;
+        }
+        $handle = fopen($targetPath, 'wb');
+        if ($handle === false) {
+            fclose($stream);
+            throw new Exception("Failed to write extracted file: {$targetPath}");
+        }
+
+        try {
+            while (!feof($stream)) {
+                $this->operationBudget?->tick();
+                $chunk = fread($stream, 8192);
+                if ($chunk === false) {
+                    throw new Exception("Failed to read archive entry: {$entryPath}");
+                }
+                if ($chunk !== '' && fwrite($handle, $chunk) !== strlen($chunk)) {
+                    throw new Exception("Failed to write extracted file: {$targetPath}");
+                }
+            }
+        } finally {
+            fclose($handle);
+            fclose($stream);
+        }
     }
 
     private function isZipEntrySymlink(ZipArchive $zip, int $index): bool
@@ -470,26 +591,30 @@ class LocalAdapter implements IFileSystem
         return $mode === 0xA000;
     }
 
-    private function assertSafeArchiveEntryPath(string $entryName): void
+    private function assertSafeArchiveEntryPath(string $entryName): string
     {
-        $entryName = str_replace('\\', '/', trim($entryName));
-        if ($entryName === '') {
+        $normalizedName = str_replace('\\', '/', trim($entryName));
+        if ($normalizedName === '') {
             throw new Exception('Archive contains an empty entry path.');
         }
 
-        if ($entryName[0] === '/' || preg_match('/^[a-zA-Z]:\//', $entryName)) {
+        if ($normalizedName[0] === '/' || preg_match('/\A[A-Za-z]:/', $normalizedName)) {
             throw new Exception('Archive contains an absolute entry path.');
         }
 
-        $parts = explode('/', $entryName);
-        foreach ($parts as $part) {
-            if ($part === '' || $part === '.') {
-                continue;
-            }
-            if ($part === '..') {
-                throw new Exception('Archive contains path traversal entries.');
-            }
+        try {
+            $relative = PathPolicy::normalizeRelative($normalizedName);
+        } catch (\RuntimeException $exception) {
+            $message = str_contains(strtolower($exception->getMessage()), 'traversal')
+                ? 'Archive contains path traversal entries.'
+                : 'Archive contains an unsafe entry path.';
+            throw new Exception($message, 0, $exception);
         }
+        if ($relative === '') {
+            throw new Exception('Archive contains an empty entry path.');
+        }
+
+        return $relative;
     }
 
     private function buildSafeExtractionPath(string $destination, string $entryName): string
@@ -512,7 +637,11 @@ class LocalAdapter implements IFileSystem
 
     private function assertWithinDirectory(string $candidate, string $baseDir): void
     {
-        $base = rtrim(realpath($baseDir) ?: $baseDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $baseReal = realpath($baseDir);
+        if ($baseReal === false || !is_dir($baseReal)) {
+            throw new Exception('Invalid extraction directory.');
+        }
+        $base = rtrim($baseReal, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
         $check = $candidate;
 
         while (!file_exists($check)) {
@@ -531,6 +660,73 @@ class LocalAdapter implements IFileSystem
         $resolved = rtrim($resolved, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
         if (!str_starts_with($resolved, $base)) {
             throw new Exception('Archive extraction path traversal blocked.');
+        }
+
+        $this->assertNoSymlinkComponents($baseReal, $candidate);
+    }
+
+    private function ensureExtractionDirectory(string $directory, array &$created): void
+    {
+        if (is_link($directory)) {
+            throw new Exception('Pre-existing symbolic link in extraction path.');
+        }
+        if (file_exists($directory)) {
+            if (!is_dir($directory)) {
+                throw new Exception("Extraction path is not a directory: {$directory}");
+            }
+            $this->assertWithinDirectory($directory, $this->rootPath);
+            return;
+        }
+
+        $parent = dirname($directory);
+        if ($parent !== $directory && !file_exists($parent)) {
+            $this->ensureExtractionDirectory($parent, $created);
+        }
+        $this->assertWithinDirectory($directory, $this->rootPath);
+        if (!mkdir($directory, 0755) && !is_dir($directory)) {
+            throw new Exception("Failed to create extraction directory: {$directory}");
+        }
+        $created[] = $directory;
+    }
+
+    private function assertNoSymlinkComponents(string $baseDir, string $candidate): void
+    {
+        $baseReal = realpath($baseDir);
+        if ($baseReal === false || !is_dir($baseReal)) {
+            throw new Exception('Invalid extraction directory.');
+        }
+
+        $baseReal = rtrim($baseReal, DIRECTORY_SEPARATOR);
+        $candidate = rtrim($candidate, DIRECTORY_SEPARATOR);
+        if ($candidate === $baseReal) {
+            return;
+        }
+        if (!str_starts_with($candidate, $baseReal . DIRECTORY_SEPARATOR)) {
+            throw new Exception('Archive extraction path traversal blocked.');
+        }
+
+        $relative = substr($candidate, strlen($baseReal) + 1);
+        $current = $baseReal;
+        foreach (explode(DIRECTORY_SEPARATOR, $relative) as $part) {
+            if ($part === '') {
+                continue;
+            }
+            $current .= DIRECTORY_SEPARATOR . $part;
+            if (is_link($current)) {
+                throw new Exception('Pre-existing symbolic link in extraction path.');
+            }
+        }
+    }
+
+    private function cleanupExtractionPaths(array $paths): void
+    {
+        usort($paths, static fn(string $left, string $right): int => strlen($right) <=> strlen($left));
+        foreach (array_unique($paths) as $path) {
+            if (is_link($path) || is_file($path)) {
+                @unlink($path);
+            } elseif (is_dir($path)) {
+                @rmdir($path);
+            }
         }
     }
 

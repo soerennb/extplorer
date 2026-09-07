@@ -90,6 +90,123 @@ class LocalAdapterSecurityTest extends CIUnitTestCase
         @rmdir($root);
     }
 
+    public function testZipExtractionRejectsWindowsAbsoluteAndDriveRelativeEntries(): void
+    {
+        foreach (['C:Windows/system.ini', 'C:/Windows/system.ini', '\\server\\share\\secret.txt'] as $entryName) {
+            $root = sys_get_temp_dir() . '/extplorer_zip_absolute_' . uniqid('', true);
+            mkdir($root . '/extract', 0755, true);
+            $archivePath = $root . '/malicious.zip';
+            $zip = new \ZipArchive();
+            $this->assertTrue($zip->open($archivePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true);
+            $zip->addFromString($entryName, 'owned');
+            $zip->close();
+
+            try {
+                $this->expectException(\Exception::class);
+                (new LocalAdapter($root))->extract('malicious.zip', 'extract');
+            } finally {
+                @unlink($archivePath);
+                @rmdir($root . '/extract');
+                @rmdir($root);
+            }
+        }
+    }
+
+    public function testZipExtractionRejectsPreExistingSymlinkParentBeforeWriting(): void
+    {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->markTestSkipped('Symlink creation is not reliably available on Windows CI.');
+        }
+
+        $root = sys_get_temp_dir() . '/extplorer_zip_parent_link_' . uniqid('', true);
+        $outside = sys_get_temp_dir() . '/extplorer_zip_parent_outside_' . uniqid('', true);
+        mkdir($root . '/extract', 0755, true);
+        mkdir($outside, 0755, true);
+        if (!@symlink($outside, $root . '/extract/link')) {
+            $this->markTestSkipped('Symlink creation is not permitted in this environment.');
+        }
+
+        $archivePath = $root . '/payload.zip';
+        $zip = new \ZipArchive();
+        $this->assertTrue($zip->open($archivePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true);
+        $zip->addFromString('link/payload.txt', 'must not escape');
+        $zip->close();
+
+        try {
+            $this->expectException(\Exception::class);
+            (new LocalAdapter($root))->extract('payload.zip', 'extract');
+        } finally {
+            $this->assertFileDoesNotExist($outside . '/payload.txt');
+            @unlink($archivePath);
+            @unlink($root . '/extract/link');
+            @rmdir($outside);
+            @rmdir($root . '/extract');
+            @rmdir($root);
+        }
+    }
+
+    public function testZipQuotaFailureRemovesNewExtractionOutput(): void
+    {
+        $root = sys_get_temp_dir() . '/extplorer_zip_cleanup_' . uniqid('', true);
+        mkdir($root, 0755, true);
+        $archivePath = $root . '/limited.zip';
+        $zip = new \ZipArchive();
+        $this->assertTrue($zip->open($archivePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true);
+        $zip->addFromString('one.txt', 'one');
+        $zip->addFromString('two.txt', 'two');
+        $zip->close();
+
+        $previous = getenv('EXTPLORER_ARCHIVE_MAX_ENTRIES');
+        putenv('EXTPLORER_ARCHIVE_MAX_ENTRIES=1');
+        try {
+            $this->expectException(\Exception::class);
+            (new LocalAdapter($root))->extract('limited.zip', 'new-destination');
+        } finally {
+            $previous === false
+                ? putenv('EXTPLORER_ARCHIVE_MAX_ENTRIES')
+                : putenv('EXTPLORER_ARCHIVE_MAX_ENTRIES=' . $previous);
+            $this->assertDirectoryDoesNotExist($root . '/new-destination');
+            @unlink($archivePath);
+            @rmdir($root);
+        }
+    }
+
+    public function testTarExtractionUsesTheSameBoundedPathPolicy(): void
+    {
+        $root = sys_get_temp_dir() . '/extplorer_tar_extract_' . uniqid('', true);
+        mkdir($root, 0755, true);
+        $archivePath = $root . '/payload.tar';
+        $phar = new \PharData($archivePath);
+        $phar->addEmptyDir('folder');
+        $phar->addFromString('folder/file.txt', 'tar payload');
+
+        try {
+            $this->assertTrue((new LocalAdapter($root))->extract('payload.tar', 'extract'));
+            $this->assertSame('tar payload', file_get_contents($root . '/extract/folder/file.txt'));
+        } finally {
+            $this->removeTree($root);
+        }
+    }
+
+    private function removeTree(string $path): void
+    {
+        if (!is_dir($path)) {
+            return;
+        }
+        foreach (scandir($path) ?: [] as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            $child = $path . DIRECTORY_SEPARATOR . $entry;
+            if (is_dir($child) && !is_link($child)) {
+                $this->removeTree($child);
+            } else {
+                @unlink($child);
+            }
+        }
+        @rmdir($path);
+    }
+
     public function testDirectoryListingStopsBeforeMaterializingAllEntries(): void
     {
         $root = sys_get_temp_dir() . '/extplorer_listing_limit_' . uniqid('', true);
