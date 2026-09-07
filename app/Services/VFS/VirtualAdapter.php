@@ -26,6 +26,7 @@ class VirtualAdapter implements IFileSystem
         $remaining = $parts[1] ?? '';
 
         if (isset($this->mounts[$alias])) {
+            $remaining = PathPolicy::normalizeRelative($remaining);
             return [$this->mounts[$alias], $remaining];
         }
 
