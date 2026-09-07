@@ -26,8 +26,6 @@ class VirtualAdapter implements IFileSystem
         $remaining = $parts[1] ?? '';
 
         if (isset($this->mounts[$alias])) {
-            // Canonicalize the remaining path before handing it to the mounted
-            // adapter so '../' traversal sequences can never escape the mount.
             $remaining = PathPolicy::normalizeRelative($remaining);
             return [$this->mounts[$alias], $remaining];
         }

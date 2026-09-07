@@ -8,6 +8,16 @@ use App\Services\VFS\LocalAdapter;
 
 class VirtualVfsTest extends CIUnitTestCase
 {
+    private function assertTraversalBlocked(callable $operation): void
+    {
+        try {
+            $operation();
+            $this->fail('Expected mounted path traversal to be rejected.');
+        } catch (\RuntimeException $exception) {
+            $this->assertStringContainsString('traversal', strtolower($exception->getMessage()));
+        }
+    }
+
     private function deleteTree(string $path): void
     {
         if (!file_exists($path)) {
@@ -87,5 +97,45 @@ class VirtualVfsTest extends CIUnitTestCase
 
         $this->deleteTree($sourceRoot);
         $this->deleteTree($targetRoot);
+    }
+
+    public function testMountedPathTraversalIsRejectedBeforeAnyOperationReachesTheAdapter(): void
+    {
+        $root = sys_get_temp_dir() . '/test_vfs_traversal_' . uniqid('', true);
+        mkdir($root, 0755, true);
+        file_put_contents($root . '/inside.txt', 'inside');
+
+        $vfs = new VirtualAdapter();
+        $vfs->mount('Test', new LocalAdapter($root));
+
+        $operations = [
+            static fn() => $vfs->listDirectory('Test/../outside'),
+            static fn() => $vfs->readFile('Test/../outside.txt'),
+            static fn() => $vfs->openReadStream('Test\\..\\outside.txt'),
+            static fn() => $vfs->writeFile('Test/../outside.txt', 'blocked'),
+            static fn() => $vfs->delete('Test/../outside.txt'),
+            static fn() => $vfs->createDirectory('Test/../outside'),
+            static fn() => $vfs->move('Test/../outside.txt', 'Test/inside.txt'),
+            static fn() => $vfs->move('Test/inside.txt', 'Test/../outside.txt'),
+            static fn() => $vfs->copy('Test/../outside.txt', 'Test/copy.txt'),
+            static fn() => $vfs->copy('Test/inside.txt', 'Test/../copy.txt'),
+            static fn() => $vfs->getMetadata('Test/../outside.txt'),
+            static fn() => $vfs->chmod('Test/../outside.txt', 0644),
+            static fn() => $vfs->chown('Test/../outside.txt', 'user', 'group'),
+            static fn() => $vfs->getDirectorySize('Test/../outside'),
+            static fn() => $vfs->archive(['Test/../outside.txt'], 'Test/archive.zip'),
+            static fn() => $vfs->extract('Test/archive.zip', 'Test/../outside'),
+            static fn() => $vfs->resolvePath('Test\\..\\outside.txt'),
+        ];
+
+        foreach ($operations as $operation) {
+            $this->assertTraversalBlocked($operation);
+        }
+
+        $this->assertFileDoesNotExist(dirname($root) . '/outside.txt');
+        $this->assertFileDoesNotExist($root . '/outside.txt');
+        $this->assertFileExists($root . '/inside.txt');
+
+        $this->deleteTree($root);
     }
 }
