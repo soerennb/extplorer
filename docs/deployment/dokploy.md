@@ -11,7 +11,8 @@ connects only the Nginx `extplorer-web` service to Dokploy's external Traefik ne
 4. Configure a domain for the `extplorer-web` service in Dokploy's Domains UI. The domain must target container port `80`.
 5. Set `EXTPLORER_BASE_URL` to the public HTTPS URL, including the trailing slash.
 6. Use `docker-compose.secrets.yml.example` as a template for a Dokploy secret file. Keep the administrator password and
-   encryption key outside ordinary environment variables where Dokploy supports secret mounts.
+   encryption key outside ordinary environment variables where Dokploy supports secret mounts. The overlay handles root-owned
+   mode-600 secret files during initialization and drops the long-running PHP-FPM process to `www-data`.
 7. Deploy and wait for the `extplorer-init`, `extplorer-app` and `extplorer-web` health states before considering the release successful.
 
 The override intentionally removes host port publishing. Traefik reaches `extplorer-web` over the external network, while

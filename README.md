@@ -68,6 +68,10 @@ export EXTPLORER_ADMIN_PASSWORD_HOST_FILE="$PWD/.extplorer-admin-password"
 docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example up -d --wait
 ```
 
+The secrets overlay starts the initialization wrapper as root only long enough to stage
+`chmod 600` secret files for the application user; the long-running PHP-FPM process is
+still executed as `www-data` (UID 82). Keep the host secret file readable only by root.
+
 **Note for Portainer Users:** Do **not** simply paste the `docker-compose.yml` into the Web Editor. Use the "Repository" method to ensure Portainer clones the configuration files along with the compose file.
 
 - `ghcr.io/soerennb/extplorer3:latest` for the `extplorer-app` service (php-fpm)

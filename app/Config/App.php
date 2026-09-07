@@ -264,7 +264,7 @@ class App extends BaseConfig
      * Application Version
      * --------------------------------------------------------------------------
      */
-    public string $version = '3.0.0-beta.4';
+    public string $version = '3.0.0-beta.5';
 
     private function configureTrustedProxies(): void
     {

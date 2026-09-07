@@ -269,6 +269,7 @@ jobs:
       E2E_BASE_URL: http://127.0.0.1:8080
       E2E_USERNAME: e2e-admin
       E2E_PASSWORD: e2e-admin-password
+      EXTPLORER_ADMIN_PASSWORD_HOST_FILE: ${{ runner.temp }}/extplorer-admin-password
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -284,6 +285,12 @@ jobs:
 
       - name: Ensure Ace assets
         run: bash ./scripts/ensure-ace-assets.sh
+
+      - name: Prepare chmod-600 secret overlay fixture
+        run: |
+          umask 077
+          printf '%s\n' "$E2E_PASSWORD" > "$EXTPLORER_ADMIN_PASSWORD_HOST_FILE"
+          chmod 600 "$EXTPLORER_ADMIN_PASSWORD_HOST_FILE"
 
       - name: Validate Docker entrypoints
         run: |
@@ -318,24 +325,29 @@ jobs:
           npm run e2e:install
 
       - name: Start E2E stack
-        run: docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml up --detach --wait --wait-timeout 120
+        run: docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml up --detach --wait --wait-timeout 120
+
+      - name: Verify secret bootstrap drops to non-root FPM
+        run: |
+          app_container="$(docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml ps -q extplorer-app)"
+          docker top "$app_container" -eo user | awk 'NR > 1 {print $1}' | sort -u | grep -qx 82
 
       - name: Verify atomic code release rollback
         run: |
-          initial_release="$(docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app readlink /var/www/html/current | sed 's#^.releases/##')"
-          docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml run --rm -e EXTPLORER_CODE_FORCE=1 extplorer-init
-          updated_release="$(docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app readlink /var/www/html/current | sed 's#^.releases/##')"
+          initial_release="$(docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app readlink /var/www/html/current | sed 's#^.releases/##')"
+          docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml run --rm -e EXTPLORER_CODE_FORCE=1 extplorer-init
+          updated_release="$(docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app readlink /var/www/html/current | sed 's#^.releases/##')"
           test "$updated_release" != "$initial_release"
-          docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml run --rm extplorer-init --rollback "$initial_release"
-          test "$(docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app readlink /var/www/html/current | sed 's#^.releases/##')" = "$initial_release"
-          docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app php /var/www/html/current/spark system:readiness
+          docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml run --rm extplorer-init --rollback "$initial_release"
+          test "$(docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app readlink /var/www/html/current | sed 's#^.releases/##')" = "$initial_release"
+          docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app php /var/www/html/current/spark system:readiness
 
       - name: Run Chromium smoke tests
         run: npm run e2e
 
       - name: Collect container logs
         if: failure()
-        run: docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml logs --no-color > e2e-compose.log
+        run: docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml logs --no-color > e2e-compose.log
 
       - name: Upload E2E diagnostics
         if: failure()
@@ -351,4 +363,4 @@ jobs:
 
       - name: Stop E2E stack
         if: always()
-        run: docker compose -f docker-compose.yml -f tests/e2e/docker-compose.yml down --volumes --remove-orphans
+        run: docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml down --volumes --remove-orphans
