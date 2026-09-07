@@ -120,6 +120,27 @@ test("running stack exposes health and protects application routes", async ({
   await assertCleanBrowser();
 });
 
+test("installed stack does not expose the installer or claim token", async ({
+  request,
+}) => {
+  const install = await request.get("/install", { maxRedirects: 0 });
+  expect(install.status()).toBe(302);
+  expect(
+    new URL(
+      install.headers().location,
+      process.env.E2E_BASE_URL || "http://127.0.0.1:8080",
+    ).pathname,
+  ).toBe("/");
+
+  for (const path of [
+    "/.extplorer-install-token",
+    "/writable/.extplorer-install-token",
+  ]) {
+    const token = await request.get(path);
+    expect(token.status(), `unexpectedly exposed ${path}`).not.toBe(200);
+  }
+});
+
 test("local user can reject invalid credentials, sign in, and sign out", async ({
   page,
 }) => {

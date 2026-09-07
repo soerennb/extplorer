@@ -22,6 +22,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  security-regression:
+    name: Native security regression suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: "8.2"
+          extensions: curl, dom, gd, intl, mbstring, sqlite3, xml, zip
+          tools: composer:2.10.2
+          coverage: none
+
+      - name: Install locked dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run VFS, archive, remote and installation security tests
+        run: >-
+          vendor/bin/phpunit --no-coverage
+          tests/unit/PathPolicyTest.php
+          tests/unit/RemoteEndpointPolicyTest.php
+          tests/unit/RemoteSecurityPolicyTest.php
+          tests/unit/VirtualVfsTest.php
+          tests/unit/VfsFactoryMountTest.php
+          tests/unit/LocalAdapterSecurityTest.php
+          tests/unit/InstallStateServiceTest.php
+
   secret-scan:
     name: Secret scanning
     runs-on: ubuntu-latest
