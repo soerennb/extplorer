@@ -24,6 +24,40 @@ class PathPolicyTest extends CIUnitTestCase
         }
     }
 
+    /**
+     * @dataProvider invalidRelativePathProvider
+     */
+    public function testInvalidRelativePathFormsAreRejected(string $path, string $message): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage($message);
+        PathPolicy::normalizeRelative($path);
+    }
+
+    public static function invalidRelativePathProvider(): array
+    {
+        return [
+            'control character' => ["safe/secret\n.txt", 'Invalid path'],
+            'unc path' => ['//server/share/file.txt', 'Invalid absolute path'],
+            'drive absolute path' => ['C:/Windows/system.ini', 'Invalid absolute path'],
+            'drive relative path' => ['C:Windows/system.ini', 'Invalid absolute path'],
+        ];
+    }
+
+    public function testMountAliasesAreStrictAndBounded(): void
+    {
+        $this->assertSame('Remote Files', PathPolicy::normalizeMountAlias('Remote Files'));
+
+        foreach (['', ' leading', 'trailing ', 'with/slash', "with\nline", str_repeat('a', 65)] as $alias) {
+            try {
+                PathPolicy::normalizeMountAlias($alias);
+                $this->fail('Expected invalid mount alias to be rejected: ' . json_encode($alias));
+            } catch (RuntimeException $exception) {
+                $this->assertSame('Invalid mount alias.', $exception->getMessage());
+            }
+        }
+    }
+
     public function testSiblingPrefixIsNotInsideRoot(): void
     {
         $this->assertFalse(PathPolicy::isWithinRoot('/srv/files', '/srv/files-old/secret.txt'));

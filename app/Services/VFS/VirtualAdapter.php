@@ -14,6 +14,13 @@ class VirtualAdapter implements IFileSystem
 
     public function mount(string $alias, IFileSystem $adapter, array $metadata = []): void
     {
+        $alias = PathPolicy::normalizeMountAlias($alias);
+        foreach (array_keys($this->mounts) as $existingAlias) {
+            if (strcasecmp($existingAlias, $alias) === 0) {
+                throw new \RuntimeException("Mount alias already exists: {$alias}");
+            }
+        }
+
         $this->mounts[$alias] = $adapter;
         $this->mountMetadata[$alias] = $metadata;
     }

@@ -15,12 +15,15 @@ final class PathPolicy
 {
     public static function normalizeRelative(string $path): string
     {
-        if (str_contains($path, "\0")) {
+        $normalized = str_replace('\\', '/', $path);
+        if (self::hasControlCharacters($normalized)) {
             throw new RuntimeException('Invalid path.');
         }
 
-        $normalized = str_replace('\\', '/', $path);
-        if (str_starts_with($normalized, '//') || preg_match('/\A[A-Za-z]:\//', $normalized)) {
+        // A single leading slash is accepted for compatibility with the UI,
+        // but UNC paths and both absolute and drive-relative Windows paths
+        // must never be interpreted below the managed root.
+        if (str_starts_with($normalized, '//') || preg_match('/\A[A-Za-z]:/', $normalized)) {
             throw new RuntimeException('Invalid absolute path.');
         }
 
@@ -38,6 +41,26 @@ final class PathPolicy
         }
 
         return implode('/', $parts);
+    }
+
+    /**
+     * Normalize the public name used to address a virtual mount.
+     *
+     * Mount aliases become the first path component of every VFS request, so
+     * accepting separators, control characters, or ambiguous whitespace here
+     * would make the virtual namespace unsafe and difficult to audit.
+     */
+    public static function normalizeMountAlias(string $alias): string
+    {
+        if ($alias === '' || $alias !== trim($alias)) {
+            throw new RuntimeException('Invalid mount alias.');
+        }
+
+        if (!preg_match('/\A[A-Za-z0-9](?:[A-Za-z0-9 _-]{0,62}[A-Za-z0-9_-])?\z/D', $alias)) {
+            throw new RuntimeException('Invalid mount alias.');
+        }
+
+        return $alias;
     }
 
     public static function resolve(string $rootPath, string $path): string
@@ -115,5 +138,10 @@ final class PathPolicy
 
         $real = realpath($current);
         return $real === false ? false : $real;
+    }
+
+    private static function hasControlCharacters(string $value): bool
+    {
+        return preg_match('/[\x00-\x1F\x7F]/', $value) === 1;
     }
 }

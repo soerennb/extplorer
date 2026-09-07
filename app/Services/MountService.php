@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\VFS\FtpAdapter;
+use App\Services\VFS\PathPolicy;
 use App\Services\VFS\Ssh2Adapter;
 use App\Services\RemoteSecurityPolicy;
 use CodeIgniter\Encryption\EncrypterInterface;
@@ -61,7 +62,18 @@ class MountService
     public function getUserMounts(string $username, bool $includeSecrets = false): array
     {
         $all = $this->getMounts();
-        $filtered = array_filter($all, fn($m) => $m['user'] === $username);
+        $filtered = [];
+        foreach ($all as $id => $mount) {
+            if (!is_array($mount) || ($mount['user'] ?? null) !== $username) {
+                continue;
+            }
+
+            // Preserve the storage key as the ID for old records that did not
+            // persist it inside the record itself. This also lets VfsFactory
+            // report malformed legacy mounts through the normal health API.
+            $mount['id'] = (string)($mount['id'] ?? $id);
+            $filtered[$id] = $mount;
+        }
         if ($includeSecrets) {
             return $this->decryptMountSecrets($filtered);
         }
@@ -356,10 +368,18 @@ class MountService
 
     private function sanitizeMountName(string $name): string
     {
-        $name = preg_replace('/[^a-zA-Z0-9 _-]/', '', $name);
-        if (empty($name)) {
+        $name = preg_replace('/[^a-zA-Z0-9 _-]/', '', $name) ?? '';
+        $name = trim($name);
+        if ($name === '') {
             throw new \Exception("Invalid mount name.");
         }
+
+        try {
+            PathPolicy::normalizeMountAlias($name);
+        } catch (\RuntimeException $exception) {
+            throw new \Exception($exception->getMessage(), 0, $exception);
+        }
+
         return $name;
     }
 

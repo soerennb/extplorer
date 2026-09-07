@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use CodeIgniter\Test\CIUnitTestCase;
 use App\Services\VFS\VirtualAdapter;
 use App\Services\VFS\LocalAdapter;
+use RuntimeException;
 
 class VirtualVfsTest extends CIUnitTestCase
 {
@@ -75,6 +76,38 @@ class VirtualVfsTest extends CIUnitTestCase
 
         // Clean up
         $this->deleteTree($tmp);
+    }
+
+    public function testInvalidAndDuplicateMountAliasesAreRejected(): void
+    {
+        $root = sys_get_temp_dir() . '/test_vfs_alias_' . uniqid('', true);
+        mkdir($root, 0755, true);
+
+        try {
+            $vfs = new VirtualAdapter();
+            $adapter = new LocalAdapter($root);
+            $vfs->mount('Files', $adapter);
+
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('already exists');
+            $vfs->mount('files', new LocalAdapter($root));
+        } finally {
+            $this->deleteTree($root);
+        }
+    }
+
+    public function testMalformedMountAliasIsRejected(): void
+    {
+        $root = sys_get_temp_dir() . '/test_vfs_invalid_alias_' . uniqid('', true);
+        mkdir($root, 0755, true);
+
+        try {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('Invalid mount alias');
+            (new VirtualAdapter())->mount('../escape', new LocalAdapter($root));
+        } finally {
+            $this->deleteTree($root);
+        }
     }
 
     public function testCopyCanCopyDirectoriesAcrossMounts(): void

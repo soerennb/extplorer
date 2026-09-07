@@ -88,26 +88,34 @@ class VfsFactory
             $mountService = new \App\Services\MountService();
             $mounts = $mountService->getUserMounts($username, true);
             foreach ($mounts as $mount) {
+                $mountId = (string)($mount['id'] ?? '');
+                $mountName = (string)($mount['name'] ?? '');
                 try {
-                    if ($mount['type'] === 'local') {
-                        $adapter = new LocalAdapter($mount['config']['path']);
-                        $vfs->mount($mount['name'], $adapter, ['is_external' => true]);
+                    if ($mountName === '' || !isset($mount['type']) || !is_array($mount['config'] ?? null)) {
+                        throw new \RuntimeException('Persisted mount record is malformed.');
                     }
-                    if ($mount['type'] === 'ftp' || $mount['type'] === 'ftps') {
-                        $config = $mount['config'] ?? [];
+
+                    $mountType = strtolower((string)$mount['type']);
+                    $mountConfig = $mount['config'];
+                    if ($mountType === 'local') {
+                        $adapter = new LocalAdapter((string)($mountConfig['path'] ?? ''));
+                        $vfs->mount($mountName, $adapter, ['is_external' => true]);
+                    }
+                    if ($mountType === 'ftp' || $mountType === 'ftps') {
+                        $config = $mountConfig;
                         $adapter = new FtpAdapter(
                             $config['host'] ?? '',
                             $config['user'] ?? '',
                             $config['pass'] ?? '',
                             (int)($config['port'] ?? 21),
                             $config['root'] ?? '/',
-                            $mount['type'] === 'ftps',
+                            $mountType === 'ftps',
                             (string)($config['tls_spki_pin'] ?? '')
                         );
-                        $vfs->mount($mount['name'], $adapter, ['is_external' => true]);
+                        $vfs->mount($mountName, $adapter, ['is_external' => true]);
                     }
-                    if ($mount['type'] === 'sftp' || $mount['type'] === 'ssh2') {
-                        $config = $mount['config'] ?? [];
+                    if ($mountType === 'sftp' || $mountType === 'ssh2') {
+                        $config = $mountConfig;
                         $adapter = new Ssh2Adapter(
                             $config['host'] ?? '',
                             $config['user'] ?? '',
@@ -119,11 +127,22 @@ class VfsFactory
                             self::revealConnectionSecret((string)($config['public_key'] ?? '')),
                             self::revealConnectionSecret((string)($config['private_key_passphrase'] ?? ''))
                         );
-                        $vfs->mount($mount['name'], $adapter, ['is_external' => true]);
+                        $vfs->mount($mountName, $adapter, ['is_external' => true]);
                     }
-                } catch (\Exception $e) {
-                    // Log invalid mount but don't crash
-                    log_message('error', "Failed to load mount {$mount['name']}: " . $e->getMessage());
+                    if (!in_array($mountType, ['local', 'ftp', 'ftps', 'sftp', 'ssh2'], true)) {
+                        throw new \RuntimeException('Persisted mount type is invalid.');
+                    }
+                } catch (\Throwable $e) {
+                    $message = "Mount " . ($mountName !== '' ? $mountName : ($mountId !== '' ? $mountId : '[unknown]'))
+                        . ' was disabled: ' . $e->getMessage();
+                    log_message('error', $message);
+                    if ($mountId !== '') {
+                        try {
+                            $mountService->recordMountHealth($mountId, $username, false, $e->getMessage());
+                        } catch (\Throwable $healthException) {
+                            log_message('error', 'Failed to record invalid mount health: ' . $healthException->getMessage());
+                        }
+                    }
                 }
             }
         } catch (\Exception $e) {

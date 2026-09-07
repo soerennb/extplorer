@@ -80,4 +80,22 @@ class RemoteSecurityPolicyTest extends CIUnitTestCase
         $this->expectException(\RuntimeException::class);
         RemotePathPolicy::normalizeRelative('incoming/../../etc');
     }
+
+    /**
+     * @dataProvider invalidRemotePathProvider
+     */
+    public function testRemotePathPolicyRejectsAmbiguousPathForms(string $path): void
+    {
+        $this->expectException(\RuntimeException::class);
+        RemotePathPolicy::normalizeRelative($path);
+    }
+
+    public static function invalidRemotePathProvider(): array
+    {
+        return [
+            'control character' => ["safe/secret\n.txt"],
+            'drive relative path' => ['C:Windows/system.ini'],
+            'unc path' => ['//server/share/file.txt'],
+        ];
+    }
 }

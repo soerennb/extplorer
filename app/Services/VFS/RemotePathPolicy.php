@@ -26,6 +26,9 @@ final class RemotePathPolicy
         if (str_contains($path, "\0") || self::hasControlCharacters($path)) {
             throw new RuntimeException('Remote path contains invalid characters.');
         }
+        if (str_starts_with($path, '//') || preg_match('/\A[A-Za-z]:/', $path)) {
+            throw new RuntimeException('Remote absolute path is not allowed.');
+        }
         return implode('/', self::segments($path));
     }
 
