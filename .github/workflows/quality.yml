@@ -2,9 +2,13 @@ name: Quality
 
 on:
   pull_request:
+    paths-ignore:
+      - '.beads/**'
   push:
     branches:
       - main
+    paths-ignore:
+      - '.beads/**'
   workflow_call:
 
 concurrency:

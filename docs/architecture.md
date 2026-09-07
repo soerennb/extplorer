@@ -70,3 +70,13 @@ Previous code releases and migration backups are retained for controlled rollbac
 
 The frontend is a Vue 3 single-page application. Assets are located in `public/assets`, routing is hash-based, and state uses
 Vue's reactivity system. CSP rules require external scripts/styles or an explicit nonce for unavoidable inline content.
+
+## 7. CI and Beads Tracking
+
+The `Quality` and `Security audit` workflows ignore changes that are limited to `.beads/**`. This keeps Beads status
+commits from consuming the full application, container and dependency test matrix. Manual runs, scheduled security audits,
+reusable `workflow_call` invocations and commits containing any non-Beads change remain enabled.
+
+When these workflows are configured as required pull-request checks in GitHub, path-filtered workflows can remain pending
+when skipped. In that setup, either do not require these two checks for Beads-only pull requests or keep pull-request
+validation enabled and apply the optimization only to direct Beads pushes on `main`.
