@@ -229,7 +229,7 @@ return function render(_ctx, _cache) {
                   ]))
                 : (_openBlock(), _createElementBlock("div", _hoisted_24, [
                     _createElementVNode("p", _hoisted_25, _toDisplayString(t('share_desc') || 'Create a public link for this item.'), 1 /* TEXT */),
-                    (!isDirectory)
+                    (!isDirectory && transferAvailable)
                       ? (_openBlock(), _createElementBlock("div", _hoisted_26, [
                           _createElementVNode("button", {
                             class: "btn btn-outline-primary btn-sm",
@@ -353,6 +353,12 @@ return function render(_ctx, _cache) {
   }
 }
 })(Vue),
+    props: {
+        transferAvailable: {
+            type: Boolean,
+            default: false
+        }
+    },
     setup(props, context) {
         const { ref, reactive, computed } = Vue;
         const t = (key, fallback = '', params = {}) => {

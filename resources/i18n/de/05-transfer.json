@@ -64,5 +64,10 @@
     "transfer_expires_within_day": "läuft innerhalb von 1 Tag ab",
     "transfer_expires_in_days": "läuft in {days} Tagen ab",
     "transfer_expires_in_week": "läuft in 1 Woche ab",
-    "transfer_expires_in_weeks": "läuft in {weeks} Wochen ab"
+    "transfer_expires_in_weeks": "läuft in {weeks} Wochen ab",
+    "transfer_email_checking": "E-Mail-Versand wird geprüft…",
+    "transfer_email_configure": "E-Mail-Versand konfigurieren",
+    "transfer_email_unavailable": "Der Dateiversand ist nicht verfügbar, bevor der E-Mail-Versand konfiguriert und getestet wurde.",
+    "transfer_email_admin_required": "Bitte einen Administrator, den E-Mail-Versand vor dem Dateiversand zu konfigurieren und zu testen.",
+    "transfer_email_test_required": "Speichern Sie die E-Mail-Einstellungen und senden Sie eine erfolgreiche Test-E-Mail, bevor Sie Dateien versenden."
 }

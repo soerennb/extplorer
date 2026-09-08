@@ -68,6 +68,20 @@ class TransferController extends BaseController
         ]);
     }
 
+    public function capability()
+    {
+        if (!can('read')) {
+            return $this->failForbidden();
+        }
+
+        $status = $this->emailService->deliveryStatus();
+        return $this->respond([
+            'available' => $status['ready'],
+            'reason' => $status['reason'],
+            'settings_url' => null,
+        ]);
+    }
+
     /**
      * Stage internal files for transfer.
      */
@@ -75,6 +89,10 @@ class TransferController extends BaseController
     {
         if (!can('read')) {
             return $this->failForbidden();
+        }
+
+        if (($gate = $this->emailDeliveryGate()) !== null) {
+            return $gate;
         }
 
         $json = $this->request->getJSON();
@@ -171,6 +189,10 @@ class TransferController extends BaseController
         if (!can('upload')) {
             LogService::log('Transfer Upload Forbidden', '', 'Blocked: missing upload permission');
             return $this->failForbidden();
+        }
+
+        if (($gate = $this->emailDeliveryGate()) !== null) {
+            return $gate;
         }
 
         $file = $this->request->getFile('file');
@@ -280,6 +302,10 @@ class TransferController extends BaseController
         if (!can('read')) {
             LogService::log('Transfer Send Forbidden', '', 'Blocked: missing read permission');
             return $this->failForbidden();
+        }
+
+        if (($gate = $this->emailDeliveryGate()) !== null) {
+            return $gate;
         }
 
         $throttler = \Config\Services::throttler();
@@ -428,6 +454,18 @@ class TransferController extends BaseController
             }
         }
 
+        if ($emailFailures !== []) {
+            $this->shareService->deleteShare($share['hash']);
+            $this->rrmdir($absPath);
+            $this->emailService->invalidateDeliveryVerification();
+            LogService::log(
+                'Transfer Email Failed',
+                "Hash: {$share['hash']}",
+                'Transfer was rolled back because at least one notification failed.'
+            );
+            return $this->fail('Unable to send the transfer notification. Email delivery must be tested again.', 502);
+        }
+
         LogService::log('Transfer Sent', "Hash: {$share['hash']}, Files: " . count($fileList));
 
         return $this->respond([
@@ -435,6 +473,17 @@ class TransferController extends BaseController
             'link' => $link,
             'email_failures' => $emailFailures,
         ]);
+    }
+
+    private function emailDeliveryGate()
+    {
+        if ($this->emailService->isDeliveryReady()) {
+            return null;
+        }
+
+        $status = $this->emailService->deliveryStatus();
+        LogService::log('Transfer Blocked', '', 'Email delivery is not ready: ' . $status['reason']);
+        return $this->fail('Email delivery must be configured and tested before sending files.', 503);
     }
 
     /**

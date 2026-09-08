@@ -81,7 +81,7 @@ class AdminBootstrapServiceTest extends CIUnitTestCase
 
         $this->assertSame('Administrator bootstrap completed.', $message);
         $this->assertNotNull($model->verifyUser('operator', 'first-password'));
-        $this->assertTrue($model->getUser('operator')['must_change_password']);
+        $this->assertFalse($model->getUser('operator')['must_change_password']);
         $this->assertNotContains('mount_external', $model->getRoles()['user']);
         $this->assertFileExists(config('Storage')->root . '/installed.lock');
     }

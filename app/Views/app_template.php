@@ -91,7 +91,7 @@
         <!-- Components -->
         <user-admin ref="userAdmin"></user-admin>
         <user-profile ref="userProfile"></user-profile>
-        <share-modal ref="shareModal" @transfer="openTransferWithFile"></share-modal>
+        <share-modal ref="shareModal" :transfer-available="transferAvailable" @transfer="openTransferWithFile"></share-modal>
         <upload-modal ref="uploadModal"></upload-modal>
         <file-history-modal ref="fileHistoryModal"></file-history-modal>
         <transfer-modal ref="transferModal"></transfer-modal>
@@ -376,8 +376,17 @@
                  <div class="offcanvas-body d-flex flex-column p-0">
                      <!-- Connect -->
                      <div class="mb-4 px-2 d-flex gap-2">
-                         <button class="btn btn-primary btn-sm flex-fill" @click="openTransfer">
+                         <button v-if="transferCapabilityLoading" class="btn btn-outline-secondary btn-sm flex-fill" type="button" disabled>
+                             <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>{{ t('transfer_email_checking') || 'Checking email delivery…' }}
+                         </button>
+                         <button v-else-if="transferAvailable" class="btn btn-primary btn-sm flex-fill" type="button" @click="openTransfer">
                              <i class="ri-send-plane-fill me-1"></i> {{ t('send_files') || 'Send Files' }}
+                         </button>
+                         <a v-else-if="transferSettingsUrl" class="btn btn-outline-primary btn-sm flex-fill" :href="transferSettingsUrl">
+                             <i class="ri-mail-settings-line me-1"></i> {{ t('transfer_email_configure') || 'Configure email delivery' }}
+                         </a>
+                         <button v-else class="btn btn-outline-secondary btn-sm flex-fill" type="button" disabled :title="t('transfer_email_admin_required') || 'Ask an administrator to configure and test email delivery before sending files.'">
+                             <i class="ri-mail-close-line me-1"></i> {{ t('send_files') || 'Send Files' }}
                          </button>
                          <button v-if="webdavEnabled" class="btn btn-outline-primary btn-sm" @click="showWebDav" title="WebDAV Connect" aria-label="WebDAV Connect">
                              <i class="ri-link" aria-hidden="true"></i>

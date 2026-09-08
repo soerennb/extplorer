@@ -64,5 +64,10 @@
     "transfer_expires_within_day": "expire dans 1 jour",
     "transfer_expires_in_days": "expire dans {days} jours",
     "transfer_expires_in_week": "expire dans 1 semaine",
-    "transfer_expires_in_weeks": "expire dans {weeks} semaines"
+    "transfer_expires_in_weeks": "expire dans {weeks} semaines",
+    "transfer_email_checking": "Vérification de l’envoi d’e-mails…",
+    "transfer_email_configure": "Configurer l’envoi d’e-mails",
+    "transfer_email_unavailable": "L’envoi de fichiers est indisponible tant que l’envoi d’e-mails n’est pas configuré et testé.",
+    "transfer_email_admin_required": "Demandez à un administrateur de configurer et tester l’envoi d’e-mails avant d’envoyer des fichiers.",
+    "transfer_email_test_required": "Enregistrez les paramètres e-mail et envoyez un e-mail de test réussi avant d’envoyer des fichiers."
 }

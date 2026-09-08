@@ -47,6 +47,11 @@ class SettingsController extends BaseController
         $settings = $this->settingsService->getSettings();
         $emailService = new EmailService();
         $settings['email_configured'] = $emailService->isConfigured($settings);
+        $deliveryStatus = $emailService->deliveryStatus($settings);
+        $settings['email_delivery_ready'] = $deliveryStatus['ready'];
+        $settings['email_delivery_reason'] = $deliveryStatus['reason'];
+        $settings['email_delivery_verified_at'] = $deliveryStatus['verified_at'];
+        unset($settings['email_delivery_verified_fingerprint']);
         
         // Mask password
         if (!empty($settings['smtp_pass'])) {
@@ -74,7 +79,13 @@ class SettingsController extends BaseController
         $currentSettings = $this->settingsService->getSettings();
 
         // Derived flags should not be persisted.
-        unset($json['email_configured']);
+        unset(
+            $json['email_configured'],
+            $json['email_delivery_ready'],
+            $json['email_delivery_reason'],
+            $json['email_delivery_verified_at'],
+            $json['email_delivery_verified_fingerprint']
+        );
 
         if (isset($json['mount_root_allowlist_text'])) {
             $json['mount_root_allowlist'] = $this->parseTextList($json['mount_root_allowlist_text']);
@@ -260,8 +271,15 @@ class SettingsController extends BaseController
 
         $this->settingsService->saveSettings($json);
         LogService::log('Update Settings', 'System Settings Updated');
-        
-        return $this->respond(['status' => 'success']);
+
+        $savedSettings = $this->settingsService->getSettings();
+        $deliveryStatus = (new EmailService())->deliveryStatus($savedSettings);
+
+        return $this->respond([
+            'status' => 'success',
+            'email_delivery_ready' => $deliveryStatus['ready'],
+            'email_delivery_verified_at' => $deliveryStatus['verified_at'],
+        ]);
     }
 
     public function testEmail()
@@ -270,7 +288,9 @@ class SettingsController extends BaseController
 
         $payload = $this->request->getJSON(true) ?? [];
         $email = $payload['email'] ?? null;
-        if (!$email) return $this->fail('Email required');
+        if (!is_string($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->fail('A valid recipient email is required.');
+        }
 
         $current = $this->settingsService->getSettings();
         if (($payload['smtp_pass'] ?? null) === '********') {
@@ -279,9 +299,17 @@ class SettingsController extends BaseController
         $settings = array_merge($current, $payload);
 
         $svc = new EmailService();
+        if (!hash_equals($svc->configFingerprint($current), $svc->configFingerprint($settings))) {
+            return $this->fail('Save the email settings before sending a test email.');
+        }
         $result = $svc->sendTestEmailWithConfig($email, $settings);
         if ($result['ok']) {
-            return $this->respond(['status' => 'success']);
+            $verifiedAt = $svc->markDeliveryVerified($settings);
+            return $this->respond([
+                'status' => 'success',
+                'email_delivery_ready' => true,
+                'email_delivery_verified_at' => $verifiedAt,
+            ]);
         }
 
         return $this->fail('Failed to send email. ' . strip_tags($result['debug'] ?? ''));

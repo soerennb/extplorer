@@ -70,8 +70,8 @@ class EmailService
 
     public function sendTransferNotification(array $transfer, string $link): bool
     {
-        if (!$this->isConfigured($this->settingsService->getSettings())) {
-            log_message('warning', 'Transfer email skipped: email settings are not configured.');
+        if (!$this->isDeliveryReady()) {
+            log_message('warning', 'Transfer email skipped: email delivery is not ready.');
             return false;
         }
 
@@ -205,6 +205,88 @@ class EmailService
         } catch (\Throwable $e) {
             return ['ok' => false, 'message' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Return the current delivery readiness state without exposing secrets.
+     *
+     * @return array{ready: bool, configured: bool, reason: string, verified_at: ?string}
+     */
+    public function deliveryStatus(?array $settings = null): array
+    {
+        $settings ??= $this->settingsService->getSettings();
+        $configured = $this->isConfigured($settings);
+        $verifiedAt = is_string($settings['email_delivery_verified_at'] ?? null)
+            ? $settings['email_delivery_verified_at']
+            : null;
+
+        if (!$configured) {
+            return [
+                'ready' => false,
+                'configured' => false,
+                'reason' => 'not_configured',
+                'verified_at' => $verifiedAt,
+            ];
+        }
+
+        $fingerprint = (string)($settings['email_delivery_verified_fingerprint'] ?? '');
+        $ready = $fingerprint !== ''
+            && hash_equals($this->configFingerprint($settings), $fingerprint)
+            && $verifiedAt !== null
+            && $verifiedAt !== '';
+
+        return [
+            'ready' => $ready,
+            'configured' => true,
+            'reason' => $ready ? 'verified' : 'test_required',
+            'verified_at' => $verifiedAt,
+        ];
+    }
+
+    public function isDeliveryReady(?array $settings = null): bool
+    {
+        return $this->deliveryStatus($settings)['ready'];
+    }
+
+    /**
+     * Hash only the effective mail configuration. The password is included in
+     * the hash so credential changes invalidate verification, but the secret
+     * itself is never persisted in the verification record.
+     */
+    public function configFingerprint(array $settings): string
+    {
+        $config = [
+            'email_protocol' => strtolower(trim((string)($settings['email_protocol'] ?? 'smtp'))),
+            'smtp_host' => trim((string)($settings['smtp_host'] ?? '')),
+            'smtp_port' => (int)($settings['smtp_port'] ?? 0),
+            'smtp_user' => (string)($settings['smtp_user'] ?? ''),
+            'smtp_pass' => (string)($settings['smtp_pass'] ?? ''),
+            'smtp_crypto' => strtolower(trim((string)($settings['smtp_crypto'] ?? ''))),
+            'sendmail_path' => trim((string)($settings['sendmail_path'] ?? '')),
+            'email_from' => strtolower(trim((string)($settings['email_from'] ?? ''))),
+            'email_from_name' => trim((string)($settings['email_from_name'] ?? '')),
+        ];
+
+        return hash('sha256', (string)json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+    }
+
+    public function markDeliveryVerified(array $settings): string
+    {
+        $verifiedAt = gmdate(DATE_ATOM);
+        $this->settingsService->saveSettings([
+            'email_delivery_verified_fingerprint' => $this->configFingerprint($settings),
+            'email_delivery_verified_at' => $verifiedAt,
+        ]);
+
+        return $verifiedAt;
+    }
+
+    public function invalidateDeliveryVerification(): void
+    {
+        $this->settingsService->saveSettings([
+            'email_delivery_verified_fingerprint' => '',
+            'email_delivery_verified_at' => null,
+        ]);
     }
 
     public function isConfigured(array $settings): bool

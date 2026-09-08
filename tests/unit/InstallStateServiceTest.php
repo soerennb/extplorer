@@ -94,7 +94,7 @@ class InstallStateServiceTest extends CIUnitTestCase
         $this->assertSame(['username' => 'operator'], $result);
         $this->assertSame(InstallStateService::STATUS_INSTALLED, $service->status());
         $this->assertFileDoesNotExist($tokenPath);
-        $this->assertTrue($model->getUser('operator')['must_change_password']);
+        $this->assertFalse($model->getUser('operator')['must_change_password']);
         $this->assertNotContains('mount_external', $model->getRoles()['user']);
 
         $this->expectException(RuntimeException::class);

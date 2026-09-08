@@ -64,5 +64,10 @@
     "transfer_expires_within_day": "vyprší do 1 dňa",
     "transfer_expires_in_days": "vyprší za {days} dní",
     "transfer_expires_in_week": "vyprší za 1 týždeň",
-    "transfer_expires_in_weeks": "vyprší za {weeks} týždňov"
+    "transfer_expires_in_weeks": "vyprší za {weeks} týždňov",
+    "transfer_email_checking": "Kontroluje sa odosielanie e-mailov…",
+    "transfer_email_configure": "Nastaviť odosielanie e-mailov",
+    "transfer_email_unavailable": "Odosielanie súborov nie je dostupné, kým nebude odosielanie e-mailov nastavené a otestované.",
+    "transfer_email_admin_required": "Pred odosielaním súborov požiadajte administrátora o nastavenie a otestovanie e-mailov.",
+    "transfer_email_test_required": "Uložte nastavenia e-mailu a pred odoslaním súborov odošlite úspešný testovací e-mail."
 }

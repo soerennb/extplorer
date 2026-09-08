@@ -139,5 +139,8 @@
     "admin_system_post": "POST-Limit",
     "admin_system_disk_free": "Freier Speicher",
     "admin_system_disk_total": "Gesamtspeicher",
-    "admin_system_extensions_heading": "Geladene Erweiterungen"
+    "admin_system_extensions_heading": "Geladene Erweiterungen",
+    "admin_settings_email_ready": "Der E-Mail-Versand ist für den Dateiversand bereit.",
+    "admin_settings_email_save_first": "Speichern Sie die E-Mail-Einstellungen und senden Sie anschließend eine Test-E-Mail, bevor Sie Dateien versenden.",
+    "admin_settings_email_test_required": "Senden Sie eine erfolgreiche Test-E-Mail, bevor Sie Dateien versenden."
 }

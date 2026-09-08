@@ -29,6 +29,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 
 COPY app app
 COPY public public
+COPY resources resources
 COPY spark spark
 COPY env env
 COPY nginx.conf.example nginx.conf.example

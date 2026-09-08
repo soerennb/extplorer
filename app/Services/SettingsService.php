@@ -51,6 +51,8 @@ class SettingsService
             'sendmail_path' => '/usr/sbin/sendmail',
             'email_from' => 'noreply@example.com',
             'email_from_name' => 'eXtplorer',
+            'email_delivery_verified_fingerprint' => '',
+            'email_delivery_verified_at' => null,
             'default_transfer_expiry' => 7,
             'transfer_max_expiry_days' => 30,
             'transfer_default_notify_download' => false,

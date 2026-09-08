@@ -134,6 +134,12 @@ const UserAdmin = {
                             <form @submit.prevent="saveSettings">
                                 <div v-if="settingsTab === 'email'">
                                     <h6 class="border-bottom pb-2 mb-3">Email Configuration</h6>
+                                    <div v-if="settings && settings.email_delivery_ready" class="alert alert-success small">
+                                        {{ t('admin_settings_email_ready', 'Email delivery is ready for file transfers.') }}
+                                    </div>
+                                    <div v-else class="alert alert-warning small">
+                                        {{ settingsDirty ? t('admin_settings_email_save_first', 'Save the email settings, then send a test email before sending files.') : t('admin_settings_email_test_required', 'Send a successful test email before sending files.') }}
+                                    </div>
                                     <div v-if="settings && settings.email_configured === false" class="alert alert-warning small">
                                         Email sending is currently disabled because the configuration is incomplete.
                                     </div>
@@ -317,7 +323,7 @@ const UserAdmin = {
                                     <button v-if="settingsTab === 'email'" type="button" class="btn btn-outline-secondary btn-sm me-2" @click="validateEmailSettings" :disabled="!settings || isValidatingEmail">
                                         {{ isValidatingEmail ? 'Validating…' : 'Validate' }}
                                     </button>
-                                    <button v-if="settingsTab === 'email'" type="button" class="btn btn-outline-secondary btn-sm me-2" @click="testEmail" :disabled="!settings || isTestingEmail">
+                                    <button v-if="settingsTab === 'email'" type="button" class="btn btn-outline-secondary btn-sm me-2" @click="testEmail" :disabled="!settings || settingsDirty || isTestingEmail">
                                         {{ isTestingEmail ? 'Sending…' : 'Send Test Email' }}
                                     </button>
                                     <button type="submit" class="btn btn-primary btn-sm" :disabled="!settingsDirty || isSavingSettings">
@@ -839,7 +845,13 @@ const UserAdmin = {
              if (!this.settingsDirty) return;
              this.isSavingSettings = true;
              try {
-                 await Api.post('settings', this.settings);
+                 const response = await Api.post('settings', this.settings);
+                 if (typeof response.email_delivery_ready === 'boolean') {
+                     this.settings.email_delivery_ready = response.email_delivery_ready;
+                 }
+                 if (Object.prototype.hasOwnProperty.call(response, 'email_delivery_verified_at')) {
+                     this.settings.email_delivery_verified_at = response.email_delivery_verified_at;
+                 }
                  this.settingsOriginal = JSON.parse(JSON.stringify(this.settings));
                  this.toastSuccess('Settings saved.');
              } catch(e) {
@@ -855,7 +867,10 @@ const UserAdmin = {
              if (!email) return;
              this.isTestingEmail = true;
              try {
-                 await Api.post('settings/test-email', { ...this.settings, email });
+                 const response = await Api.post('settings/test-email', { ...this.settings, email });
+                 this.settings.email_delivery_ready = response.email_delivery_ready === true;
+                 this.settings.email_delivery_verified_at = response.email_delivery_verified_at || null;
+                 this.settingsOriginal = JSON.parse(JSON.stringify(this.settings));
                  this.setEmailValidation(true, 'Test email sent successfully.');
                  this.toastSuccess('Test email sent.');
              } catch(e) {

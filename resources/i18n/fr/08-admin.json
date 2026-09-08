@@ -139,5 +139,8 @@
     "admin_system_post": "Limite POST",
     "admin_system_disk_free": "Espace libre",
     "admin_system_disk_total": "Espace total",
-    "admin_system_extensions_heading": "Extensions chargées"
+    "admin_system_extensions_heading": "Extensions chargées",
+    "admin_settings_email_ready": "L'envoi d'e-mails est prêt pour le transfert de fichiers.",
+    "admin_settings_email_save_first": "Enregistrez les paramètres e-mail, puis envoyez un e-mail de test avant de transférer des fichiers.",
+    "admin_settings_email_test_required": "Envoyez un e-mail de test réussi avant de transférer des fichiers."
 }

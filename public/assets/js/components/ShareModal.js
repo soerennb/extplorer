@@ -48,7 +48,7 @@ const ShareModal = {
                     <div v-else>
                         <p class="small text-muted">{{ t('share_desc') || 'Create a public link for this item.' }}</p>
                         
-                        <div v-if="!isDirectory" class="d-grid mb-3">
+                        <div v-if="!isDirectory && transferAvailable" class="d-grid mb-3">
                             <button class="btn btn-outline-primary btn-sm" @click="sendCopy">
                                 <i class="ri-send-plane-fill me-2"></i> {{ t('send_files') || 'Send a Copy' }}
                             </button>
@@ -144,6 +144,12 @@ const ShareModal = {
         </div>
     </div>
     `,
+    props: {
+        transferAvailable: {
+            type: Boolean,
+            default: false
+        }
+    },
     setup(props, context) {
         const { ref, reactive, computed } = Vue;
         const t = (key, fallback = '', params = {}) => {

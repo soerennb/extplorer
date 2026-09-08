@@ -139,5 +139,8 @@
     "admin_system_post": "POST Limit",
     "admin_system_disk_free": "Disk Free",
     "admin_system_disk_total": "Disk Total",
-    "admin_system_extensions_heading": "Loaded Extensions"
+    "admin_system_extensions_heading": "Loaded Extensions",
+    "admin_settings_email_ready": "Email delivery is ready for file transfers.",
+    "admin_settings_email_save_first": "Save the email settings, then send a test email before sending files.",
+    "admin_settings_email_test_required": "Send a successful test email before sending files."
 }

@@ -159,293 +159,298 @@ const _hoisted_117 = { class: "offcanvas-header d-lg-none" }
 const _hoisted_118 = ["aria-label"]
 const _hoisted_119 = { class: "offcanvas-body d-flex flex-column p-0" }
 const _hoisted_120 = { class: "mb-4 px-2 d-flex gap-2" }
-const _hoisted_121 = ["onClick"]
-const _hoisted_122 = ["onClick"]
-const _hoisted_123 = { class: "mb-4" }
-const _hoisted_124 = { class: "d-flex justify-content-between align-items-center mb-2 px-2" }
-const _hoisted_125 = { class: "small fw-bold text-uppercase text-muted mb-0" }
-const _hoisted_126 = ["onClick", "aria-label", "title"]
-const _hoisted_127 = {
+const _hoisted_121 = {
   key: 0,
-  class: "small text-muted px-2"
+  class: "btn btn-outline-secondary btn-sm flex-fill",
+  type: "button",
+  disabled: ""
 }
-const _hoisted_128 = ["onClick"]
+const _hoisted_122 = ["onClick"]
+const _hoisted_123 = ["href"]
+const _hoisted_124 = ["title"]
+const _hoisted_125 = ["onClick"]
+const _hoisted_126 = { class: "mb-4" }
+const _hoisted_127 = { class: "d-flex justify-content-between align-items-center mb-2 px-2" }
+const _hoisted_128 = { class: "small fw-bold text-uppercase text-muted mb-0" }
 const _hoisted_129 = ["onClick", "aria-label", "title"]
 const _hoisted_130 = {
   key: 0,
+  class: "small text-muted px-2"
+}
+const _hoisted_131 = ["onClick"]
+const _hoisted_132 = ["onClick", "aria-label", "title"]
+const _hoisted_133 = {
+  key: 0,
   class: "mb-4"
 }
-const _hoisted_131 = { class: "d-flex justify-content-between align-items-center mb-2 px-2" }
-const _hoisted_132 = { class: "small fw-bold text-uppercase text-muted mb-0" }
-const _hoisted_133 = ["onClick"]
-const _hoisted_134 = ["onClick"]
-const _hoisted_135 = { class: "text-truncate" }
-const _hoisted_136 = { class: "mt-4 px-2" }
+const _hoisted_134 = { class: "d-flex justify-content-between align-items-center mb-2 px-2" }
+const _hoisted_135 = { class: "small fw-bold text-uppercase text-muted mb-0" }
+const _hoisted_136 = ["onClick"]
 const _hoisted_137 = ["onClick"]
-const _hoisted_138 = ["onClick"]
-const _hoisted_139 = {
+const _hoisted_138 = { class: "text-truncate" }
+const _hoisted_139 = { class: "mt-4 px-2" }
+const _hoisted_140 = ["onClick"]
+const _hoisted_141 = ["onClick"]
+const _hoisted_142 = {
   key: 0,
   class: "mb-3"
 }
-const _hoisted_140 = { class: "d-flex justify-content-between small text-muted mb-1" }
-const _hoisted_141 = { key: 0 }
-const _hoisted_142 = { class: "progress progress-thin" }
-const _hoisted_143 = {
+const _hoisted_143 = { class: "d-flex justify-content-between small text-muted mb-1" }
+const _hoisted_144 = { key: 0 }
+const _hoisted_145 = { class: "progress progress-thin" }
+const _hoisted_146 = {
   key: 1,
   class: "position-absolute top-50 start-50 translate-middle"
 }
-const _hoisted_144 = {
+const _hoisted_147 = {
   key: 2,
   class: "alert alert-danger m-3"
 }
-const _hoisted_145 = { key: 3 }
-const _hoisted_146 = {
+const _hoisted_148 = { key: 3 }
+const _hoisted_149 = {
   key: 0,
   class: "d-flex flex-column align-items-center justify-content-center w-100 text-muted py-5 my-5 empty-state"
 }
-const _hoisted_147 = { class: "bg-body-secondary rounded-circle d-flex align-items-center justify-content-center mb-4 empty-state-icon" }
-const _hoisted_148 = { class: "fw-normal mb-3" }
-const _hoisted_149 = { class: "mb-5 text-center px-4 empty-state-text" }
-const _hoisted_150 = {
+const _hoisted_150 = { class: "bg-body-secondary rounded-circle d-flex align-items-center justify-content-center mb-4 empty-state-icon" }
+const _hoisted_151 = { class: "fw-normal mb-3" }
+const _hoisted_152 = { class: "mb-5 text-center px-4 empty-state-text" }
+const _hoisted_153 = {
   key: 0,
   class: "d-flex gap-2"
 }
-const _hoisted_151 = ["onClick"]
-const _hoisted_152 = ["onClick"]
-const _hoisted_153 = ["onClick"]
-const _hoisted_154 = ["onClick", "title", "aria-label"]
-const _hoisted_155 = {
+const _hoisted_154 = ["onClick"]
+const _hoisted_155 = ["onClick"]
+const _hoisted_156 = ["onClick"]
+const _hoisted_157 = ["onClick", "title", "aria-label"]
+const _hoisted_158 = {
   key: 1,
   class: "list-view-header text-muted border-bottom px-3 py-2 small fw-bold user-select-none w-100"
 }
-const _hoisted_156 = ["onClick"]
-const _hoisted_157 = ["onClick"]
-const _hoisted_158 = ["onClick"]
-const _hoisted_159 = ["data-file-name", "data-file-path", "onDragstart", "onDragend", "onDragover", "onDragleave", "onDrop", "onClick", "onTouchstart", "onTouchend", "onDblclick", "onContextmenu"]
-const _hoisted_160 = { class: "file-icon position-relative" }
-const _hoisted_161 = ["src"]
-const _hoisted_162 = {
+const _hoisted_159 = ["onClick"]
+const _hoisted_160 = ["onClick"]
+const _hoisted_161 = ["onClick"]
+const _hoisted_162 = ["data-file-name", "data-file-path", "onDragstart", "onDragend", "onDragover", "onDragleave", "onDrop", "onClick", "onTouchstart", "onTouchend", "onDblclick", "onContextmenu"]
+const _hoisted_163 = { class: "file-icon position-relative" }
+const _hoisted_164 = ["src"]
+const _hoisted_165 = {
   key: 2,
   class: "position-absolute bottom-0 end-0 bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center shared-badge"
 }
-const _hoisted_163 = ["title"]
-const _hoisted_164 = {
+const _hoisted_166 = ["title"]
+const _hoisted_167 = {
   key: 0,
   class: "badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-1 mount-badge"
 }
-const _hoisted_165 = ["onClick"]
-const _hoisted_166 = { class: "file-meta-col size-col" }
-const _hoisted_167 = { class: "file-meta-col date-col" }
 const _hoisted_168 = ["onClick"]
-const _hoisted_169 = { class: "d-flex align-items-center justify-content-between gap-2 mb-3" }
-const _hoisted_170 = {
+const _hoisted_169 = { class: "file-meta-col size-col" }
+const _hoisted_170 = { class: "file-meta-col date-col" }
+const _hoisted_171 = ["onClick"]
+const _hoisted_172 = { class: "d-flex align-items-center justify-content-between gap-2 mb-3" }
+const _hoisted_173 = {
   id: "detailsPaneTitle",
   class: "mb-0"
 }
-const _hoisted_171 = ["onClick", "aria-label"]
-const _hoisted_172 = {
+const _hoisted_174 = ["onClick", "aria-label"]
+const _hoisted_175 = {
   key: 0,
   class: "text-center text-muted small py-4"
 }
-const _hoisted_173 = { key: 1 }
-const _hoisted_174 = { class: "details-preview rounded d-flex align-items-center justify-content-center mb-3 overflow-hidden" }
-const _hoisted_175 = ["src", "alt"]
-const _hoisted_176 = { class: "d-flex align-items-start justify-content-between gap-2 mb-3" }
-const _hoisted_177 = { class: "min-w-0" }
-const _hoisted_178 = ["title"]
-const _hoisted_179 = ["title"]
-const _hoisted_180 = ["onClick", "aria-label", "title"]
-const _hoisted_181 = { class: "row small mb-3" }
-const _hoisted_182 = { class: "col-4" }
-const _hoisted_183 = { class: "col-8 text-truncate" }
-const _hoisted_184 = { class: "col-4" }
-const _hoisted_185 = { class: "col-8" }
-const _hoisted_186 = { class: "col-4" }
-const _hoisted_187 = { class: "col-8" }
-const _hoisted_188 = { class: "col-4" }
-const _hoisted_189 = { class: "col-8" }
-const _hoisted_190 = { class: "col-4" }
-const _hoisted_191 = { class: "col-8" }
-const _hoisted_192 = { class: "d-grid gap-2" }
-const _hoisted_193 = ["onClick", "disabled"]
-const _hoisted_194 = ["onClick", "disabled"]
-const _hoisted_195 = { class: "bg-body-tertiary border-top px-3 py-2 small text-muted d-flex flex-wrap align-items-center gap-2 app-statusbar" }
-const _hoisted_196 = { class: "d-flex align-items-center me-auto app-statusbar-summary" }
-const _hoisted_197 = { class: "me-2 fw-bold text-primary version-label" }
-const _hoisted_198 = { class: "ms-2 connection-label" }
-const _hoisted_199 = {
+const _hoisted_176 = { key: 1 }
+const _hoisted_177 = { class: "details-preview rounded d-flex align-items-center justify-content-center mb-3 overflow-hidden" }
+const _hoisted_178 = ["src", "alt"]
+const _hoisted_179 = { class: "d-flex align-items-start justify-content-between gap-2 mb-3" }
+const _hoisted_180 = { class: "min-w-0" }
+const _hoisted_181 = ["title"]
+const _hoisted_182 = ["title"]
+const _hoisted_183 = ["onClick", "aria-label", "title"]
+const _hoisted_184 = { class: "row small mb-3" }
+const _hoisted_185 = { class: "col-4" }
+const _hoisted_186 = { class: "col-8 text-truncate" }
+const _hoisted_187 = { class: "col-4" }
+const _hoisted_188 = { class: "col-8" }
+const _hoisted_189 = { class: "col-4" }
+const _hoisted_190 = { class: "col-8" }
+const _hoisted_191 = { class: "col-4" }
+const _hoisted_192 = { class: "col-8" }
+const _hoisted_193 = { class: "col-4" }
+const _hoisted_194 = { class: "col-8" }
+const _hoisted_195 = { class: "d-grid gap-2" }
+const _hoisted_196 = ["onClick", "disabled"]
+const _hoisted_197 = ["onClick", "disabled"]
+const _hoisted_198 = { class: "bg-body-tertiary border-top px-3 py-2 small text-muted d-flex flex-wrap align-items-center gap-2 app-statusbar" }
+const _hoisted_199 = { class: "d-flex align-items-center me-auto app-statusbar-summary" }
+const _hoisted_200 = { class: "me-2 fw-bold text-primary version-label" }
+const _hoisted_201 = { class: "ms-2 connection-label" }
+const _hoisted_202 = {
   key: 0,
   class: "d-flex align-items-center gap-2 mx-auto order-2 order-md-1 app-statusbar-pagination"
 }
-const _hoisted_200 = { "aria-label": "File list pagination" }
-const _hoisted_201 = { class: "pagination pagination-lg mb-0 flex-wrap gap-1" }
-const _hoisted_202 = ["onClick"]
-const _hoisted_203 = { class: "d-none d-sm-inline ms-1" }
-const _hoisted_204 = {
+const _hoisted_203 = { "aria-label": "File list pagination" }
+const _hoisted_204 = { class: "pagination pagination-lg mb-0 flex-wrap gap-1" }
+const _hoisted_205 = ["onClick"]
+const _hoisted_206 = { class: "d-none d-sm-inline ms-1" }
+const _hoisted_207 = {
   key: 0,
   class: "page-link"
 }
-const _hoisted_205 = ["onClick"]
-const _hoisted_206 = ["onClick"]
-const _hoisted_207 = { class: "d-none d-sm-inline me-1" }
-const _hoisted_208 = { class: "text-muted small d-none d-md-inline" }
-const _hoisted_209 = { class: "d-flex align-items-center gap-2 ms-auto order-1 order-md-2 app-statusbar-pagesize" }
-const _hoisted_210 = {
+const _hoisted_208 = ["onClick"]
+const _hoisted_209 = ["onClick"]
+const _hoisted_210 = { class: "d-none d-sm-inline me-1" }
+const _hoisted_211 = { class: "text-muted small d-none d-md-inline" }
+const _hoisted_212 = { class: "d-flex align-items-center gap-2 ms-auto order-1 order-md-2 app-statusbar-pagesize" }
+const _hoisted_213 = {
   for: "pageSizeSelect",
   class: "small text-muted d-none d-sm-inline mb-0"
 }
-const _hoisted_211 = ["value", "onChange"]
-const _hoisted_212 = {
+const _hoisted_214 = ["value", "onChange"]
+const _hoisted_215 = {
   class: "modal fade",
   id: "editorModal",
   tabindex: "-1",
   "data-bs-backdrop": "static"
 }
-const _hoisted_213 = { class: "modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered h-90vh" }
-const _hoisted_214 = { class: "modal-content h-100" }
-const _hoisted_215 = { class: "modal-header py-2" }
-const _hoisted_216 = { class: "modal-title fs-6" }
-const _hoisted_217 = ["aria-label"]
-const _hoisted_218 = { class: "modal-footer py-2" }
-const _hoisted_219 = {
+const _hoisted_216 = { class: "modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered h-90vh" }
+const _hoisted_217 = { class: "modal-content h-100" }
+const _hoisted_218 = { class: "modal-header py-2" }
+const _hoisted_219 = { class: "modal-title fs-6" }
+const _hoisted_220 = ["aria-label"]
+const _hoisted_221 = { class: "modal-footer py-2" }
+const _hoisted_222 = {
   type: "button",
   class: "btn btn-secondary btn-sm",
   "data-bs-dismiss": "modal"
 }
-const _hoisted_220 = ["onClick"]
-const _hoisted_221 = {
+const _hoisted_223 = ["onClick"]
+const _hoisted_224 = {
   class: "modal fade",
   id: "diffModal",
   tabindex: "-1"
 }
-const _hoisted_222 = { class: "modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered h-90vh" }
-const _hoisted_223 = { class: "modal-content h-100" }
-const _hoisted_224 = { class: "modal-header py-2" }
-const _hoisted_225 = ["aria-label"]
-const _hoisted_226 = {
+const _hoisted_225 = { class: "modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered h-90vh" }
+const _hoisted_226 = { class: "modal-content h-100" }
+const _hoisted_227 = { class: "modal-header py-2" }
+const _hoisted_228 = ["aria-label"]
+const _hoisted_229 = {
   class: "modal fade",
   id: "previewModal",
   tabindex: "-1"
 }
-const _hoisted_227 = { class: "modal-dialog modal-xl modal-dialog-centered" }
-const _hoisted_228 = { class: "modal-content bg-dark border-0 shadow-lg" }
-const _hoisted_229 = { class: "modal-header border-0 py-2" }
-const _hoisted_230 = { class: "modal-title text-white" }
-const _hoisted_231 = ["aria-label"]
-const _hoisted_232 = { class: "modal-body p-0 text-center position-relative d-flex align-items-center justify-content-center preview-modal-body" }
-const _hoisted_233 = ["src"]
-const _hoisted_234 = ["src"]
-const _hoisted_235 = {
+const _hoisted_230 = { class: "modal-dialog modal-xl modal-dialog-centered" }
+const _hoisted_231 = { class: "modal-content bg-dark border-0 shadow-lg" }
+const _hoisted_232 = { class: "modal-header border-0 py-2" }
+const _hoisted_233 = { class: "modal-title text-white" }
+const _hoisted_234 = ["aria-label"]
+const _hoisted_235 = { class: "modal-body p-0 text-center position-relative d-flex align-items-center justify-content-center preview-modal-body" }
+const _hoisted_236 = ["src"]
+const _hoisted_237 = ["src"]
+const _hoisted_238 = {
   key: 2,
   class: "p-5 w-100"
 }
-const _hoisted_236 = ["src"]
-const _hoisted_237 = ["src"]
-const _hoisted_238 = ["onClick", "disabled", "aria-label"]
-const _hoisted_239 = ["onClick", "disabled", "aria-label"]
-const _hoisted_240 = {
+const _hoisted_239 = ["src"]
+const _hoisted_240 = ["src"]
+const _hoisted_241 = ["onClick", "disabled", "aria-label"]
+const _hoisted_242 = ["onClick", "disabled", "aria-label"]
+const _hoisted_243 = {
   class: "modal fade",
   id: "propModal",
   tabindex: "-1"
 }
-const _hoisted_241 = { class: "modal-dialog modal-fullscreen-sm-down" }
-const _hoisted_242 = { class: "modal-content" }
-const _hoisted_243 = { class: "modal-header py-2" }
-const _hoisted_244 = { class: "modal-title fs-6" }
-const _hoisted_245 = ["aria-label"]
-const _hoisted_246 = {
+const _hoisted_244 = { class: "modal-dialog modal-fullscreen-sm-down" }
+const _hoisted_245 = { class: "modal-content" }
+const _hoisted_246 = { class: "modal-header py-2" }
+const _hoisted_247 = { class: "modal-title fs-6" }
+const _hoisted_248 = ["aria-label"]
+const _hoisted_249 = {
   key: 0,
   class: "modal-body"
 }
-const _hoisted_247 = { class: "text-center mb-3" }
-const _hoisted_248 = { class: "mt-2" }
-const _hoisted_249 = { "aria-labelledby": "propertiesMetadataHeading" }
-const _hoisted_250 = {
+const _hoisted_250 = { class: "text-center mb-3" }
+const _hoisted_251 = { class: "mt-2" }
+const _hoisted_252 = { "aria-labelledby": "propertiesMetadataHeading" }
+const _hoisted_253 = {
   id: "propertiesMetadataHeading",
   class: "text-uppercase text-muted small fw-bold mb-2"
 }
-const _hoisted_251 = { class: "table table-sm small mb-0" }
-const _hoisted_252 = ["onClick"]
-const _hoisted_253 = {
+const _hoisted_254 = { class: "table table-sm small mb-0" }
+const _hoisted_255 = ["onClick"]
+const _hoisted_256 = {
   key: 0,
   class: "border border-warning-subtle rounded bg-warning-subtle p-3 mt-3",
   "aria-labelledby": "propertiesAdminHeading"
 }
-const _hoisted_254 = { class: "d-flex align-items-start gap-2 mb-3" }
-const _hoisted_255 = {
+const _hoisted_257 = { class: "d-flex align-items-start gap-2 mb-3" }
+const _hoisted_258 = {
   id: "propertiesAdminHeading",
   class: "mb-1"
 }
-const _hoisted_256 = { class: "small text-warning-emphasis" }
-const _hoisted_257 = { class: "row g-2" }
-const _hoisted_258 = { class: "col-sm-6" }
-const _hoisted_259 = {
-  class: "form-label small",
-  for: "propOwner"
-}
-const _hoisted_260 = ["onUpdate:modelValue"]
+const _hoisted_259 = { class: "small text-warning-emphasis" }
+const _hoisted_260 = { class: "row g-2" }
 const _hoisted_261 = { class: "col-sm-6" }
 const _hoisted_262 = {
   class: "form-label small",
-  for: "propGroup"
+  for: "propOwner"
 }
 const _hoisted_263 = ["onUpdate:modelValue"]
-const _hoisted_264 = { class: "form-check small mt-3" }
-const _hoisted_265 = ["onUpdate:modelValue"]
-const _hoisted_266 = {
+const _hoisted_264 = { class: "col-sm-6" }
+const _hoisted_265 = {
+  class: "form-label small",
+  for: "propGroup"
+}
+const _hoisted_266 = ["onUpdate:modelValue"]
+const _hoisted_267 = { class: "form-check small mt-3" }
+const _hoisted_268 = ["onUpdate:modelValue"]
+const _hoisted_269 = {
   class: "form-check-label",
   for: "propRecursive"
 }
-const _hoisted_267 = {
+const _hoisted_270 = {
   key: 0,
   class: "alert alert-warning small py-2 mt-2 mb-0"
 }
-const _hoisted_268 = { class: "d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3" }
-const _hoisted_269 = { class: "small text-muted" }
-const _hoisted_270 = ["onClick"]
-const _hoisted_271 = {
+const _hoisted_271 = { class: "d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3" }
+const _hoisted_272 = { class: "small text-muted" }
+const _hoisted_273 = ["onClick"]
+const _hoisted_274 = {
   class: "modal fade",
   id: "webdavModal",
   tabindex: "-1"
 }
-const _hoisted_272 = { class: "modal-dialog modal-lg modal-dialog-centered" }
-const _hoisted_273 = { class: "modal-content" }
-const _hoisted_274 = { class: "modal-header py-2" }
-const _hoisted_275 = { class: "modal-title fs-6" }
-const _hoisted_276 = ["aria-label"]
-const _hoisted_277 = { class: "modal-body" }
-const _hoisted_278 = { class: "small text-muted" }
-const _hoisted_279 = { class: "mb-3" }
-const _hoisted_280 = {
+const _hoisted_275 = { class: "modal-dialog modal-lg modal-dialog-centered" }
+const _hoisted_276 = { class: "modal-content" }
+const _hoisted_277 = { class: "modal-header py-2" }
+const _hoisted_278 = { class: "modal-title fs-6" }
+const _hoisted_279 = ["aria-label"]
+const _hoisted_280 = { class: "modal-body" }
+const _hoisted_281 = { class: "small text-muted" }
+const _hoisted_282 = { class: "mb-3" }
+const _hoisted_283 = {
   class: "form-label small fw-bold",
   for: "webdav_url_input"
 }
-const _hoisted_281 = { class: "input-group input-group-sm" }
-const _hoisted_282 = ["value"]
-const _hoisted_283 = ["onClick"]
-const _hoisted_284 = { class: "row g-3 mb-3" }
-const _hoisted_285 = { class: "col-md-4" }
-const _hoisted_286 = { class: "border rounded p-3 h-100" }
-const _hoisted_287 = { class: "fw-bold small mb-2" }
-const _hoisted_288 = { class: "small text-muted" }
-const _hoisted_289 = { class: "col-md-4" }
-const _hoisted_290 = { class: "border rounded p-3 h-100" }
-const _hoisted_291 = { class: "fw-bold small mb-2" }
-const _hoisted_292 = { class: "small text-muted" }
-const _hoisted_293 = { class: "col-md-4" }
-const _hoisted_294 = { class: "border rounded p-3 h-100" }
-const _hoisted_295 = { class: "fw-bold small mb-2" }
-const _hoisted_296 = { class: "small text-muted" }
-const _hoisted_297 = { class: "alert alert-info py-2 small mb-2" }
-const _hoisted_298 = { class: "alert alert-warning py-2 small mb-2" }
-const _hoisted_299 = { class: "alert alert-light border py-2 small mb-0" }
-const _hoisted_300 = {
+const _hoisted_284 = { class: "input-group input-group-sm" }
+const _hoisted_285 = ["value"]
+const _hoisted_286 = ["onClick"]
+const _hoisted_287 = { class: "row g-3 mb-3" }
+const _hoisted_288 = { class: "col-md-4" }
+const _hoisted_289 = { class: "border rounded p-3 h-100" }
+const _hoisted_290 = { class: "fw-bold small mb-2" }
+const _hoisted_291 = { class: "small text-muted" }
+const _hoisted_292 = { class: "col-md-4" }
+const _hoisted_293 = { class: "border rounded p-3 h-100" }
+const _hoisted_294 = { class: "fw-bold small mb-2" }
+const _hoisted_295 = { class: "small text-muted" }
+const _hoisted_296 = { class: "col-md-4" }
+const _hoisted_297 = { class: "border rounded p-3 h-100" }
+const _hoisted_298 = { class: "fw-bold small mb-2" }
+const _hoisted_299 = { class: "small text-muted" }
+const _hoisted_300 = { class: "alert alert-info py-2 small mb-2" }
+const _hoisted_301 = { class: "alert alert-warning py-2 small mb-2" }
+const _hoisted_302 = { class: "alert alert-light border py-2 small mb-0" }
+const _hoisted_303 = {
   key: 2,
   class: "dropdown-menu show context-menu"
 }
-const _hoisted_301 = ["onClick"]
-const _hoisted_302 = ["onClick"]
-const _hoisted_303 = ["onClick"]
 const _hoisted_304 = ["onClick"]
 const _hoisted_305 = ["onClick"]
 const _hoisted_306 = ["onClick"]
@@ -457,6 +462,9 @@ const _hoisted_311 = ["onClick"]
 const _hoisted_312 = ["onClick"]
 const _hoisted_313 = ["onClick"]
 const _hoisted_314 = ["onClick"]
+const _hoisted_315 = ["onClick"]
+const _hoisted_316 = ["onClick"]
+const _hoisted_317 = ["onClick"]
 
 return function render(_ctx, _cache) {
   with (_ctx) {
@@ -712,8 +720,9 @@ return function render(_ctx, _cache) {
       _createVNode(_component_user_profile, { ref: "userProfile" }, null, 512 /* NEED_PATCH */),
       _createVNode(_component_share_modal, {
         ref: "shareModal",
+        "transfer-available": transferAvailable,
         onTransfer: openTransferWithFile
-      }, null, 8 /* PROPS */, ["onTransfer"]),
+      }, null, 8 /* PROPS */, ["transfer-available", "onTransfer"]),
       _createVNode(_component_upload_modal, { ref: "uploadModal" }, null, 512 /* NEED_PATCH */),
       _createVNode(_component_file_history_modal, { ref: "fileHistoryModal" }, null, 512 /* NEED_PATCH */),
       _createVNode(_component_transfer_modal, { ref: "transferModal" }, null, 512 /* NEED_PATCH */),
@@ -1328,32 +1337,62 @@ return function render(_ctx, _cache) {
           _createElementVNode("div", _hoisted_119, [
             _createCommentVNode(" Connect "),
             _createElementVNode("div", _hoisted_120, [
-              _createElementVNode("button", {
-                class: "btn btn-primary btn-sm flex-fill",
-                onClick: openTransfer
-              }, [
-                _cache[73] || (_cache[73] = _createElementVNode("i", { class: "ri-send-plane-fill me-1" }, null, -1 /* CACHED */)),
-                _createTextVNode(" " + _toDisplayString(t('send_files') || 'Send Files'), 1 /* TEXT */)
-              ], 8 /* PROPS */, _hoisted_121),
+              transferCapabilityLoading
+                ? (_openBlock(), _createElementBlock("button", _hoisted_121, [
+                    _cache[73] || (_cache[73] = _createElementVNode("span", {
+                      class: "spinner-border spinner-border-sm me-1",
+                      "aria-hidden": "true"
+                    }, null, -1 /* CACHED */)),
+                    _createTextVNode(_toDisplayString(t('transfer_email_checking') || 'Checking email delivery…'), 1 /* TEXT */)
+                  ]))
+                : transferAvailable
+                  ? (_openBlock(), _createElementBlock("button", {
+                      key: 1,
+                      class: "btn btn-primary btn-sm flex-fill",
+                      type: "button",
+                      onClick: openTransfer
+                    }, [
+                      _cache[74] || (_cache[74] = _createElementVNode("i", { class: "ri-send-plane-fill me-1" }, null, -1 /* CACHED */)),
+                      _createTextVNode(" " + _toDisplayString(t('send_files') || 'Send Files'), 1 /* TEXT */)
+                    ], 8 /* PROPS */, _hoisted_122))
+                  : transferSettingsUrl
+                    ? (_openBlock(), _createElementBlock("a", {
+                        key: 2,
+                        class: "btn btn-outline-primary btn-sm flex-fill",
+                        href: transferSettingsUrl
+                      }, [
+                        _cache[75] || (_cache[75] = _createElementVNode("i", { class: "ri-mail-settings-line me-1" }, null, -1 /* CACHED */)),
+                        _createTextVNode(" " + _toDisplayString(t('transfer_email_configure') || 'Configure email delivery'), 1 /* TEXT */)
+                      ], 8 /* PROPS */, _hoisted_123))
+                    : (_openBlock(), _createElementBlock("button", {
+                        key: 3,
+                        class: "btn btn-outline-secondary btn-sm flex-fill",
+                        type: "button",
+                        disabled: "",
+                        title: t('transfer_email_admin_required') || 'Ask an administrator to configure and test email delivery before sending files.'
+                      }, [
+                        _cache[76] || (_cache[76] = _createElementVNode("i", { class: "ri-mail-close-line me-1" }, null, -1 /* CACHED */)),
+                        _createTextVNode(" " + _toDisplayString(t('send_files') || 'Send Files'), 1 /* TEXT */)
+                      ], 8 /* PROPS */, _hoisted_124)),
               webdavEnabled
                 ? (_openBlock(), _createElementBlock("button", {
-                    key: 0,
+                    key: 4,
                     class: "btn btn-outline-primary btn-sm",
                     onClick: showWebDav,
                     title: "WebDAV Connect",
                     "aria-label": "WebDAV Connect"
-                  }, [...(_cache[74] || (_cache[74] = [
+                  }, [...(_cache[77] || (_cache[77] = [
                     _createElementVNode("i", {
                       class: "ri-link",
                       "aria-hidden": "true"
                     }, null, -1 /* CACHED */)
-                  ]))], 8 /* PROPS */, _hoisted_122))
+                  ]))], 8 /* PROPS */, _hoisted_125))
                 : _createCommentVNode("v-if", true)
             ]),
             _createCommentVNode(" Bookmarks "),
-            _createElementVNode("div", _hoisted_123, [
-              _createElementVNode("div", _hoisted_124, [
-                _createElementVNode("h6", _hoisted_125, _toDisplayString(t('bookmarks')), 1 /* TEXT */),
+            _createElementVNode("div", _hoisted_126, [
+              _createElementVNode("div", _hoisted_127, [
+                _createElementVNode("h6", _hoisted_128, _toDisplayString(t('bookmarks')), 1 /* TEXT */),
                 _createElementVNode("button", {
                   class: "btn btn-link btn-sm p-0 text-decoration-none",
                   onClick: $event => (toggleBookmark(currentFolderBookmark)),
@@ -1364,10 +1403,10 @@ return function render(_ctx, _cache) {
                     class: _normalizeClass(store.isBookmarked(currentFolderBookmark) ? 'ri-star-fill' : 'ri-star-line'),
                     "aria-hidden": "true"
                   }, null, 2 /* CLASS */)
-                ], 8 /* PROPS */, _hoisted_126)
+                ], 8 /* PROPS */, _hoisted_129)
               ]),
               (store.bookmarks.length === 0)
-                ? (_openBlock(), _createElementBlock("div", _hoisted_127, _toDisplayString(t('bookmarks_empty')), 1 /* TEXT */))
+                ? (_openBlock(), _createElementBlock("div", _hoisted_130, _toDisplayString(t('bookmarks_empty')), 1 /* TEXT */))
                 : _createCommentVNode("v-if", true),
               (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(store.bookmarks, (bookmark) => {
                 return (_openBlock(), _createElementBlock("div", {
@@ -1382,37 +1421,37 @@ return function render(_ctx, _cache) {
                   _createElementVNode("span", {
                     class: "text-truncate flex-grow-1",
                     onClick: $event => (open(bookmark))
-                  }, _toDisplayString(bookmark.name), 9 /* TEXT, PROPS */, _hoisted_128),
+                  }, _toDisplayString(bookmark.name), 9 /* TEXT, PROPS */, _hoisted_131),
                   _createElementVNode("button", {
                     class: "btn btn-link btn-sm p-0 text-muted bookmark-item-action",
                     onClick: _withModifiers($event => (store.removeBookmark(bookmark.path)), ["stop"]),
                     "aria-label": t('remove_bookmark') + ': ' + bookmark.name,
                     title: t('remove_bookmark')
-                  }, [...(_cache[75] || (_cache[75] = [
+                  }, [...(_cache[78] || (_cache[78] = [
                     _createElementVNode("i", {
                       class: "ri-close-line",
                       "aria-hidden": "true"
                     }, null, -1 /* CACHED */)
-                  ]))], 8 /* PROPS */, _hoisted_129)
+                  ]))], 8 /* PROPS */, _hoisted_132)
                 ]))
               }), 128 /* KEYED_FRAGMENT */))
             ]),
             _createCommentVNode(" Recent Files "),
             (store.recentFiles.length > 0)
-              ? (_openBlock(), _createElementBlock("div", _hoisted_130, [
-                  _createElementVNode("div", _hoisted_131, [
-                    _createElementVNode("h6", _hoisted_132, _toDisplayString(t('recent_files')), 1 /* TEXT */),
+              ? (_openBlock(), _createElementBlock("div", _hoisted_133, [
+                  _createElementVNode("div", _hoisted_134, [
+                    _createElementVNode("h6", _hoisted_135, _toDisplayString(t('recent_files')), 1 /* TEXT */),
                     _createElementVNode("button", {
                       class: "btn btn-link btn-sm p-0 text-decoration-none",
                       onClick: $event => (store.clearRecent()),
                       "aria-label": "Clear recent files",
                       title: "Clear recent files"
-                    }, [...(_cache[76] || (_cache[76] = [
+                    }, [...(_cache[79] || (_cache[79] = [
                       _createElementVNode("i", {
                         class: "ri-delete-bin-7-line",
                         "aria-hidden": "true"
                       }, null, -1 /* CACHED */)
-                    ]))], 8 /* PROPS */, _hoisted_133)
+                    ]))], 8 /* PROPS */, _hoisted_136)
                   ]),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(store.recentFiles, (file) => {
                     return (_openBlock(), _createElementBlock("div", {
@@ -1425,19 +1464,19 @@ return function render(_ctx, _cache) {
                       _createElementVNode("i", {
                         class: _normalizeClass([getIcon(file), "me-2"])
                       }, null, 2 /* CLASS */),
-                      _createElementVNode("span", _hoisted_135, _toDisplayString(file.name), 1 /* TEXT */)
-                    ], 8 /* PROPS */, _hoisted_134))
+                      _createElementVNode("span", _hoisted_138, _toDisplayString(file.name), 1 /* TEXT */)
+                    ], 8 /* PROPS */, _hoisted_137))
                   }), 128 /* KEYED_FRAGMENT */))
                 ]))
               : _createCommentVNode("v-if", true),
-            _cache[78] || (_cache[78] = _createElementVNode("h6", { class: "small fw-bold text-uppercase text-muted mb-2 px-2" }, "Explorer", -1 /* CACHED */)),
+            _cache[81] || (_cache[81] = _createElementVNode("h6", { class: "small fw-bold text-uppercase text-muted mb-2 px-2" }, "Explorer", -1 /* CACHED */)),
             _createVNode(_component_file_tree, {
               path: "",
               name: "Root",
               root: true,
               onClick: $event => (isMobile ? closeOffcanvas() : null)
             }, null, 8 /* PROPS */, ["root", "onClick"]),
-            _createElementVNode("div", _hoisted_136, [
+            _createElementVNode("div", _hoisted_139, [
               _createElementVNode("div", {
                 class: _normalizeClass(["d-flex align-items-center py-1 px-2 rounded small file-item", {'bg-danger-subtle text-danger': store.isTrashMode}]),
                 onClick: toggleTrash,
@@ -1445,9 +1484,9 @@ return function render(_ctx, _cache) {
                 "data-bs-dismiss": "offcanvas",
                 "data-bs-target": "#sidebarOffcanvas"
               }, [
-                _cache[77] || (_cache[77] = _createElementVNode("i", { class: "ri-delete-bin-line me-2" }, null, -1 /* CACHED */)),
+                _cache[80] || (_cache[80] = _createElementVNode("i", { class: "ri-delete-bin-line me-2" }, null, -1 /* CACHED */)),
                 _createElementVNode("span", null, _toDisplayString(t('trash') || 'Recycle Bin'), 1 /* TEXT */)
-              ], 10 /* CLASS, PROPS */, _hoisted_137)
+              ], 10 /* CLASS, PROPS */, _hoisted_140)
             ])
           ])
         ]),
@@ -1458,17 +1497,17 @@ return function render(_ctx, _cache) {
           onClick: _withModifiers($event => {store.clearSelection(); hideContextMenu()}, ["stop"])
         }, [
           (store.uploadProgress > 0)
-            ? (_openBlock(), _createElementBlock("div", _hoisted_139, [
-                _createElementVNode("div", _hoisted_140, [
+            ? (_openBlock(), _createElementBlock("div", _hoisted_142, [
+                _createElementVNode("div", _hoisted_143, [
                   _createElementVNode("span", null, [
-                    _cache[79] || (_cache[79] = _createTextVNode("Uploading: ", -1 /* CACHED */)),
+                    _cache[82] || (_cache[82] = _createTextVNode("Uploading: ", -1 /* CACHED */)),
                     _createElementVNode("strong", null, _toDisplayString(store.uploadFileName), 1 /* TEXT */)
                   ]),
                   (store.uploadTotal > 1)
-                    ? (_openBlock(), _createElementBlock("span", _hoisted_141, _toDisplayString(store.uploadCurrent + 1) + " / " + _toDisplayString(store.uploadTotal), 1 /* TEXT */))
+                    ? (_openBlock(), _createElementBlock("span", _hoisted_144, _toDisplayString(store.uploadCurrent + 1) + " / " + _toDisplayString(store.uploadTotal), 1 /* TEXT */))
                     : _createCommentVNode("v-if", true)
                 ]),
-                _createElementVNode("div", _hoisted_142, [
+                _createElementVNode("div", _hoisted_145, [
                   _createElementVNode("div", {
                     class: _normalizeClass(["progress-bar progress-bar-striped progress-bar-animated", 'progress-w-' + Math.round(store.uploadProgress / 5) * 5]),
                     role: "progressbar"
@@ -1477,47 +1516,47 @@ return function render(_ctx, _cache) {
               ]))
             : _createCommentVNode("v-if", true),
           (store.isLoading && store.uploadProgress === 0)
-            ? (_openBlock(), _createElementBlock("div", _hoisted_143, [...(_cache[80] || (_cache[80] = [
+            ? (_openBlock(), _createElementBlock("div", _hoisted_146, [...(_cache[83] || (_cache[83] = [
                 _createElementVNode("div", {
                   class: "spinner-border text-primary",
                   role: "status"
                 }, null, -1 /* CACHED */)
               ]))]))
             : (store.error)
-              ? (_openBlock(), _createElementBlock("div", _hoisted_144, [
-                  _cache[81] || (_cache[81] = _createElementVNode("i", { class: "ri-error-warning-line me-2" }, null, -1 /* CACHED */)),
+              ? (_openBlock(), _createElementBlock("div", _hoisted_147, [
+                  _cache[84] || (_cache[84] = _createElementVNode("i", { class: "ri-error-warning-line me-2" }, null, -1 /* CACHED */)),
                   _createTextVNode(" " + _toDisplayString(store.error), 1 /* TEXT */)
                 ]))
-              : (_openBlock(), _createElementBlock("div", _hoisted_145, [
+              : (_openBlock(), _createElementBlock("div", _hoisted_148, [
                   (filteredFiles.length === 0)
-                    ? (_openBlock(), _createElementBlock("div", _hoisted_146, [
+                    ? (_openBlock(), _createElementBlock("div", _hoisted_149, [
                         _createCommentVNode(" Icon with background circle "),
-                        _createElementVNode("div", _hoisted_147, [
+                        _createElementVNode("div", _hoisted_150, [
                           _createElementVNode("i", {
                             class: _normalizeClass([emptyStateIcon, "empty-state-icon-glyph"])
                           }, null, 2 /* CLASS */)
                         ]),
                         _createCommentVNode(" Title "),
-                        _createElementVNode("h4", _hoisted_148, _toDisplayString(emptyStateTitle), 1 /* TEXT */),
+                        _createElementVNode("h4", _hoisted_151, _toDisplayString(emptyStateTitle), 1 /* TEXT */),
                         _createCommentVNode(" Subtitle/Description "),
-                        _createElementVNode("p", _hoisted_149, _toDisplayString(emptyStateDescription), 1 /* TEXT */),
+                        _createElementVNode("p", _hoisted_152, _toDisplayString(emptyStateDescription), 1 /* TEXT */),
                         _createCommentVNode(" CTAs (only for normal directory) "),
                         (!store.isTrashMode && !store.searchQuery)
-                          ? (_openBlock(), _createElementBlock("div", _hoisted_150, [
+                          ? (_openBlock(), _createElementBlock("div", _hoisted_153, [
                               _createElementVNode("button", {
                                 class: "btn btn-primary btn-sm px-3",
                                 onClick: createFolder
                               }, [
-                                _cache[82] || (_cache[82] = _createElementVNode("i", { class: "ri-folder-add-line me-1" }, null, -1 /* CACHED */)),
+                                _cache[85] || (_cache[85] = _createElementVNode("i", { class: "ri-folder-add-line me-1" }, null, -1 /* CACHED */)),
                                 _createTextVNode(" " + _toDisplayString(t('new_folder')), 1 /* TEXT */)
-                              ], 8 /* PROPS */, _hoisted_151),
+                              ], 8 /* PROPS */, _hoisted_154),
                               _createElementVNode("button", {
                                 class: "btn btn-outline-secondary btn-sm px-3",
                                 onClick: uploadFile
                               }, [
-                                _cache[83] || (_cache[83] = _createElementVNode("i", { class: "ri-upload-cloud-2-line me-1" }, null, -1 /* CACHED */)),
+                                _cache[86] || (_cache[86] = _createElementVNode("i", { class: "ri-upload-cloud-2-line me-1" }, null, -1 /* CACHED */)),
                                 _createTextVNode(" " + _toDisplayString(t('upload')), 1 /* TEXT */)
-                              ], 8 /* PROPS */, _hoisted_152)
+                              ], 8 /* PROPS */, _hoisted_155)
                             ]))
                           : _createCommentVNode("v-if", true),
                         _createCommentVNode(" CTA for Search (Clear) "),
@@ -1526,10 +1565,10 @@ return function render(_ctx, _cache) {
                               key: 1,
                               class: "btn btn-outline-primary btn-sm px-3",
                               onClick: $event => {store.searchQuery = ''; store.performSearch('')}
-                            }, [...(_cache[84] || (_cache[84] = [
+                            }, [...(_cache[87] || (_cache[87] = [
                               _createElementVNode("i", { class: "ri-close-circle-line me-1" }, null, -1 /* CACHED */),
                               _createTextVNode(" Clear Search ", -1 /* CACHED */)
-                            ]))], 8 /* PROPS */, _hoisted_153))
+                            ]))], 8 /* PROPS */, _hoisted_156))
                           : _createCommentVNode("v-if", true)
                       ]))
                     : (_openBlock(), _createElementBlock("div", {
@@ -1543,17 +1582,17 @@ return function render(_ctx, _cache) {
                               onClick: goUp,
                               title: t('up_one_level') || 'Up one level',
                               "aria-label": t('up_one_level') || 'Up one level'
-                            }, [...(_cache[85] || (_cache[85] = [
+                            }, [...(_cache[88] || (_cache[88] = [
                               _createElementVNode("i", {
                                 class: "ri-arrow-up-line",
                                 "aria-hidden": "true"
                               }, null, -1 /* CACHED */)
-                            ]))], 8 /* PROPS */, _hoisted_154))
+                            ]))], 8 /* PROPS */, _hoisted_157))
                           : _createCommentVNode("v-if", true),
                         _createCommentVNode(" Header for List View "),
                         (store.viewMode === 'list')
-                          ? (_openBlock(), _createElementBlock("div", _hoisted_155, [
-                              _cache[86] || (_cache[86] = _createElementVNode("div", { class: "list-view-header-spacer" }, null, -1 /* CACHED */)),
+                          ? (_openBlock(), _createElementBlock("div", _hoisted_158, [
+                              _cache[89] || (_cache[89] = _createElementVNode("div", { class: "list-view-header-spacer" }, null, -1 /* CACHED */)),
                               _createElementVNode("div", {
                                 class: "list-view-name-col cursor-pointer",
                                 onClick: $event => (setSort('name'))
@@ -1565,7 +1604,7 @@ return function render(_ctx, _cache) {
                                       class: _normalizeClass(store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill')
                                     }, null, 2 /* CLASS */))
                                   : _createCommentVNode("v-if", true)
-                              ], 8 /* PROPS */, _hoisted_156),
+                              ], 8 /* PROPS */, _hoisted_159),
                               _createElementVNode("div", {
                                 class: "file-meta-col size-col cursor-pointer",
                                 onClick: $event => (setSort('size'))
@@ -1577,7 +1616,7 @@ return function render(_ctx, _cache) {
                                       class: _normalizeClass(store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill')
                                     }, null, 2 /* CLASS */))
                                   : _createCommentVNode("v-if", true)
-                              ], 8 /* PROPS */, _hoisted_157),
+                              ], 8 /* PROPS */, _hoisted_160),
                               _createElementVNode("div", {
                                 class: "file-meta-col date-col cursor-pointer",
                                 onClick: $event => (setSort('mtime'))
@@ -1589,7 +1628,7 @@ return function render(_ctx, _cache) {
                                       class: _normalizeClass(store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill')
                                     }, null, 2 /* CLASS */))
                                   : _createCommentVNode("v-if", true)
-                              ], 8 /* PROPS */, _hoisted_158)
+                              ], 8 /* PROPS */, _hoisted_161)
                             ]))
                           : _createCommentVNode("v-if", true),
                         _createCommentVNode(" File Loop "),
@@ -1612,7 +1651,7 @@ return function render(_ctx, _cache) {
                             onDblclick: _withModifiers($event => (open(file)), ["stop"]),
                             onContextmenu: _withModifiers($event => (showContextMenu($event, file)), ["prevent","stop"])
                           }, [
-                            _createElementVNode("div", _hoisted_160, [
+                            _createElementVNode("div", _hoisted_163, [
                               (store.viewMode === 'grid' && isImage(file))
                                 ? (_openBlock(), _createElementBlock("img", {
                                     key: 0,
@@ -1621,13 +1660,13 @@ return function render(_ctx, _cache) {
                                     loading: "lazy",
                                     decoding: "async",
                                     draggable: "false"
-                                  }, null, 8 /* PROPS */, _hoisted_161))
+                                  }, null, 8 /* PROPS */, _hoisted_164))
                                 : (_openBlock(), _createElementBlock("i", {
                                     key: 1,
                                     class: _normalizeClass(getIcon(file))
                                   }, null, 2 /* CLASS */)),
                               (file.is_shared)
-                                ? (_openBlock(), _createElementBlock("div", _hoisted_162, [...(_cache[87] || (_cache[87] = [
+                                ? (_openBlock(), _createElementBlock("div", _hoisted_165, [...(_cache[90] || (_cache[90] = [
                                     _createElementVNode("i", { class: "ri-share-forward-line text-primary shared-badge-icon" }, null, -1 /* CACHED */)
                                   ]))]))
                                 : _createCommentVNode("v-if", true)
@@ -1638,28 +1677,28 @@ return function render(_ctx, _cache) {
                             }, [
                               _createTextVNode(_toDisplayString(file.name) + " ", 1 /* TEXT */),
                               (file.is_mount && file.is_external)
-                                ? (_openBlock(), _createElementBlock("span", _hoisted_164, "Mount"))
+                                ? (_openBlock(), _createElementBlock("span", _hoisted_167, "Mount"))
                                 : _createCommentVNode("v-if", true),
                               (file.type === 'dir')
                                 ? (_openBlock(), _createElementBlock("i", {
                                     key: 1,
                                     class: "ri-arrow-right-line d-md-none ms-2 text-muted",
                                     onClick: _withModifiers($event => (open(file)), ["stop"])
-                                  }, null, 8 /* PROPS */, _hoisted_165))
+                                  }, null, 8 /* PROPS */, _hoisted_168))
                                 : _createCommentVNode("v-if", true)
-                            ], 8 /* PROPS */, _hoisted_163),
+                            ], 8 /* PROPS */, _hoisted_166),
                             _createCommentVNode(" List View Meta "),
                             (store.viewMode === 'list')
                               ? (_openBlock(), _createElementBlock(_Fragment, { key: 0 }, [
-                                  _createElementVNode("div", _hoisted_166, _toDisplayString(formatSize(file.size)), 1 /* TEXT */),
-                                  _createElementVNode("div", _hoisted_167, _toDisplayString(formatDate(file.mtime)), 1 /* TEXT */)
+                                  _createElementVNode("div", _hoisted_169, _toDisplayString(formatSize(file.size)), 1 /* TEXT */),
+                                  _createElementVNode("div", _hoisted_170, _toDisplayString(formatDate(file.mtime)), 1 /* TEXT */)
                                 ], 64 /* STABLE_FRAGMENT */))
                               : _createCommentVNode("v-if", true)
-                          ], 42 /* CLASS, PROPS, NEED_HYDRATION */, _hoisted_159))
+                          ], 42 /* CLASS, PROPS, NEED_HYDRATION */, _hoisted_162))
                         }), 128 /* KEYED_FRAGMENT */))
                       ], 2 /* CLASS */))
                 ]))
-        ], 8 /* PROPS */, _hoisted_138),
+        ], 8 /* PROPS */, _hoisted_141),
         detailsPaneOpen
           ? (_openBlock(), _createElementBlock("aside", {
               key: 1,
@@ -1667,52 +1706,52 @@ return function render(_ctx, _cache) {
               "aria-labelledby": "detailsPaneTitle",
               onClick: _withModifiers(() => {}, ["stop"])
             }, [
-              _createElementVNode("div", _hoisted_169, [
-                _createElementVNode("h6", _hoisted_170, _toDisplayString(t('details_pane')), 1 /* TEXT */),
+              _createElementVNode("div", _hoisted_172, [
+                _createElementVNode("h6", _hoisted_173, _toDisplayString(t('details_pane')), 1 /* TEXT */),
                 _createElementVNode("button", {
                   class: "btn btn-link btn-sm text-muted p-0",
                   onClick: closeDetailsPane,
                   "aria-label": t('close') || 'Close'
-                }, [...(_cache[88] || (_cache[88] = [
+                }, [...(_cache[91] || (_cache[91] = [
                   _createElementVNode("i", {
                     class: "ri-close-line",
                     "aria-hidden": "true"
                   }, null, -1 /* CACHED */)
-                ]))], 8 /* PROPS */, _hoisted_171)
+                ]))], 8 /* PROPS */, _hoisted_174)
               ]),
               (!detailsItem)
-                ? (_openBlock(), _createElementBlock("div", _hoisted_172, [
-                    _cache[89] || (_cache[89] = _createElementVNode("i", {
+                ? (_openBlock(), _createElementBlock("div", _hoisted_175, [
+                    _cache[92] || (_cache[92] = _createElementVNode("i", {
                       class: "ri-information-line d-block fs-2 mb-2",
                       "aria-hidden": "true"
                     }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('details_empty')), 1 /* TEXT */)
                   ]))
-                : (_openBlock(), _createElementBlock("div", _hoisted_173, [
-                    _createElementVNode("div", _hoisted_174, [
+                : (_openBlock(), _createElementBlock("div", _hoisted_176, [
+                    _createElementVNode("div", _hoisted_177, [
                       (!detailsItem.isBulk && isImage(detailsItem))
                         ? (_openBlock(), _createElementBlock("img", {
                             key: 0,
                             src: getThumbUrl(detailsItem),
                             class: "w-100 h-100 object-fit-cover",
                             alt: detailsItem.name
-                          }, null, 8 /* PROPS */, _hoisted_175))
+                          }, null, 8 /* PROPS */, _hoisted_178))
                         : (_openBlock(), _createElementBlock("i", {
                             key: 1,
                             class: _normalizeClass([getIcon(detailsItem), "details-preview-icon"]),
                             "aria-hidden": "true"
                           }, null, 2 /* CLASS */))
                     ]),
-                    _createElementVNode("div", _hoisted_176, [
-                      _createElementVNode("div", _hoisted_177, [
+                    _createElementVNode("div", _hoisted_179, [
+                      _createElementVNode("div", _hoisted_180, [
                         _createElementVNode("div", {
                           class: "fw-semibold text-truncate",
                           title: detailsItem.name
-                        }, _toDisplayString(detailsItem.name), 9 /* TEXT, PROPS */, _hoisted_178),
+                        }, _toDisplayString(detailsItem.name), 9 /* TEXT, PROPS */, _hoisted_181),
                         _createElementVNode("div", {
                           class: "small text-muted text-truncate",
                           title: '/' + detailsItem.path
-                        }, "/" + _toDisplayString(detailsItem.path), 9 /* TEXT, PROPS */, _hoisted_179)
+                        }, "/" + _toDisplayString(detailsItem.path), 9 /* TEXT, PROPS */, _hoisted_182)
                       ]),
                       (!detailsItem.isBulk)
                         ? (_openBlock(), _createElementBlock("button", {
@@ -1726,22 +1765,22 @@ return function render(_ctx, _cache) {
                               class: _normalizeClass(store.isBookmarked(detailsItem) ? 'ri-star-fill' : 'ri-star-line'),
                               "aria-hidden": "true"
                             }, null, 2 /* CLASS */)
-                          ], 8 /* PROPS */, _hoisted_180))
+                          ], 8 /* PROPS */, _hoisted_183))
                         : _createCommentVNode("v-if", true)
                     ]),
-                    _createElementVNode("dl", _hoisted_181, [
-                      _createElementVNode("dt", _hoisted_182, _toDisplayString(t('type')), 1 /* TEXT */),
-                      _createElementVNode("dd", _hoisted_183, _toDisplayString(detailsItem.mime || detailsItem.type), 1 /* TEXT */),
-                      _createElementVNode("dt", _hoisted_184, _toDisplayString(t('size')), 1 /* TEXT */),
-                      _createElementVNode("dd", _hoisted_185, _toDisplayString(formatSize(detailsItem.size || 0)), 1 /* TEXT */),
-                      _createElementVNode("dt", _hoisted_186, _toDisplayString(t('date')), 1 /* TEXT */),
-                      _createElementVNode("dd", _hoisted_187, _toDisplayString(detailsItem.mtime ? formatDate(detailsItem.mtime) : '-'), 1 /* TEXT */),
-                      _createElementVNode("dt", _hoisted_188, _toDisplayString(t('perms')), 1 /* TEXT */),
-                      _createElementVNode("dd", _hoisted_189, _toDisplayString(detailsItem.perms || '-'), 1 /* TEXT */),
+                    _createElementVNode("dl", _hoisted_184, [
+                      _createElementVNode("dt", _hoisted_185, _toDisplayString(t('type')), 1 /* TEXT */),
+                      _createElementVNode("dd", _hoisted_186, _toDisplayString(detailsItem.mime || detailsItem.type), 1 /* TEXT */),
+                      _createElementVNode("dt", _hoisted_187, _toDisplayString(t('size')), 1 /* TEXT */),
+                      _createElementVNode("dd", _hoisted_188, _toDisplayString(formatSize(detailsItem.size || 0)), 1 /* TEXT */),
+                      _createElementVNode("dt", _hoisted_189, _toDisplayString(t('date')), 1 /* TEXT */),
+                      _createElementVNode("dd", _hoisted_190, _toDisplayString(detailsItem.mtime ? formatDate(detailsItem.mtime) : '-'), 1 /* TEXT */),
+                      _createElementVNode("dt", _hoisted_191, _toDisplayString(t('perms')), 1 /* TEXT */),
+                      _createElementVNode("dd", _hoisted_192, _toDisplayString(detailsItem.perms || '-'), 1 /* TEXT */),
                       (!detailsItem.isBulk)
                         ? (_openBlock(), _createElementBlock(_Fragment, { key: 0 }, [
-                            _createElementVNode("dt", _hoisted_190, _toDisplayString(t('share')), 1 /* TEXT */),
-                            _createElementVNode("dd", _hoisted_191, [
+                            _createElementVNode("dt", _hoisted_193, _toDisplayString(t('share')), 1 /* TEXT */),
+                            _createElementVNode("dd", _hoisted_194, [
                               _createElementVNode("span", {
                                 class: _normalizeClass(["badge", detailsItem.is_shared ? 'text-bg-primary' : 'text-bg-secondary'])
                               }, _toDisplayString(detailsShareLabel), 3 /* TEXT, CLASS */)
@@ -1749,18 +1788,18 @@ return function render(_ctx, _cache) {
                           ], 64 /* STABLE_FRAGMENT */))
                         : _createCommentVNode("v-if", true)
                     ]),
-                    _createElementVNode("div", _hoisted_192, [
+                    _createElementVNode("div", _hoisted_195, [
                       _createElementVNode("button", {
                         class: "btn btn-outline-primary btn-sm",
                         onClick: showProperties,
                         disabled: store.selectedItems.length === 0
                       }, [
-                        _cache[90] || (_cache[90] = _createElementVNode("i", {
+                        _cache[93] || (_cache[93] = _createElementVNode("i", {
                           class: "ri-information-line me-1",
                           "aria-hidden": "true"
                         }, null, -1 /* CACHED */)),
                         _createTextVNode(_toDisplayString(t('properties')), 1 /* TEXT */)
-                      ], 8 /* PROPS */, _hoisted_193),
+                      ], 8 /* PROPS */, _hoisted_196),
                       (store.selectedItems.length === 1)
                         ? (_openBlock(), _createElementBlock("button", {
                             key: 0,
@@ -1768,29 +1807,29 @@ return function render(_ctx, _cache) {
                             onClick: openShare,
                             disabled: store.isTrashMode
                           }, [
-                            _cache[91] || (_cache[91] = _createElementVNode("i", {
+                            _cache[94] || (_cache[94] = _createElementVNode("i", {
                               class: "ri-share-line me-1",
                               "aria-hidden": "true"
                             }, null, -1 /* CACHED */)),
                             _createTextVNode(_toDisplayString(t('share')), 1 /* TEXT */)
-                          ], 8 /* PROPS */, _hoisted_194))
+                          ], 8 /* PROPS */, _hoisted_197))
                         : _createCommentVNode("v-if", true)
                     ])
                   ]))
-            ], 8 /* PROPS */, _hoisted_168))
+            ], 8 /* PROPS */, _hoisted_171))
           : _createCommentVNode("v-if", true)
       ], 42 /* CLASS, PROPS, NEED_HYDRATION */, _hoisted_114),
       _createCommentVNode(" Status Bar "),
-      _createElementVNode("div", _hoisted_195, [
-        _createElementVNode("div", _hoisted_196, [
-          _createElementVNode("span", _hoisted_197, "v" + _toDisplayString(appVersion), 1 /* TEXT */),
+      _createElementVNode("div", _hoisted_198, [
+        _createElementVNode("div", _hoisted_199, [
+          _createElementVNode("span", _hoisted_200, "v" + _toDisplayString(appVersion), 1 /* TEXT */),
           _createElementVNode("span", null, _toDisplayString(t('items_count', {count: store.pagination.total})), 1 /* TEXT */),
-          _createElementVNode("span", _hoisted_198, "(" + _toDisplayString(connectionMode === 'local' ? t('local_fs') : connectionMode.toUpperCase()) + ")", 1 /* TEXT */)
+          _createElementVNode("span", _hoisted_201, "(" + _toDisplayString(connectionMode === 'local' ? t('local_fs') : connectionMode.toUpperCase()) + ")", 1 /* TEXT */)
         ]),
         (store.pagination.total > store.pagination.pageSize)
-          ? (_openBlock(), _createElementBlock("div", _hoisted_199, [
-              _createElementVNode("nav", _hoisted_200, [
-                _createElementVNode("ul", _hoisted_201, [
+          ? (_openBlock(), _createElementBlock("div", _hoisted_202, [
+              _createElementVNode("nav", _hoisted_203, [
+                _createElementVNode("ul", _hoisted_204, [
                   _createElementVNode("li", {
                     class: _normalizeClass(["page-item", {disabled: store.pagination.page <= 1}])
                   }, [
@@ -1800,9 +1839,9 @@ return function render(_ctx, _cache) {
                       onClick: _withModifiers($event => (changePage(-1)), ["prevent"]),
                       "aria-label": "Previous page"
                     }, [
-                      _cache[92] || (_cache[92] = _createElementVNode("i", { class: "ri-arrow-left-s-line" }, null, -1 /* CACHED */)),
-                      _createElementVNode("span", _hoisted_203, _toDisplayString(t('prev')), 1 /* TEXT */)
-                    ], 8 /* PROPS */, _hoisted_202)
+                      _cache[95] || (_cache[95] = _createElementVNode("i", { class: "ri-arrow-left-s-line" }, null, -1 /* CACHED */)),
+                      _createElementVNode("span", _hoisted_206, _toDisplayString(t('prev')), 1 /* TEXT */)
+                    ], 8 /* PROPS */, _hoisted_205)
                   ], 2 /* CLASS */),
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(paginationPages, (p) => {
                     return (_openBlock(), _createElementBlock("li", {
@@ -1810,13 +1849,13 @@ return function render(_ctx, _cache) {
                       class: _normalizeClass(["page-item", {active: p.type === 'page' && p.number === store.pagination.page, disabled: p.type === 'ellipsis'}])
                     }, [
                       (p.type === 'ellipsis')
-                        ? (_openBlock(), _createElementBlock("span", _hoisted_204, "…"))
+                        ? (_openBlock(), _createElementBlock("span", _hoisted_207, "…"))
                         : (_openBlock(), _createElementBlock("a", {
                             key: 1,
                             class: "page-link",
                             href: "#",
                             onClick: _withModifiers($event => (goToPage(p.number)), ["prevent"])
-                          }, _toDisplayString(p.number), 9 /* TEXT, PROPS */, _hoisted_205))
+                          }, _toDisplayString(p.number), 9 /* TEXT, PROPS */, _hoisted_208))
                     ], 2 /* CLASS */))
                   }), 128 /* KEYED_FRAGMENT */)),
                   _createElementVNode("li", {
@@ -1828,101 +1867,101 @@ return function render(_ctx, _cache) {
                       onClick: _withModifiers($event => (changePage(1)), ["prevent"]),
                       "aria-label": "Next page"
                     }, [
-                      _createElementVNode("span", _hoisted_207, _toDisplayString(t('next')), 1 /* TEXT */),
-                      _cache[93] || (_cache[93] = _createElementVNode("i", { class: "ri-arrow-right-s-line" }, null, -1 /* CACHED */))
-                    ], 8 /* PROPS */, _hoisted_206)
+                      _createElementVNode("span", _hoisted_210, _toDisplayString(t('next')), 1 /* TEXT */),
+                      _cache[96] || (_cache[96] = _createElementVNode("i", { class: "ri-arrow-right-s-line" }, null, -1 /* CACHED */))
+                    ], 8 /* PROPS */, _hoisted_209)
                   ], 2 /* CLASS */)
                 ])
               ]),
-              _createElementVNode("span", _hoisted_208, _toDisplayString(t('page_info', {current: store.pagination.page, total: totalPages})), 1 /* TEXT */)
+              _createElementVNode("span", _hoisted_211, _toDisplayString(t('page_info', {current: store.pagination.page, total: totalPages})), 1 /* TEXT */)
             ]))
           : _createCommentVNode("v-if", true),
-        _createElementVNode("div", _hoisted_209, [
-          _createElementVNode("label", _hoisted_210, _toDisplayString(t('rows_per_page') || 'Rows'), 1 /* TEXT */),
+        _createElementVNode("div", _hoisted_212, [
+          _createElementVNode("label", _hoisted_213, _toDisplayString(t('rows_per_page') || 'Rows'), 1 /* TEXT */),
           _createElementVNode("select", {
             id: "pageSizeSelect",
             class: "form-select form-select-sm w-auto",
             value: store.pagination.pageSize,
             onChange: $event => (setPageSize($event))
-          }, [...(_cache[94] || (_cache[94] = [
+          }, [...(_cache[97] || (_cache[97] = [
             _createElementVNode("option", { value: "25" }, "25", -1 /* CACHED */),
             _createElementVNode("option", { value: "50" }, "50", -1 /* CACHED */),
             _createElementVNode("option", { value: "100" }, "100", -1 /* CACHED */),
             _createElementVNode("option", { value: "200" }, "200", -1 /* CACHED */)
-          ]))], 40 /* PROPS, NEED_HYDRATION */, _hoisted_211)
+          ]))], 40 /* PROPS, NEED_HYDRATION */, _hoisted_214)
         ])
       ]),
       _createCommentVNode(" Modals "),
       _createCommentVNode(" Editor Modal "),
-      _createElementVNode("div", _hoisted_212, [
-        _createElementVNode("div", _hoisted_213, [
-          _createElementVNode("div", _hoisted_214, [
-            _createElementVNode("div", _hoisted_215, [
-              _createElementVNode("h5", _hoisted_216, _toDisplayString(t('editing', {name: editorFile?.name})), 1 /* TEXT */),
+      _createElementVNode("div", _hoisted_215, [
+        _createElementVNode("div", _hoisted_216, [
+          _createElementVNode("div", _hoisted_217, [
+            _createElementVNode("div", _hoisted_218, [
+              _createElementVNode("h5", _hoisted_219, _toDisplayString(t('editing', {name: editorFile?.name})), 1 /* TEXT */),
               _createElementVNode("button", {
                 type: "button",
                 class: "btn-close",
                 "data-bs-dismiss": "modal",
                 "aria-label": t('close') || 'Close'
-              }, null, 8 /* PROPS */, _hoisted_217)
+              }, null, 8 /* PROPS */, _hoisted_220)
             ]),
-            _cache[95] || (_cache[95] = _createElementVNode("div", { class: "modal-body p-0 overflow-hidden" }, [
+            _cache[98] || (_cache[98] = _createElementVNode("div", { class: "modal-body p-0 overflow-hidden" }, [
               _createElementVNode("div", {
                 id: "aceEditor",
                 class: "h-100 w-100"
               })
             ], -1 /* CACHED */)),
-            _createElementVNode("div", _hoisted_218, [
-              _createElementVNode("button", _hoisted_219, _toDisplayString(t('close')), 1 /* TEXT */),
+            _createElementVNode("div", _hoisted_221, [
+              _createElementVNode("button", _hoisted_222, _toDisplayString(t('close')), 1 /* TEXT */),
               _createElementVNode("button", {
                 type: "button",
                 class: "btn btn-primary btn-sm",
                 onClick: saveFile
-              }, _toDisplayString(t('save')), 9 /* TEXT, PROPS */, _hoisted_220)
+              }, _toDisplayString(t('save')), 9 /* TEXT, PROPS */, _hoisted_223)
             ])
           ])
         ])
       ]),
       _createCommentVNode(" Diff Modal "),
-      _createElementVNode("div", _hoisted_221, [
-        _createElementVNode("div", _hoisted_222, [
-          _createElementVNode("div", _hoisted_223, [
-            _createElementVNode("div", _hoisted_224, [
-              _cache[96] || (_cache[96] = _createElementVNode("h5", { class: "modal-title fs-6" }, "Compare Files", -1 /* CACHED */)),
+      _createElementVNode("div", _hoisted_224, [
+        _createElementVNode("div", _hoisted_225, [
+          _createElementVNode("div", _hoisted_226, [
+            _createElementVNode("div", _hoisted_227, [
+              _cache[99] || (_cache[99] = _createElementVNode("h5", { class: "modal-title fs-6" }, "Compare Files", -1 /* CACHED */)),
               _createElementVNode("button", {
                 type: "button",
                 class: "btn-close",
                 "data-bs-dismiss": "modal",
                 "aria-label": t('close') || 'Close'
-              }, null, 8 /* PROPS */, _hoisted_225)
+              }, null, 8 /* PROPS */, _hoisted_228)
             ]),
-            _cache[97] || (_cache[97] = _createElementVNode("div", { class: "modal-body overflow-auto" }, [
+            _cache[100] || (_cache[100] = _createElementVNode("div", { class: "modal-body overflow-auto" }, [
               _createElementVNode("div", { id: "diffViewer" })
             ], -1 /* CACHED */))
           ])
         ])
       ]),
       _createCommentVNode(" Preview Modal "),
-      _createElementVNode("div", _hoisted_226, [
-        _createElementVNode("div", _hoisted_227, [
-          _createElementVNode("div", _hoisted_228, [
-            _createElementVNode("div", _hoisted_229, [
-              _createElementVNode("h6", _hoisted_230, _toDisplayString(previewState.filename), 1 /* TEXT */),
+      _createElementVNode("div", _hoisted_229, [
+        _createElementVNode("div", _hoisted_230, [
+          _createElementVNode("div", _hoisted_231, [
+            _createElementVNode("div", _hoisted_232, [
+              _createElementVNode("h6", _hoisted_233, _toDisplayString(previewState.filename), 1 /* TEXT */),
               _createElementVNode("button", {
                 type: "button",
                 class: "btn-close btn-close-white",
                 "data-bs-dismiss": "modal",
                 "aria-label": t('close') || 'Close'
-              }, null, 8 /* PROPS */, _hoisted_231)
+              }, null, 8 /* PROPS */, _hoisted_234)
             ]),
-            _createElementVNode("div", _hoisted_232, [
+            _createElementVNode("div", _hoisted_235, [
               _createCommentVNode(" Image "),
               (previewState.type === 'image')
                 ? (_openBlock(), _createElementBlock("img", {
                     key: 0,
                     src: previewState.src,
                     class: "img-fluid rounded max-h-90vh"
-                  }, null, 8 /* PROPS */, _hoisted_233))
+                  }, null, 8 /* PROPS */, _hoisted_236))
                 : _createCommentVNode("v-if", true),
               _createCommentVNode(" Video "),
               (previewState.type === 'video')
@@ -1932,18 +1971,18 @@ return function render(_ctx, _cache) {
                     controls: "",
                     autoplay: "",
                     class: "w-100 max-h-90vh"
-                  }, null, 8 /* PROPS */, _hoisted_234))
+                  }, null, 8 /* PROPS */, _hoisted_237))
                 : _createCommentVNode("v-if", true),
               _createCommentVNode(" Audio "),
               (previewState.type === 'audio')
-                ? (_openBlock(), _createElementBlock("div", _hoisted_235, [
-                    _cache[98] || (_cache[98] = _createElementVNode("i", { class: "ri-music-2-line fs-1 text-white-50 d-block mb-3" }, null, -1 /* CACHED */)),
+                ? (_openBlock(), _createElementBlock("div", _hoisted_238, [
+                    _cache[101] || (_cache[101] = _createElementVNode("i", { class: "ri-music-2-line fs-1 text-white-50 d-block mb-3" }, null, -1 /* CACHED */)),
                     _createElementVNode("audio", {
                       src: previewState.src,
                       controls: "",
                       autoplay: "",
                       class: "w-100"
-                    }, null, 8 /* PROPS */, _hoisted_236)
+                    }, null, 8 /* PROPS */, _hoisted_239)
                   ]))
                 : _createCommentVNode("v-if", true),
               _createCommentVNode(" PDF "),
@@ -1952,7 +1991,7 @@ return function render(_ctx, _cache) {
                     key: 3,
                     src: previewState.src,
                     class: "w-100 preview-pdf-frame"
-                  }, null, 8 /* PROPS */, _hoisted_237))
+                  }, null, 8 /* PROPS */, _hoisted_240))
                 : _createCommentVNode("v-if", true),
               _createCommentVNode(" Controls "),
               (previewState.list.length > 1)
@@ -1962,12 +2001,12 @@ return function render(_ctx, _cache) {
                     onClick: _withModifiers(prevPreview, ["stop"]),
                     disabled: previewState.index <= 0,
                     "aria-label": t('prev') || 'Previous'
-                  }, [...(_cache[99] || (_cache[99] = [
+                  }, [...(_cache[102] || (_cache[102] = [
                     _createElementVNode("i", {
                       class: "ri-arrow-left-s-line fs-4",
                       "aria-hidden": "true"
                     }, null, -1 /* CACHED */)
-                  ]))], 8 /* PROPS */, _hoisted_238))
+                  ]))], 8 /* PROPS */, _hoisted_241))
                 : _createCommentVNode("v-if", true),
               (previewState.list.length > 1)
                 ? (_openBlock(), _createElementBlock("button", {
@@ -1976,41 +2015,41 @@ return function render(_ctx, _cache) {
                     onClick: _withModifiers(nextPreview, ["stop"]),
                     disabled: previewState.index >= previewState.list.length - 1,
                     "aria-label": t('next') || 'Next'
-                  }, [...(_cache[100] || (_cache[100] = [
+                  }, [...(_cache[103] || (_cache[103] = [
                     _createElementVNode("i", {
                       class: "ri-arrow-right-s-line fs-4",
                       "aria-hidden": "true"
                     }, null, -1 /* CACHED */)
-                  ]))], 8 /* PROPS */, _hoisted_239))
+                  ]))], 8 /* PROPS */, _hoisted_242))
                 : _createCommentVNode("v-if", true)
             ])
           ])
         ])
       ]),
       _createCommentVNode(" Properties Modal "),
-      _createElementVNode("div", _hoisted_240, [
-        _createElementVNode("div", _hoisted_241, [
-          _createElementVNode("div", _hoisted_242, [
-            _createElementVNode("div", _hoisted_243, [
-              _createElementVNode("h5", _hoisted_244, _toDisplayString(t('properties')), 1 /* TEXT */),
+      _createElementVNode("div", _hoisted_243, [
+        _createElementVNode("div", _hoisted_244, [
+          _createElementVNode("div", _hoisted_245, [
+            _createElementVNode("div", _hoisted_246, [
+              _createElementVNode("h5", _hoisted_247, _toDisplayString(t('properties')), 1 /* TEXT */),
               _createElementVNode("button", {
                 type: "button",
                 class: "btn-close",
                 "data-bs-dismiss": "modal",
                 "aria-label": t('close') || 'Close'
-              }, null, 8 /* PROPS */, _hoisted_245)
+              }, null, 8 /* PROPS */, _hoisted_248)
             ]),
             propFile
-              ? (_openBlock(), _createElementBlock("div", _hoisted_246, [
-                  _createElementVNode("div", _hoisted_247, [
+              ? (_openBlock(), _createElementBlock("div", _hoisted_249, [
+                  _createElementVNode("div", _hoisted_250, [
                     _createElementVNode("i", {
                       class: _normalizeClass([getIcon(propFile), "icon-large"])
                     }, null, 2 /* CLASS */),
-                    _createElementVNode("h6", _hoisted_248, _toDisplayString(propFile.name), 1 /* TEXT */)
+                    _createElementVNode("h6", _hoisted_251, _toDisplayString(propFile.name), 1 /* TEXT */)
                   ]),
-                  _createElementVNode("section", _hoisted_249, [
-                    _createElementVNode("h6", _hoisted_250, _toDisplayString(t('properties_metadata')), 1 /* TEXT */),
-                    _createElementVNode("table", _hoisted_251, [
+                  _createElementVNode("section", _hoisted_252, [
+                    _createElementVNode("h6", _hoisted_253, _toDisplayString(t('properties_metadata')), 1 /* TEXT */),
+                    _createElementVNode("table", _hoisted_254, [
                       _createElementVNode("tbody", null, [
                         _createElementVNode("tr", null, [
                           _createElementVNode("th", null, _toDisplayString(t('name')), 1 /* TEXT */),
@@ -2030,12 +2069,12 @@ return function render(_ctx, _cache) {
                                   class: "btn btn-link btn-sm p-0 ms-2 text-decoration-none",
                                   onClick: calcDirSize
                                 }, [
-                                  _cache[101] || (_cache[101] = _createElementVNode("i", {
+                                  _cache[104] || (_cache[104] = _createElementVNode("i", {
                                     class: "ri-calculator-line",
                                     "aria-hidden": "true"
                                   }, null, -1 /* CACHED */)),
                                   _createTextVNode(" " + _toDisplayString(t('calculate')), 1 /* TEXT */)
-                                ], 8 /* PROPS */, _hoisted_252))
+                                ], 8 /* PROPS */, _hoisted_255))
                               : _createCommentVNode("v-if", true)
                           ])
                         ]),
@@ -2063,70 +2102,70 @@ return function render(_ctx, _cache) {
                     ])
                   ]),
                   isAdmin
-                    ? (_openBlock(), _createElementBlock("section", _hoisted_253, [
-                        _createElementVNode("div", _hoisted_254, [
-                          _cache[102] || (_cache[102] = _createElementVNode("i", {
+                    ? (_openBlock(), _createElementBlock("section", _hoisted_256, [
+                        _createElementVNode("div", _hoisted_257, [
+                          _cache[105] || (_cache[105] = _createElementVNode("i", {
                             class: "ri-shield-keyhole-line text-warning-emphasis fs-5",
                             "aria-hidden": "true"
                           }, null, -1 /* CACHED */)),
                           _createElementVNode("div", null, [
-                            _createElementVNode("h6", _hoisted_255, _toDisplayString(t('properties_ownership_actions')), 1 /* TEXT */),
-                            _createElementVNode("div", _hoisted_256, _toDisplayString(t('properties_ownership_desc')), 1 /* TEXT */)
+                            _createElementVNode("h6", _hoisted_258, _toDisplayString(t('properties_ownership_actions')), 1 /* TEXT */),
+                            _createElementVNode("div", _hoisted_259, _toDisplayString(t('properties_ownership_desc')), 1 /* TEXT */)
                           ])
                         ]),
-                        _createElementVNode("div", _hoisted_257, [
-                          _createElementVNode("div", _hoisted_258, [
-                            _createElementVNode("label", _hoisted_259, _toDisplayString(t('owner')), 1 /* TEXT */),
+                        _createElementVNode("div", _hoisted_260, [
+                          _createElementVNode("div", _hoisted_261, [
+                            _createElementVNode("label", _hoisted_262, _toDisplayString(t('owner')), 1 /* TEXT */),
                             _withDirectives(_createElementVNode("input", {
                               id: "propOwner",
                               type: "text",
                               class: "form-control form-control-sm",
                               "onUpdate:modelValue": $event => ((propFile.owner) = $event),
                               autocomplete: "off"
-                            }, null, 8 /* PROPS */, _hoisted_260), [
+                            }, null, 8 /* PROPS */, _hoisted_263), [
                               [_vModelText, propFile.owner]
                             ])
                           ]),
-                          _createElementVNode("div", _hoisted_261, [
-                            _createElementVNode("label", _hoisted_262, _toDisplayString(t('group')), 1 /* TEXT */),
+                          _createElementVNode("div", _hoisted_264, [
+                            _createElementVNode("label", _hoisted_265, _toDisplayString(t('group')), 1 /* TEXT */),
                             _withDirectives(_createElementVNode("input", {
                               id: "propGroup",
                               type: "text",
                               class: "form-control form-control-sm",
                               "onUpdate:modelValue": $event => ((propFile.group) = $event),
                               autocomplete: "off"
-                            }, null, 8 /* PROPS */, _hoisted_263), [
+                            }, null, 8 /* PROPS */, _hoisted_266), [
                               [_vModelText, propFile.group]
                             ])
                           ])
                         ]),
-                        _createElementVNode("div", _hoisted_264, [
+                        _createElementVNode("div", _hoisted_267, [
                           _withDirectives(_createElementVNode("input", {
                             class: "form-check-input",
                             type: "checkbox",
                             id: "propRecursive",
                             "onUpdate:modelValue": $event => ((propFile.recursive) = $event)
-                          }, null, 8 /* PROPS */, _hoisted_265), [
+                          }, null, 8 /* PROPS */, _hoisted_268), [
                             [_vModelCheckbox, propFile.recursive]
                           ]),
-                          _createElementVNode("label", _hoisted_266, _toDisplayString(t('apply_recursively')), 1 /* TEXT */)
+                          _createElementVNode("label", _hoisted_269, _toDisplayString(t('apply_recursively')), 1 /* TEXT */)
                         ]),
                         (propFile.recursive)
-                          ? (_openBlock(), _createElementBlock("div", _hoisted_267, _toDisplayString(t('recursive_owner_warning')), 1 /* TEXT */))
+                          ? (_openBlock(), _createElementBlock("div", _hoisted_270, _toDisplayString(t('recursive_owner_warning')), 1 /* TEXT */))
                           : _createCommentVNode("v-if", true),
-                        _createElementVNode("div", _hoisted_268, [
-                          _createElementVNode("div", _hoisted_269, _toDisplayString(propertiesTargetSummary), 1 /* TEXT */),
+                        _createElementVNode("div", _hoisted_271, [
+                          _createElementVNode("div", _hoisted_272, _toDisplayString(propertiesTargetSummary), 1 /* TEXT */),
                           _createElementVNode("button", {
                             class: "btn btn-warning btn-sm",
                             type: "button",
                             onClick: saveChown
                           }, [
-                            _cache[103] || (_cache[103] = _createElementVNode("i", {
+                            _cache[106] || (_cache[106] = _createElementVNode("i", {
                               class: "ri-shield-check-line me-1",
                               "aria-hidden": "true"
                             }, null, -1 /* CACHED */)),
                             _createTextVNode(_toDisplayString(t('apply_owner_group')), 1 /* TEXT */)
-                          ], 8 /* PROPS */, _hoisted_270)
+                          ], 8 /* PROPS */, _hoisted_273)
                         ])
                       ]))
                     : _createCommentVNode("v-if", true)
@@ -2136,96 +2175,96 @@ return function render(_ctx, _cache) {
         ])
       ]),
       _createCommentVNode(" WebDAV Modal "),
-      _createElementVNode("div", _hoisted_271, [
-        _createElementVNode("div", _hoisted_272, [
-          _createElementVNode("div", _hoisted_273, [
-            _createElementVNode("div", _hoisted_274, [
-              _createElementVNode("h5", _hoisted_275, _toDisplayString(t('webdav_connect')), 1 /* TEXT */),
+      _createElementVNode("div", _hoisted_274, [
+        _createElementVNode("div", _hoisted_275, [
+          _createElementVNode("div", _hoisted_276, [
+            _createElementVNode("div", _hoisted_277, [
+              _createElementVNode("h5", _hoisted_278, _toDisplayString(t('webdav_connect')), 1 /* TEXT */),
               _createElementVNode("button", {
                 type: "button",
                 class: "btn-close",
                 "data-bs-dismiss": "modal",
                 "aria-label": t('close') || 'Close'
-              }, null, 8 /* PROPS */, _hoisted_276)
+              }, null, 8 /* PROPS */, _hoisted_279)
             ]),
-            _createElementVNode("div", _hoisted_277, [
-              _createElementVNode("p", _hoisted_278, _toDisplayString(t('webdav_help')), 1 /* TEXT */),
-              _createElementVNode("div", _hoisted_279, [
-                _createElementVNode("label", _hoisted_280, _toDisplayString(t('webdav_url')), 1 /* TEXT */),
-                _createElementVNode("div", _hoisted_281, [
+            _createElementVNode("div", _hoisted_280, [
+              _createElementVNode("p", _hoisted_281, _toDisplayString(t('webdav_help')), 1 /* TEXT */),
+              _createElementVNode("div", _hoisted_282, [
+                _createElementVNode("label", _hoisted_283, _toDisplayString(t('webdav_url')), 1 /* TEXT */),
+                _createElementVNode("div", _hoisted_284, [
                   _createElementVNode("input", {
                     type: "text",
                     class: "form-control",
                     value: webDavUrl,
                     readonly: "",
                     id: "webdav_url_input"
-                  }, null, 8 /* PROPS */, _hoisted_282),
+                  }, null, 8 /* PROPS */, _hoisted_285),
                   _createElementVNode("button", {
                     class: "btn btn-outline-secondary",
                     onClick: copyWebDavUrl
                   }, [
-                    _cache[104] || (_cache[104] = _createElementVNode("i", {
+                    _cache[107] || (_cache[107] = _createElementVNode("i", {
                       class: "ri-file-copy-line",
                       "aria-hidden": "true"
                     }, null, -1 /* CACHED */)),
                     _createElementVNode("span", null, _toDisplayString(t('webdav_copy_url')), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_283)
+                  ], 8 /* PROPS */, _hoisted_286)
                 ])
               ]),
-              _createElementVNode("div", _hoisted_284, [
-                _createElementVNode("div", _hoisted_285, [
-                  _createElementVNode("div", _hoisted_286, [
-                    _createElementVNode("div", _hoisted_287, [
-                      _cache[105] || (_cache[105] = _createElementVNode("i", {
+              _createElementVNode("div", _hoisted_287, [
+                _createElementVNode("div", _hoisted_288, [
+                  _createElementVNode("div", _hoisted_289, [
+                    _createElementVNode("div", _hoisted_290, [
+                      _cache[108] || (_cache[108] = _createElementVNode("i", {
                         class: "ri-windows-line me-1",
                         "aria-hidden": "true"
                       }, null, -1 /* CACHED */)),
                       _createTextVNode(_toDisplayString(t('webdav_windows_title')), 1 /* TEXT */)
                     ]),
-                    _createElementVNode("div", _hoisted_288, _toDisplayString(t('webdav_windows_hint')), 1 /* TEXT */)
+                    _createElementVNode("div", _hoisted_291, _toDisplayString(t('webdav_windows_hint')), 1 /* TEXT */)
                   ])
                 ]),
-                _createElementVNode("div", _hoisted_289, [
-                  _createElementVNode("div", _hoisted_290, [
-                    _createElementVNode("div", _hoisted_291, [
-                      _cache[106] || (_cache[106] = _createElementVNode("i", {
+                _createElementVNode("div", _hoisted_292, [
+                  _createElementVNode("div", _hoisted_293, [
+                    _createElementVNode("div", _hoisted_294, [
+                      _cache[109] || (_cache[109] = _createElementVNode("i", {
                         class: "ri-apple-line me-1",
                         "aria-hidden": "true"
                       }, null, -1 /* CACHED */)),
                       _createTextVNode(_toDisplayString(t('webdav_macos_title')), 1 /* TEXT */)
                     ]),
-                    _createElementVNode("div", _hoisted_292, _toDisplayString(t('webdav_macos_hint')), 1 /* TEXT */)
+                    _createElementVNode("div", _hoisted_295, _toDisplayString(t('webdav_macos_hint')), 1 /* TEXT */)
                   ])
                 ]),
-                _createElementVNode("div", _hoisted_293, [
-                  _createElementVNode("div", _hoisted_294, [
-                    _createElementVNode("div", _hoisted_295, [
-                      _cache[107] || (_cache[107] = _createElementVNode("i", {
+                _createElementVNode("div", _hoisted_296, [
+                  _createElementVNode("div", _hoisted_297, [
+                    _createElementVNode("div", _hoisted_298, [
+                      _cache[110] || (_cache[110] = _createElementVNode("i", {
                         class: "ri-terminal-box-line me-1",
                         "aria-hidden": "true"
                       }, null, -1 /* CACHED */)),
                       _createTextVNode(_toDisplayString(t('webdav_linux_title')), 1 /* TEXT */)
                     ]),
-                    _createElementVNode("div", _hoisted_296, _toDisplayString(t('webdav_linux_hint')), 1 /* TEXT */)
+                    _createElementVNode("div", _hoisted_299, _toDisplayString(t('webdav_linux_hint')), 1 /* TEXT */)
                   ])
                 ])
               ]),
-              _createElementVNode("div", _hoisted_297, [
-                _cache[108] || (_cache[108] = _createElementVNode("i", {
+              _createElementVNode("div", _hoisted_300, [
+                _cache[111] || (_cache[111] = _createElementVNode("i", {
                   class: "ri-key-2-line me-1",
                   "aria-hidden": "true"
                 }, null, -1 /* CACHED */)),
                 _createTextVNode(" " + _toDisplayString(t('webdav_credentials_note', {username: username})), 1 /* TEXT */)
               ]),
-              _createElementVNode("div", _hoisted_298, [
-                _cache[109] || (_cache[109] = _createElementVNode("i", {
+              _createElementVNode("div", _hoisted_301, [
+                _cache[112] || (_cache[112] = _createElementVNode("i", {
                   class: "ri-shield-check-line me-1",
                   "aria-hidden": "true"
                 }, null, -1 /* CACHED */)),
                 _createTextVNode(" " + _toDisplayString(t('webdav_https_note')), 1 /* TEXT */)
               ]),
-              _createElementVNode("div", _hoisted_299, [
-                _cache[110] || (_cache[110] = _createElementVNode("i", {
+              _createElementVNode("div", _hoisted_302, [
+                _cache[113] || (_cache[113] = _createElementVNode("i", {
                   class: "ri-admin-line me-1",
                   "aria-hidden": "true"
                 }, null, -1 /* CACHED */)),
@@ -2237,7 +2276,7 @@ return function render(_ctx, _cache) {
       ]),
       _createCommentVNode(" Context Menu "),
       (contextMenu.visible)
-        ? (_openBlock(), _createElementBlock("div", _hoisted_300, [
+        ? (_openBlock(), _createElementBlock("div", _hoisted_303, [
             (!store.isTrashMode)
               ? (_openBlock(), _createElementBlock(_Fragment, { key: 0 }, [
                   _createElementVNode("a", {
@@ -2245,75 +2284,75 @@ return function render(_ctx, _cache) {
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('open')), ["prevent"])
                   }, [
-                    _cache[111] || (_cache[111] = _createElementVNode("i", { class: "ri-folder-open-line me-2" }, null, -1 /* CACHED */)),
+                    _cache[114] || (_cache[114] = _createElementVNode("i", { class: "ri-folder-open-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('open') || 'Open'), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_301),
+                  ], 8 /* PROPS */, _hoisted_304),
                   _createElementVNode("a", {
                     class: "dropdown-item",
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('download')), ["prevent"])
                   }, [
-                    _cache[112] || (_cache[112] = _createElementVNode("i", { class: "ri-download-line me-2" }, null, -1 /* CACHED */)),
+                    _cache[115] || (_cache[115] = _createElementVNode("i", { class: "ri-download-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('download')), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_302),
+                  ], 8 /* PROPS */, _hoisted_305),
                   _createElementVNode("a", {
                     class: "dropdown-item",
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('share')), ["prevent"])
                   }, [
-                    _cache[113] || (_cache[113] = _createElementVNode("i", { class: "ri-share-line me-2" }, null, -1 /* CACHED */)),
+                    _cache[116] || (_cache[116] = _createElementVNode("i", { class: "ri-share-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('share_title') || 'Share'), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_303),
-                  _cache[122] || (_cache[122] = _createElementVNode("div", { class: "dropdown-divider" }, null, -1 /* CACHED */)),
+                  ], 8 /* PROPS */, _hoisted_306),
+                  _cache[125] || (_cache[125] = _createElementVNode("div", { class: "dropdown-divider" }, null, -1 /* CACHED */)),
                   _createElementVNode("a", {
                     class: "dropdown-item",
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('copy')), ["prevent"])
                   }, [
-                    _cache[114] || (_cache[114] = _createElementVNode("i", { class: "ri-file-copy-line me-2" }, null, -1 /* CACHED */)),
+                    _cache[117] || (_cache[117] = _createElementVNode("i", { class: "ri-file-copy-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('copy')), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_304),
+                  ], 8 /* PROPS */, _hoisted_307),
                   _createElementVNode("a", {
                     class: "dropdown-item",
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('cut')), ["prevent"])
                   }, [
-                    _cache[115] || (_cache[115] = _createElementVNode("i", { class: "ri-scissors-cut-line me-2" }, null, -1 /* CACHED */)),
+                    _cache[118] || (_cache[118] = _createElementVNode("i", { class: "ri-scissors-cut-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('cut')), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_305),
+                  ], 8 /* PROPS */, _hoisted_308),
                   _createElementVNode("a", {
                     class: _normalizeClass(["dropdown-item", {disabled: store.clipboard.items.length === 0}]),
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('paste')), ["prevent"])
                   }, [
-                    _cache[116] || (_cache[116] = _createElementVNode("i", { class: "ri-clipboard-line me-2" }, null, -1 /* CACHED */)),
+                    _cache[119] || (_cache[119] = _createElementVNode("i", { class: "ri-clipboard-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('paste')), 1 /* TEXT */)
-                  ], 10 /* CLASS, PROPS */, _hoisted_306),
-                  _cache[123] || (_cache[123] = _createElementVNode("div", { class: "dropdown-divider" }, null, -1 /* CACHED */)),
+                  ], 10 /* CLASS, PROPS */, _hoisted_309),
+                  _cache[126] || (_cache[126] = _createElementVNode("div", { class: "dropdown-divider" }, null, -1 /* CACHED */)),
                   _createElementVNode("a", {
                     class: "dropdown-item",
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('rename')), ["prevent"])
                   }, [
-                    _cache[117] || (_cache[117] = _createElementVNode("i", { class: "ri-edit-line me-2" }, null, -1 /* CACHED */)),
+                    _cache[120] || (_cache[120] = _createElementVNode("i", { class: "ri-edit-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('rename')), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_307),
+                  ], 8 /* PROPS */, _hoisted_310),
                   _createElementVNode("a", {
                     class: "dropdown-item",
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('perms')), ["prevent"])
                   }, [
-                    _cache[118] || (_cache[118] = _createElementVNode("i", { class: "ri-lock-2-line me-2" }, null, -1 /* CACHED */)),
+                    _cache[121] || (_cache[121] = _createElementVNode("i", { class: "ri-lock-2-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('perms')), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_308),
+                  ], 8 /* PROPS */, _hoisted_311),
                   _createElementVNode("a", {
                     class: "dropdown-item",
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('properties')), ["prevent"])
                   }, [
-                    _cache[119] || (_cache[119] = _createElementVNode("i", { class: "ri-information-line me-2" }, null, -1 /* CACHED */)),
+                    _cache[122] || (_cache[122] = _createElementVNode("i", { class: "ri-information-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('properties')), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_309),
+                  ], 8 /* PROPS */, _hoisted_312),
                   (contextMenu.file && contextMenu.file.type !== 'dir')
                     ? (_openBlock(), _createElementBlock("a", {
                         key: 0,
@@ -2321,19 +2360,19 @@ return function render(_ctx, _cache) {
                         href: "#",
                         onClick: _withModifiers($event => (cmAction('history')), ["prevent"])
                       }, [
-                        _cache[120] || (_cache[120] = _createElementVNode("i", { class: "ri-history-line me-2" }, null, -1 /* CACHED */)),
+                        _cache[123] || (_cache[123] = _createElementVNode("i", { class: "ri-history-line me-2" }, null, -1 /* CACHED */)),
                         _createTextVNode(" " + _toDisplayString(t('version_history') || 'Version History'), 1 /* TEXT */)
-                      ], 8 /* PROPS */, _hoisted_310))
+                      ], 8 /* PROPS */, _hoisted_313))
                     : _createCommentVNode("v-if", true),
-                  _cache[124] || (_cache[124] = _createElementVNode("div", { class: "dropdown-divider" }, null, -1 /* CACHED */)),
+                  _cache[127] || (_cache[127] = _createElementVNode("div", { class: "dropdown-divider" }, null, -1 /* CACHED */)),
                   _createElementVNode("a", {
                     class: "dropdown-item text-danger",
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('delete')), ["prevent"])
                   }, [
-                    _cache[121] || (_cache[121] = _createElementVNode("i", { class: "ri-delete-bin-line me-2" }, null, -1 /* CACHED */)),
+                    _cache[124] || (_cache[124] = _createElementVNode("i", { class: "ri-delete-bin-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('delete')), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_311)
+                  ], 8 /* PROPS */, _hoisted_314)
                 ], 64 /* STABLE_FRAGMENT */))
               : (_openBlock(), _createElementBlock(_Fragment, { key: 1 }, [
                   _createElementVNode("a", {
@@ -2341,26 +2380,26 @@ return function render(_ctx, _cache) {
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('restore')), ["prevent"])
                   }, [
-                    _cache[125] || (_cache[125] = _createElementVNode("i", { class: "ri-restart-line me-2" }, null, -1 /* CACHED */)),
+                    _cache[128] || (_cache[128] = _createElementVNode("i", { class: "ri-restart-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('restore') || 'Restore'), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_312),
+                  ], 8 /* PROPS */, _hoisted_315),
                   _createElementVNode("a", {
                     class: "dropdown-item",
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('properties')), ["prevent"])
                   }, [
-                    _cache[126] || (_cache[126] = _createElementVNode("i", { class: "ri-information-line me-2" }, null, -1 /* CACHED */)),
+                    _cache[129] || (_cache[129] = _createElementVNode("i", { class: "ri-information-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('properties')), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_313),
-                  _cache[128] || (_cache[128] = _createElementVNode("div", { class: "dropdown-divider" }, null, -1 /* CACHED */)),
+                  ], 8 /* PROPS */, _hoisted_316),
+                  _cache[131] || (_cache[131] = _createElementVNode("div", { class: "dropdown-divider" }, null, -1 /* CACHED */)),
                   _createElementVNode("a", {
                     class: "dropdown-item text-danger",
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('delete_perm')), ["prevent"])
                   }, [
-                    _cache[127] || (_cache[127] = _createElementVNode("i", { class: "ri-delete-bin-2-line me-2" }, null, -1 /* CACHED */)),
+                    _cache[130] || (_cache[130] = _createElementVNode("i", { class: "ri-delete-bin-2-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('delete_perm') || 'Delete Permanently'), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_314)
+                  ], 8 /* PROPS */, _hoisted_317)
                 ], 64 /* STABLE_FRAGMENT */))
           ]))
         : _createCommentVNode("v-if", true)

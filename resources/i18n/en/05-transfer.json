@@ -64,5 +64,10 @@
     "transfer_expires_within_day": "expires within 1 day",
     "transfer_expires_in_days": "expires in {days} days",
     "transfer_expires_in_week": "expires in 1 week",
-    "transfer_expires_in_weeks": "expires in {weeks} weeks"
+    "transfer_expires_in_weeks": "expires in {weeks} weeks",
+    "transfer_email_checking": "Checking email delivery…",
+    "transfer_email_configure": "Configure email delivery",
+    "transfer_email_unavailable": "File sending is unavailable until email delivery is configured and tested.",
+    "transfer_email_admin_required": "Ask an administrator to configure and test email delivery before sending files.",
+    "transfer_email_test_required": "Save the email settings and send a successful test email before sending files."
 }

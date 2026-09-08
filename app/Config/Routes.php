@@ -104,6 +104,7 @@ $routes->group('api', function($routes) {
     $routes->get('logs/query', 'UserAdminController::queryLogs');
 
     // Transfer
+    $routes->get('transfer/capability', 'TransferController::capability');
     $routes->get('transfer/status', 'TransferController::status');
     $routes->post('transfer/stage', 'TransferController::stage');
     $routes->post('transfer/upload', 'TransferController::upload');

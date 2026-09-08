@@ -1,15 +1,17 @@
+const defaultLocaleOptions = [
+    { code: 'en', labelKey: 'language_english', labelFallback: 'English' },
+    { code: 'de', labelKey: 'language_german', labelFallback: 'Deutsch' },
+    { code: 'fr', labelKey: 'language_french', labelFallback: 'Français' },
+    { code: 'sk', labelKey: 'language_slovak', labelFallback: 'Slovenčina' }
+];
+
 const i18n = Vue.reactive({
     locale: 'en',
     fallbackLocale: 'en',
     messages: {},
     fallbackMessages: {},
     availableLocales: ['en', 'de', 'fr', 'sk'],
-    availableLocaleOptions: [
-        { code: 'en', labelKey: 'language_english', labelFallback: 'English' },
-        { code: 'de', labelKey: 'language_german', labelFallback: 'Deutsch' },
-        { code: 'fr', labelKey: 'language_french', labelFallback: 'Français' },
-        { code: 'sk', labelKey: 'language_slovak', labelFallback: 'Slovenčina' }
-    ],
+    availableLocaleOptions: defaultLocaleOptions.map((locale) => ({ ...locale })),
     storageKey: 'extplorer_locale',
 
     async loadManifest() {
@@ -31,14 +33,22 @@ const i18n = Vue.reactive({
                     code: locale.code,
                     labelKey: locale.labelKey || `language_${locale.code}`,
                     labelFallback: locale.labelFallback || locale.code
-                }));
+                }))
+                .filter((locale, index, entries) =>
+                    entries.findIndex((entry) => entry.code === locale.code) === index
+                );
 
-            if (normalized.length > 0) {
+            if (normalized.length > 0 && normalized.some((locale) => locale.code === this.fallbackLocale)) {
                 this.availableLocaleOptions = normalized;
                 this.availableLocales = normalized.map((locale) => locale.code);
+            } else {
+                this.availableLocaleOptions = defaultLocaleOptions.map((locale) => ({ ...locale }));
+                this.availableLocales = defaultLocaleOptions.map((locale) => locale.code);
             }
         } catch (e) {
             console.error('Failed to load locale manifest', e);
+            this.availableLocaleOptions = defaultLocaleOptions.map((locale) => ({ ...locale }));
+            this.availableLocales = defaultLocaleOptions.map((locale) => locale.code);
         }
     },
 

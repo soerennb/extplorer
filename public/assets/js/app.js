@@ -20,6 +20,8 @@ const app = createApp({
         const uploadModal = ref(null);
         const fileHistoryModal = ref(null);
         const transferModal = ref(null);
+        const transferCapability = ref(null);
+        const transferCapabilityLoading = ref(true);
         const commandPaletteOpen = ref(false);
         const commandPaletteQuery = ref('');
         const commandPaletteInput = ref(null);
@@ -95,7 +97,7 @@ const app = createApp({
                 { id: 'search', label: i18n.t('command_open_search'), icon: 'ri-search-line', enabled: true, action: focusSearch },
                 { id: 'upload', label: i18n.t('upload'), icon: 'ri-upload-cloud-2-line', enabled: true, action: uploadFile },
                 { id: 'new-folder', label: i18n.t('new_folder'), icon: 'ri-folder-add-line', enabled: !store.isTrashMode, reason: unavailable, action: createFolder },
-                { id: 'send-files', label: i18n.t('send_files'), icon: 'ri-send-plane-line', enabled: true, action: openTransfer },
+                { id: 'send-files', label: i18n.t('send_files'), icon: 'ri-send-plane-line', enabled: transferAvailable.value === true, reason: i18n.t('transfer_email_test_required'), action: openTransfer },
                 { id: 'share', label: i18n.t('share'), icon: 'ri-share-line', enabled: hasSingleSelection && !store.isTrashMode, reason: i18n.t('command_requires_one_selection'), action: openShare },
                 { id: 'properties', label: i18n.t('properties'), icon: 'ri-information-line', enabled: hasSelection, reason: i18n.t('command_requires_selection'), action: showProperties },
                 { id: 'perms', label: i18n.t('perms'), icon: 'ri-lock-2-line', enabled: hasSelection && !store.isTrashMode, reason: i18n.t('command_requires_selection'), action: chmodSelected },
@@ -688,8 +690,58 @@ const app = createApp({
         // --- Remote/Auth ---
         const openAdmin = () => { if (userAdmin.value) userAdmin.value.open(); };
         const openProfile = (tab = null) => { if (userProfile.value) userProfile.value.open(tab); };
-        const openTransfer = () => { if (transferModal.value) transferModal.value.open(); };
-        const openTransferWithFile = (file) => { if (transferModal.value) transferModal.value.openWithFiles([file]); };
+        const transferAvailable = computed(() => transferCapability.value?.available === true);
+        const transferSettingsUrl = computed(() => {
+            if (transferCapability.value?.settings_url) return transferCapability.value.settings_url;
+            return isAdmin.value ? `${window.baseUrl}admin#settings/email` : '';
+        });
+
+        const loadTransferCapability = async () => {
+            transferCapabilityLoading.value = true;
+            try {
+                transferCapability.value = await Api.get('transfer/capability');
+            } catch (error) {
+                transferCapability.value = {
+                    available: false,
+                    reason: 'unavailable',
+                    settings_url: isAdmin.value ? `${window.baseUrl}admin#settings/email` : null
+                };
+            } finally {
+                transferCapabilityLoading.value = false;
+            }
+            return transferAvailable.value;
+        };
+
+        const redirectToTransferSettings = async () => {
+            if (transferSettingsUrl.value) {
+                window.location.href = transferSettingsUrl.value;
+                return false;
+            }
+
+            if (window.Swal) {
+                await Swal.fire(
+                    i18n.t('transfer_email_unavailable'),
+                    i18n.t('transfer_email_admin_required'),
+                    'info'
+                );
+            }
+            return false;
+        };
+
+        const ensureTransferAvailable = async () => {
+            const available = await loadTransferCapability();
+            return available || redirectToTransferSettings();
+        };
+
+        const openTransfer = async () => {
+            if (!(await ensureTransferAvailable())) return;
+            if (transferModal.value) transferModal.value.open();
+        };
+
+        const openTransferWithFile = async (file) => {
+            if (!(await ensureTransferAvailable())) return;
+            if (transferModal.value) transferModal.value.openWithFiles([file]);
+        };
 
         watch(commandPaletteQuery, () => {
             commandPaletteSelectedIndex.value = 0;
@@ -935,6 +987,7 @@ const app = createApp({
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (theme.value === 'auto') applyTheme(); });
             const lastPath = localStorage.getItem('extplorer_last_path') || '';
             store.loadPath(lastPath);
+            loadTransferCapability();
             
             ace.config.set('basePath', window.baseUrl + 'assets/vendor/ace');
             editorModal = new bootstrap.Modal(document.getElementById('editorModal'));
@@ -994,6 +1047,7 @@ const app = createApp({
             toggleDetailsPane, closeDetailsPane, toggleBookmark,
             emptyStateIcon, emptyStateTitle, emptyStateDescription,
             isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer, openTransferWithFile, openShare, openHistory,
+            transferCapability, transferCapabilityLoading, transferAvailable, transferSettingsUrl,
             contextMenu, showContextMenu, hideContextMenu, logout, cmAction,
             previewState, nextPreview, prevPreview, showWebDav, copyWebDavUrl, webDavUrl,
             dragIndicatorMode, onDragStart, onDragEnd, onDragOver, onDragLeave, onDrop,

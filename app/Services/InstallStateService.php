@@ -234,7 +234,7 @@ final class InstallStateService
         $groups['Administrators'] = ['admin'];
         $model->saveGroups($groups);
 
-        if (!$model->addUser($username, $password, 'admin', '/', ['Administrators'], '', '', true)) {
+        if (!$model->addUser($username, $password, 'admin', '/', ['Administrators'], '', '', false)) {
             throw new RuntimeException('Unable to create the initial administrator account.');
         }
     }
