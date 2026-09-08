@@ -66,11 +66,11 @@ to a temporary file, validate it, atomically replace the target, and reload Ngin
 configuration and fail the deployment. The platform API and documentation should use one identifier consistently (`serviceId`
 or `composeId`) for file mounts.
 
-The entrypoint also repairs the exact beta.1 directive
+The entrypoint also repairs the exact legacy directive
 `root /var/www/html/public;` while rendering the runtime configuration. It
 changes no other directive and refuses to start if the resulting template does
 not point to `/var/www/html/current/public`. This keeps stale host-mounted
-templates from producing PHP-FPM 404 responses after a beta.5 upgrade.
+templates from producing PHP-FPM 404 responses after an older release upgrade.
 
 Traefik is the HTTPS redirect owner in this deployment. The Dokploy override
 sets `app.forceGlobalSecureRequests=false` to prevent a second redirect inside

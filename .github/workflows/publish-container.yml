@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       release_tag:
-        description: Immutable Git tag to publish (for example v3.0.0-beta.5)
+        description: Immutable Git tag to publish (for example v3.0.0-beta.6)
         required: true
         type: string
       force_qemu:
@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Existing immutable release tag to publish (for example v3.0.0-beta.5)
+        description: Existing immutable release tag to publish (for example v3.0.0-beta.6)
         required: true
         type: string
       force_qemu:

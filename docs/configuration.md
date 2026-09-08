@@ -92,7 +92,7 @@ database path is provided.
 
 For reproducible deployments, set `EXTPLORER_IMAGE_REF` to an immutable
 release tag or digest, for example
-`ghcr.io/soerennb/extplorer3:3.0.0-beta.5` or
+`ghcr.io/soerennb/extplorer3:3.0.0-beta.6` or
 `ghcr.io/soerennb/extplorer3@sha256:<digest>`. `latest` follows the newest
 release that passed the release gates and is therefore intentionally mutable;
 `pull_policy: always` only controls when the reference is fetched.
