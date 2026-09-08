@@ -1886,6 +1886,12 @@ return function render(_ctx, _cache) {
                 if (!this.settings.mount_root_allowlist_text && Array.isArray(this.settings.mount_root_allowlist)) {
                     this.settings.mount_root_allowlist_text = this.settings.mount_root_allowlist.join('\n');
                 }
+                if (typeof this.settings.remote_endpoint_allowlist_text !== 'string' && Array.isArray(this.settings.remote_endpoint_allowlist)) {
+                    this.settings.remote_endpoint_allowlist_text = this.settings.remote_endpoint_allowlist.map((entry) => {
+                        if (typeof entry === 'string') return entry;
+                        return `${entry.protocol}://${entry.host}:${entry.port}`;
+                    }).join('\n');
+                }
                 if (!this.settings.email_protocol) {
                     this.settings.email_protocol = 'smtp';
                 }

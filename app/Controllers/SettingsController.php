@@ -59,9 +59,11 @@ class SettingsController extends BaseController
         }
 
         $settings['mount_root_allowlist_text'] = implode("\n", $settings['mount_root_allowlist'] ?? []);
+        $remoteEndpoints = (new RemoteEndpointPolicy())->allowlistedEndpoints();
+        $settings['remote_endpoint_allowlist'] = $remoteEndpoints;
         $settings['remote_endpoint_allowlist_text'] = implode("\n", array_map(
             static fn(array $endpoint): string => sprintf('%s://%s:%d', $endpoint['protocol'], $endpoint['host'], $endpoint['port']),
-            (new RemoteEndpointPolicy())->allowlistedEndpoints()
+            $remoteEndpoints
         ));
         $settings['share_upload_allowed_extensions_text'] = implode("\n", $settings['share_upload_allowed_extensions'] ?? []);
 
@@ -97,16 +99,18 @@ class SettingsController extends BaseController
         }
 
         try {
-            if (isset($json['remote_endpoint_allowlist_text'])) {
+            if (array_key_exists('remote_endpoint_allowlist_text', $json)) {
                 $json['remote_endpoint_allowlist'] = $this->parseRemoteEndpointList($json['remote_endpoint_allowlist_text']);
                 unset($json['remote_endpoint_allowlist_text']);
-            }
-
-            if (isset($json['remote_endpoint_allowlist'])) {
+            } elseif (array_key_exists('remote_endpoint_allowlist', $json)) {
                 if (is_string($json['remote_endpoint_allowlist']) || is_array($json['remote_endpoint_allowlist'])) {
                     $json['remote_endpoint_allowlist'] = $this->parseRemoteEndpointList($json['remote_endpoint_allowlist']);
                 } else {
-                    return $this->fail('Invalid remote endpoint allowlist');
+                    return $this->fail(
+                        'Invalid remote endpoint allowlist entry. Use protocol://server:port.',
+                        422,
+                        'invalid_remote_endpoint_allowlist'
+                    );
                 }
             }
 
@@ -116,8 +120,12 @@ class SettingsController extends BaseController
                     return $this->fail('Invalid remote login setting');
                 }
             }
-        } catch (\InvalidArgumentException $exception) {
-            return $this->fail($exception->getMessage());
+        } catch (\InvalidArgumentException) {
+            return $this->fail(
+                'Invalid remote endpoint allowlist entry. Use protocol://server:port.',
+                422,
+                'invalid_remote_endpoint_allowlist'
+            );
         }
 
         if (array_key_exists('remote_login_enabled', $json) && !is_bool($json['remote_login_enabled'])) {
@@ -405,6 +413,10 @@ class SettingsController extends BaseController
         $normalized = [];
 
         foreach ($entries as $entry) {
+            if (is_string($entry) && trim($entry) === '') {
+                continue;
+            }
+
             $endpoint = is_array($entry)
                 ? $policy->parseEndpoint(sprintf(
                     '%s://%s:%d',

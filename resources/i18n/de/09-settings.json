@@ -67,6 +67,7 @@
     "admin_settings_remote_endpoint_allowlist": "Remote-Endpoint-Allowlist (ein exakter Endpoint pro Zeile)",
     "admin_settings_remote_endpoint_allowlist_placeholder": "sftp://files.example.com:22\nftps://ftp.example.com:990",
     "admin_settings_remote_endpoint_allowlist_hint": "Format protocol://hostname:port. Leer bedeutet, dass alle Remote-Verbindungen abgelehnt werden; Wildcards und offene Netzwerke sind nicht erlaubt.",
+    "admin_settings_remote_endpoint_allowlist_invalid": "Ungültiger Remote-Endpoint. Verwende protocol://hostname:port.",
     "admin_settings_logging_heading": "Audit-Protokollierung",
     "admin_settings_logging_retention": "Aufbewahrungsanzahl",
     "admin_settings_logging_retention_hint": "Wie viele aktuelle Audit-Logeinträge behalten werden (100-20000).",

@@ -19,7 +19,8 @@ const Api = {
         }
 
         const translationKeys = {
-            current_password_incorrect: 'current_password_incorrect'
+            current_password_incorrect: 'current_password_incorrect',
+            invalid_remote_endpoint_allowlist: 'admin_settings_remote_endpoint_allowlist_invalid'
         };
         const key = translationKeys[payload.error];
         if (!key || !window.i18n || typeof window.i18n.t !== 'function') {

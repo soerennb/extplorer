@@ -20,7 +20,14 @@ async function monitorPage(page) {
       response.status() === 403 && response.url().includes("/api/ls");
     const expectedPasswordRejection =
       response.status() === 400 && response.url().includes("/api/profile/password");
-    if (response.status() >= 400 && !expectedPasswordGate && !expectedPasswordRejection) {
+    const expectedSettingsStepUp =
+      response.status() === 428 && response.url().endsWith("/api/settings");
+    if (
+      response.status() >= 400 &&
+      !expectedPasswordGate &&
+      !expectedPasswordRejection &&
+      !expectedSettingsStepUp
+    ) {
       failedResponses.push(`${response.status()} ${response.url()}`);
     }
   });
@@ -182,6 +189,40 @@ test("local user can reject invalid credentials, sign in, and sign out", async (
   await expect(page).toHaveURL(/\/login$/);
   await page.goto("/");
   await expect(page).toHaveURL(/\/login\?return=%2F$/);
+  await assertCleanBrowser();
+});
+
+test("admin can save settings after current-password confirmation", async ({
+  page,
+}) => {
+  const assertCleanBrowser = await monitorPage(page);
+
+  await login(page);
+  await page.goto("/admin#settings/mounts");
+
+  const endpointAllowlist = page.locator(
+    'textarea[aria-label*="Remote endpoint"]',
+  );
+  await expect(endpointAllowlist).toBeVisible();
+
+  // Whitespace-only input must be accepted as an empty allowlist and does not
+  // change the persisted policy, making the test safe for a shared smoke stack.
+  await endpointAllowlist.fill("\n  \r\n");
+  const saveResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/settings") &&
+      response.request().method() === "POST" &&
+      response.status() === 200,
+  );
+  await page.getByRole("button", { name: "Save Settings" }).click();
+
+  const stepUpInput = page.locator(".swal2-input");
+  await expect(stepUpInput).toBeVisible();
+  await stepUpInput.fill(password);
+  await page.locator(".swal2-confirm").click();
+  await saveResponse;
+  await expect(page.locator(".swal2-toast")).toContainText("Settings saved.");
+
   await assertCleanBrowser();
 });
 

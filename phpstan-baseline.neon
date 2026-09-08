@@ -1065,7 +1065,7 @@ parameters:
 		-
 			message: '#^Function config not found\.$#'
 			identifier: function.notFound
-			count: 9
+			count: 10
 			path: app/Views/admin.php
 
 		-
@@ -1119,7 +1119,7 @@ parameters:
 		-
 			message: '#^Function config not found\.$#'
 			identifier: function.notFound
-			count: 11
+			count: 13
 			path: app/Views/app.php
 
 		-

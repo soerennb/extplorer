@@ -713,6 +713,7 @@
     "admin_settings_remote_endpoint_allowlist": "Remote endpoint allowlist (one exact endpoint per line)",
     "admin_settings_remote_endpoint_allowlist_placeholder": "sftp://files.example.com:22\nftps://ftp.example.com:990",
     "admin_settings_remote_endpoint_allowlist_hint": "Use protocol://hostname:port. Empty means deny all remote connections; wildcards and open networks are not accepted.",
+    "admin_settings_remote_endpoint_allowlist_invalid": "Invalid remote endpoint. Use protocol://hostname:port.",
     "admin_settings_logging_heading": "Audit Logging",
     "admin_settings_logging_retention": "Retention Count",
     "admin_settings_logging_retention_hint": "How many recent audit log entries to keep (100-20000).",

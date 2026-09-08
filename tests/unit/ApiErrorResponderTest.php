@@ -64,4 +64,23 @@ class ApiErrorResponderTest extends CIUnitTestCase
         $this->assertSame('current_password_incorrect', $payload['error']);
         $this->assertSame('Current password is incorrect.', $payload['messages']['error']);
     }
+
+    public function testInvalidRemoteEndpointErrorCodeReturnsSafePublicMessage(): void
+    {
+        $controller = new ApiControllerErrorHarness();
+        $controller->initController(Services::request(), Services::response(), Services::logger());
+
+        $response = $controller->exposeFailure(
+            'Invalid remote endpoint allowlist entry. Use protocol://host:port.',
+            422,
+            'invalid_remote_endpoint_allowlist'
+        );
+        $payload = json_decode($response->getBody(), true);
+
+        $this->assertSame('invalid_remote_endpoint_allowlist', $payload['error']);
+        $this->assertSame(
+            'Invalid remote endpoint allowlist entry. Use protocol://server:port.',
+            $payload['messages']['error']
+        );
+    }
 }

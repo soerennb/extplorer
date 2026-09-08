@@ -632,7 +632,7 @@
     <script src="<?= base_url('assets/js/diff2html-ui.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/api.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/store.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/i18n.js') ?>"></script>
+    <script src="<?= base_url('assets/js/i18n.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/compiled/components/FileTree.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/compiled/components/UserAdmin.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/compiled/components/UserProfile.js?v=' . config('App')->version) ?>"></script>
@@ -641,6 +641,6 @@
     <script src="<?= base_url('assets/js/compiled/components/FileHistoryModal.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/compiled/components/TransferModal.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/compiled/app-render.js?v=' . config('App')->version) ?>"></script>
-    <script src="<?= base_url('assets/js/app.js?v=' . time()) ?>"></script>
+    <script src="<?= base_url('assets/js/app.js?v=' . config('App')->version) ?>"></script>
 </body>
 </html>

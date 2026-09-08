@@ -713,6 +713,7 @@
     "admin_settings_remote_endpoint_allowlist": "Liste des points distants autorisés (un point exact par ligne)",
     "admin_settings_remote_endpoint_allowlist_placeholder": "sftp://files.example.com:22\nftps://ftp.example.com:990",
     "admin_settings_remote_endpoint_allowlist_hint": "Utilisez protocol://hostname:port. Une liste vide refuse toutes les connexions distantes ; les jokers et réseaux ouverts sont refusés.",
+    "admin_settings_remote_endpoint_allowlist_invalid": "Point distant invalide. Utilisez protocol://hostname:port.",
     "admin_settings_logging_heading": "Journalisation d'audit",
     "admin_settings_logging_retention": "Nombre de rétention",
     "admin_settings_logging_retention_hint": "Combien d'entrées récentes conserver (100-20000).",

@@ -36,6 +36,10 @@ final class ApiErrorResponder
             return 'Current password is incorrect.';
         }
 
+        if ($status < 500 && $code === 'invalid_remote_endpoint_allowlist') {
+            return 'Invalid remote endpoint allowlist entry. Use protocol://server:port.';
+        }
+
         $message = is_array($messages)
             ? (string)($messages['error'] ?? $messages['message'] ?? reset($messages) ?: '')
             : (string)$messages;
