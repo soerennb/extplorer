@@ -74,7 +74,7 @@ still executed as `www-data` (UID 82). Keep the host secret file readable only b
 
 **Note for Portainer Users:** Do **not** simply paste the `docker-compose.yml` into the Web Editor. Use the "Repository" method to ensure Portainer clones the configuration files along with the compose file.
 
-- `ghcr.io/soerennb/extplorer3:latest` for the `extplorer-app` service (php-fpm)
+- `ghcr.io/soerennb/extplorer3:latest` for the `extplorer-app` service (php-fpm); `latest` tracks the newest release that passed the release gates
 - `nginx:alpine` for the `extplorer-web` service
 - An `extplorer-init` service that populates the shared code volume on first run and on image updates
 
@@ -97,8 +97,9 @@ release identity. `pull_policy: always` does not replace an already active code 
 that synchronization.
 
 Production deployments should set `EXTPLORER_IMAGE_REF` to an immutable
-release tag or digest. `latest` remains available as a convenience for
-development, but is not reproducible and makes rollback analysis harder.
+release tag or digest when reproducibility and controlled rollback matter.
+The moving `latest` tag follows the newest release that passed the release
+gates and is intended for installations that want automatic beta updates.
 
 To inspect or roll back a release:
 

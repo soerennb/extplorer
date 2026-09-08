@@ -186,6 +186,7 @@ jobs:
     uses: ./.github/workflows/publish-container.yml
     with:
       release_tag: ${{ github.ref_name }}
+      publish_latest: true
     permissions:
       contents: read
       packages: write

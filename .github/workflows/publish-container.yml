@@ -12,6 +12,11 @@ on:
         required: false
         default: false
         type: boolean
+      publish_latest:
+        description: Promote this release to the moving latest tag
+        required: false
+        default: false
+        type: boolean
   workflow_dispatch:
     inputs:
       release_tag:
@@ -20,6 +25,11 @@ on:
         type: string
       force_qemu:
         description: Build arm64 through QEMU instead of the native arm64 runner
+        required: false
+        default: false
+        type: boolean
+      publish_latest:
+        description: Promote this release to the moving latest tag
         required: false
         default: false
         type: boolean
@@ -77,7 +87,9 @@ jobs:
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
       - name: Ensure Ace assets
-        run: bash ./scripts/ensure-ace-assets.sh
+        run: |
+          bash ./scripts/ensure-ace-assets.sh
+          test -s public/assets/vendor/ace/ace.min.js
 
       - name: Log in to GHCR
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -148,6 +160,8 @@ jobs:
       - name: Create and verify manifest tags
         env:
           RELEASE_TAG: ${{ inputs.release_tag }}
+          PUBLISH_LATEST: ${{ inputs.publish_latest }}
+          REPOSITORY: ${{ github.repository }}
         shell: bash
         run: |
           set -euo pipefail
@@ -166,10 +180,20 @@ jobs:
             "${IMAGE_NAME}:${major}.${minor}"
             "${IMAGE_NAME}:${major}"
           )
-          case "$version" in
-            *-*) ;;
-            *) tags+=("${IMAGE_NAME}:latest") ;;
-          esac
+          if [ "$PUBLISH_LATEST" = "true" ]; then
+            case "$RELEASE_TAG" in
+              v*-*)
+                newest_prerelease_tag="$({
+                  git ls-remote --tags --refs "https://github.com/${REPOSITORY}.git" \
+                    | awk -F/ '$3 ~ /^v[0-9]+\.[0-9]+\.[0-9]+-.+$/ { print $3 }' \
+                    | sort -V \
+                    | tail -n 1
+                } || true)"
+                test "$RELEASE_TAG" = "$newest_prerelease_tag"
+                ;;
+            esac
+            tags+=("${IMAGE_NAME}:latest")
+          fi
 
           for tag in "${tags[@]}"; do
             docker buildx imagetools create --tag "$tag" "${source_images[@]}"
@@ -179,3 +203,13 @@ jobs:
             | tee manifest.txt
           grep -q 'linux/amd64' manifest.txt
           grep -q 'linux/arm64' manifest.txt
+
+          if [ "$PUBLISH_LATEST" = "true" ]; then
+            release_digest="$(awk '$1 == "Digest:" { print $2; exit }' manifest.txt)"
+            latest_manifest="$(docker buildx imagetools inspect "${IMAGE_NAME}:latest")"
+            latest_digest="$(awk '$1 == "Digest:" { print $2; exit }' <<< "$latest_manifest")"
+            test -n "$release_digest"
+            test "$release_digest" = "$latest_digest"
+            grep -q 'linux/amd64' <<< "$latest_manifest"
+            grep -q 'linux/arm64' <<< "$latest_manifest"
+          fi

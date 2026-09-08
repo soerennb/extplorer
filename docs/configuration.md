@@ -92,10 +92,10 @@ database path is provided.
 
 For reproducible deployments, set `EXTPLORER_IMAGE_REF` to an immutable
 release tag or digest, for example
-`ghcr.io/soerennb/extplorer3:3.0.0-beta.1` or
-`ghcr.io/soerennb/extplorer3@sha256:<digest>`. `pull_policy: always` only
-controls when the reference is fetched; it does not make a mutable tag
-reproducible.
+`ghcr.io/soerennb/extplorer3:3.0.0-beta.5` or
+`ghcr.io/soerennb/extplorer3@sha256:<digest>`. `latest` follows the newest
+release that passed the release gates and is therefore intentionally mutable;
+`pull_policy: always` only controls when the reference is fetched.
 
 The canonical configuration names are `EXTPLORER_BASE_URL`, `EXTPLORER_WRITE_PATH`, `EXTPLORER_ENCRYPTION_KEY` and
 `EXTPLORER_ENCRYPTION_KEY_FILE`. The aliases `app.baseURL`, `app_baseURL`, `WRITEPATH` and `encryption.key` remain supported
