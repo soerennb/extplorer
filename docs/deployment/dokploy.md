@@ -10,10 +10,19 @@ connects only the Nginx `extplorer-web` service to Dokploy's external Traefik ne
 3. Set `DOKPLOY_NETWORK_NAME` if the installation uses a network other than `dokploy-network`.
 4. Configure a domain for the `extplorer-web` service in Dokploy's Domains UI. The domain must target container port `80`.
 5. Set `EXTPLORER_BASE_URL` to the public HTTPS URL, including the trailing slash.
-6. Use `docker-compose.secrets.yml.example` as a template for a Dokploy secret file. Keep the administrator password and
+6. Set `EXTPLORER_TRUSTED_PROXY_IPS` to the Traefik source IP or CIDR as seen on the Dokploy network. Do not use
+   `0.0.0.0/0`; forwarded headers from arbitrary clients must never be trusted. The external network range can be inspected with:
+
+   ```bash
+   docker network inspect "${DOKPLOY_NETWORK_NAME:-dokploy-network}" \
+     --format '{{range .IPAM.Config}}{{.Subnet}}{{"\n"}}{{end}}'
+   ```
+
+   Use the narrowest range that contains Traefik, not necessarily the entire Docker address pool.
+7. Use `docker-compose.secrets.yml.example` as a template for a Dokploy secret file. Keep the administrator password and
    encryption key outside ordinary environment variables where Dokploy supports secret mounts. The overlay handles root-owned
    mode-600 secret files during initialization and drops the long-running PHP-FPM process to `www-data`.
-7. Deploy and wait for the `extplorer-init`, `extplorer-app` and `extplorer-web` health states before considering the release successful.
+8. Deploy and wait for the `extplorer-init`, `extplorer-app` and `extplorer-web` health states before considering the release successful.
 
 The override intentionally removes host port publishing. Traefik reaches `extplorer-web` over the external network, while
 `extplorer-app` and `extplorer-init` continue to use the private `extplorer-net` network.
@@ -27,7 +36,10 @@ COMPOSE_ARGS='-f docker-compose.yml -f docker-compose.dokploy.yml' \
 ```
 
 The verifier checks service state, the application readiness marker and
-migration state, `nginx -t`, and the public `/health` route. If the Traefik
+migration state, `nginx -t`, the active release document root, forwarded HTTPS
+configuration, the public `/health` route and a PHP-backed `/login` request.
+The latter must not return a 307 or an HTTP redirect and must include HSTS;
+this proves that CodeIgniter recognized the external HTTPS request. If the Traefik
 API is reachable, set `TRAEFIK_API_URL` and `TRAEFIK_ROUTER_NAME` as well; a
 missing router then fails verification instead of being mistaken for a
 successful Compose deployment. The script is deliberately usable from a
@@ -53,6 +65,19 @@ The supplied Nginx entrypoint already runs `nginx -t` before startup. A platform
 to a temporary file, validate it, atomically replace the target, and reload Nginx. If validation fails, retain the previous
 configuration and fail the deployment. The platform API and documentation should use one identifier consistently (`serviceId`
 or `composeId`) for file mounts.
+
+The entrypoint also repairs the exact beta.1 directive
+`root /var/www/html/public;` while rendering the runtime configuration. It
+changes no other directive and refuses to start if the resulting template does
+not point to `/var/www/html/current/public`. This keeps stale host-mounted
+templates from producing PHP-FPM 404 responses after a beta.5 upgrade.
+
+Traefik is the HTTPS redirect owner in this deployment. The Dokploy override
+sets `app.forceGlobalSecureRequests=false` to prevent a second redirect inside
+the container. Nginx forwards Traefik's `X-Forwarded-Proto` header to PHP, and
+CodeIgniter accepts it only when the source matches
+`EXTPLORER_TRUSTED_PROXY_IPS`; secure cookies and HSTS therefore remain active
+for the public HTTPS request without trusting arbitrary client headers.
 
 ## Upgrade and rollback
 

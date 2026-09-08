@@ -141,6 +141,12 @@ class InstallStateServiceTest extends CIUnitTestCase
         $nginx = (string)file_get_contents(ROOTPATH . 'docker/nginx/default.conf');
         $writableHtaccess = (string)file_get_contents(ROOTPATH . 'writable/.htaccess');
 
+        $this->assertStringContainsString('root /var/www/html/current/public;', $nginx);
+        $this->assertStringNotContainsString('root /var/www/html/public;', $nginx);
+        $this->assertStringContainsString(
+            'fastcgi_param HTTP_X_FORWARDED_PROTO $http_x_forwarded_proto;',
+            $nginx
+        );
         $this->assertStringContainsString('location ~ ^/(writable|app|tests|vendor|spark)', $nginx);
         $this->assertStringContainsString('deny all;', $nginx);
         $this->assertStringContainsString('Require all denied', $writableHtaccess);

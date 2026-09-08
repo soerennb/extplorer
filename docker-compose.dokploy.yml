@@ -1,4 +1,11 @@
 services:
+  extplorer-app:
+    environment:
+      # Traefik owns the HTTP-to-HTTPS redirect. CodeIgniter still receives
+      # the trusted forwarded scheme below for secure cookies and HSTS.
+      app.forceGlobalSecureRequests: "false"
+      EXTPLORER_TRUSTED_PROXY_IPS: ${EXTPLORER_TRUSTED_PROXY_IPS:?Set EXTPLORER_TRUSTED_PROXY_IPS to the Traefik source IP or CIDR}
+
   extplorer-web:
     # Dokploy/Traefik is the ingress; do not publish a host port here.
     ports: !override []

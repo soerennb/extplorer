@@ -128,7 +128,11 @@ rolls back staged files if activation fails.
 ### Security Controls (Current Defaults)
 The following controls are enabled in the application and should be considered part of your operational baseline:
 
-- HTTPS and secure cookies are enforced in production mode.
+- HTTPS redirects and secure cookies are enforced in production mode. When
+  Traefik terminates TLS, let Traefik own the redirect, set
+  `app.forceGlobalSecureRequests=false` in the Dokploy override, and configure
+  `EXTPLORER_TRUSTED_PROXY_IPS`; Nginx forwards the trusted
+  `X-Forwarded-Proto` value so CodeIgniter still marks the request as secure.
 - Session IDs are regenerated on login and old IDs are destroyed. Set
   `EXTPLORER_SESSION_MATCH_IP=1` only when stable client IPs are guaranteed;
   otherwise normal mobile/proxy IP changes would invalidate sessions.
