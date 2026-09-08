@@ -51,4 +51,72 @@ class PasswordStateMigrationTest extends CIUnitTestCase
         $this->assertSame(0, $model->getUser('admin')['failed_login_count']);
         $this->assertSame(0, $model->migratePasswordState());
     }
+
+    public function testLegacyInitialAdminWithCustomPasswordIsReleasedOnce(): void
+    {
+        $model = new UserModel();
+        $model->saveUsers([[
+            'username' => 'admin',
+            'password_hash' => password_hash('chosen-during-setup', PASSWORD_DEFAULT),
+            'role' => 'admin',
+            'groups' => ['Administrators'],
+            'must_change_password' => true,
+            'auth_version' => 1,
+            'disabled' => false,
+        ]]);
+
+        $this->assertSame(1, $model->migrateLegacyInitialAdminPasswordState());
+        $user = $model->getUser('admin');
+        $this->assertFalse($user['must_change_password']);
+        $this->assertSame(2, $user['auth_version']);
+        $this->assertTrue(password_verify('chosen-during-setup', $user['password_hash']));
+        $this->assertSame(0, $model->migrateLegacyInitialAdminPasswordState());
+    }
+
+    public function testLegacyInitialAdminWithLiteralDefaultRemainsRequired(): void
+    {
+        $model = new UserModel();
+        $model->saveUsers([[
+            'username' => 'admin',
+            'password_hash' => password_hash('admin', PASSWORD_DEFAULT),
+            'role' => 'admin',
+            'groups' => ['Administrators'],
+            'must_change_password' => true,
+            'auth_version' => 1,
+            'disabled' => false,
+        ]]);
+
+        $this->assertSame(0, $model->migrateLegacyInitialAdminPasswordState());
+        $user = $model->getUser('admin');
+        $this->assertTrue($user['must_change_password']);
+        $this->assertSame(1, $user['auth_version']);
+    }
+
+    public function testLegacyInitialAdminIsNotReleasedWhenAnotherActiveAdminExists(): void
+    {
+        $model = new UserModel();
+        $model->saveUsers([
+            [
+                'username' => 'admin',
+                'password_hash' => password_hash('chosen-during-setup', PASSWORD_DEFAULT),
+                'role' => 'admin',
+                'groups' => ['Administrators'],
+                'must_change_password' => true,
+                'auth_version' => 1,
+                'disabled' => false,
+            ],
+            [
+                'username' => 'operator',
+                'password_hash' => password_hash('operator-password', PASSWORD_DEFAULT),
+                'role' => 'admin',
+                'groups' => ['Administrators'],
+                'must_change_password' => false,
+                'auth_version' => 1,
+                'disabled' => false,
+            ],
+        ]);
+
+        $this->assertSame(0, $model->migrateLegacyInitialAdminPasswordState());
+        $this->assertTrue($model->getUser('admin')['must_change_password']);
+    }
 }

@@ -14,12 +14,13 @@ async function monitorPage(page) {
 
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("response", (response) => {
-    // The application loads the file list before the mandatory first-login
-    // password change has completed. Those two 403 responses are expected;
-    // all other failed browser requests remain test failures.
+    // A legacy persistent installation may still need to complete its
+    // one-time password gate while the smoke suite is running.
     const expectedPasswordGate =
       response.status() === 403 && response.url().includes("/api/ls");
-    if (response.status() >= 400 && !expectedPasswordGate) {
+    const expectedPasswordRejection =
+      response.status() === 400 && response.url().includes("/api/profile/password");
+    if (response.status() >= 400 && !expectedPasswordGate && !expectedPasswordRejection) {
       failedResponses.push(`${response.status()} ${response.url()}`);
     }
   });
@@ -50,6 +51,9 @@ async function login(page) {
   await page.getByTestId("login-submit").click();
   await expect(page.getByTestId("app-shell")).toBeVisible();
   await page.waitForLoadState("networkidle");
+  await expect
+    .poll(() => page.evaluate(() => window.forcePasswordChange === true))
+    .toBe(false);
   await completeRequiredPasswordChange(page);
   await expect(page.locator(".swal2-container")).toHaveCount(0);
 }
@@ -158,6 +162,19 @@ test("local user can reject invalid credentials, sign in, and sign out", async (
   await page.getByTestId("login-submit").click();
   await expect(page.getByTestId("app-shell")).toBeVisible();
   await completeRequiredPasswordChange(page);
+
+  await page.getByTestId("user-menu").click();
+  await page.locator(".dropdown-menu.show a.dropdown-item").first().click();
+  await page.locator("#profile-tab-security").click();
+  await page.locator("#profile-current-password").fill("incorrect-password");
+  await page.locator("#profile-new-password").fill(updatedPassword);
+  await page.locator("#profile-confirm-password").fill(updatedPassword);
+  await page.locator("#profile-panel-security button").filter({ hasText: "Update" }).click();
+  await expect(page.locator("#profile-panel-security .alert-danger")).toContainText(
+    "Current password is incorrect.",
+  );
+  await page.locator("#userProfileModal .btn-close").click();
+  await expect(page.locator("#userProfileModal")).toBeHidden();
 
   await restoreInitialPassword(page);
   await page.getByTestId("user-menu").click();

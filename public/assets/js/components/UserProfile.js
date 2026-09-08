@@ -24,7 +24,7 @@ const UserProfile = {
                         <i class="ri-alert-line fs-5 me-2 mt-1"></i>
                         <div>
                             <strong>{{ t('password_change_required') || 'Password change required' }}</strong>
-                            <div class="small">{{ t('password_change_required_desc') || 'You are using the default admin password. Please set a new password now.' }}</div>
+                            <div class="small">{{ t('password_change_required_desc') || 'A password change is required before continuing.' }}</div>
                         </div>
                     </div>
 

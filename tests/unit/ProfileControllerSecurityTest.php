@@ -75,4 +75,46 @@ class ProfileControllerSecurityTest extends CIUnitTestCase
         $this->assertSame(400, $response->getStatusCode());
         $this->assertFalse((bool)(new UserModel())->getUser('alice')['2fa_enabled']);
     }
+
+    public function testWrongCurrentPasswordReturnsStableSafeError(): void
+    {
+        $controller = new ProfileController();
+        $controller->initController(Services::request(), Services::response(), Services::logger());
+        Services::request()->setBody(json_encode([
+            'old_password' => 'wrong-password',
+            'password' => 'New-strong-password!2026',
+        ]));
+
+        $response = $controller->updatePassword();
+        $payload = json_decode($response->getBody(), true);
+
+        $this->assertSame(400, $response->getStatusCode());
+        $this->assertSame('current_password_incorrect', $payload['error']);
+        $this->assertSame('Current password is incorrect.', $payload['messages']['error']);
+        $this->assertTrue(password_verify('correct-password', (new UserModel())->getUser('alice')['password_hash']));
+    }
+
+    public function testSuccessfulPasswordUpdateClearsForcedChangeState(): void
+    {
+        $model = new UserModel();
+        $model->updateUser('alice', ['must_change_password' => true]);
+        session()->set(['force_password_change' => true, 'auth_version' => 1]);
+
+        $controller = new ProfileController();
+        $controller->initController(Services::request(), Services::response(), Services::logger());
+        Services::request()->setBody(json_encode([
+            'old_password' => 'correct-password',
+            'password' => 'New-strong-password!2026',
+        ]));
+
+        $response = $controller->updatePassword();
+        $user = (new UserModel())->getUser('alice');
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertFalse($user['must_change_password']);
+        $this->assertSame(2, $user['auth_version']);
+        $this->assertTrue(password_verify('New-strong-password!2026', $user['password_hash']));
+        $this->assertNull(session('force_password_change'));
+        $this->assertSame(2, session('auth_version'));
+    }
 }

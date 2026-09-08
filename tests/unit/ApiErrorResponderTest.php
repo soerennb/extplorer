@@ -9,9 +9,9 @@ use Config\Services;
 
 class ApiControllerErrorHarness extends ApiController
 {
-    public function exposeFailure(string $message, int $status = 400)
+    public function exposeFailure(string $message, int $status = 400, ?string $code = null)
     {
-        return $this->fail($message, $status);
+        return $this->fail($message, $status, $code);
     }
 }
 
@@ -51,5 +51,17 @@ class ApiErrorResponderTest extends CIUnitTestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{32}$/', $payload['request_id']);
         $this->assertSame($payload['request_id'], $response->getHeaderLine('X-Request-ID'));
         $this->assertStringNotContainsString('/var/www/html', $response->getBody());
+    }
+
+    public function testKnownPasswordErrorCodeReturnsSafePublicMessage(): void
+    {
+        $controller = new ApiControllerErrorHarness();
+        $controller->initController(Services::request(), Services::response(), Services::logger());
+
+        $response = $controller->exposeFailure('Current password is incorrect', 400, 'current_password_incorrect');
+        $payload = json_decode($response->getBody(), true);
+
+        $this->assertSame('current_password_incorrect', $payload['error']);
+        $this->assertSame('Current password is incorrect.', $payload['messages']['error']);
     }
 }

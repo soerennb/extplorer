@@ -13,6 +13,22 @@ const Api = {
         }
         return 'Unable to reach the server. Please check your connection and try again.';
     },
+    localizedErrorFromPayload(payload) {
+        if (!payload || typeof payload !== 'object') {
+            return '';
+        }
+
+        const translationKeys = {
+            current_password_incorrect: 'current_password_incorrect'
+        };
+        const key = translationKeys[payload.error];
+        if (!key || !window.i18n || typeof window.i18n.t !== 'function') {
+            return '';
+        }
+
+        const translated = window.i18n.t(key);
+        return translated && translated !== key ? translated : '';
+    },
     async parseResponseBody(res) {
         const contentType = (res.headers.get('content-type') || '').toLowerCase();
         const isJson = contentType.includes('application/json') || contentType.includes('+json');
@@ -38,6 +54,10 @@ const Api = {
     },
     errorFromPayload(payload, fallback = '') {
         if (payload && typeof payload === 'object') {
+            const localizedMessage = this.localizedErrorFromPayload(payload);
+            if (localizedMessage) {
+                return localizedMessage;
+            }
             return payload.messages?.error || payload.message || payload.error || payload.title || fallback || this.genericServerError();
         }
 

@@ -1,9 +1,10 @@
 {
     "change_password": "Changer le mot de passe",
     "password_change_required": "Changement de mot de passe requis",
-    "password_change_required_desc": "Vous utilisez le mot de passe admin par defaut. Veuillez en definir un nouveau.",
+    "password_change_required_desc": "Vous devez modifier votre mot de passe avant de continuer.",
     "password_change_required_api": "Le changement de mot de passe est requis avant de continuer.",
     "current_password": "Mot de passe actuel",
+    "current_password_incorrect": "Le mot de passe actuel est incorrect.",
     "password_placeholder": "••••••••",
     "password_min_hint": "Minimum 12 caractères",
     "password_confirm_hint": "Ressaisissez le nouveau mot de passe",

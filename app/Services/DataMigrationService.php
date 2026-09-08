@@ -10,16 +10,20 @@ use App\Services\State\StorageSchemaService;
  */
 final class DataMigrationService
 {
-    public const CURRENT_VERSION = 4;
+    public const CURRENT_VERSION = 5;
 
     private string $migrationState;
     private string $backupDirectory;
+    private string $usersStatePath;
+    private string $stateDriver;
 
     public function __construct()
     {
         $storage = config('Storage');
         $this->migrationState = $storage->state . '/migrations.php';
         $this->backupDirectory = $storage->backups . '/migration-' . gmdate('Ymd-His');
+        $this->usersStatePath = $storage->state . '/users.php';
+        $this->stateDriver = $storage->stateDriver;
     }
 
     public function run(): int
@@ -62,6 +66,13 @@ final class DataMigrationService
             (new \App\Models\UserModel())->migratePasswordState();
             $version = 4;
             $applied[] = 'account-auth-state-v4';
+        }
+
+        if ($version < 5) {
+            $this->backupUserStateForPasswordMigration();
+            (new \App\Models\UserModel())->migrateLegacyInitialAdminPasswordState();
+            $version = 5;
+            $applied[] = 'legacy-initial-admin-password-state-v5';
         }
 
         // Keep this idempotent and run it on every boot. This also handles a
@@ -153,6 +164,13 @@ final class DataMigrationService
         foreach (glob($storage->trash . '/*/index.json') ?: [] as $legacyIndex) {
             $target = dirname($legacyIndex) . '/index.php';
             $this->migrateFile('trash-index', $target, $legacyIndex, null);
+        }
+    }
+
+    private function backupUserStateForPasswordMigration(): void
+    {
+        if ($this->stateDriver === 'file' && is_file($this->usersStatePath)) {
+            $this->backup($this->usersStatePath, 'users-password-state-v5.php');
         }
     }
 

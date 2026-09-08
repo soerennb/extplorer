@@ -1,9 +1,10 @@
 {
     "change_password": "Passwort ändern",
     "password_change_required": "Passwortaenderung erforderlich",
-    "password_change_required_desc": "Du verwendest das Standard-Admin-Passwort. Bitte setze jetzt ein neues Passwort.",
+    "password_change_required_desc": "Vor dem Fortfahren muss das Passwort geändert werden.",
     "password_change_required_api": "Vor dem Fortfahren muss das Passwort geändert werden.",
     "current_password": "Aktuelles Passwort",
+    "current_password_incorrect": "Das aktuelle Passwort ist falsch.",
     "password_placeholder": "••••••••",
     "password_min_hint": "Mindestens 12 Zeichen",
     "password_confirm_hint": "Neues Passwort erneut eingeben",

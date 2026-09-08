@@ -30,8 +30,12 @@ final class ApiErrorResponder
         };
     }
 
-    public static function message(mixed $messages, int $status): string
+    public static function message(mixed $messages, int $status, ?string $code = null): string
     {
+        if ($status < 500 && $code === 'current_password_incorrect') {
+            return 'Current password is incorrect.';
+        }
+
         $message = is_array($messages)
             ? (string)($messages['error'] ?? $messages['message'] ?? reset($messages) ?: '')
             : (string)$messages;

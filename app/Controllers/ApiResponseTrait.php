@@ -30,7 +30,7 @@ trait ApiResponseTrait
         ));
 
         $publicMessages = [
-            'error' => ApiErrorResponder::message($messages, $status),
+            'error' => ApiErrorResponder::message($messages, $status, $errorCode),
         ];
 
         // Preserve intentionally structured, non-exception details for clients

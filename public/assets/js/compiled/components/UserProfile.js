@@ -482,7 +482,7 @@ return function render(_ctx, _cache) {
                   _cache[1] || (_cache[1] = _createElementVNode("i", { class: "ri-alert-line fs-5 me-2 mt-1" }, null, -1 /* CACHED */)),
                   _createElementVNode("div", null, [
                     _createElementVNode("strong", null, _toDisplayString(t('password_change_required') || 'Password change required'), 1 /* TEXT */),
-                    _createElementVNode("div", _hoisted_9, _toDisplayString(t('password_change_required_desc') || 'You are using the default admin password. Please set a new password now.'), 1 /* TEXT */)
+                    _createElementVNode("div", _hoisted_9, _toDisplayString(t('password_change_required_desc') || 'A password change is required before continuing.'), 1 /* TEXT */)
                   ])
                 ]))
               : _createCommentVNode("v-if", true),

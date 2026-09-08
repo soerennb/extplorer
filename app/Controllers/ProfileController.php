@@ -166,7 +166,7 @@ class ProfileController extends BaseController
 
         $userModel = new UserModel();
         if (!$userModel->verifyUser($username, $oldPassword)) {
-            return $this->fail('Current password is incorrect');
+            return $this->fail('Current password is incorrect', 400, 'current_password_incorrect');
         }
         if ($userModel->updateUser($username, [
             'password' => $password,

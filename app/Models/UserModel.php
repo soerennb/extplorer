@@ -291,6 +291,61 @@ class UserModel
         });
     }
 
+    /**
+     * Clears the password-change flag left by the pre-setup-flow release,
+     * but only when the account is unambiguously the original administrator.
+     *
+     * The literal historical default password remains protected by the flag.
+     * This migration is intentionally separate from authentication so that a
+     * normal login can never infer state from a password value.
+     */
+    public function migrateLegacyInitialAdminPasswordState(): int
+    {
+        return AtomicFileStore::transaction($this->usersFile, function (array &$users): int {
+            $activeAdministrators = 0;
+            foreach ($users as $user) {
+                if (is_array($user)
+                    && ($user['role'] ?? '') === 'admin'
+                    && empty($user['disabled'])
+                ) {
+                    $activeAdministrators++;
+                }
+            }
+
+            if ($activeAdministrators !== 1 || $users === []) {
+                return 0;
+            }
+
+            $firstKey = array_key_first($users);
+            if (!is_array($users[$firstKey])) {
+                return 0;
+            }
+
+            $candidate =& $users[$firstKey];
+            $groups = $candidate['groups'] ?? null;
+            $passwordHash = $candidate['password_hash'] ?? null;
+            $hashInfo = is_string($passwordHash) ? password_get_info($passwordHash) : [];
+
+            if (($candidate['role'] ?? '') !== 'admin'
+                || !empty($candidate['disabled'])
+                || !is_array($groups)
+                || !in_array('Administrators', $groups, true)
+                || ($candidate['must_change_password'] ?? false) !== true
+                || !array_key_exists('auth_version', $candidate)
+                || (int)$candidate['auth_version'] !== 1
+                || !is_string($passwordHash)
+                || (int)($hashInfo['algo'] ?? 0) === 0
+                || password_verify('admin', $passwordHash)
+            ) {
+                return 0;
+            }
+
+            $candidate['must_change_password'] = false;
+            $candidate['auth_version']++;
+            return 1;
+        });
+    }
+
     public function deleteUser(string $username): bool
     {
         return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username): bool {
