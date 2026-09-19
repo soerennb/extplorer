@@ -40,6 +40,13 @@ class AuthFilterSecurityTest extends CIUnitTestCase
             'auth_version' => 1,
             'connection' => ['mode' => 'local'],
             'last_activity_ts' => time() - 120,
+            'step_up_grant' => [
+                'token_hash' => str_repeat('a', 64),
+                'username' => 'alice',
+                'auth_version' => 1,
+                'issued_at' => time() - 10,
+                'expires_at' => time() + 590,
+            ],
         ]);
         unset($_COOKIE[RememberMeService::COOKIE_NAME]);
         if (is_file($this->tokensFile)) {
@@ -77,5 +84,6 @@ class AuthFilterSecurityTest extends CIUnitTestCase
 
         $this->assertSame(302, $response->getStatusCode());
         $this->assertFalse((bool)session('isLoggedIn'));
+        $this->assertNull(session('step_up_grant'));
     }
 }

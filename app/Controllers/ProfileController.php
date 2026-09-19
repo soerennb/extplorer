@@ -6,6 +6,7 @@ use App\Models\UserModel;
 use App\Services\AuthenticationService;
 use App\Services\LogService;
 use App\Services\PasswordPolicy;
+use App\Services\StepUpAuthenticationService;
 
 class ProfileController extends BaseController
 {
@@ -84,6 +85,7 @@ class ProfileController extends BaseController
             if ($updatedUser) {
                 session()->set('auth_version', (int)$updatedUser['auth_version']);
             }
+            StepUpAuthenticationService::clearGrant();
             (new AuthenticationService($userModel))->revokeUserTokens($username);
             LogService::log('Enable 2FA', '', 'Authenticator enrollment completed');
             
@@ -141,6 +143,7 @@ class ProfileController extends BaseController
         if ($updatedUser) {
             session()->set('auth_version', (int)$updatedUser['auth_version']);
         }
+        StepUpAuthenticationService::clearGrant();
         (new AuthenticationService($userModel))->revokeUserTokens($username);
         LogService::log('Disable 2FA', '', 'Authenticator enrollment removed');
 
@@ -176,6 +179,7 @@ class ProfileController extends BaseController
             if ($updatedUser) {
                 session()->set('auth_version', (int)$updatedUser['auth_version']);
             }
+            StepUpAuthenticationService::clearGrant();
             (new AuthenticationService($userModel))->revokeUserTokens($username);
             LogService::log('Change password', '', 'Password changed');
             if (session('force_password_change')) {

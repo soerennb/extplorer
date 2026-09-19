@@ -92,7 +92,7 @@ const Api = {
             const result = await Swal.fire({
                 icon: 'warning',
                 title: (window.i18n && i18n.t('step_up_title')) || 'Confirm your identity',
-                text: (window.i18n && i18n.t('step_up_description')) || 'Enter your current password to continue.',
+                text: (window.i18n && i18n.t('step_up_description')) || 'Enter your current password. This confirmation will be remembered for 10 minutes for sensitive administrative changes.',
                 input: 'password',
                 inputAttributes: {
                     autocomplete: 'current-password',

@@ -44,7 +44,7 @@
     "password_optional": "Passwort (Optional)",
     "password_protected": "Passwortgeschützt",
     "step_up_title": "Identität bestätigen",
-    "step_up_description": "Gib dein aktuelles Passwort ein, um fortzufahren.",
+    "step_up_description": "Gib dein aktuelles Passwort ein. Die Bestätigung gilt 10 Minuten für sensible Administrationsänderungen.",
     "step_up_confirm": "Fortfahren",
     "step_up_password_required": "Das aktuelle Passwort ist erforderlich."
 }

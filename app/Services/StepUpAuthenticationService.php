@@ -7,12 +7,29 @@ use CodeIgniter\HTTP\RequestInterface;
 use RuntimeException;
 
 /**
- * Provides a short-lived, one-time re-authentication proof for sensitive API
- * mutations. The proof is bound to the current user, session and action.
+ * Provides a short-lived re-authentication grant for sensitive API mutations.
+ * The grant is bound to the current user and session and is reusable for all
+ * supported sensitive actions until it expires.
  */
 final class StepUpAuthenticationService
 {
-    public const TTL_SECONDS = 300;
+    public const TTL_SECONDS = 600;
+
+    /** @var list<string> */
+    public const ACTIONS = [
+        'user.create',
+        'user.update',
+        'user.delete',
+        'role.save',
+        'role.delete',
+        'group.save',
+        'group.delete',
+        'settings.update',
+        'mount.create',
+        'mount.update',
+        'mount.delete',
+        'mount.test',
+    ];
 
     public function __construct(private ?UserModel $userModel = null)
     {
@@ -22,62 +39,108 @@ final class StepUpAuthenticationService
     public function issue(string $action, string $password): string
     {
         $username = (string) session('username');
-        if ($username === '' || !session('isLoggedIn')) {
+        if (!in_array($action, self::ACTIONS, true)
+            || $username === ''
+            || !session('isLoggedIn')
+        ) {
             throw new RuntimeException('Re-authentication is required.');
         }
-        if ($password === '' || !$this->userModel->verifyUser($username, $password)) {
+
+        $user = $password === '' ? null : $this->userModel->verifyUser($username, $password);
+        if (!is_array($user)) {
             throw new RuntimeException('Re-authentication failed.');
         }
 
         $token = bin2hex(random_bytes(32));
-        $challenges = $this->prune((array) session('step_up_challenges'));
-        $challenges[hash('sha256', $token)] = [
-            'action' => $action,
+        $now = time();
+        self::clearGrant();
+        session()->set('step_up_grant', [
+            'token_hash' => hash('sha256', $token),
             'username' => $username,
-            'auth_version' => (int)($this->userModel->getUser($username)['auth_version'] ?? 1),
-            'expires_at' => time() + self::TTL_SECONDS,
-        ];
-        session()->set('step_up_challenges', $challenges);
+            'auth_version' => (int)($user['auth_version'] ?? 1),
+            'issued_at' => $now,
+            'expires_at' => $now + self::TTL_SECONDS,
+        ]);
 
         return $token;
     }
 
     public function consume(RequestInterface $request, string $action): bool
     {
+        if (!in_array($action, self::ACTIONS, true) || !session('isLoggedIn')) {
+            return false;
+        }
+
+        $grant = $this->activeGrant();
+        if ($grant === null) {
+            return false;
+        }
+
         $token = trim($request->getHeaderLine('X-Extplorer-Step-Up'));
-        if ($token === '' || !preg_match('/\A[a-f0-9]{64}\z/i', $token)) {
-            return false;
-        }
-
-        $key = hash('sha256', $token);
-        $challenges = $this->prune((array) session('step_up_challenges'));
-        $challenge = $challenges[$key] ?? null;
-        unset($challenges[$key]);
-        session()->set('step_up_challenges', $challenges);
-
-        if (!is_array($challenge)
-            || !hash_equals((string)($challenge['action'] ?? ''), $action)
-            || !hash_equals((string)($challenge['username'] ?? ''), (string)session('username'))
-            || (int)($challenge['expires_at'] ?? 0) < time()) {
-            return false;
-        }
-
-        $user = $this->userModel->getUser((string)session('username'));
-        return is_array($user)
-            && empty($user['disabled'])
-            && (int)($user['auth_version'] ?? 1) === (int)($challenge['auth_version'] ?? 0);
-    }
-
-    /** @return array<string, array<string, mixed>> */
-    private function prune(array $challenges): array
-    {
-        $now = time();
-        foreach ($challenges as $key => $challenge) {
-            if (!is_array($challenge) || (int)($challenge['expires_at'] ?? 0) < $now) {
-                unset($challenges[$key]);
+        if ($token !== '') {
+            if (!preg_match('/\A[a-f0-9]{64}\z/i', $token)
+                || !hash_equals($grant['token_hash'], hash('sha256', $token))
+            ) {
+                return false;
             }
         }
 
-        return $challenges;
+        $username = (string) session('username');
+        if (!hash_equals($grant['username'], $username)) {
+            self::clearGrant();
+            return false;
+        }
+
+        $sessionVersion = (int) session('auth_version');
+        if ($sessionVersion > 0 && $sessionVersion !== $grant['auth_version']) {
+            self::clearGrant();
+            return false;
+        }
+
+        $user = $this->userModel->getUser($username);
+        if (!is_array($user)
+            || !empty($user['disabled'])
+            || (int)($user['auth_version'] ?? 1) !== $grant['auth_version']
+        ) {
+            self::clearGrant();
+            return false;
+        }
+
+        return true;
+    }
+
+    public static function clearGrant(): void
+    {
+        session()->remove(['step_up_grant', 'step_up_challenges']);
+    }
+
+    /** @return array{token_hash: string, username: string, auth_version: int, issued_at: int, expires_at: int}|null */
+    private function activeGrant(): ?array
+    {
+        $grant = session('step_up_grant');
+        $now = time();
+
+        if (!is_array($grant)
+            || !is_string($grant['token_hash'] ?? null)
+            || !preg_match('/\A[a-f0-9]{64}\z/', $grant['token_hash'])
+            || !is_string($grant['username'] ?? null)
+            || $grant['username'] === ''
+            || (int)($grant['auth_version'] ?? 0) < 1
+            || (int)($grant['issued_at'] ?? 0) < 1
+            || (int)$grant['issued_at'] > $now
+            || (int)($grant['expires_at'] ?? 0) <= $now
+            || (int)$grant['issued_at'] > (int)$grant['expires_at']
+        ) {
+            self::clearGrant();
+            return null;
+        }
+
+        return [
+            'token_hash' => $grant['token_hash'],
+            'username' => $grant['username'],
+            'auth_version' => (int)$grant['auth_version'],
+            'issued_at' => (int)$grant['issued_at'],
+            'expires_at' => (int)$grant['expires_at'],
+        ];
     }
 }

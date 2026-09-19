@@ -787,7 +787,7 @@
     "password_optional": "Mot de passe (Optionnel)",
     "password_protected": "Protégé par mot de passe",
     "step_up_title": "Confirmez votre identité",
-    "step_up_description": "Saisissez votre mot de passe actuel pour continuer.",
+    "step_up_description": "Saisissez votre mot de passe actuel. Cette confirmation sera conservée pendant 10 minutes pour les modifications administratives sensibles.",
     "step_up_confirm": "Continuer",
     "step_up_password_required": "Le mot de passe actuel est requis."
 }

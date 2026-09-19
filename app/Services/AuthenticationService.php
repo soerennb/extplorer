@@ -18,6 +18,7 @@ final class AuthenticationService
 
     public function startLocalSession(array $user, bool $remembered = false): void
     {
+        StepUpAuthenticationService::clearGrant();
         session()->regenerate();
         session()->set([
             'isLoggedIn' => true,
@@ -37,6 +38,7 @@ final class AuthenticationService
 
     public function startRemoteSession(string $username, array $connection): void
     {
+        StepUpAuthenticationService::clearGrant();
         session()->regenerate();
         session()->set([
             'isLoggedIn' => true,
@@ -58,6 +60,7 @@ final class AuthenticationService
     public function logout(RequestInterface $request, ResponseInterface $response): void
     {
         (new RememberMeService($this->userModel))->forget($request, $response);
+        StepUpAuthenticationService::clearGrant();
         session()->remove([
             'isLoggedIn',
             'username',

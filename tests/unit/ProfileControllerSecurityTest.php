@@ -99,6 +99,13 @@ class ProfileControllerSecurityTest extends CIUnitTestCase
         $model = new UserModel();
         $model->updateUser('alice', ['must_change_password' => true]);
         session()->set(['force_password_change' => true, 'auth_version' => 1]);
+        session()->set('step_up_grant', [
+            'token_hash' => str_repeat('a', 64),
+            'username' => 'alice',
+            'auth_version' => 1,
+            'issued_at' => time(),
+            'expires_at' => time() + 600,
+        ]);
 
         $controller = new ProfileController();
         $controller->initController(Services::request(), Services::response(), Services::logger());
@@ -116,5 +123,6 @@ class ProfileControllerSecurityTest extends CIUnitTestCase
         $this->assertTrue(password_verify('New-strong-password!2026', $user['password_hash']));
         $this->assertNull(session('force_password_change'));
         $this->assertSame(2, session('auth_version'));
+        $this->assertNull(session('step_up_grant'));
     }
 }

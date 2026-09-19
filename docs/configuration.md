@@ -146,6 +146,12 @@ The following controls are enabled in the application and should be considered p
   `EXTPLORER_SESSION_MATCH_IP=1` only when stable client IPs are guaranteed;
   otherwise normal mobile/proxy IP changes would invalidate sessions.
 - CSRF token randomization and regeneration are enabled.
+- Sensitive administration mutations use step-up authentication. After the
+  current password is confirmed, the same authenticated session may perform
+  the existing protected user, role, group, settings and mount changes for
+  10 minutes without another prompt. The grant is not persisted in cookies or
+  browser storage and is invalidated by logout, a new login, password/2FA
+  changes or an `auth_version` change.
 - Public share endpoints have throttling:
   - Share password auth: `10 requests/minute` per `share + IP`
   - Share upload: `30 requests/minute` per `share + IP`

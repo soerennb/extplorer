@@ -787,7 +787,7 @@
     "password_optional": "Password (Optional)",
     "password_protected": "Password Protected",
     "step_up_title": "Confirm your identity",
-    "step_up_description": "Enter your current password to continue.",
+    "step_up_description": "Enter your current password. This confirmation will be remembered for 10 minutes for sensitive administrative changes.",
     "step_up_confirm": "Continue",
     "step_up_password_required": "Current password is required."
 }

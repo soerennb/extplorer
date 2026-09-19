@@ -121,6 +121,26 @@ final class SettingsControllerTest extends CIUnitTestCase
         $this->assertSame([], (new SettingsService())->get('remote_endpoint_allowlist'));
     }
 
+    public function testOneStepUpGrantAllowsMultipleSettingsChangesWithoutAnotherToken(): void
+    {
+        $this->authorizeStepUp();
+        Services::request()->setBody(json_encode([
+            'default_transfer_expiry' => 7,
+        ], JSON_THROW_ON_ERROR));
+
+        $controller = new SettingsController();
+        $this->initController($controller);
+        $this->assertSame(200, $controller->update()->getStatusCode());
+
+        Services::request()->setHeader('X-Extplorer-Step-Up', '');
+        Services::request()->setBody(json_encode([
+            'default_transfer_expiry' => 8,
+        ], JSON_THROW_ON_ERROR));
+
+        $this->assertSame(200, $controller->update()->getStatusCode());
+        $this->assertSame(8, (new SettingsService())->get('default_transfer_expiry'));
+    }
+
     public function testInvalidEndpointReturnsStableLocalizedErrorCode(): void
     {
         $this->authorizeStepUp();

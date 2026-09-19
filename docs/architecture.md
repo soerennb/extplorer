@@ -46,6 +46,11 @@ The VFS abstraction decouples the UI from physical storage.
 
 * **Authentication:** Session-based, with optional remember-me tokens.
 * **Authorization:** Role-Based Access Control with granular permissions and groups.
+* **Step-up authentication:** Sensitive administration mutations require the
+  current password once per authenticated session. The successful check is
+  reusable for 10 minutes across the existing user, role, group, settings and
+  mount actions; it is stored only in the session and is invalidated by logout,
+  session replacement, password/2FA changes or an `auth_version` change.
 * **Secrets:** Encryption keys and bootstrap/SMTP passwords support secret files; legacy environment aliases remain available
   for compatibility.
 * **Initialization:** Migrations, settings synchronization and admin bootstrap are strict phases. A readiness marker is written

@@ -5,6 +5,7 @@ namespace App\Filters;
 use App\Services\SettingsService;
 use App\Services\RememberMeService;
 use App\Services\RemoteEndpointPolicy;
+use App\Services\StepUpAuthenticationService;
 use App\Models\UserModel;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\IncomingRequest;
@@ -115,6 +116,7 @@ class AuthFilter implements FilterInterface
     {
         $remember = new RememberMeService();
         $remember->forget($request, Services::response());
+        StepUpAuthenticationService::clearGrant();
         session()->remove([
             'isLoggedIn',
             'username',

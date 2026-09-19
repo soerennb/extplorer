@@ -223,6 +223,17 @@ test("admin can save settings after current-password confirmation", async ({
   await saveResponse;
   await expect(page.locator(".swal2-toast")).toContainText("Settings saved.");
 
+  await endpointAllowlist.fill(" \n");
+  const repeatedSaveResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/settings") &&
+      response.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: "Save Settings" }).click();
+  expect((await repeatedSaveResponse).status()).toBe(200);
+  await expect(stepUpInput).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Save Settings" })).toBeDisabled();
+
   await assertCleanBrowser();
 });
 

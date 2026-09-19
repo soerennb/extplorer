@@ -44,7 +44,7 @@
     "password_optional": "Heslo (voliteľné)",
     "password_protected": "Chránené heslom",
     "step_up_title": "Potvrďte svoju identitu",
-    "step_up_description": "Pre pokračovanie zadajte svoje aktuálne heslo.",
+    "step_up_description": "Zadajte svoje aktuálne heslo. Toto potvrdenie sa bude 10 minút používať pri citlivých administratívnych zmenách.",
     "step_up_confirm": "Pokračovať",
     "step_up_password_required": "Vyžaduje sa aktuálne heslo."
 }
