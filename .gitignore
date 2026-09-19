@@ -64,6 +64,11 @@ writable/logs/*
 !writable/logs/index.html
 
 writable/config/*
+writable/mounts.php
+writable/shared/*
+!writable/shared/.gitkeep
+writable/.install.lock
+writable/installed.lock
 writable/runtime/*
 writable/backups/*
 

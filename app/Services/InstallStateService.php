@@ -186,6 +186,8 @@ final class InstallStateService
                     if (!$model->changePassword($username, $password)) {
                         throw new RuntimeException("Unable to reset administrator password: {$username}");
                     }
+                    (new AuthenticationService($model))->revokeUserTokens($username);
+                    (new WebDavCredentialService())->revokeUser($username);
                     $state['last_reset'] = [
                         'username' => $username,
                         'fingerprint' => $fingerprint,

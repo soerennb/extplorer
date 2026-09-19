@@ -9,6 +9,9 @@ use App\Services\Dav\AuthBackend;
 use App\Services\VFS\PathPolicy;
 use App\Services\LogService;
 use App\Services\ResourcePolicy;
+use App\Services\DavAuthenticationService;
+use App\Services\DavWritePolicy;
+use App\Services\UploadQuarantineService;
 use Sabre\DAV\Auth\Plugin as AuthPlugin;
 use Exception;
 
@@ -57,12 +60,11 @@ class DavController extends BaseController
             return $this->denyDav(403, 'HTTPS is required for WebDAV.', 'https-required');
         }
 
-        // 3. Setup Auth Backend
-        $authBackend = new AuthBackend();
-
         // 4. Determine User and Root Path BEFORE starting SabreDAV
         $authHeader = $this->request->getServer('HTTP_AUTHORIZATION');
         $userData = null;
+        $authenticatedUsername = '';
+        $authenticatedPassword = '';
 
         if (is_string($authHeader) && strlen($authHeader) > 8192) {
             return $this->denyDav(400, 'Invalid WebDAV authentication header.', 'auth-header-size');
@@ -73,7 +75,7 @@ class DavController extends BaseController
             if (is_string($credentials) && str_contains($credentials, ':')) {
                 [$user, $pass] = explode(':', $credentials, 2);
                 $userModel = new UserModel();
-                $userData = $userModel->verifyUser($user, $pass);
+                $userData = (new DavAuthenticationService($userModel))->authenticate($user, $pass);
                 
                 if (!$userData) {
                     \App\Services\LogService::log('WebDAV Auth Failed', 'dav', "Failed login attempt", $user);
@@ -81,6 +83,9 @@ class DavController extends BaseController
                     if (!$this->hasRequiredDavPermissions($userModel, (string)$userData['username'])) {
                         \App\Services\LogService::log('WebDAV Access Forbidden', 'dav', "Insufficient permissions", (string)$userData['username']);
                         $userData = null;
+                    } else {
+                        $authenticatedUsername = $user;
+                        $authenticatedPassword = $pass;
                     }
                     // Optional: Log successful logins (might be noisy)
                     // \App\Services\LogService::log('WebDAV Login', 'dav', "Successful login", $user);
@@ -88,12 +93,18 @@ class DavController extends BaseController
             }
         }
 
+        $authBackend = new AuthBackend($authenticatedUsername, $authenticatedPassword);
+
         if (!$userData) {
             LogService::log('WebDAV Auth Required', 'dav', 'Missing or invalid credentials', 'Public');
             return $this->response
                 ->setStatusCode(401)
                 ->setHeader('WWW-Authenticate', 'Basic realm="eXtplorer3 WebDAV"')
                 ->setBody('Authentication required.');
+        }
+
+        if ($method === 'PUT' && (new UploadQuarantineService())->enabled()) {
+            return $this->denyDav(503, 'WebDAV uploads are unavailable while external upload scanning is enabled.', 'quarantine-required');
         }
 
         // 3. Determine Root Path
@@ -105,7 +116,18 @@ class DavController extends BaseController
         }
 
         // 4. Initialize SabreDAV
-        $rootNode = new SafeDirectory($rootPath, $rootPath);
+        $effectiveSettings = $settings->getSettings();
+        $maxMb = (int)($effectiveSettings['upload_max_file_mb'] ?? 100);
+        $quotaMb = (int)($effectiveSettings['quota_per_user_mb'] ?? 0);
+        $writePolicy = new DavWritePolicy(
+            (string)$userData['username'],
+            $rootPath,
+            (string)($userData['allowed_extensions'] ?? ''),
+            (string)($userData['blocked_extensions'] ?? ''),
+            $maxMb > 0 ? $maxMb * 1024 * 1024 : 0,
+            $quotaMb > 0 ? $quotaMb * 1024 * 1024 : 0,
+        );
+        $rootNode = new SafeDirectory($rootPath, $rootPath, null, $writePolicy);
         $server = new Server($rootNode);
 
         // Set the base URL (important!)

@@ -32,6 +32,20 @@ trait ApiShareOperationsTrait
 
         if (!$path) return $this->fail('Path required');
 
+        try {
+            $normalizedPath = \App\Services\VFS\PathPolicy::normalizeRelative((string)$path);
+        } catch (\Throwable) {
+            return $this->fail('Invalid share path.', 422);
+        }
+        $mount = explode('/', $normalizedPath, 2)[0];
+        if (!in_array($mount, ['Home', 'Shared'], true)) {
+            return $this->fail('Only Home and Shared paths can be published.', 422);
+        }
+
+        if ($mode === 'upload' && !can('upload')) {
+            return $this->failForbidden('Upload permission is required for upload shares.');
+        }
+
         // Verify existence within user jail
         try {
             $absolutePath = $this->fs->resolvePath($path); // Throws if invalid/traversal
@@ -59,7 +73,7 @@ trait ApiShareOperationsTrait
 
             $expiresAt = $this->normalizeShareExpiry($expires, $settings);
             $service = new \App\Services\ShareService();
-            $share = $service->createShare($path, session('username'), $password, $expiresAt, $mode);
+            $share = $service->createShare($normalizedPath, session('username'), $password, $expiresAt, $mode);
             LogService::log('Create Share', $path);
             return $this->respond(['status' => 'success', 'share' => $service->ownerView($share)]);
         } catch (\Throwable $e) {

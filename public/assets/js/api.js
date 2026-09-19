@@ -92,33 +92,34 @@ const Api = {
             const result = await Swal.fire({
                 icon: 'warning',
                 title: (window.i18n && i18n.t('step_up_title')) || 'Confirm your identity',
-                text: (window.i18n && i18n.t('step_up_description')) || 'Enter your current password. This confirmation will be remembered for 10 minutes for sensitive administrative changes.',
-                input: 'password',
-                inputAttributes: {
-                    autocomplete: 'current-password',
-                    autocapitalize: 'none',
-                    autocorrect: 'off'
-                },
-                inputPlaceholder: (window.i18n && i18n.t('current_password')) || 'Current password',
+                text: (window.i18n && i18n.t('step_up_description')) || 'Enter your current password and, when enabled, your authenticator code.',
+                html: `
+                    <input id="step-up-password" type="password" class="swal2-input" autocomplete="current-password" placeholder="${(window.i18n && i18n.t('current_password')) || 'Current password'}">
+                    <input id="step-up-code" type="text" inputmode="numeric" class="swal2-input" autocomplete="one-time-code" maxlength="8" placeholder="${(window.i18n && i18n.t('authenticator_code')) || 'Authenticator code (if enabled)'}">
+                `,
                 showCancelButton: true,
                 confirmButtonText: (window.i18n && i18n.t('step_up_confirm')) || 'Continue',
                 cancelButtonText: (window.i18n && i18n.t('cancel')) || 'Cancel',
                 allowOutsideClick: false,
-                preConfirm: (password) => {
+                preConfirm: () => {
+                    const password = document.getElementById('step-up-password')?.value || '';
+                    const code = document.getElementById('step-up-code')?.value || '';
                     if (!password) {
                         Swal.showValidationMessage((window.i18n && i18n.t('step_up_password_required')) || 'Current password is required.');
+                        return false;
                     }
-                    return password;
+                    return { password, code };
                 }
             });
 
-            if (!result.isConfirmed || typeof result.value !== 'string' || result.value === '') {
+            if (!result.isConfirmed || !result.value || typeof result.value.password !== 'string') {
                 return null;
             }
 
             const response = await this.request('security/step-up', 'POST', {
                 action,
-                password: result.value
+                password: result.value.password,
+                code: result.value.code || ''
             }, null, true);
             return typeof response.token === 'string' ? response.token : null;
         } finally {

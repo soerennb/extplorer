@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Dav;
 
 use App\Services\FileNamePolicy;
+use App\Services\DavWritePolicy;
 use Sabre\DAV;
 use Sabre\DAV\Exception\Forbidden;
 use Sabre\DAV\FS\Directory;
@@ -17,11 +18,13 @@ use Sabre\DAV\FS\Directory;
 final class SafeDirectory extends Directory
 {
     private string $jailRoot;
+    private ?DavWritePolicy $writePolicy;
 
-    public function __construct($path, ?string $jailRoot = null, $overrideName = null)
+    public function __construct($path, ?string $jailRoot = null, $overrideName = null, ?DavWritePolicy $writePolicy = null)
     {
         parent::__construct($path, $overrideName);
         $this->jailRoot = rtrim(realpath($jailRoot ?? $path) ?: $jailRoot ?? $path, '/\\');
+        $this->writePolicy = $writePolicy;
         $this->assertPath($path);
     }
 
@@ -35,15 +38,23 @@ final class SafeDirectory extends Directory
         }
 
         if (is_dir($path)) {
-            return new self($path, $this->jailRoot);
+            return new self($path, $this->jailRoot, null, $this->writePolicy);
         }
 
-        return new SafeFile($path, $this->jailRoot);
+        return new SafeFile($path, $this->jailRoot, null, $this->writePolicy);
     }
 
     public function createFile($name, $data = null)
     {
         $this->assertChildTarget((string)$name);
+        if ($this->writePolicy !== null) {
+            try {
+                $this->writePolicy->writeAtomic($this->path . DIRECTORY_SEPARATOR . $name, $data);
+                return null;
+            } catch (\Throwable $exception) {
+                throw new Forbidden($exception->getMessage());
+            }
+        }
         return parent::createFile($name, $data);
     }
 

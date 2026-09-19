@@ -15,6 +15,7 @@ final class StepUpController extends BaseController
         $json = $this->request->getJSON(true);
         $action = is_array($json) ? trim((string)($json['action'] ?? '')) : '';
         $password = is_array($json) ? (string)($json['password'] ?? '') : '';
+        $code = is_array($json) ? trim((string)($json['code'] ?? '')) : '';
 
         if (!in_array($action, StepUpAuthenticationService::ACTIONS, true) || $password === '') {
             return $this->fail('Re-authentication request is invalid.', 422);
@@ -31,7 +32,7 @@ final class StepUpController extends BaseController
         }
 
         try {
-            $token = (new StepUpAuthenticationService())->issue($action, $password);
+            $token = (new StepUpAuthenticationService())->issue($action, $password, $code);
             LogService::log('Step-up authentication', '', 'Sensitive action authorized');
             return $this->respond(['status' => 'success', 'token' => $token]);
         } catch (\Throwable) {

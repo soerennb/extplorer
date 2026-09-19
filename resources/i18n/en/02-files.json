@@ -68,7 +68,7 @@
     "webdav_macos_hint": "Finder: Go → Connect to Server → paste the URL.",
     "webdav_linux_title": "Linux",
     "webdav_linux_hint": "Use your file manager's Connect to Server option or mount with davfs2.",
-    "webdav_credentials_note": "Sign in with your eXtplorer username \"{username}\" and password.",
+    "webdav_credentials_note": "Sign in as \"{username}\" with a WebDAV app password from Profile → Security. With 2FA enabled, the normal account password is rejected.",
     "webdav_https_note": "Use HTTPS in production. Some operating systems reject WebDAV over plain HTTP.",
     "webdav_policy_note": "Access follows the administrator's WebDAV setting and your file permissions.",
     "recent_files": "Recent Files",

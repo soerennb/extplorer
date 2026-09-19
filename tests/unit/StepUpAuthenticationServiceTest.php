@@ -168,4 +168,23 @@ final class StepUpAuthenticationServiceTest extends CIUnitTestCase
         $this->expectException(\RuntimeException::class);
         $service->issue('unsupported.action', 'correct-password');
     }
+
+    public function testTwoFactorAccountRequiresCurrentTotpForStepUp(): void
+    {
+        $secret = 'JBSWY3DPEHPK3PXP';
+        $model = new \App\Models\UserModel();
+        $model->updateUser('stepup-test', ['2fa_secret' => $secret, '2fa_enabled' => true]);
+        session()->set('auth_version', (int)$model->getUser('stepup-test')['auth_version']);
+        $service = new StepUpAuthenticationService($model);
+
+        try {
+            $service->issue('webdav-credential.create', 'correct-password');
+            $this->fail('A password-only step-up was accepted for a 2FA account.');
+        } catch (\RuntimeException) {
+            $this->assertNull(session('step_up_grant'));
+        }
+
+        $code = \OTPHP\TOTP::create($secret)->now();
+        $this->assertNotSame('', $service->issue('webdav-credential.create', 'correct-password', $code));
+    }
 }

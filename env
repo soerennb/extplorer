@@ -14,7 +14,7 @@
 # ENVIRONMENT
 #--------------------------------------------------------------------
 
-CI_ENVIRONMENT = development
+CI_ENVIRONMENT = production
 
 #--------------------------------------------------------------------
 # APP
@@ -25,7 +25,7 @@ CI_ENVIRONMENT = development
 # EXTPLORER_FILE_MANAGER_ROOT = '/var/lib/extplorer/writable/file_manager_root'
 # EXTPLORER_STATE_DRIVER = 'file' # file, sqlite or database
 # EXTPLORER_SESSION_DRIVER = 'file' # file, database or redis
-# EXTPLORER_CACHE_DRIVER = 'file' # file, redis or dummy
+# EXTPLORER_CACHE_DRIVER = 'file' # file or redis in production; dummy only for development/testing
 # EXTPLORER_CACHE_PREFIX = 'extplorer_' # portable cache-key namespace
 # EXTPLORER_MAX_DOWNLOAD_MB = 2048
 # EXTPLORER_MAX_CONTENT_MB = 16

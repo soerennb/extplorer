@@ -59,6 +59,9 @@ class Storage extends BaseConfig
         $this->stateDriver = $this->driver('EXTPLORER_STATE_DRIVER', ['file', 'sqlite', 'database'], 'file');
         $this->sessionDriver = $this->driver('EXTPLORER_SESSION_DRIVER', ['file', 'database', 'redis'], 'file');
         $this->cacheDriver = $this->driver('EXTPLORER_CACHE_DRIVER', ['file', 'redis', 'dummy'], 'file');
+        if (defined('ENVIRONMENT') && constant('ENVIRONMENT') === 'production' && $this->cacheDriver === 'dummy') {
+            throw new \RuntimeException('EXTPLORER_CACHE_DRIVER=dummy is not allowed in production.');
+        }
     }
 
     private function resolveDirectory(string $environmentKey, string $default): string

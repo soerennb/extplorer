@@ -166,13 +166,16 @@ class Cache extends BaseConfig
         parent::__construct();
 
         $driver = strtolower(trim((string)(getenv('EXTPLORER_CACHE_DRIVER') ?: 'file')));
+        if (defined('ENVIRONMENT') && constant('ENVIRONMENT') === 'production' && $driver === 'dummy') {
+            throw new \RuntimeException('EXTPLORER_CACHE_DRIVER=dummy is not allowed in production.');
+        }
         $this->handler = match ($driver) {
             'file' => 'file',
             'redis' => 'redis',
             'dummy' => 'dummy',
             default => throw new \RuntimeException('EXTPLORER_CACHE_DRIVER must be file, redis or dummy.'),
         };
-        $this->backupHandler = $this->handler === 'redis' ? 'dummy' : $this->handler;
+        $this->backupHandler = $this->handler === 'redis' ? 'file' : $this->handler;
         $prefix = trim((string)(getenv('EXTPLORER_CACHE_PREFIX') ?: 'extplorer_'));
         if ($prefix !== '' && preg_match('/[^A-Za-z0-9_-]/', $prefix)) {
             throw new \RuntimeException('EXTPLORER_CACHE_PREFIX may contain only letters, numbers, underscores and hyphens.');

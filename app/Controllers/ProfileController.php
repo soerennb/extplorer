@@ -7,10 +7,54 @@ use App\Services\AuthenticationService;
 use App\Services\LogService;
 use App\Services\PasswordPolicy;
 use App\Services\StepUpAuthenticationService;
+use App\Services\WebDavCredentialService;
 
 class ProfileController extends BaseController
 {
     use ApiResponseTrait;
+
+    private function requireStepUp(string $action)
+    {
+        if ((new StepUpAuthenticationService())->consume($this->request, $action)) {
+            return true;
+        }
+        return $this->fail(['error' => 'Additional authentication is required.', 'action' => $action], 428, 'step_up_required');
+    }
+
+    public function webDavCredentials()
+    {
+        $username = (string)\Config\Services::session()->get('username');
+        if ($username === '') return $this->failForbidden('Not logged in');
+        $this->response->setHeader('Cache-Control', 'no-store');
+        return $this->respond(['items' => (new WebDavCredentialService())->listForUser($username)]);
+    }
+
+    public function createWebDavCredential()
+    {
+        if (($stepUp = $this->requireStepUp('webdav-credential.create')) !== true) return $stepUp;
+        $username = (string)\Config\Services::session()->get('username');
+        $json = $this->request->getJSON(true);
+        try {
+            $created = (new WebDavCredentialService())->create($username, (string)($json['label'] ?? ''));
+            LogService::log('Create WebDAV credential', $created['credential']['id']);
+            $this->response->setHeader('Cache-Control', 'no-store');
+            return $this->respondCreated($created);
+        } catch (\InvalidArgumentException $exception) {
+            return $this->fail($exception->getMessage(), 422);
+        } catch (\RuntimeException $exception) {
+            return $this->fail($exception->getMessage(), 409);
+        }
+    }
+
+    public function deleteWebDavCredential(?string $id = null)
+    {
+        if (($stepUp = $this->requireStepUp('webdav-credential.delete')) !== true) return $stepUp;
+        if (!is_string($id) || preg_match('/\A[a-f0-9]{32}\z/', $id) !== 1) return $this->failNotFound();
+        $username = (string)\Config\Services::session()->get('username');
+        if (!(new WebDavCredentialService())->delete($username, $id)) return $this->failNotFound();
+        LogService::log('Delete WebDAV credential', $id);
+        return $this->respondDeleted(['status' => 'success']);
+    }
 
     public function getDetails()
     {
@@ -87,6 +131,7 @@ class ProfileController extends BaseController
             }
             StepUpAuthenticationService::clearGrant();
             (new AuthenticationService($userModel))->revokeUserTokens($username);
+            (new WebDavCredentialService())->revokeUser($username);
             LogService::log('Enable 2FA', '', 'Authenticator enrollment completed');
             
             return $this->respond([
@@ -145,6 +190,7 @@ class ProfileController extends BaseController
         }
         StepUpAuthenticationService::clearGrant();
         (new AuthenticationService($userModel))->revokeUserTokens($username);
+        (new WebDavCredentialService())->revokeUser($username);
         LogService::log('Disable 2FA', '', 'Authenticator enrollment removed');
 
         return $this->respond(['status' => 'success']);
@@ -181,6 +227,7 @@ class ProfileController extends BaseController
             }
             StepUpAuthenticationService::clearGrant();
             (new AuthenticationService($userModel))->revokeUserTokens($username);
+            (new WebDavCredentialService())->revokeUser($username);
             LogService::log('Change password', '', 'Password changed');
             if (session('force_password_change')) {
                 session()->remove('force_password_change');

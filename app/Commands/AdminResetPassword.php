@@ -5,6 +5,8 @@ namespace App\Commands;
 use App\Models\UserModel;
 use App\Services\SecretReader;
 use App\Services\PasswordPolicy;
+use App\Services\AuthenticationService;
+use App\Services\WebDavCredentialService;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 use RuntimeException;
@@ -63,6 +65,8 @@ class AdminResetPassword extends BaseCommand
             if (!$model->changePassword($username, $password)) {
                 throw new RuntimeException("Unable to reset administrator password: {$username}");
             }
+            (new AuthenticationService($model))->revokeUserTokens($username);
+            (new WebDavCredentialService())->revokeUser($username);
 
             CLI::write("Administrator password reset for '{$username}'.", 'green');
             return EXIT_SUCCESS;

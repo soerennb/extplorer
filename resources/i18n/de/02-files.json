@@ -69,7 +69,7 @@
     "webdav_macos_hint": "Finder: Gehe zu → Mit Server verbinden → URL einfügen.",
     "webdav_linux_title": "Linux",
     "webdav_linux_hint": "Im Dateimanager „Mit Server verbinden“ nutzen oder mit davfs2 einbinden.",
-    "webdav_credentials_note": "Mit eXtplorer-Benutzername „{username}“ und Passwort anmelden.",
+    "webdav_credentials_note": "Als „{username}“ mit einem WebDAV-App-Passwort aus Profil → Sicherheit anmelden. Bei aktivierter 2FA wird das normale Kontopasswort abgelehnt.",
     "webdav_https_note": "In Produktion HTTPS verwenden. Einige Betriebssysteme lehnen WebDAV über reines HTTP ab.",
     "webdav_policy_note": "Der Zugriff folgt der WebDAV-Admin-Einstellung und Ihren Dateiberechtigungen.",
     "recent_files": "Zuletzt geöffnete Dateien",

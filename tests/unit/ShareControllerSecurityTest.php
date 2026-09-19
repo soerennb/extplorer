@@ -14,8 +14,8 @@ class ShareControllerSecurityTest extends CIUnitTestCase
         $method = $reflection->getMethod('resolveSharePaths');
         $method->setAccessible(true);
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('traversal');
+        $this->expectException(\CodeIgniter\Exceptions\PageNotFoundException::class);
+        $this->expectExceptionMessage('Link expired or invalid');
         $method->invoke($controller, ['path' => '../../etc/passwd']);
     }
 

@@ -308,20 +308,39 @@ class ShareService
 
         if ($mount === 'Home') {
             $owner = (string)($share['created_by'] ?? '');
-            $user = $owner !== '' ? (new UserModel())->getUser($owner) : null;
-            if (!is_array($user)) {
-                throw new \RuntimeException('Share owner was not found.');
-            }
+            $user = $this->assertActiveOwner($owner, (string)($share['mode'] ?? 'read') === 'upload');
             $root = (new LocalAdapter($root))->resolvePath((string)($user['home_dir'] ?? '/'));
         } elseif ($mount === 'Shared') {
+            $this->assertActiveOwner((string)($share['created_by'] ?? ''), (string)($share['mode'] ?? 'read') === 'upload');
             $root = $this->storage->shared;
         } else {
-            // Compatibility for pre-virtual-namespace share records.
-            $relative = $path;
+            \Config\Services::logger()->warning('Rejected ambiguous legacy or external share path: {path}', ['path' => $path]);
+            throw new \RuntimeException('This legacy share must be recreated.');
         }
 
         $resolver = new LocalAdapter($root);
         return [$root, $resolver->resolvePath($relative)];
+    }
+
+    /** @return array<string,mixed> */
+    private function assertActiveOwner(string $owner, bool $upload): array
+    {
+        $model = new UserModel();
+        $user = $owner !== '' ? $model->getUser($owner) : null;
+        if (!is_array($user) || !empty($user['disabled']) || (int)($user['locked_until'] ?? 0) > time()) {
+            throw new \RuntimeException('Share owner is not active.');
+        }
+
+        $permissions = $model->getPermissions($owner);
+        $allowed = in_array('*', $permissions, true) || in_array('read', $permissions, true);
+        if ($upload) {
+            $allowed = $allowed && (in_array('*', $permissions, true) || in_array('upload', $permissions, true));
+        }
+        if (!$allowed) {
+            throw new \RuntimeException('Share owner no longer has the required permission.');
+        }
+
+        return $user;
     }
 
     private function assertNoSymlinkComponents(string $path): void

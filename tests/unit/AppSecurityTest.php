@@ -91,6 +91,26 @@ final class AppSecurityTest extends CIUnitTestCase
         }
     }
 
+    public function testConfiguredBaseUrlDefinesTrustedHost(): void
+    {
+        $this->rememberEnvironment('EXTPLORER_BASE_URL');
+        putenv('EXTPLORER_BASE_URL=https://files.example.test/base/');
+
+        $config = new App();
+
+        $this->assertSame('https://files.example.test/base/', $config->baseURL);
+        $this->assertSame(['files.example.test'], $config->allowedHostnames);
+    }
+
+    public function testConfiguredBaseUrlRejectsEmbeddedCredentials(): void
+    {
+        $this->rememberEnvironment('EXTPLORER_BASE_URL');
+        putenv('EXTPLORER_BASE_URL=https://user:secret@files.example.test/');
+
+        $this->expectException(\RuntimeException::class);
+        new App();
+    }
+
     private function rememberEnvironment(string $key): void
     {
         if (!array_key_exists($key, $this->environment)) {

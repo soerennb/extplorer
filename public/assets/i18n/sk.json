@@ -199,7 +199,7 @@
     "webdav_macos_hint": "Finder: Prejsť → Pripojiť k serveru → vložte URL.",
     "webdav_linux_title": "Linux",
     "webdav_linux_hint": "Použite voľbu Pripojiť k serveru v správcovi súborov alebo pripojenie cez davfs2.",
-    "webdav_credentials_note": "Prihláste sa používateľom eXtplorer „{username}“ a jeho heslom.",
+    "webdav_credentials_note": "Prihláste sa ako „{username}“ pomocou hesla aplikácie WebDAV z Profil → Zabezpečenie. Pri zapnutej 2FA sa bežné heslo účtu odmietne.",
     "webdav_https_note": "V produkcii používajte HTTPS. Niektoré operačné systémy odmietajú WebDAV cez obyčajné HTTP.",
     "webdav_policy_note": "Prístup sa riadi administrátorským nastavením WebDAV a vašimi oprávneniami k súborom.",
     "recent_files": "Nedávne súbory",
@@ -787,7 +787,17 @@
     "password_optional": "Heslo (voliteľné)",
     "password_protected": "Chránené heslom",
     "step_up_title": "Potvrďte svoju identitu",
-    "step_up_description": "Zadajte svoje aktuálne heslo. Toto potvrdenie sa bude 10 minút používať pri citlivých administratívnych zmenách.",
+    "step_up_description": "Zadajte svoje aktuálne heslo a pri zapnutom dvojfaktorovom overení aj kód autentifikátora. Potvrdenie platí 10 minút.",
     "step_up_confirm": "Pokračovať",
-    "step_up_password_required": "Vyžaduje sa aktuálne heslo."
+    "step_up_password_required": "Vyžaduje sa aktuálne heslo.",
+    "webdav_credentials": "Heslá aplikácií WebDAV",
+    "webdav_credentials_desc": "Pre klientov WebDAV použite samostatné odvolateľné heslo. Tajný údaj sa zobrazí iba raz.",
+    "webdav_secret_once": "Skopírujte toto heslo teraz. Už sa znova nezobrazí.",
+    "webdav_label_placeholder": "Názov zariadenia",
+    "webdav_create": "Vytvoriť heslo aplikácie",
+    "webdav_empty": "Žiadne heslá aplikácií WebDAV.",
+    "webdav_load_failed": "Nepodarilo sa načítať prihlasovacie údaje WebDAV.",
+    "webdav_create_failed": "Nepodarilo sa vytvoriť prihlasovací údaj WebDAV.",
+    "webdav_delete_failed": "Nepodarilo sa odvolať prihlasovací údaj WebDAV.",
+    "revoke": "Odvolať"
 }

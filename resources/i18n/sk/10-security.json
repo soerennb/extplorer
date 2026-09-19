@@ -44,7 +44,17 @@
     "password_optional": "Heslo (voliteľné)",
     "password_protected": "Chránené heslom",
     "step_up_title": "Potvrďte svoju identitu",
-    "step_up_description": "Zadajte svoje aktuálne heslo. Toto potvrdenie sa bude 10 minút používať pri citlivých administratívnych zmenách.",
+    "step_up_description": "Zadajte svoje aktuálne heslo a pri zapnutom dvojfaktorovom overení aj kód autentifikátora. Potvrdenie platí 10 minút.",
     "step_up_confirm": "Pokračovať",
-    "step_up_password_required": "Vyžaduje sa aktuálne heslo."
+    "step_up_password_required": "Vyžaduje sa aktuálne heslo.",
+    "webdav_credentials": "Heslá aplikácií WebDAV",
+    "webdav_credentials_desc": "Pre klientov WebDAV použite samostatné odvolateľné heslo. Tajný údaj sa zobrazí iba raz.",
+    "webdav_secret_once": "Skopírujte toto heslo teraz. Už sa znova nezobrazí.",
+    "webdav_label_placeholder": "Názov zariadenia",
+    "webdav_create": "Vytvoriť heslo aplikácie",
+    "webdav_empty": "Žiadne heslá aplikácií WebDAV.",
+    "webdav_load_failed": "Nepodarilo sa načítať prihlasovacie údaje WebDAV.",
+    "webdav_create_failed": "Nepodarilo sa vytvoriť prihlasovací údaj WebDAV.",
+    "webdav_delete_failed": "Nepodarilo sa odvolať prihlasovací údaj WebDAV.",
+    "revoke": "Odvolať"
 }

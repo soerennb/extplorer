@@ -351,6 +351,29 @@ const UserProfile = {
                                 </div>
                             </div>
                         </div>
+
+                        <h6 class="border-bottom pb-2 mb-3 mt-4">{{ t('webdav_credentials') || 'WebDAV App Passwords' }}</h6>
+                        <p class="small text-muted">{{ t('webdav_credentials_desc') || 'Use a separate, revocable password for WebDAV clients. The secret is shown only once.' }}</p>
+                        <div v-if="webDavMessage.text" class="alert" :class="webDavMessage.type === 'success' ? 'alert-success' : 'alert-danger'" role="alert">{{ webDavMessage.text }}</div>
+                        <div v-if="webDavSecret" class="alert alert-warning" role="alert">
+                            <strong class="d-block mb-2">{{ t('webdav_secret_once') || 'Copy this password now. It will not be shown again.' }}</strong>
+                            <code class="user-select-all text-break">{{ webDavSecret }}</code>
+                            <button type="button" class="btn btn-outline-secondary btn-sm d-block mt-2" @click="copyWebDavSecret">{{ t('copy_code') || 'Copy' }}</button>
+                        </div>
+                        <div class="input-group input-group-sm mb-3">
+                            <input type="text" class="form-control" maxlength="64" v-model="webDavLabel" :placeholder="t('webdav_label_placeholder') || 'Device name'">
+                            <button type="button" class="btn btn-primary" @click="createWebDavCredential" :disabled="webDavLoading || !webDavLabel.trim()">
+                                <span v-if="webDavLoading" class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                                {{ t('webdav_create') || 'Create app password' }}
+                            </button>
+                        </div>
+                        <div v-if="webDavCredentials.length" class="list-group list-group-flush border rounded">
+                            <div v-for="credential in webDavCredentials" :key="credential.id" class="list-group-item d-flex justify-content-between align-items-center">
+                                <div><strong>{{ credential.label }}</strong><div class="small text-muted">{{ formatCredentialDate(credential.created_at) }}</div></div>
+                                <button type="button" class="btn btn-outline-danger btn-sm" @click="deleteWebDavCredential(credential.id)" :disabled="webDavLoading">{{ t('revoke') || 'Revoke' }}</button>
+                            </div>
+                        </div>
+                        <div v-else-if="!webDavLoading" class="small text-muted">{{ t('webdav_empty') || 'No WebDAV app passwords.' }}</div>
                     </div>
 
                     <div
@@ -578,6 +601,11 @@ const UserProfile = {
 
         const setup = reactive({ step: 0, qr: '', secret: '', code: '', recoveryCodes: [] });
         const disable2faState = reactive({ open: false, password: '', code: '', loading: false });
+        const webDavCredentials = ref([]);
+        const webDavLabel = ref('');
+        const webDavSecret = ref('');
+        const webDavLoading = ref(false);
+        const webDavMessage = reactive({ type: '', text: '' });
 
         const mounts = ref([]);
         const mountsLoading = ref(false);
@@ -773,6 +801,55 @@ const UserProfile = {
             }
         };
 
+        const loadWebDavCredentials = async () => {
+            webDavLoading.value = true;
+            try {
+                const response = await Api.get('profile/webdav-credentials');
+                webDavCredentials.value = response.items || [];
+            } catch (e) {
+                webDavMessage.type = 'error';
+                webDavMessage.text = e.message || (t('webdav_load_failed') || 'Failed to load WebDAV credentials.');
+            } finally {
+                webDavLoading.value = false;
+            }
+        };
+
+        const createWebDavCredential = async () => {
+            if (!webDavLabel.value.trim()) return;
+            webDavLoading.value = true;
+            webDavMessage.text = '';
+            webDavSecret.value = '';
+            try {
+                const response = await Api.post('profile/webdav-credentials', { label: webDavLabel.value.trim() });
+                webDavSecret.value = response.secret || '';
+                webDavLabel.value = '';
+                await loadWebDavCredentials();
+            } catch (e) {
+                webDavMessage.type = 'error';
+                webDavMessage.text = e.message || (t('webdav_create_failed') || 'Failed to create WebDAV credential.');
+            } finally {
+                webDavLoading.value = false;
+            }
+        };
+
+        const deleteWebDavCredential = async (id) => {
+            webDavLoading.value = true;
+            webDavMessage.text = '';
+            try {
+                await Api.delete('profile/webdav-credentials/' + encodeURIComponent(id));
+                webDavSecret.value = '';
+                await loadWebDavCredentials();
+            } catch (e) {
+                webDavMessage.type = 'error';
+                webDavMessage.text = e.message || (t('webdav_delete_failed') || 'Failed to revoke WebDAV credential.');
+            } finally {
+                webDavLoading.value = false;
+            }
+        };
+
+        const copyWebDavSecret = () => copyText(webDavSecret.value, t('copy_code_success') || 'Password copied');
+        const formatCredentialDate = (timestamp) => new Date(Number(timestamp) * 1000).toLocaleString();
+
         const setTab = async (tab, options = {}) => {
             const { persist = true } = options;
             const nextTab = normalizeTab(tab);
@@ -783,6 +860,8 @@ const UserProfile = {
             if (nextTab === 'mounts') {
                 resetMountMessages();
                 await loadMounts();
+            } else if (nextTab === 'security') {
+                await loadWebDavCredentials();
             }
         };
 
@@ -982,6 +1061,7 @@ const UserProfile = {
                 passwordForm.confirm = '';
                 forcePasswordChange.value = false;
                 window.forcePasswordChange = false;
+                await loadWebDavCredentials();
             } catch (e) {
                 setPasswordMessage('error', e.message || (t('password_update_failed') || 'Failed to update password'));
             } finally {
@@ -1026,6 +1106,7 @@ const UserProfile = {
                 setup.step = 2;
                 setup.recoveryCodes = res.recovery_codes || [];
                 setup.code = '';
+                await loadWebDavCredentials();
             } catch (e) {
                 setTwoFaMessage('error', e.message || (t('twofa_verify_failed') || 'Invalid verification code'));
             } finally {
@@ -1059,6 +1140,7 @@ const UserProfile = {
                 details.value['2fa_enabled'] = false;
                 closeDisable2fa();
                 setTwoFaMessage('success', t('twofa_disabled') || 'Two-factor authentication disabled.');
+                await loadWebDavCredentials();
             } catch (e) {
                 setTwoFaMessage('error', e.message || (t('twofa_disable_failed') || 'Failed to disable 2FA'));
             } finally {
@@ -1218,6 +1300,11 @@ const UserProfile = {
             twoFaStepperVisible,
             twoFaStepClass,
             disable2faState,
+            webDavCredentials,
+            webDavLabel,
+            webDavSecret,
+            webDavLoading,
+            webDavMessage,
             canSubmitDisable2fa,
             canMount,
             mounts,
@@ -1246,6 +1333,10 @@ const UserProfile = {
             openDisable2fa,
             closeDisable2fa,
             submitDisable2fa,
+            createWebDavCredential,
+            deleteWebDavCredential,
+            copyWebDavSecret,
+            formatCredentialDate,
             copySecret,
             copyRecoveryCodes,
             downloadRecoveryCodes,

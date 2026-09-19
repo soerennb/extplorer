@@ -199,7 +199,7 @@
     "webdav_macos_hint": "Finder: Go → Connect to Server → paste the URL.",
     "webdav_linux_title": "Linux",
     "webdav_linux_hint": "Use your file manager's Connect to Server option or mount with davfs2.",
-    "webdav_credentials_note": "Sign in with your eXtplorer username \"{username}\" and password.",
+    "webdav_credentials_note": "Sign in as \"{username}\" with a WebDAV app password from Profile → Security. With 2FA enabled, the normal account password is rejected.",
     "webdav_https_note": "Use HTTPS in production. Some operating systems reject WebDAV over plain HTTP.",
     "webdav_policy_note": "Access follows the administrator's WebDAV setting and your file permissions.",
     "recent_files": "Recent Files",
@@ -787,7 +787,17 @@
     "password_optional": "Password (Optional)",
     "password_protected": "Password Protected",
     "step_up_title": "Confirm your identity",
-    "step_up_description": "Enter your current password. This confirmation will be remembered for 10 minutes for sensitive administrative changes.",
+    "step_up_description": "Enter your current password and, when enabled, your authenticator code. This confirmation remains valid for 10 minutes.",
     "step_up_confirm": "Continue",
-    "step_up_password_required": "Current password is required."
+    "step_up_password_required": "Current password is required.",
+    "webdav_credentials": "WebDAV App Passwords",
+    "webdav_credentials_desc": "Use a separate, revocable password for WebDAV clients. The secret is shown only once.",
+    "webdav_secret_once": "Copy this password now. It will not be shown again.",
+    "webdav_label_placeholder": "Device name",
+    "webdav_create": "Create app password",
+    "webdav_empty": "No WebDAV app passwords.",
+    "webdav_load_failed": "Failed to load WebDAV credentials.",
+    "webdav_create_failed": "Failed to create WebDAV credential.",
+    "webdav_delete_failed": "Failed to revoke WebDAV credential.",
+    "revoke": "Revoke"
 }

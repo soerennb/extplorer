@@ -193,11 +193,12 @@ class UserModel
                 }
 
                 $securityChanged = false;
-                if (isset($data['role'])) $user['role'] = $data['role'];
-                if (isset($data['home_dir'])) $user['home_dir'] = $data['home_dir'];
-                if (isset($data['groups'])) $user['groups'] = $data['groups'];
-                if (isset($data['allowed_extensions'])) $user['allowed_extensions'] = $data['allowed_extensions'];
-                if (isset($data['blocked_extensions'])) $user['blocked_extensions'] = $data['blocked_extensions'];
+                foreach (['role', 'home_dir', 'groups', 'allowed_extensions', 'blocked_extensions'] as $field) {
+                    if (array_key_exists($field, $data) && ($user[$field] ?? null) !== $data[$field]) {
+                        $user[$field] = $data[$field];
+                        $securityChanged = true;
+                    }
+                }
 
                 // 2FA Fields
                 if (array_key_exists('2fa_secret', $data)) {
@@ -514,6 +515,31 @@ class UserModel
 
     public function saveRoles(array $roles): void
     {
+        $current = $this->getRoles();
+        $changedRoles = [];
+        foreach (array_unique(array_merge(array_keys($current), array_keys($roles))) as $name) {
+            if (($current[$name] ?? null) !== ($roles[$name] ?? null)) {
+                $changedRoles[] = $name;
+            }
+        }
+        $affected = [];
+        if ($changedRoles !== []) {
+            $groups = $this->getGroups();
+            foreach ($this->getUsers() as $user) {
+                $direct = (string)($user['role'] ?? '');
+                $groupNames = is_array($user['groups'] ?? null) ? $user['groups'] : [];
+                $groupRoles = [];
+                foreach ($groupNames as $groupName) {
+                    if (is_array($groups[$groupName] ?? null)) {
+                        $groupRoles = array_merge($groupRoles, $groups[$groupName]);
+                    }
+                }
+                if (in_array($direct, $changedRoles, true) || array_intersect($groupRoles, $changedRoles)) {
+                    $affected[] = (string)($user['username'] ?? '');
+                }
+            }
+        }
+        $this->bumpAuthVersions($affected);
         $this->saveData($this->rolesFile, $roles);
     }
 
@@ -573,7 +599,48 @@ class UserModel
 
     public function saveGroups(array $groups): void
     {
+        $current = $this->getGroups();
+        $changedGroups = [];
+        foreach (array_unique(array_merge(array_keys($current), array_keys($groups))) as $name) {
+            if (($current[$name] ?? null) !== ($groups[$name] ?? null)) {
+                $changedGroups[] = $name;
+            }
+        }
+        $affected = [];
+        if ($changedGroups !== []) {
+            foreach ($this->getUsers() as $user) {
+                $userGroups = is_array($user['groups'] ?? null) ? $user['groups'] : [];
+                if (array_intersect($userGroups, $changedGroups)) {
+                    $affected[] = (string)($user['username'] ?? '');
+                }
+            }
+        }
+        $this->bumpAuthVersions($affected);
         $this->saveData($this->groupsFile, $groups);
+    }
+
+    /**
+     * Role and group definitions are authorization state. Invalidate every
+     * directly or indirectly affected account so cached grants cannot survive
+     * a policy change.
+     */
+    /** @param list<string> $usernames */
+    private function bumpAuthVersions(array $usernames): void
+    {
+        $usernames = array_values(array_filter(array_unique($usernames)));
+        if ($usernames === []) {
+            return;
+        }
+        AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($usernames): void {
+            foreach ($users as &$user) {
+                if (!is_array($user) || !in_array((string)($user['username'] ?? ''), $usernames, true)) {
+                    continue;
+                }
+                $user = $this->withAuthDefaults($user);
+                $user['auth_version']++;
+            }
+            unset($user);
+        });
     }
 
     /**

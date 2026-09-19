@@ -7,6 +7,7 @@ use App\Services\LogService;
 use App\Services\AuthenticationService;
 use App\Services\PasswordPolicy;
 use App\Services\StepUpAuthenticationService;
+use App\Services\WebDavCredentialService;
 use App\Services\VFS\PathPolicy;
 
 class UserAdminController extends BaseController
@@ -344,8 +345,15 @@ class UserAdminController extends BaseController
 
         try {
             if ($this->userModel->updateUser($username, $data)) {
-                if (isset($data['password']) || array_key_exists('disabled', $data) || array_key_exists('locked_until', $data)) {
+                $credentialAffectingFields = [
+                    'password', 'disabled', 'locked_until', 'role', 'home_dir',
+                    'groups', 'allowed_extensions', 'blocked_extensions',
+                ];
+                if (array_intersect($credentialAffectingFields, array_keys($data)) !== []) {
                     (new AuthenticationService($this->userModel))->revokeUserTokens($username);
+                }
+                if (isset($data['password'])) {
+                    (new WebDavCredentialService())->revokeUser($username);
                 }
                 LogService::log('Update User', $username);
                 return $this->respond(['status' => 'success']);
@@ -377,6 +385,7 @@ class UserAdminController extends BaseController
         try {
             if ($this->userModel->deleteUser($username)) {
                 (new AuthenticationService($this->userModel))->revokeUserTokens($username);
+                (new WebDavCredentialService())->revokeUser($username);
                 LogService::log('Delete User', $username);
                 return $this->respond(['status' => 'success']);
             }

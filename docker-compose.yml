@@ -33,7 +33,7 @@ services:
       CI_ENVIRONMENT: production
       EXTPLORER_WRITE_PATH: /var/www/html/writable
       PHP_INI_SCAN_DIR: /usr/local/etc/php/conf.d
-      EXTPLORER_BASE_URL: ${EXTPLORER_BASE_URL:-}
+      EXTPLORER_BASE_URL: ${EXTPLORER_BASE_URL:?Set EXTPLORER_BASE_URL to the public HTTPS URL}
       EXTPLORER_FILE_MANAGER_ROOT: ${EXTPLORER_FILE_MANAGER_ROOT:-}
       EXTPLORER_STATE_DRIVER: ${EXTPLORER_STATE_DRIVER:-file}
       EXTPLORER_SESSION_DRIVER: ${EXTPLORER_SESSION_DRIVER:-file}
@@ -190,6 +190,7 @@ services:
       - extplorer_writable:/var/www/html/writable
     environment:
       CI_ENVIRONMENT: production
+      EXTPLORER_BASE_URL: ${EXTPLORER_BASE_URL:?Set EXTPLORER_BASE_URL to the public HTTPS URL}
       EXTPLORER_WRITE_PATH: /var/www/html/writable
       EXTPLORER_STATE_DRIVER: ${EXTPLORER_STATE_DRIVER:-file}
       EXTPLORER_CACHE_DRIVER: ${EXTPLORER_CACHE_DRIVER:-file}

@@ -44,7 +44,17 @@
     "password_optional": "Passwort (Optional)",
     "password_protected": "Passwortgeschützt",
     "step_up_title": "Identität bestätigen",
-    "step_up_description": "Gib dein aktuelles Passwort ein. Die Bestätigung gilt 10 Minuten für sensible Administrationsänderungen.",
+    "step_up_description": "Gib dein aktuelles Passwort und bei aktivierter Zwei-Faktor-Authentifizierung deinen Authenticator-Code ein. Die Bestätigung gilt 10 Minuten.",
     "step_up_confirm": "Fortfahren",
-    "step_up_password_required": "Das aktuelle Passwort ist erforderlich."
+    "step_up_password_required": "Das aktuelle Passwort ist erforderlich.",
+    "webdav_credentials": "WebDAV-App-Passwörter",
+    "webdav_credentials_desc": "Verwende ein separates, widerrufbares Passwort für WebDAV-Clients. Das Geheimnis wird nur einmal angezeigt.",
+    "webdav_secret_once": "Kopiere dieses Passwort jetzt. Es wird nicht erneut angezeigt.",
+    "webdav_label_placeholder": "Gerätename",
+    "webdav_create": "App-Passwort erstellen",
+    "webdav_empty": "Keine WebDAV-App-Passwörter vorhanden.",
+    "webdav_load_failed": "WebDAV-Zugangsdaten konnten nicht geladen werden.",
+    "webdav_create_failed": "WebDAV-Zugangsdaten konnten nicht erstellt werden.",
+    "webdav_delete_failed": "WebDAV-Zugangsdaten konnten nicht widerrufen werden.",
+    "revoke": "Widerrufen"
 }

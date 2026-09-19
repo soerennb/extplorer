@@ -44,7 +44,17 @@
     "password_optional": "Mot de passe (Optionnel)",
     "password_protected": "Protégé par mot de passe",
     "step_up_title": "Confirmez votre identité",
-    "step_up_description": "Saisissez votre mot de passe actuel. Cette confirmation sera conservée pendant 10 minutes pour les modifications administratives sensibles.",
+    "step_up_description": "Saisissez votre mot de passe actuel et, si elle est activée, votre code d’authentification. Cette confirmation reste valable 10 minutes.",
     "step_up_confirm": "Continuer",
-    "step_up_password_required": "Le mot de passe actuel est requis."
+    "step_up_password_required": "Le mot de passe actuel est requis.",
+    "webdav_credentials": "Mots de passe d’application WebDAV",
+    "webdav_credentials_desc": "Utilisez un mot de passe distinct et révocable pour les clients WebDAV. Le secret ne s’affiche qu’une fois.",
+    "webdav_secret_once": "Copiez ce mot de passe maintenant. Il ne sera plus affiché.",
+    "webdav_label_placeholder": "Nom de l’appareil",
+    "webdav_create": "Créer un mot de passe",
+    "webdav_empty": "Aucun mot de passe d’application WebDAV.",
+    "webdav_load_failed": "Impossible de charger les identifiants WebDAV.",
+    "webdav_create_failed": "Impossible de créer l’identifiant WebDAV.",
+    "webdav_delete_failed": "Impossible de révoquer l’identifiant WebDAV.",
+    "revoke": "Révoquer"
 }

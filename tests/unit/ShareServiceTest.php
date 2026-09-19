@@ -3,23 +3,40 @@
 namespace Tests\Unit;
 
 use App\Services\ShareService;
+use App\Models\UserModel;
 use CodeIgniter\Test\CIUnitTestCase;
 
 class ShareServiceTest extends CIUnitTestCase
 {
     private string $testFile;
+    private string $usersFile;
+    private string|false $usersBackup;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->testFile = config('Storage')->state . '/test_shares.php';
         if (file_exists($this->testFile)) unlink($this->testFile);
+        $this->usersFile = config('Storage')->state . '/users.php';
+        $this->usersBackup = is_file($this->usersFile) ? file_get_contents($this->usersFile) : false;
+        (new UserModel())->saveUsers([[
+            'username' => 'share-owner',
+            'password_hash' => password_hash('unused-password', PASSWORD_DEFAULT),
+            'role' => 'admin',
+            'home_dir' => '/',
+            'groups' => [],
+            'auth_version' => 1,
+            'disabled' => false,
+            'locked_until' => 0,
+        ]]);
     }
 
     protected function tearDown(): void
     {
         parent::tearDown();
         if (file_exists($this->testFile)) unlink($this->testFile);
+        if ($this->usersBackup === false) @unlink($this->usersFile);
+        else file_put_contents($this->usersFile, $this->usersBackup);
     }
 
     public function testCreateShare()
@@ -115,5 +132,24 @@ class ShareServiceTest extends CIUnitTestCase
         $this->assertArrayNotHasKey('recipients', $transferView);
         $this->assertArrayNotHasKey('sender_email', $transferView);
         $this->assertArrayNotHasKey('path', $transferView);
+    }
+
+    public function testAmbiguousLegacyOrExternalSharePathFailsClosed(): void
+    {
+        $service = new ShareService($this->testFile);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('must be recreated');
+        $service->resolveSharePaths(['path' => 'external/secret.txt', 'created_by' => 'admin']);
+    }
+
+    public function testInactiveShareOwnerCannotResolvePublishedPath(): void
+    {
+        $service = new ShareService($this->testFile);
+        (new UserModel())->updateUser('share-owner', ['locked_until' => time() + 3600]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('not active');
+        $service->resolveSharePaths(['path' => 'Home/file.txt', 'created_by' => 'share-owner']);
     }
 }

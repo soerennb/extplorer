@@ -118,4 +118,7 @@ $routes->group('api', function($routes) {
     $routes->get('profile/2fa/setup', 'ProfileController::setup2fa');
     $routes->post('profile/2fa/enable', 'ProfileController::enable2fa');
     $routes->post('profile/2fa/disable', 'ProfileController::disable2fa');
+    $routes->get('profile/webdav-credentials', 'ProfileController::webDavCredentials');
+    $routes->post('profile/webdav-credentials', 'ProfileController::createWebDavCredential');
+    $routes->delete('profile/webdav-credentials/(:segment)', 'ProfileController::deleteWebDavCredential/$1');
 });

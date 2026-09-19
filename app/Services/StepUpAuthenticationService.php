@@ -29,6 +29,8 @@ final class StepUpAuthenticationService
         'mount.update',
         'mount.delete',
         'mount.test',
+        'webdav-credential.create',
+        'webdav-credential.delete',
     ];
 
     public function __construct(private ?UserModel $userModel = null)
@@ -36,7 +38,7 @@ final class StepUpAuthenticationService
         $this->userModel ??= new UserModel();
     }
 
-    public function issue(string $action, string $password): string
+    public function issue(string $action, string $password, string $code = ''): string
     {
         $username = (string) session('username');
         if (!in_array($action, self::ACTIONS, true)
@@ -49,6 +51,13 @@ final class StepUpAuthenticationService
         $user = $password === '' ? null : $this->userModel->verifyUser($username, $password);
         if (!is_array($user)) {
             throw new RuntimeException('Re-authentication failed.');
+        }
+
+        if (!empty($user['2fa_enabled'])) {
+            $secret = $this->userModel->get2faSecret($username);
+            if ($secret === null || !(new TwoFactorService())->verifyCode($secret, trim($code))) {
+                throw new RuntimeException('Two-factor authentication failed.');
+            }
         }
 
         $token = bin2hex(random_bytes(32));

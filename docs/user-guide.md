@@ -39,7 +39,8 @@ Navigate to **Admin > Users**.
 You can mount your eXtplorer files as a network drive on your computer.
 
 *   **URL:** `https://your-site.com/dav`
-*   **Username/Password:** Your eXtplorer credentials.
+*   **Username:** Your eXtplorer username.
+*   **Password:** Create a revocable WebDAV app password under **Profile → Security**. Accounts without 2FA may also use their normal password; accounts with 2FA must use an app password.
 
 **Windows:**
 1.  Open File Explorer > Map Network Drive.
@@ -50,4 +51,4 @@ You can mount your eXtplorer files as a network drive on your computer.
 1.  Finder > Go > Connect to Server (`Cmd+K`).
 2.  Address: `https://your-site.com/dav`
 
-*Note: WebDAV requires HTTPS for reliable operation on Windows and macOS.*
+*Note: WebDAV requires HTTPS in production. If external upload scanning is enabled, WebDAV remains available for reads and file management but rejects new PUT uploads because DAV clients cannot represent the asynchronous quarantine state safely.*

@@ -36,11 +36,24 @@ class App extends BaseConfig
             if (filter_var($configuredBaseUrl, FILTER_VALIDATE_URL) === false) {
                 throw new \RuntimeException('EXTPLORER_BASE_URL must be a valid absolute URL.');
             }
+            $parts = parse_url($configuredBaseUrl);
+            if (!is_array($parts) || empty($parts['host'])
+                || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])
+            ) {
+                throw new \RuntimeException('EXTPLORER_BASE_URL must not contain credentials, a query, or a fragment.');
+            }
+            if ($this->isProduction() && ($parts['scheme'] ?? '') !== 'https') {
+                throw new \RuntimeException('EXTPLORER_BASE_URL must use HTTPS in production.');
+            }
             $this->baseURL = $configuredBaseUrl;
+            $this->allowedHostnames = [$parts['host']];
         }
 
         if (empty($this->baseURL)) {
-            if (isset($_SERVER['HTTP_HOST'])) {
+            if ($this->isProduction()) {
+                throw new \RuntimeException('EXTPLORER_BASE_URL is required in production.');
+            }
+            if (isset($_SERVER['HTTP_HOST']) && preg_match('/\A[A-Za-z0-9.-]+(?::[0-9]{1,5})?\z/', $_SERVER['HTTP_HOST'])) {
                 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
                 
                 // Determine the script path (subfolder)
@@ -58,6 +71,11 @@ class App extends BaseConfig
                 $this->baseURL = 'http://localhost:8080/';
             }
         }
+    }
+
+    private function isProduction(): bool
+    {
+        return defined('ENVIRONMENT') && constant('ENVIRONMENT') === 'production';
     }
 
     /**

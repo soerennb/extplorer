@@ -9,6 +9,10 @@ Copy the `env` file to `.env` to start customizing:
 cp env .env
 ```
 
+Set `EXTPLORER_BASE_URL` to the public HTTPS URL before starting a production
+installation. For local development, explicitly change `CI_ENVIRONMENT` to
+`development`; production intentionally refuses Host-header URL discovery.
+
 ### Essential Settings
 | Variable | Description | Recommended (Prod) |
 | :--- | :--- | :--- |
@@ -29,7 +33,7 @@ service. The following alternatives are available:
 | :--- | :--- | :--- |
 | `EXTPLORER_STATE_DRIVER` | `file`, `sqlite`, `database` | Metadata and application state |
 | `EXTPLORER_SESSION_DRIVER` | `file`, `database`, `redis` | PHP sessions |
-| `EXTPLORER_CACHE_DRIVER` | `file`, `redis`, `dummy` | Cache and request throttling |
+| `EXTPLORER_CACHE_DRIVER` | `file`, `redis` in production; `dummy` only in development/testing | Cache and request throttling |
 
 `EXTPLORER_CACHE_PREFIX` optionally overrides the cache namespace. It may
 contain only letters, numbers, underscores and hyphens because CodeIgniter

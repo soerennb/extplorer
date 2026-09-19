@@ -355,6 +355,11 @@ class ShareController extends BaseController
             return $this->failForbidden('Uploads are not allowed for this share.');
         }
 
+        $settings = (new \App\Services\SettingsService())->getSettings();
+        if (empty($settings['allow_public_uploads'])) {
+            return $this->failForbidden('Public uploads are disabled.');
+        }
+
         [, $basePath] = $this->resolveSharePaths($share);
         if (!is_dir($basePath)) {
             return $this->failForbidden();
@@ -374,8 +379,6 @@ class ShareController extends BaseController
         }
 
         try {
-            $settingsService = new \App\Services\SettingsService();
-            $settings = $settingsService->getSettings();
             $policy = $this->buildUploadPolicy($settings, $basePath, $share);
 
             $fileSize = (int)$file->getSize();
@@ -491,7 +494,12 @@ class ShareController extends BaseController
      */
     private function resolveSharePaths(array $share): array
     {
-        return (new ShareService())->resolveSharePaths($share);
+        try {
+            return (new ShareService())->resolveSharePaths($share);
+        } catch (\RuntimeException $exception) {
+            LogService::log('Share Access Denied', (string)($share['hash'] ?? ''), 'Share owner or namespace is no longer authorized', 'Public');
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Link expired or invalid.');
+        }
     }
 
     /**

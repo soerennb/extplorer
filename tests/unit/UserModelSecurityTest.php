@@ -9,12 +9,16 @@ class UserModelSecurityTest extends CIUnitTestCase
 {
     private string $usersFile;
     private ?string $backup = null;
+    private string $rolesFile;
+    private ?string $rolesBackup = null;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->usersFile = config('Storage')->state . '/users.php';
         $this->backup = is_file($this->usersFile) ? file_get_contents($this->usersFile) : null;
+        $this->rolesFile = config('Storage')->state . '/roles.php';
+        $this->rolesBackup = is_file($this->rolesFile) ? file_get_contents($this->rolesFile) : null;
 
         $model = new UserModel();
         $model->saveUsers([[
@@ -34,6 +38,8 @@ class UserModelSecurityTest extends CIUnitTestCase
         } else {
             file_put_contents($this->usersFile, $this->backup);
         }
+        if ($this->rolesBackup === null) @unlink($this->rolesFile);
+        else file_put_contents($this->rolesFile, $this->rolesBackup);
         parent::tearDown();
     }
 
@@ -70,5 +76,26 @@ class UserModelSecurityTest extends CIUnitTestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $model->changePassword('alice', 'short');
+    }
+
+    public function testAuthorizationFieldsInvalidateExistingSessions(): void
+    {
+        $model = new UserModel();
+        $before = (int)$model->getUser('alice')['auth_version'];
+
+        $this->assertTrue($model->updateUser('alice', ['home_dir' => '/restricted']));
+        $this->assertSame($before + 1, (int)$model->getUser('alice')['auth_version']);
+    }
+
+    public function testRoleDefinitionChangeInvalidatesAllUsers(): void
+    {
+        $model = new UserModel();
+        $before = (int)$model->getUser('alice')['auth_version'];
+        $roles = $model->getRoles();
+        $roles['user'] = ['read'];
+
+        $model->saveRoles($roles);
+
+        $this->assertSame($before + 1, (int)$model->getUser('alice')['auth_version']);
     }
 }

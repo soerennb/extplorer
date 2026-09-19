@@ -3,11 +3,15 @@
 namespace App\Services\Dav;
 
 use Sabre\DAV\Auth\Backend\AbstractBasic;
-use App\Models\UserModel;
 
 class AuthBackend extends AbstractBasic
 {
-    protected ?array $currentUser = null;
+    private string $passwordHash;
+
+    public function __construct(private string $expectedUsername, string $expectedPassword)
+    {
+        $this->passwordHash = hash('sha256', $expectedPassword);
+    }
 
     /**
      * Validates a username and password
@@ -18,20 +22,7 @@ class AuthBackend extends AbstractBasic
      */
     protected function validateUserPass($username, $password): bool
     {
-        $userModel = new UserModel();
-        $user = $userModel->verifyUser($username, $password);
-
-        if ($user) {
-            // We store the user data in the object for later use (e.g. home_dir)
-            $this->currentUser = $user;
-            return true;
-        }
-
-        return false;
-    }
-
-    public function getCurrentUser(): ?array
-    {
-        return $this->currentUser;
+        return hash_equals($this->expectedUsername, (string)$username)
+            && hash_equals($this->passwordHash, hash('sha256', (string)$password));
     }
 }

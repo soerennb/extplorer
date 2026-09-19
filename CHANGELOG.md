@@ -4,6 +4,21 @@ All notable changes to eXtplorer 3 are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Added revocable, one-time-display WebDAV app passwords in the user security profile.
+
+### Changed
+
+- Production now requires an explicit HTTPS `EXTPLORER_BASE_URL` and a persistent cache backend.
+- WebDAV uploads now enforce account extension rules, streaming size limits and per-user quota.
+
+### Security
+
+- Authorization changes immediately invalidate affected sessions and persistent login grants.
+- Public shares now revalidate owner permissions and reject ambiguous legacy or external mount paths.
+- Accounts protected by 2FA can no longer use the normal account password to bypass 2FA over WebDAV.
+
 ## [3.0.0] - 2026-09-19
 
 ### Added
