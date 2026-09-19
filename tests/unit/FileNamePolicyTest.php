@@ -12,7 +12,7 @@ final class FileNamePolicyTest extends CIUnitTestCase
     {
         $policy = new FileNamePolicy();
 
-        foreach (['shell.php', '.php', 'payload.pHp', '.htaccess', 'script.cgi', 'file.php.'] as $filename) {
+        foreach (['shell.php', '.php', 'payload.pHp', '.htaccess', '.htpasswd', 'script.cgi', 'file.php.'] as $filename) {
             try {
                 $policy->assertSafe($filename);
                 $this->fail("Expected {$filename} to be rejected.");

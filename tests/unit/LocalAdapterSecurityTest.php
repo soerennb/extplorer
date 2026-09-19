@@ -90,6 +90,32 @@ class LocalAdapterSecurityTest extends CIUnitTestCase
         @rmdir($root);
     }
 
+    public function testDirectoryListingCanIncludeOrExcludeHiddenEntries(): void
+    {
+        $root = sys_get_temp_dir() . '/extplorer_hidden_listing_' . uniqid('', true);
+        mkdir($root, 0755, true);
+        file_put_contents($root . '/visible.txt', 'visible');
+        file_put_contents($root . '/.htaccess', 'hidden');
+        file_put_contents($root . '/.htpasswd', 'hidden');
+
+        try {
+            $adapter = new LocalAdapter($root);
+            $visibleNames = array_column($adapter->listDirectory('/', false), 'name');
+            $allNames = array_column($adapter->listDirectory('/', true), 'name');
+
+            $this->assertContains('visible.txt', $visibleNames);
+            $this->assertNotContains('.htaccess', $visibleNames);
+            $this->assertNotContains('.htpasswd', $visibleNames);
+            $this->assertContains('.htaccess', $allNames);
+            $this->assertContains('.htpasswd', $allNames);
+        } finally {
+            @unlink($root . '/visible.txt');
+            @unlink($root . '/.htaccess');
+            @unlink($root . '/.htpasswd');
+            @rmdir($root);
+        }
+    }
+
     public function testZipExtractionRejectsWindowsAbsoluteAndDriveRelativeEntries(): void
     {
         foreach (['C:Windows/system.ini', 'C:/Windows/system.ini', '\\server\\share\\secret.txt'] as $entryName) {

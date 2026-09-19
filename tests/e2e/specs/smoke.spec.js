@@ -312,3 +312,80 @@ test("local user can create, upload, download, rename, trash, and restore a file
 
   await assertCleanBrowser();
 });
+
+test("local user can copy a folder with nested contents", async ({ page }) => {
+  const assertCleanBrowser = await monitorPage(page);
+  const suffix = Date.now().toString(36);
+  const sourceName = `e2e-copy-source-${suffix}`;
+  const targetName = `e2e-copy-target-${suffix}`;
+  const nestedFileName = "smoke-upload.txt";
+
+  await login(page);
+
+  await fileItem(page, "Home").dblclick();
+  await expect(page.getByTestId("current-path")).toContainText("Home");
+
+  await page.getByTestId("create-folder").click();
+  await page.locator(".swal2-input").fill(sourceName);
+  await confirmDialog(page);
+  await expect(fileItem(page, sourceName)).toBeVisible();
+  await fileItem(page, sourceName).dblclick();
+
+  await page.getByTestId("upload").click();
+  await page.locator("#uploadFileInput").setInputFiles(fixturePath);
+  await page.getByTestId("upload-submit").click();
+  await expect(page.locator(".swal2-success")).toBeVisible();
+  await confirmDialog(page);
+  await page.getByTestId("upload-close").click();
+  await expect(fileItem(page, nestedFileName)).toBeVisible();
+
+  await page.getByTestId("go-up").click();
+  await expect(fileItem(page, sourceName)).toBeVisible();
+  await fileItem(page, sourceName).click();
+  await page.locator('button[title="Copy"]').click();
+
+  await page.getByTestId("create-folder").click();
+  await page.locator(".swal2-input").fill(targetName);
+  await confirmDialog(page);
+  await expect(fileItem(page, targetName)).toBeVisible();
+  await fileItem(page, targetName).dblclick();
+
+  const copyResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/cp") &&
+      response.request().method() === "POST" &&
+      response.status() === 200,
+  );
+  await page.locator('button[title="Paste"]').click();
+  await copyResponse;
+  await expect(page.locator(".swal2-success")).toBeVisible();
+  await confirmDialog(page);
+  await expect(fileItem(page, sourceName)).toBeVisible();
+
+  await fileItem(page, sourceName).dblclick();
+  await expect(fileItem(page, nestedFileName)).toBeVisible();
+
+  await page.getByTestId("go-up").click();
+  await page.getByTestId("go-up").click();
+  await expect(fileItem(page, sourceName)).toBeVisible();
+  await expect(fileItem(page, targetName)).toBeVisible();
+
+  await fileItem(page, targetName).click();
+  await page.getByTestId("selection-delete").click();
+  await confirmDialog(page);
+  await expect(fileItem(page, targetName)).toHaveCount(0);
+
+  await fileItem(page, sourceName).click();
+  await page.getByTestId("selection-delete").click();
+  await confirmDialog(page);
+  await expect(fileItem(page, sourceName)).toHaveCount(0);
+
+  await page.getByTestId("trash-toggle").click();
+  await expect(fileItem(page, targetName)).toBeVisible();
+  await expect(fileItem(page, sourceName)).toBeVisible();
+  await page.getByTestId("empty-trash").click();
+  await confirmDialog(page);
+  await expect(page.getByTestId("file-item")).toHaveCount(0);
+
+  await assertCleanBrowser();
+});
