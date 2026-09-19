@@ -216,7 +216,7 @@ test("admin can save settings after current-password confirmation", async ({
   );
   await page.getByRole("button", { name: "Save Settings" }).click();
 
-  const stepUpInput = page.locator(".swal2-input");
+  const stepUpInput = page.locator("#step-up-password");
   await expect(stepUpInput).toBeVisible();
   await stepUpInput.fill(password);
   await page.locator(".swal2-confirm").click();
