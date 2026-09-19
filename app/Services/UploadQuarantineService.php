@@ -283,6 +283,12 @@ final class UploadQuarantineService
         if (is_link($target)) {
             throw new RuntimeException('Upload target must not be a symbolic link.');
         }
+        try {
+            (new FileNamePolicy())->assertSafe(basename(str_replace('\\', '/', $target)));
+        } catch (\Throwable $exception) {
+            throw new RuntimeException('Upload target filename is not allowed.', 0, $exception);
+        }
+        $this->assertNoSymlinkComponents(dirname($target));
         $parent = realpath(dirname($target));
         if ($parent === false || !$this->isAllowedTarget($parent)) {
             throw new RuntimeException('Upload target is outside the managed file roots.');
@@ -299,11 +305,26 @@ final class UploadQuarantineService
                 continue;
             }
             $root = rtrim(str_replace('\\', '/', $root), '/');
+            if (DIRECTORY_SEPARATOR === '\\') {
+                $normalized = strtolower($normalized);
+                $root = strtolower($root);
+            }
             if ($normalized === $root || str_starts_with($normalized, $root . '/')) {
                 return true;
             }
         }
         return false;
+    }
+
+    private function assertNoSymlinkComponents(string $path): void
+    {
+        $current = rtrim($path, '/\\');
+        while ($current !== dirname($current)) {
+            if (is_link($current)) {
+                throw new RuntimeException('Upload target uses a symbolic link.');
+            }
+            $current = dirname($current);
+        }
     }
 
     private function assertPendingBudget(int $additionalBytes): void
@@ -336,9 +357,11 @@ final class UploadQuarantineService
 
     private function ensureRoot(): void
     {
+        $this->assertNoSymlinkComponents($this->root);
         if (!is_dir($this->root) && !mkdir($this->root, 0700, true) && !is_dir($this->root)) {
             throw new RuntimeException('Unable to create upload quarantine storage.');
         }
+        $this->assertNoSymlinkComponents($this->root);
         if (is_link($this->root) || !is_writable($this->root)) {
             throw new RuntimeException('Upload quarantine storage is not safe or writable.');
         }

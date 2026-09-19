@@ -29,6 +29,10 @@ class LoginSecurityTest extends CIUnitTestCase
 
         $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ['https://evil.example']));
         $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ['//evil.example']));
+        $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ['\\\\evil.example\\share']));
+        $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ['/%5cevil.example']));
+        $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ['/%2f%2fevil.example']));
+        $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ['/%252f%252fevil.example']));
         $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ["/app\nLocation: https://evil.example"]));
     }
 

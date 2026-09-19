@@ -26,6 +26,21 @@ class InstallFilter implements FilterInterface
             return $isInstallPage ? null : redirect()->to('install');
         }
 
+        // Validate the storage boundary before reading or creating installer
+        // state as well. Otherwise an unsafe WRITE_PATH could expose the
+        // claim token and newly created account state through the webroot.
+        try {
+            (new \App\Services\StorageBoundaryPolicy())->assertSafe();
+        } catch (\Throwable $exception) {
+            log_message('critical', 'Storage boundary validation failed: {message}', [
+                'message' => $exception->getMessage(),
+            ]);
+            return Services::response()
+                ->setStatusCode(503)
+                ->setHeader('Cache-Control', 'no-store')
+                ->setBody('Storage configuration is unsafe.');
+        }
+
         try {
             $status = (new InstallStateService())->status();
         } catch (\Throwable $exception) {

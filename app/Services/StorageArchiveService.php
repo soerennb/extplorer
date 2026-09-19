@@ -393,8 +393,13 @@ final class StorageArchiveService
 
     private function ensureDirectory(string $path): void
     {
+        $this->assertNoSymlinkComponents($path);
         if (!is_dir($path) && !mkdir($path, 0700, true) && !is_dir($path)) {
             throw new RuntimeException("Unable to create directory: {$path}");
+        }
+        $this->assertNoSymlinkComponents($path);
+        if (is_link($path)) {
+            throw new RuntimeException("Unsafe symbolic link directory: {$path}");
         }
     }
 
@@ -413,6 +418,9 @@ final class StorageArchiveService
 
     private function removeTree(string $path): void
     {
+        if (is_link($path)) {
+            throw new RuntimeException("Refusing to remove a symbolic link: {$path}");
+        }
         if (!is_dir($path)) {
             return;
         }
@@ -426,5 +434,16 @@ final class StorageArchiveService
             }
         }
         @rmdir($path);
+    }
+
+    private function assertNoSymlinkComponents(string $path): void
+    {
+        $current = rtrim($path, '/\\');
+        while ($current !== dirname($current)) {
+            if (is_link($current)) {
+                throw new RuntimeException("Storage archive path uses a symbolic link: {$path}");
+            }
+            $current = dirname($current);
+        }
     }
 }

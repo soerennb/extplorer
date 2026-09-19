@@ -227,4 +227,18 @@ class LocalAdapterSecurityTest extends CIUnitTestCase
             @rmdir($root);
         }
     }
+
+    public function testWritableOperationsRejectExecutableFilenames(): void
+    {
+        $root = sys_get_temp_dir() . '/extplorer_filename_policy_' . uniqid('', true);
+        mkdir($root, 0755, true);
+        $adapter = new LocalAdapter($root);
+
+        try {
+            $this->expectException(\RuntimeException::class);
+            $adapter->writeFile('payload.php', '<?php echo 1;');
+        } finally {
+            @rmdir($root);
+        }
+    }
 }

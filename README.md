@@ -143,6 +143,7 @@ Settings synced into `writable/config/settings.php` (apply once on first run, or
 - `EXTPLORER_MOUNT_REMOTE_HOST_ALLOWLIST` (comma- or newline-separated)
 - `EXTPLORER_REMOTE_SECURITY_MODE=compat|strict` (strict rejects plaintext FTP and requires SFTP host-key fingerprints)
 - `EXTPLORER_MAX_SEARCH_RESULTS` and `EXTPLORER_MAX_OPERATION_SECONDS` for bounded recursive operations
+- `EXTPLORER_UPLOAD_STAGING_MAX_MB`, `EXTPLORER_UPLOAD_STAGING_MAX_FILES` and `EXTPLORER_UPLOAD_STAGING_TTL_SECONDS` for aggregate resumable-upload and transfer staging limits
 - `EXTPLORER_UPLOAD_SCAN_MODE=off|external` for external upload quarantine, plus its quarantine capacity/TTL settings
 
 The old names `app.baseURL`, `app_baseURL`, `WRITEPATH`, `encryption.key` and `EXTPLORER_ADMIN_PASS` remain accepted

@@ -6,6 +6,7 @@ use App\Services\ShareService;
 use App\Services\LogService;
 use App\Services\VFS\LocalAdapter;
 use App\Services\DownloadHeaders;
+use App\Services\FileNamePolicy;
 use App\Services\ResourcePolicy;
 
 class ShareController extends BaseController
@@ -17,6 +18,9 @@ class ShareController extends BaseController
     public function index(string $hash)
     {
         $service = new ShareService();
+        if (!$service->isValidHash($hash)) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
         $share = $service->getShare($hash);
         $supportedLocales = config('I18n')->supportedLocales();
         $locale = $this->detectLocale($supportedLocales);
@@ -38,6 +42,9 @@ class ShareController extends BaseController
             ]);
         }
 
+        $publicShare = $service->publicView($share);
+        $displayName = (string)($publicShare['display_name'] ?? '');
+
         [, $basePath] = $this->resolveSharePaths($share);
 
         // Serve Content
@@ -54,9 +61,9 @@ class ShareController extends BaseController
             // Direct download/preview for single file share?
             // Usually showing a preview page is better UX
             return view('shared', [
-                'share' => $share, 
+                'share' => $publicShare,
                 'is_file' => true,
-                'filename' => basename($share['path']),
+                'filename' => $displayName,
                 'size' => filesize($root),
                 'hash' => $hash,
                 'locale' => $locale,
@@ -72,7 +79,7 @@ class ShareController extends BaseController
         // Let's go with a simpler Vue instance using the 'shared' layout.
         
         return view('shared', [
-            'share' => $share, 
+            'share' => $publicShare,
             'is_file' => false,
             'hash' => $hash,
             'locale' => $locale,
@@ -139,6 +146,10 @@ class ShareController extends BaseController
 
     public function auth(string $hash)
     {
+        $service = new ShareService();
+        if (!$service->isValidHash($hash)) {
+            return $this->failNotFound();
+        }
         $throttler = \Config\Services::throttler();
         $authThrottleKey = 'share-auth-' . $hash . '-' . hash('sha256', $this->request->getIPAddress());
         if ($throttler->check($authThrottleKey, 10, MINUTE) === false) {
@@ -146,7 +157,6 @@ class ShareController extends BaseController
             return redirect()->back()->with('error', 'Too many requests. Please slow down.');
         }
 
-        $service = new ShareService();
         $password = $this->request->getPost('password');
         $supportedLocales = config('I18n')->supportedLocales();
         $locale = $this->detectLocale($supportedLocales);
@@ -175,6 +185,7 @@ class ShareController extends BaseController
     public function download(string $hash)
     {
         $service = new ShareService();
+        if (!$service->isValidHash($hash)) return $this->failNotFound();
         $share = $service->getShare($hash);
         if (!$share) return $this->failNotFound();
 
@@ -272,6 +283,7 @@ class ShareController extends BaseController
     public function ls(string $hash)
     {
         $service = new ShareService();
+        if (!$service->isValidHash($hash)) return $this->failNotFound();
         $share = $service->getShare($hash);
         if (!$share) return $this->failNotFound();
 
@@ -291,6 +303,13 @@ class ShareController extends BaseController
         try {
             $fs = new LocalAdapter($basePath);
             $items = $fs->listDirectory($subPath, false);
+            // Do not expose local account/group names or permission bits on a
+            // public share. They are useful to administrators but disclose
+            // host details to unauthenticated visitors.
+            $items = array_map(static function (array $item): array {
+                unset($item['owner'], $item['group'], $item['perms']);
+                return $item;
+            }, $items);
             $policy = null;
             if (($share['mode'] ?? 'read') === 'upload') {
                 $settingsService = new \App\Services\SettingsService();
@@ -311,6 +330,8 @@ class ShareController extends BaseController
      */
     public function upload(string $hash)
     {
+        $service = new ShareService();
+        if (!$service->isValidHash($hash)) return $this->failNotFound();
         $throttler = \Config\Services::throttler();
         $uploadThrottleKey = 'share-upload-' . $hash . '-' . hash('sha256', $this->request->getIPAddress());
         if ($throttler->check($uploadThrottleKey, 30, MINUTE) === false) {
@@ -318,7 +339,6 @@ class ShareController extends BaseController
             return $this->fail('Too many requests. Please slow down.', 429);
         }
 
-        $service = new ShareService();
         $share = $service->getShare($hash);
         if (!$share) {
             return $this->failNotFound();
@@ -342,6 +362,11 @@ class ShareController extends BaseController
 
         $subPath = (string)($this->request->getPost('path') ?? '');
         $subPath = ltrim($subPath, '/');
+        try {
+            (new FileNamePolicy())->assertSafePath($subPath, true);
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage());
+        }
 
         $file = $this->request->getFile('file');
         if (!$file || !$file->isValid()) {
@@ -362,9 +387,13 @@ class ShareController extends BaseController
                 }
             }
 
+            $name = $this->sanitizePublicUploadFilename((string)$file->getClientName());
+            if (!(new FileNamePolicy())->isAllowed($name, $policy['allowed_extensions'])) {
+                return $this->fail('File type not allowed.', 422);
+            }
+
             $allowedExts = $policy['allowed_extensions'];
             if (!empty($allowedExts)) {
-                $name = (string)$file->getClientName();
                 $ext = strtolower((string)pathinfo($name, PATHINFO_EXTENSION));
                 if ($ext === '' || !in_array($ext, $allowedExts, true)) {
                     $allowedLabel = $policy['allowed_extensions_label'];
@@ -377,7 +406,6 @@ class ShareController extends BaseController
                 }
             }
 
-            $name = $this->sanitizePublicUploadFilename((string)$file->getClientName());
             $lock = $this->openShareUploadLock($hash);
             try {
                 $policy = $this->buildUploadPolicy($settings, $basePath, $share);
@@ -397,6 +425,10 @@ class ShareController extends BaseController
                 $targetDir = $fs->resolvePath($subPath);
                 if (!is_dir($targetDir)) {
                     return $this->fail('Target directory does not exist.');
+                }
+                $this->assertNoSymlinkComponents($targetDir);
+                if (is_link($targetDir . DIRECTORY_SEPARATOR . $name)) {
+                    return $this->fail('Unable to store uploaded file.', 409);
                 }
 
                 $quarantine = new \App\Services\UploadQuarantineService();
@@ -459,13 +491,7 @@ class ShareController extends BaseController
      */
     private function resolveSharePaths(array $share): array
     {
-        $rootBase = rtrim(config('Storage')->fileManagerRoot, '/\\');
-        if (isset($share['source']) && $share['source'] === 'transfer') {
-            $rootBase = rtrim(config('Storage')->uploads, '/\\') . DIRECTORY_SEPARATOR . 'shares';
-        }
-
-        $resolver = new LocalAdapter($rootBase);
-        return [$rootBase, $resolver->resolvePath((string)($share['path'] ?? ''))];
+        return (new ShareService())->resolveSharePaths($share);
     }
 
     /**
@@ -564,7 +590,9 @@ class ShareController extends BaseController
 
         $bytes = 0;
         $files = 0;
-        $budget = (new ResourcePolicy())->startOperation();
+        $entries = 0;
+        $resourcePolicy = new ResourcePolicy();
+        $budget = $resourcePolicy->startOperation();
 
         try {
             $iterator = new \RecursiveIteratorIterator(
@@ -573,6 +601,9 @@ class ShareController extends BaseController
 
             foreach ($iterator as $item) {
                 $budget->tick();
+                if (++$entries > $resourcePolicy->maxDirectoryEntries()) {
+                    throw new \RuntimeException('Share usage exceeds the configured resource limit.');
+                }
                 if ($item->isLink()) {
                     throw new \RuntimeException('Share usage cannot be calculated for symbolic links.');
                 }
@@ -677,7 +708,18 @@ class ShareController extends BaseController
             throw new \RuntimeException('Invalid filename.');
         }
 
-        return $filename;
+        return (new FileNamePolicy())->assertSafe($filename);
+    }
+
+    private function assertNoSymlinkComponents(string $path): void
+    {
+        $current = rtrim($path, '/\\');
+        while ($current !== dirname($current)) {
+            if (is_link($current)) {
+                throw new \RuntimeException('Upload path contains a symbolic link.');
+            }
+            $current = dirname($current);
+        }
     }
 
     /** @return resource */

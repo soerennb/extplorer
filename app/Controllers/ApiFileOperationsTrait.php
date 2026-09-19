@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\LogService;
 use App\Services\ResourcePolicy;
+use App\Services\FileNamePolicy;
 use Exception;
 
 trait ApiFileOperationsTrait
@@ -107,6 +108,7 @@ trait ApiFileOperationsTrait
 
         try {
             $content = (string)($content ?? '');
+            $this->assertWritableTargetName((string)$path);
             if (strlen($content) > (new ResourcePolicy())->maxContentBytes()) {
                 return $this->fail('File exceeds the configured content limit.', 413);
             }
@@ -173,6 +175,16 @@ trait ApiFileOperationsTrait
             // Use TrashService instead of direct delete
             $username = session('username');
             $trashService = new \App\Services\TrashService($username);
+
+            $path = (string)$path;
+            $normalizedPath = trim(str_replace('\\', '/', $path), '/');
+            if ($normalizedPath === '') {
+                throw new Exception('Cannot delete a mount point directly.');
+            }
+            $metadata = $this->fs->getMetadata($path);
+            if (is_array($metadata) && !empty($metadata['is_mount'])) {
+                throw new Exception('Cannot delete a mount point directly.');
+            }
 
             // Resolve full path to verify existence and for the move operation
             $fullPath = $this->fs->resolvePath($path);
@@ -279,6 +291,7 @@ trait ApiFileOperationsTrait
         if (!$from || !$to) return $this->fail('From and To required');
 
         try {
+            $this->assertWritableTargetName((string)$to);
             if (!$this->fs->move($from, $to)) {
                 throw new Exception('Unable to move item.');
             }
@@ -299,6 +312,7 @@ trait ApiFileOperationsTrait
         if (!$from || !$to) return $this->fail('From and To required');
 
         try {
+            $this->assertWritableTargetName((string)$to);
             if (!$this->fs->copy($from, $to)) {
                 throw new Exception('Unable to copy item.');
             }
@@ -307,6 +321,16 @@ trait ApiFileOperationsTrait
         } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
+    }
+
+    private function assertWritableTargetName(string $path): void
+    {
+        $path = trim(str_replace('\\', '/', $path), '/');
+        if ($path === '') {
+            throw new Exception('A target filename is required.');
+        }
+
+        (new FileNamePolicy())->assertSafePath($path);
     }
 
     public function chown()

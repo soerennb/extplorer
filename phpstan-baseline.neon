@@ -225,7 +225,7 @@ parameters:
 		-
 			message: '#^Function config not found\.$#'
 			identifier: function.notFound
-			count: 5
+			count: 4
 			path: app/Controllers/ApiController.php
 
 		-
@@ -279,12 +279,6 @@ parameters:
 		-
 			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
 			identifier: method.notFound
-			count: 1
-			path: app/Controllers/ApiShareController.php
-
-		-
-			message: '#^Function config not found\.$#'
-			identifier: function.notFound
 			count: 1
 			path: app/Controllers/ApiShareController.php
 
@@ -507,7 +501,7 @@ parameters:
 		-
 			message: '#^Function config not found\.$#'
 			identifier: function.notFound
-			count: 7
+			count: 5
 			path: app/Controllers/ShareController.php
 
 		-
@@ -543,19 +537,19 @@ parameters:
 		-
 			message: '#^Function config not found\.$#'
 			identifier: function.notFound
-			count: 3
+			count: 1
 			path: app/Controllers/TransferController.php
 
 		-
 			message: '#^Function log_message not found\.$#'
 			identifier: function.notFound
-			count: 1
+			count: 3
 			path: app/Controllers/TransferController.php
 
 		-
 			message: '#^Function session not found\.$#'
 			identifier: function.notFound
-			count: 10
+			count: 13
 			path: app/Controllers/TransferController.php
 
 		-
@@ -571,7 +565,7 @@ parameters:
 			path: app/Controllers/TransferController.php
 
 		-
-			message: '#^Parameter \#1 \$data of method App\\Controllers\\TransferController\:\:respond\(\) expects array\<string, mixed\>\|string\|null, list\<array\> given\.$#'
+			message: '#^Parameter \#1 \$data of method App\\Controllers\\TransferController\:\:respond\(\) expects array\<string, mixed\>\|string\|null, list\<array\<string, mixed\>\> given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Controllers/TransferController.php
@@ -645,7 +639,7 @@ parameters:
 		-
 			message: '#^Function log_message not found\.$#'
 			identifier: function.notFound
-			count: 1
+			count: 2
 			path: app/Filters/InstallFilter.php
 
 		-
@@ -763,6 +757,12 @@ parameters:
 			path: app/Services/MountService.php
 
 		-
+			message: '#^Constant ROOTPATH not found\.$#'
+			identifier: constant.notFound
+			count: 5
+			path: app/Services/MountService.php
+
+		-
 			message: '#^Function config not found\.$#'
 			identifier: function.notFound
 			count: 1
@@ -807,7 +807,7 @@ parameters:
 		-
 			message: '#^Function config not found\.$#'
 			identifier: function.notFound
-			count: 4
+			count: 1
 			path: app/Services/ShareService.php
 
 		-
@@ -933,7 +933,7 @@ parameters:
 		-
 			message: '#^Function log_message not found\.$#'
 			identifier: function.notFound
-			count: 1
+			count: 2
 			path: app/Services/UploadSessionService.php
 
 		-
@@ -1613,3 +1613,39 @@ parameters:
 			identifier: function.notFound
 			count: 1
 			path: app/Views/welcome_message.php
+
+		-
+			message: '#^Function csrf_token not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/shared.php
+
+		-
+			message: '#^Function csrf_hash not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Views/shared.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/StagingResourceService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/TransferStagingService.php
+
+		-
+			message: '#^Function config not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: app/Services/StorageBoundaryPolicy.php
+
+		-
+			message: '#^Constant ROOTPATH not found\.$#'
+			identifier: constant.notFound
+			count: 5
+			path: app/Services/StorageBoundaryPolicy.php

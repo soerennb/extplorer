@@ -153,7 +153,7 @@ final class UploadQuarantineServiceTest extends CIUnitTestCase
         file_put_contents($source, 'data');
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('managed file roots');
+        $this->expectExceptionMessage('symbolic link');
         (new UploadQuarantineService($this->root))->stage($source, $link . '/escaped.bin');
     }
 

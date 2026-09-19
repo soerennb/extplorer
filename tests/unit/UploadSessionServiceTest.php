@@ -26,7 +26,7 @@ class UploadSessionServiceTest extends CIUnitTestCase
     public function testChunksMustAllExistBeforeAssembly(): void
     {
         $service = new UploadSessionService($this->root, 'test-key');
-        $created = $service->create('alice', '/', '', 'file.txt', 6, 64 * 1024, 2);
+        $created = $service->create('alice', '/', '', 'file.txt', null, 64 * 1024, 2);
         $first = $service->chunkPath($created['id'], 0);
         file_put_contents($first, 'abc');
         $service->storeChunk($created['id'], 0, 3);
@@ -39,7 +39,7 @@ class UploadSessionServiceTest extends CIUnitTestCase
     public function testAssemblyStreamsChunksAndBindsOwner(): void
     {
         $service = new UploadSessionService($this->root, 'test-key');
-        $created = $service->create('alice', '/', '', 'file.txt', 6, 64 * 1024, 2);
+        $created = $service->create('alice', '/', '', 'file.txt', null, 64 * 1024, 2);
         $first = $service->chunkPath($created['id'], 0);
         $second = $service->chunkPath($created['id'], 1);
         file_put_contents($first, 'abc');
@@ -56,7 +56,7 @@ class UploadSessionServiceTest extends CIUnitTestCase
     public function testAssemblyProducesExactFinalFileAndRemovesSession(): void
     {
         $service = new UploadSessionService($this->root, 'test-key');
-        $created = $service->create('alice', '/', '', 'file.txt', 6, 64 * 1024, 2);
+        $created = $service->create('alice', '/', '', 'file.txt', null, 64 * 1024, 2);
         file_put_contents($service->chunkPath($created['id'], 0), 'abc');
         file_put_contents($service->chunkPath($created['id'], 1), 'def');
         $service->storeChunk($created['id'], 0, 3);
@@ -139,7 +139,7 @@ class UploadSessionServiceTest extends CIUnitTestCase
         }
 
         $service = new UploadSessionService($this->root, 'test-key');
-        $created = $service->create('alice', '/', '', 'file.txt', 6, 64 * 1024, 2);
+        $created = $service->create('alice', '/', '', 'file.txt', null, 64 * 1024, 2);
         file_put_contents($service->chunkPath($created['id'], 0), 'abc');
         file_put_contents($service->chunkPath($created['id'], 1), 'def');
         $service->storeChunk($created['id'], 0, 3);

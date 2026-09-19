@@ -14,6 +14,8 @@ class VfsFactoryMountTest extends CIUnitTestCase
     private string $mountsPath;
     private ?string $usersBackup = null;
     private ?string $mountsBackup = null;
+    private string $allowedRoot;
+    private array $originalAllowlist = [];
 
     protected function setUp(): void
     {
@@ -24,6 +26,10 @@ class VfsFactoryMountTest extends CIUnitTestCase
         $this->mountsPath = $state . '/mounts.php';
         $this->usersBackup = file_exists($this->usersPath) ? file_get_contents($this->usersPath) : null;
         $this->mountsBackup = file_exists($this->mountsPath) ? file_get_contents($this->mountsPath) : null;
+        $this->originalAllowlist = config('App')->mountRootAllowlist ?? [];
+        $this->allowedRoot = sys_get_temp_dir() . '/extplorer3-vfs-mount-' . bin2hex(random_bytes(8));
+        mkdir($this->allowedRoot, 0777, true);
+        config('App')->mountRootAllowlist = [$this->allowedRoot];
 
         (new UserModel())->saveUsers([
             [
@@ -49,6 +55,9 @@ class VfsFactoryMountTest extends CIUnitTestCase
             file_put_contents($this->mountsPath, $this->mountsBackup);
         }
 
+        config('App')->mountRootAllowlist = $this->originalAllowlist;
+        $this->removeDirectory($this->allowedRoot);
+
         parent::tearDown();
     }
 
@@ -61,7 +70,7 @@ class VfsFactoryMountTest extends CIUnitTestCase
                 'user' => 'vfs-mount-user',
                 'name' => '../escape',
                 'type' => 'local',
-                'config' => ['path' => config('Storage')->fileManagerRoot],
+                'config' => ['path' => $this->allowedRoot],
             ],
         ]);
 
@@ -72,5 +81,24 @@ class VfsFactoryMountTest extends CIUnitTestCase
         $health = (new MountService())->getMountHealth($mountId, 'vfs-mount-user');
         $this->assertSame('unhealthy', $health['status']);
         $this->assertStringContainsString('Invalid mount alias', $health['error']);
+    }
+
+    private function removeDirectory(string $directory): void
+    {
+        if (!is_dir($directory) || is_link($directory)) {
+            return;
+        }
+        foreach (scandir($directory) ?: [] as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            $path = $directory . DIRECTORY_SEPARATOR . $entry;
+            if (is_link($path) || is_file($path)) {
+                unlink($path);
+            } elseif (is_dir($path)) {
+                $this->removeDirectory($path);
+            }
+        }
+        rmdir($directory);
     }
 }

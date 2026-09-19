@@ -431,13 +431,7 @@ class MountService
                 $path = strtoupper($matches[1]) . ':/' . $matches[2];
             }
 
-            $realPath = realpath($path);
-            if (!$realPath || !is_dir($realPath)) {
-                throw new \Exception("Local path does not exist or is not readable: $path");
-            }
-
-            $this->assertLocalPathAllowlisted($realPath);
-            $config['path'] = $realPath;
+            $config['path'] = $this->assertLocalPathAllowed($path);
             return [$type, $config];
         }
 
@@ -567,11 +561,27 @@ class MountService
         throw new \Exception("Unknown mount type.");
     }
 
+    public function assertLocalPathAllowed(string $path): string
+    {
+        $path = trim($path);
+        if ($path === '') {
+            throw new \Exception('Local path is required.');
+        }
+        $this->assertNoSymlinkComponents($path);
+
+        $realPath = realpath($path);
+        if (!$realPath || !is_dir($realPath)) {
+            throw new \Exception("Local path does not exist or is not readable: $path");
+        }
+
+        $this->assertLocalPathAllowlisted($realPath);
+        return $realPath;
+    }
+
     private function assertLocalPathAllowlisted(string $realPath): void
     {
         $settingsService = new SettingsService();
         $allowedRoots = array_merge(
-            [config('Storage')->fileManagerRoot],
             config('App')->mountRootAllowlist ?? [],
             $settingsService->get('mount_root_allowlist', [])
         );
@@ -583,18 +593,65 @@ class MountService
             throw new \Exception("External mounts are disabled. Configure mountRootAllowlist.");
         }
 
+        $storage = config('Storage');
+        $protectedRoots = [
+            $storage->root,
+            $storage->fileManagerRoot,
+            $storage->shared,
+            $storage->uploads,
+            $storage->state,
+            $storage->runtime,
+            ROOTPATH . 'public',
+            ROOTPATH . 'app',
+            ROOTPATH . 'system',
+            ROOTPATH . 'vendor',
+            ROOTPATH . 'tests',
+        ];
+        foreach ($protectedRoots as $protectedRoot) {
+            $protectedReal = realpath((string)$protectedRoot);
+            if ($protectedReal && $this->pathsOverlap($realPath, $protectedReal)) {
+                throw new \Exception('Local mount path overlaps managed application storage or code.');
+            }
+        }
+
         foreach ($allowedRoots as $root) {
             $rootReal = realpath($root);
             if (!$rootReal) {
                 continue;
             }
-            $rootReal = rtrim($rootReal, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-            if (str_starts_with($realPath . DIRECTORY_SEPARATOR, $rootReal)) {
+            if ($this->isWithin($realPath, $rootReal)) {
                 return;
             }
         }
 
         throw new \Exception("Local path is not within an allowlisted mount root.");
+    }
+
+    private function isWithin(string $path, string $root): bool
+    {
+        $path = rtrim(str_replace('\\', '/', $path), '/') . '/';
+        $root = rtrim(str_replace('\\', '/', $root), '/') . '/';
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $path = strtolower($path);
+            $root = strtolower($root);
+        }
+        return str_starts_with($path, $root) || rtrim($path, '/') === rtrim($root, '/');
+    }
+
+    private function pathsOverlap(string $left, string $right): bool
+    {
+        return $this->isWithin($left, $right) || $this->isWithin($right, $left);
+    }
+
+    private function assertNoSymlinkComponents(string $path): void
+    {
+        $current = rtrim($path, '/\\');
+        while ($current !== dirname($current)) {
+            if (is_link($current)) {
+                throw new \Exception('Local mount path uses a symbolic link.');
+            }
+            $current = dirname($current);
+        }
     }
 
     private function validateConnectivity(string $type, array &$config): void

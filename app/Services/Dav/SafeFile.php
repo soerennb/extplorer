@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Dav;
 
+use App\Services\FileNamePolicy;
 use Sabre\DAV\Exception\Forbidden;
 use Sabre\DAV\FS\File;
 
@@ -24,6 +25,11 @@ final class SafeFile extends File
     public function put($data)
     {
         $this->assertCurrentPath();
+        try {
+            (new FileNamePolicy())->assertSafe(basename($this->path));
+        } catch (\Throwable $exception) {
+            throw new Forbidden('WebDAV filename is not allowed.');
+        }
         return parent::put($data);
     }
 
@@ -33,6 +39,11 @@ final class SafeFile extends File
         if ($name === '' || $name === '.' || $name === '..' || str_contains($name, "\0")
             || str_contains($name, '/') || str_contains($name, '\\')) {
             throw new Forbidden('Invalid WebDAV node name.');
+        }
+        try {
+            (new FileNamePolicy())->assertSafe($name);
+        } catch (\Throwable $exception) {
+            throw new Forbidden('WebDAV filename is not allowed.');
         }
 
         $destination = dirname($this->path) . DIRECTORY_SEPARATOR . $name;

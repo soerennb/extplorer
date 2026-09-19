@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\VFS\LocalAdapter;
+use App\Services\FileNamePolicy;
 use App\Services\LogService;
 use App\Services\UploadSessionService;
 use Exception;
@@ -11,21 +12,11 @@ trait ApiTransferOperationsTrait
 {
     private function isExtensionAllowed(string $filename): bool
     {
-        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        $allowed = session('allowed_extensions');
-        $blocked = session('blocked_extensions');
-
-        if ($allowed && !in_array($ext, array_map('trim', explode(',', strtolower($allowed))), true)) {
-            return false;
-        }
-        if ($blocked && in_array($ext, array_map('trim', explode(',', strtolower($blocked))), true)) {
-            return false;
-        }
-        if (empty($allowed) && in_array($ext, ['php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'pl', 'py', 'rb', 'cgi', 'exe', 'sh', 'bat', 'cmd', 'htaccess', 'htpasswd'], true)) {
-            return false;
-        }
-
-        return true;
+        return (new FileNamePolicy())->isAllowed(
+            $filename,
+            session('allowed_extensions'),
+            session('blocked_extensions')
+        );
     }
 
     public function upload()
@@ -450,6 +441,7 @@ trait ApiTransferOperationsTrait
         if (!is_dir($targetDir)) {
             throw new Exception('Target directory does not exist.');
         }
+        $this->assertNoSymlinkComponents($targetDir);
 
         $segments = $this->sanitizeUploadRelativeSegments($relativePath);
         if ($segments !== []) {
@@ -465,12 +457,16 @@ trait ApiTransferOperationsTrait
                 if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
                     throw new Exception('Unable to create upload folder.');
                 }
+                $this->assertNoSymlinkComponents($targetDir);
             }
         }
 
         $filename = $this->sanitizeUploadFilename($filename);
         $targetPath = $targetDir . DIRECTORY_SEPARATOR . $filename;
-        if (is_link($targetPath) || file_exists($targetPath)) {
+        if (is_link($targetPath)) {
+            throw new Exception('Upload target contains a symbolic link.');
+        }
+        if (file_exists($targetPath)) {
             if ($conflict === 'skip') {
                 return [
                     'dir' => $targetDir,
@@ -641,7 +637,18 @@ trait ApiTransferOperationsTrait
             throw new Exception('Invalid filename.');
         }
 
-        return $name;
+        return (new FileNamePolicy())->assertSafe($name);
+    }
+
+    private function assertNoSymlinkComponents(string $path): void
+    {
+        $current = rtrim($path, '/\\');
+        while ($current !== dirname($current)) {
+            if (is_link($current)) {
+                throw new Exception('Upload path contains a symbolic link.');
+            }
+            $current = dirname($current);
+        }
     }
 
 

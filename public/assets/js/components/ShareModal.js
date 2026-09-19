@@ -33,7 +33,7 @@ const ShareModal = {
                             </div>
                             <div>
                                 <strong>{{ t('password') || 'Password' }}:</strong>&nbsp;
-                                <span>{{ currentShare.password_hash ? t('password_protected') : t('share_no_password', 'No password') }}</span>
+                                <span>{{ currentShare.password_protected ? t('password_protected') : t('share_no_password', 'No password') }}</span>
                             </div>
                             <div><strong>{{ t('downloads') || 'Downloads' }}:</strong> {{ currentShare.downloads }}</div>
                         </div>

@@ -22,6 +22,7 @@ final class StorageCheck extends BaseCommand
         try {
             $storage = config('Storage');
             $this->checkDirectories($storage);
+            (new \App\Services\StorageBoundaryPolicy())->assertSafe($storage);
             (new StorageSchemaService())->ensure();
             AtomicFileStore::verifyBackend();
             $this->checkRedis($storage);

@@ -2,6 +2,7 @@
 
 namespace App\Services\VFS;
 
+use App\Services\FileNamePolicy;
 use App\Services\ResourcePolicy;
 use Exception;
 use ZipArchive;
@@ -109,6 +110,7 @@ class LocalAdapter implements IFileSystem
 
     public function writeFile(string $path, string $content): bool
     {
+        $this->assertWritableTarget($path);
         $fullPath = $this->resolvePath($path);
         $directory = dirname($fullPath);
         if (!is_dir($directory)) {
@@ -136,6 +138,9 @@ class LocalAdapter implements IFileSystem
     public function delete(string $path): bool
     {
         $fullPath = $this->resolvePath($path);
+        if (is_link($fullPath)) {
+            return false;
+        }
         if (is_dir($fullPath)) {
             return $this->deleteDirectory($fullPath);
         } elseif (is_file($fullPath)) {
@@ -146,7 +151,7 @@ class LocalAdapter implements IFileSystem
 
     private function deleteDirectory(string $dir): bool
     {
-        if (!is_dir($dir)) {
+        if (!is_dir($dir) || is_link($dir)) {
             return false;
         }
         $items = scandir($dir);
@@ -164,6 +169,7 @@ class LocalAdapter implements IFileSystem
 
     public function createDirectory(string $path): bool
     {
+        $this->assertWritableTarget($path);
         $fullPath = $this->resolvePath($path);
         if (file_exists($fullPath)) {
             return false;
@@ -173,6 +179,7 @@ class LocalAdapter implements IFileSystem
 
     public function rename(string $from, string $to): bool
     {
+        $this->assertWritableTarget($to);
         $fullFrom = $this->resolvePath($from);
         $fullTo = $this->resolvePath($to);
         return rename($fullFrom, $fullTo);
@@ -185,6 +192,7 @@ class LocalAdapter implements IFileSystem
 
     public function copy(string $from, string $to): bool
     {
+        $this->assertWritableTarget($to);
         $fullFrom = $this->resolvePath($from);
         $fullTo = $this->resolvePath($to);
 
@@ -229,6 +237,7 @@ class LocalAdapter implements IFileSystem
         }
         while (false !== ($file = readdir($dir))) {
             if ($file !== '.' && $file !== '..') {
+                (new FileNamePolicy())->assertSafe($file);
                 $srcPath = $src . '/' . $file;
                 $dstPath = $dst . '/' . $file;
 
@@ -259,6 +268,7 @@ class LocalAdapter implements IFileSystem
         $this->archiveEntries = 0;
         $this->archiveBytes = 0;
         $fullDest = $this->resolvePath($destination);
+        $this->assertWritableTarget($destination);
         $ext = strtolower(pathinfo($fullDest, PATHINFO_EXTENSION));
         
         if (str_ends_with(strtolower($fullDest), '.tar.gz')) {
@@ -359,6 +369,9 @@ class LocalAdapter implements IFileSystem
     {
         $this->operationBudget = $this->resourcePolicy->startOperation();
         $fullArchive = $this->resolvePath($archive);
+        if (trim(str_replace('\\', '/', $destination), '/') !== '') {
+            $this->assertWritableTarget($destination);
+        }
         $fullDest = $this->resolvePath($destination);
         $ext = strtolower(pathinfo($fullArchive, PATHINFO_EXTENSION));
 
@@ -614,7 +627,25 @@ class LocalAdapter implements IFileSystem
             throw new Exception('Archive contains an empty entry path.');
         }
 
+        foreach (explode('/', $relative) as $part) {
+            try {
+                (new FileNamePolicy())->assertSafe($part);
+            } catch (\Throwable $exception) {
+                throw new Exception('Archive contains a dangerous filename.', 0, $exception);
+            }
+        }
+
         return $relative;
+    }
+
+    private function assertWritableTarget(string $path): void
+    {
+        $normalized = trim(str_replace('\\', '/', $path), '/');
+        if ($normalized === '') {
+            throw new Exception('A target filename is required.');
+        }
+
+        (new FileNamePolicy())->assertSafePath($normalized);
     }
 
     private function buildSafeExtractionPath(string $destination, string $entryName): string
@@ -749,6 +780,9 @@ class LocalAdapter implements IFileSystem
         if ($recursive && is_dir($fullPath)) {
             $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($fullPath, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
             foreach ($iterator as $item) {
+                if ($item->isLink()) {
+                    continue;
+                }
                 chmod($item->getPathname(), $mode);
             }
         }
@@ -773,6 +807,9 @@ class LocalAdapter implements IFileSystem
         if ($recursive && is_dir($fullPath)) {
             $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($fullPath, \RecursiveDirectoryIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
             foreach ($iterator as $item) {
+                if ($item->isLink()) {
+                    continue;
+                }
                 $apply($item->getPathname());
             }
         }

@@ -61,7 +61,7 @@ trait ApiShareOperationsTrait
             $service = new \App\Services\ShareService();
             $share = $service->createShare($path, session('username'), $password, $expiresAt, $mode);
             LogService::log('Create Share', $path);
-            return $this->respond(['status' => 'success', 'share' => $share]);
+            return $this->respond(['status' => 'success', 'share' => $service->ownerView($share)]);
         } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
@@ -72,18 +72,21 @@ trait ApiShareOperationsTrait
         if (!can('read')) return $this->failForbidden();
 
         $json = $this->request->getJSON();
-        $hash = $json->hash ?? null;
+        $hash = isset($json->hash) && is_scalar($json->hash) ? (string)$json->hash : null;
         if (!$hash) return $this->fail('Hash required');
 
         try {
             $service = new \App\Services\ShareService();
+            if (!$service->isValidHash($hash)) {
+                return $this->failNotFound();
+            }
             $share = $service->getShareRaw($hash);
 
             // Allow admin to delete any share, user only their own
             if ($share && ($share['created_by'] === session('username') || can('admin_users'))) {
                 // If it is a transfer, delete the physical directory as well.
                 if (isset($share['source']) && $share['source'] === 'transfer') {
-                    $dir = config('Storage')->uploads . '/shares/' . $share['path'];
+                    $dir = $service->resolveTransferDirectory((string)($share['path'] ?? ''), true);
                     $this->rrmdir($dir);
                 }
                 $service->deleteShare($hash);
@@ -102,7 +105,7 @@ trait ApiShareOperationsTrait
 
         try {
             $service = new \App\Services\ShareService();
-            $shares = $service->listUserShares(session('username'));
+            $shares = $service->listUserShareViews(session('username'));
             return $this->respond(['items' => $shares]);
         } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
@@ -251,7 +254,7 @@ trait ApiShareOperationsTrait
 
     private function rrmdir(string $dir): void
     {
-        if (!is_dir($dir)) {
+        if (!is_dir($dir) || is_link($dir)) {
             return;
         }
 

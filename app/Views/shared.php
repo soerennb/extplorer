@@ -24,8 +24,8 @@
 
         $shareTitle = $share['subject'] ?? (
             $is_file
-                ? ($filename ?? basename($share['path'] ?? $st('shared_item', 'Shared Item')))
-                : basename($share['path'] ?? $st('shared_content', 'Shared Content'))
+                ? ($filename ?? ($share['display_name'] ?? $st('shared_item', 'Shared Item')))
+                : ($share['display_name'] ?? $st('shared_content', 'Shared Content'))
         );
         if (($share['source'] ?? '') === 'transfer' && empty($share['subject'])) {
             $shareTitle = $st('shared_file_transfer', 'File Transfer');
@@ -41,8 +41,8 @@
         ];
         $shareModeLabel = $shareModeLabels[$shareMode] ?? ucfirst($shareMode);
         $shareExpiresAt = $share['expires_at'] ?? null;
-        $shareCreatedBy = $share['created_by'] ?? null;
-        $shareSender = $share['sender_email'] ?? null;
+        $shareCreatedBy = null;
+        $shareSender = null;
     ?>
     <style <?= csp_style_nonce() ?>>
         body, html { height: 100%; background-color: #f8f9fa; }
@@ -138,6 +138,8 @@
         const { createApp, ref, reactive, computed, onMounted } = Vue;
         const hash = <?= json_encode($hash, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const baseUrl = <?= json_encode(base_url(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const csrfTokenName = <?= json_encode(csrf_token(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        let csrfHash = <?= json_encode(csrf_hash(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const isFile = <?= json_encode((bool)$is_file) ?>;
         const share = <?= json_encode($share, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const locale = <?= json_encode($locale, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
@@ -149,8 +151,8 @@
         const shareModeLabel = <?= json_encode($shareModeLabel, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const shareExpiresAt = <?= json_encode((bool)$shareExpiresAt) ?>;
         const shareExpiresDate = <?= json_encode($shareExpiresAt ? date('Y-m-d', (int)$shareExpiresAt) : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
-        const shareSender = <?= json_encode($shareSender ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
-        const shareCreatedBy = <?= json_encode($shareCreatedBy ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const shareSender = <?= json_encode($shareSender, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        const shareCreatedBy = <?= json_encode($shareCreatedBy, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const filename = <?= json_encode($filename ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const size = <?= json_encode((int)($size ?? 0)) ?>;
 
@@ -187,11 +189,19 @@
                 const uploadProcessing = ref(false);
                 let previewModal = null;
 
+                const updateCsrfHash = (response) => {
+                    const nextHash = typeof response?.getResponseHeader === 'function'
+                        ? response.getResponseHeader('X-CSRF-HASH')
+                        : response?.headers?.get('X-CSRF-HASH');
+                    if (nextHash) csrfHash = nextHash;
+                };
+
                 const loadPath = async (path = '') => {
                     loading.value = true;
                     try {
-                        const res = await fetch(baseUrl + 's/' + hash + '/ls?path=' + encodeURIComponent(path))
-                            .then(r => r.json());
+                        const response = await fetch(baseUrl + 's/' + hash + '/ls?path=' + encodeURIComponent(path));
+                        updateCsrfHash(response);
+                        const res = await response.json();
                         
                         files.value = Array.isArray(res.items) ? res.items : [];
                         if (res?.upload_policy && typeof res.upload_policy === 'object') {
@@ -443,6 +453,10 @@
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', baseUrl + 's/' + hash + '/upload');
                     xhr.withCredentials = true;
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    if (csrfTokenName && csrfHash) {
+                        xhr.setRequestHeader('X-CSRF-TOKEN', csrfHash);
+                    }
 
                     xhr.upload.onprogress = (event) => {
                         if (!event.lengthComputable) return;
@@ -451,6 +465,7 @@
                     };
 
                     xhr.onload = () => {
+                        updateCsrfHash(xhr);
                         const json = safeParseJson(xhr.responseText || '{}');
                         if (xhr.status >= 200 && xhr.status < 300) {
                             item.status = 'done';

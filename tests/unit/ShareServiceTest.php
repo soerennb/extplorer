@@ -82,4 +82,38 @@ class ShareServiceTest extends CIUnitTestCase
         $service = new ShareService($this->testFile);
         $this->assertFalse($service->verifyPassword('missing-hash', 'anything'));
     }
+
+    public function testShareViewsDoNotExposeSecretsOrTransferMessageMetadata(): void
+    {
+        $service = new ShareService($this->testFile);
+        $share = $service->createShare('Transfers/internal', 'admin', 'secret', null, 'read', [
+            'source' => 'transfer',
+            'is_transfer' => true,
+            'subject' => 'Confidential subject',
+            'message' => 'Private message',
+            'recipients' => ['recipient@example.test'],
+            'sender_email' => 'sender@example.test',
+            'file_count' => 1,
+            'total_size' => 42,
+        ]);
+
+        $ownerView = $service->ownerView($share);
+        $this->assertArrayNotHasKey('password_hash', $ownerView);
+        $this->assertArrayNotHasKey('message', $ownerView);
+        $this->assertArrayNotHasKey('recipients', $ownerView);
+        $this->assertArrayNotHasKey('sender_email', $ownerView);
+        $this->assertTrue($ownerView['password_protected']);
+
+        $publicView = $service->publicView($share);
+        $this->assertArrayNotHasKey('path', $publicView);
+        $this->assertArrayNotHasKey('password_hash', $publicView);
+        $this->assertSame('internal', $publicView['display_name']);
+
+        $transferView = $service->transferView($share);
+        $this->assertSame(1, $transferView['recipient_count']);
+        $this->assertArrayNotHasKey('message', $transferView);
+        $this->assertArrayNotHasKey('recipients', $transferView);
+        $this->assertArrayNotHasKey('sender_email', $transferView);
+        $this->assertArrayNotHasKey('path', $transferView);
+    }
 }

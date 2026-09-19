@@ -40,7 +40,7 @@ class Storage extends BaseConfig
             $root = __DIR__ . '/../../writable';
         }
 
-        $this->root = rtrim((string) $root, '/\\');
+        $this->root = $this->resolveDirectory('EXTPLORER_WRITE_PATH', (string)$root);
         $this->state = $this->resolveDirectory('EXTPLORER_STATE_PATH', $this->root . '/config');
         $this->logs = $this->root . '/logs';
         $this->session = $this->root . '/session';

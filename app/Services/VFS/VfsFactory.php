@@ -98,7 +98,8 @@ class VfsFactory
                     $mountType = strtolower((string)$mount['type']);
                     $mountConfig = $mount['config'];
                     if ($mountType === 'local') {
-                        $adapter = new LocalAdapter((string)($mountConfig['path'] ?? ''));
+                        $localPath = $mountService->assertLocalPathAllowed((string)($mountConfig['path'] ?? ''));
+                        $adapter = new LocalAdapter($localPath);
                         $vfs->mount($mountName, $adapter, ['is_external' => true]);
                     }
                     if ($mountType === 'ftp' || $mountType === 'ftps') {

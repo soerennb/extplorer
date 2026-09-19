@@ -160,6 +160,17 @@ class Login extends BaseController
     public function testRemote()
     {
         $loginMessages = $this->loginTranslations($this->preferredLoginLocale());
+        $throttler = \Config\Services::throttler();
+        $throttleKey = 'remote-test-ip-' . hash('sha256', $this->request->getIPAddress());
+        if ($throttler->check($throttleKey, 5, MINUTE) === false) {
+            return $this->response
+                ->setStatusCode(429)
+                ->setJSON([
+                    'ok' => false,
+                    'message' => $loginMessages['login_too_many_attempts'],
+                ]);
+        }
+
         $modeValue = $this->request->getPost('mode');
         $hostValue = $this->request->getPost('remote_host');
         $portValue = $this->request->getPost('remote_port');
@@ -224,7 +235,16 @@ class Login extends BaseController
             return '/';
         }
 
-        if (str_starts_with($returnTo, '//') || preg_match('/[\r\n]/', $returnTo)) {
+        if (
+            str_starts_with($returnTo, '//')
+            || preg_match('/[\\\r\n]/', $returnTo)
+            || preg_match('/%(?:25)*2f|%(?:25)*5c/i', (string)strtok($returnTo, '?#'))
+        ) {
+            return '/';
+        }
+
+        $parsed = parse_url($returnTo);
+        if ($parsed === false || isset($parsed['scheme'], $parsed['host'], $parsed['user'], $parsed['pass'])) {
             return '/';
         }
 

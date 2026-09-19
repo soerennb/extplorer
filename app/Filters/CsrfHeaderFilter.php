@@ -16,7 +16,7 @@ class CsrfHeaderFilter implements FilterInterface
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
         $path = trim($request->getUri()->getPath(), '/');
-        if (str_starts_with($path, 'api/')) {
+        if (str_starts_with($path, 'api/') || str_starts_with($path, 's/')) {
             $response->setHeader('X-CSRF-HASH', csrf_hash());
         }
 

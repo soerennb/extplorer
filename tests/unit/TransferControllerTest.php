@@ -60,8 +60,10 @@ class TransferControllerTest extends CIUnitTestCase
     public function testNormalizeSessionIdStripsUnsafeChars(): void
     {
         $controller = new TransferController();
-        $result = $this->callPrivate($controller, 'normalizeSessionId', ['abc-123_!?']);
-        $this->assertSame('abc123', $result);
+        $result = $this->callPrivate($controller, 'normalizeSessionId', ['abc-123_!?4567890123']);
+        $this->assertSame('abc1234567890123', $result);
+
+        $this->assertSame('', $this->callPrivate($controller, 'normalizeSessionId', ['abc-123_!?']));
     }
 
     public function testTransferFilenameRejectsPathAndControlCharacters(): void

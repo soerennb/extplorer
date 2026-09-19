@@ -15,6 +15,7 @@ cp env .env
 | `CI_ENVIRONMENT` | Application mode. | `production` |
 | `EXTPLORER_BASE_URL` | Full public URL (with trailing slash). | `https://yourdomain.com/` |
 | `EXTPLORER_WRITE_PATH` | Persistent writable root. | `/var/lib/extplorer/writable` |
+| `EXTPLORER_FILE_MANAGER_ROOT` | Optional local file root; must stay outside the public webroot and application source tree. | `/var/lib/extplorer/writable/file_manager_root` |
 | `EXTPLORER_ENCRYPTION_KEY_FILE` | File containing the encryption key. | `/run/secrets/extplorer-encryption-key` |
 | `app.forceGlobalSecureRequests` | Force HTTPS redirection. | `true` |
 
@@ -48,6 +49,14 @@ recursive operations. Search results are capped by
 `EXTPLORER_MAX_SEARCH_RESULTS` (default 10,000). The defaults are
 intentionally finite and should be reviewed together with PHP/Nginx upload
 and timeout settings.
+
+Resumable uploads and internal transfer staging also use owner-scoped aggregate
+reservations. `EXTPLORER_UPLOAD_STAGING_MAX_MB` (default `2048`),
+`EXTPLORER_UPLOAD_STAGING_MAX_FILES` (default `1000`) and
+`EXTPLORER_UPLOAD_STAGING_TTL_SECONDS` (default `86400`, minimum five minutes)
+bound abandoned or concurrent staging data. The scheduled `shares:cleanup`
+command removes expired reservations and transfer directories; run it regularly
+in every deployment.
 
 WebDAV request depth is limited to one level by default. Configure
 `EXTPLORER_WEBDAV_MAX_DEPTH` when clients require a deeper listing, but keep
@@ -147,6 +156,13 @@ The following controls are enabled in the application and should be considered p
   (`mountRootAllowlist` / `mount_root_allowlist`). The general
   `file_manager_root` is never implicitly allowlisted; keep mount roots in a
   separate directory such as `writable/mounts/`.
+- All configured writable roots are checked at startup and by
+  `php spark storage:check`; they must remain outside `public/`, and local
+  mounts may not overlap application source, vendor, tests or managed storage.
+- User-introduced filenames are subject to a hard deny-list for executable and
+  server-configuration names. This applies to uploads, editor saves, copy/
+  move, archive extraction and WebDAV; per-user extension allowlists cannot
+  re-enable those names.
 - Outbound remote connections are denied by default. Enable direct remote
   login explicitly in the administrator settings or with
   `EXTPLORER_REMOTE_LOGIN_ENABLED=1` and configure exact endpoint entries in

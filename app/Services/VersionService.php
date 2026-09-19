@@ -39,6 +39,7 @@ class VersionService
      */
     public function createVersion(string $fullPath, string $relativePath): void
     {
+        $this->assertRestorableName($relativePath);
         if (!file_exists($fullPath) || is_dir($fullPath)) {
             return;
         }
@@ -94,6 +95,7 @@ class VersionService
      */
     public function restoreVersion(string $relativePath, string $versionId, \App\Services\VFS\IFileSystem $fs): void
     {
+        $this->assertRestorableName($relativePath);
         $versionDir = $this->versionRoot . DIRECTORY_SEPARATOR . $this->getPathHash($relativePath);
         if (!$this->isSafeVersionId($versionId)) {
             throw new Exception('Version not found.');
@@ -132,6 +134,12 @@ class VersionService
     {
         return preg_match('/\A\d{10,}(?:_[a-f0-9]{12})?\.bak\z/i', $versionId) === 1
             && basename($versionId) === $versionId;
+    }
+
+    private function assertRestorableName(string $relativePath): void
+    {
+        $normalized = trim(str_replace('\\', '/', $relativePath), '/');
+        (new FileNamePolicy())->assertSafe(basename($normalized));
     }
 
     private function isWithinDirectory(string $directory, string $path): bool

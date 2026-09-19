@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Dav;
 
+use App\Services\FileNamePolicy;
 use Sabre\DAV;
 use Sabre\DAV\Exception\Forbidden;
 use Sabre\DAV\FS\Directory;
@@ -106,6 +107,11 @@ final class SafeDirectory extends Directory
         if ($name === '' || $name === '.' || $name === '..' || str_contains($name, "\0")
             || str_contains($name, '/') || str_contains($name, '\\')) {
             throw new Forbidden('Invalid WebDAV node name.');
+        }
+        try {
+            (new FileNamePolicy())->assertSafe($name);
+        } catch (\Throwable $exception) {
+            throw new Forbidden('WebDAV filename is not allowed.');
         }
     }
 

@@ -95,10 +95,14 @@ final class PathPolicy
 
     public static function isWithinRoot(string $rootPath, string $path): bool
     {
-        $root = rtrim($rootPath, DIRECTORY_SEPARATOR);
-        $path = rtrim($path, DIRECTORY_SEPARATOR);
+        $root = rtrim(str_replace('\\', '/', $rootPath), '/');
+        $path = rtrim(str_replace('\\', '/', $path), '/');
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $root = strtolower($root);
+            $path = strtolower($path);
+        }
 
-        return $path === $root || str_starts_with($path, $root . DIRECTORY_SEPARATOR);
+        return $path === $root || str_starts_with($path, $root . '/');
     }
 
     private static function assertNoSymlinkComponents(string $root, string $relative): void

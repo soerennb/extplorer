@@ -3,6 +3,7 @@
 namespace App\Services\VFS;
 
 use Exception;
+use App\Services\FileNamePolicy;
 use App\Services\RemoteSecurityPolicy;
 use App\Services\RemoteEndpointPolicy;
 use App\Services\ResourcePolicy;
@@ -164,6 +165,7 @@ class Ssh2Adapter implements IFileSystem
 
     public function writeFile(string $path, string $content): bool
     {
+        $this->assertWritableTarget($path);
         return file_put_contents($this->resolvePath($path), $content) !== false;
     }
 
@@ -192,11 +194,13 @@ class Ssh2Adapter implements IFileSystem
 
     public function createDirectory(string $path): bool
     {
+        $this->assertWritableTarget($path);
         return ssh2_sftp_mkdir($this->sftp, $this->remotePath($path), 0755, true);
     }
 
     public function rename(string $from, string $to): bool
     {
+        $this->assertWritableTarget($to);
         return ssh2_sftp_rename($this->sftp, $this->remotePath($from), $this->remotePath($to));
     }
 
@@ -207,6 +211,7 @@ class Ssh2Adapter implements IFileSystem
 
     public function copy(string $from, string $to): bool
     {
+        $this->assertWritableTarget($to);
         $meta = $this->getMetadata($from);
         if (!$meta) {
             throw new Exception("Source not found: $from");
@@ -273,6 +278,15 @@ class Ssh2Adapter implements IFileSystem
     private function normalizeRelativePath(string $path): string
     {
         return RemotePathPolicy::normalizeRelative($path);
+    }
+
+    private function assertWritableTarget(string $path): void
+    {
+        $normalized = trim(str_replace('\\', '/', $path), '/');
+        if ($normalized === '') {
+            throw new Exception('A target filename is required.');
+        }
+        (new FileNamePolicy())->assertSafePath($normalized);
     }
 
     public function getMetadata(string $path): ?array

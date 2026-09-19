@@ -154,16 +154,15 @@ const _hoisted_94 = { class: "table table-hover table-sm small align-middle" }
 const _hoisted_95 = { class: "table-light" }
 const _hoisted_96 = { class: "text-end" }
 const _hoisted_97 = { class: "fw-bold" }
-const _hoisted_98 = ["title"]
-const _hoisted_99 = {
+const _hoisted_98 = {
   key: 0,
   class: "text-muted small"
 }
-const _hoisted_100 = { class: "text-end" }
-const _hoisted_101 = { class: "small text-muted mb-1" }
-const _hoisted_102 = ["href"]
+const _hoisted_99 = { class: "text-end" }
+const _hoisted_100 = { class: "small text-muted mb-1" }
+const _hoisted_101 = ["href"]
+const _hoisted_102 = ["onClick", "title", "aria-label"]
 const _hoisted_103 = ["onClick", "title", "aria-label"]
-const _hoisted_104 = ["onClick", "title", "aria-label"]
 
 return function render(_ctx, _cache) {
   with (_ctx) {
@@ -550,7 +549,7 @@ return function render(_ctx, _cache) {
                               _createElementVNode("tr", null, [
                                 _createElementVNode("th", null, _toDisplayString(t('transfer_col_status', 'Status')), 1 /* TEXT */),
                                 _createElementVNode("th", null, _toDisplayString(t('transfer_col_subject', 'Subject')), 1 /* TEXT */),
-                                _createElementVNode("th", null, _toDisplayString(t('transfer_col_to', 'To')), 1 /* TEXT */),
+                                _createElementVNode("th", null, _toDisplayString(t('transfer_recipients', 'Recipients')), 1 /* TEXT */),
                                 _createElementVNode("th", null, _toDisplayString(t('transfer_col_date', 'Date')), 1 /* TEXT */),
                                 _createElementVNode("th", null, _toDisplayString(t('transfer_col_size', 'Size')), 1 /* TEXT */),
                                 _createElementVNode("th", null, _toDisplayString(t('transfer_col_downloads', 'Downloads')), 1 /* TEXT */),
@@ -567,10 +566,7 @@ return function render(_ctx, _cache) {
                                     }, _toDisplayString(statusLabel(item.status)), 3 /* TEXT, CLASS */)
                                   ]),
                                   _createElementVNode("td", _hoisted_97, _toDisplayString(item.subject || t('transfer_no_subject', '(No Subject)')), 1 /* TEXT */),
-                                  _createElementVNode("td", {
-                                    class: "text-truncate transfer-recipient",
-                                    title: item.recipients?.join(', ')
-                                  }, _toDisplayString(item.recipients ? item.recipients[0] + (item.recipients.length > 1 ? ' +' + (item.recipients.length-1) : '') : '-'), 9 /* TEXT, PROPS */, _hoisted_98),
+                                  _createElementVNode("td", null, _toDisplayString(item.recipient_count || 0), 1 /* TEXT */),
                                   _createElementVNode("td", null, _toDisplayString(formatDate(item.created_at)), 1 /* TEXT */),
                                   _createElementVNode("td", null, _toDisplayString(formatSize(item.total_size)), 1 /* TEXT */),
                                   _createElementVNode("td", null, [
@@ -583,16 +579,16 @@ return function render(_ctx, _cache) {
                                       class: _normalizeClass({'text-danger': item.is_expired})
                                     }, _toDisplayString(item.is_expired ? t('transfer_filter_expired', 'Expired') : formatDate(item.expires_at)), 3 /* TEXT, CLASS */),
                                     (item.expires_in && !item.is_expired)
-                                      ? (_openBlock(), _createElementBlock("div", _hoisted_99, _toDisplayString(expiryCountdown(item.expires_in)), 1 /* TEXT */))
+                                      ? (_openBlock(), _createElementBlock("div", _hoisted_98, _toDisplayString(expiryCountdown(item.expires_in)), 1 /* TEXT */))
                                       : _createCommentVNode("v-if", true)
                                   ]),
-                                  _createElementVNode("td", _hoisted_100, [
-                                    _createElementVNode("div", _hoisted_101, [
+                                  _createElementVNode("td", _hoisted_99, [
+                                    _createElementVNode("div", _hoisted_100, [
                                       _createElementVNode("a", {
                                         href: transferLink(item.hash),
                                         target: "_blank",
                                         rel: "noopener"
-                                      }, _toDisplayString(transferLink(item.hash)), 9 /* TEXT, PROPS */, _hoisted_102)
+                                      }, _toDisplayString(transferLink(item.hash)), 9 /* TEXT, PROPS */, _hoisted_101)
                                     ]),
                                     _createElementVNode("button", {
                                       class: "btn btn-link p-0 me-2",
@@ -604,7 +600,7 @@ return function render(_ctx, _cache) {
                                         class: "ri-links-line",
                                         "aria-hidden": "true"
                                       }, null, -1 /* CACHED */)
-                                    ]))], 8 /* PROPS */, _hoisted_103),
+                                    ]))], 8 /* PROPS */, _hoisted_102),
                                     _createElementVNode("button", {
                                       class: "btn btn-link p-0 text-danger",
                                       onClick: $event => (deleteItem(item.hash)),
@@ -615,7 +611,7 @@ return function render(_ctx, _cache) {
                                         class: "ri-delete-bin-line",
                                         "aria-hidden": "true"
                                       }, null, -1 /* CACHED */)
-                                    ]))], 8 /* PROPS */, _hoisted_104)
+                                    ]))], 8 /* PROPS */, _hoisted_103)
                                   ])
                                 ]))
                               }), 128 /* KEYED_FRAGMENT */))

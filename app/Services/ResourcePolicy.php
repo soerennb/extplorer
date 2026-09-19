@@ -98,6 +98,21 @@ final class ResourcePolicy
         return $this->integer('EXTPLORER_ARCHIVE_MAX_RATIO', 200, 1, 10000);
     }
 
+    public function maxUploadStagingBytes(): int
+    {
+        return $this->megabytes('EXTPLORER_UPLOAD_STAGING_MAX_MB', 2048, 1, 102400);
+    }
+
+    public function maxUploadStagingFiles(): int
+    {
+        return $this->integer('EXTPLORER_UPLOAD_STAGING_MAX_FILES', 1000, 1, 1000000);
+    }
+
+    public function uploadStagingTtlSeconds(): int
+    {
+        return $this->integer('EXTPLORER_UPLOAD_STAGING_TTL_SECONDS', 86400, 300, 604800);
+    }
+
     public function copyStream($source, $destination, ?int $maxBytes = null): int
     {
         if (!is_resource($source) || !is_resource($destination)) {

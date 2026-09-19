@@ -24,6 +24,7 @@ final class SystemReadiness extends BaseCommand
                 throw new RuntimeException('Code release is not ready.');
             }
 
+            (new \App\Services\StorageBoundaryPolicy())->assertSafe();
             (new StorageSchemaService())->ensure();
             AtomicFileStore::verifyBackend();
             CLI::write('ready');

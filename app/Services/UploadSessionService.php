@@ -17,19 +17,27 @@ final class UploadSessionService
 
     private string $root;
     private string $signingKey;
+    private StagingResourceService $stagingResources;
 
-    public function __construct(?string $root = null, ?string $signingKey = null)
+    public function __construct(
+        ?string $root = null,
+        ?string $signingKey = null,
+        ?StagingResourceService $stagingResources = null
+    )
     {
         $this->root = rtrim($root ?? config('Storage')->uploads . DIRECTORY_SEPARATOR . 'chunks', '/\\');
         $this->signingKey = $signingKey ?? (string)config('Encryption')->key;
+        $this->stagingResources = $stagingResources ?? new StagingResourceService();
 
         if ($this->signingKey === '') {
             throw new RuntimeException('Upload session signing key is not configured.');
         }
 
+        $this->assertNoSymlinkComponents($this->root);
         if (!is_dir($this->root) && !mkdir($this->root, 0700, true) && !is_dir($this->root)) {
             throw new RuntimeException('Unable to create upload session storage.');
         }
+        $this->assertNoSymlinkComponents($this->root);
     }
 
     /**
@@ -61,6 +69,12 @@ final class UploadSessionService
         if ($totalChunks < 1 || $totalChunks > self::MAX_CHUNKS) {
             throw new RuntimeException('Invalid upload chunk count.');
         }
+        if ($totalSize !== null) {
+            $expectedChunks = max(1, (int)ceil($totalSize / $chunkSize));
+            if ($totalChunks !== $expectedChunks) {
+                throw new RuntimeException('Upload chunk count does not match the declared size.');
+            }
+        }
 
         do {
             $id = bin2hex(random_bytes(16));
@@ -82,13 +96,15 @@ final class UploadSessionService
             'total_chunks' => $totalChunks,
             'conflict' => $conflict,
             'created_at' => time(),
-            'expires_at' => time() + self::DEFAULT_TTL,
+            'expires_at' => $this->expirationTime(),
             'chunks' => [],
         ];
 
         try {
             $this->writeManifest($id, $manifest);
+            $this->reserveManifest($manifest, $totalSize ?? 0);
         } catch (\Throwable $e) {
+            $this->stagingResources->release($this->reservationId($id));
             $this->removeDirectory($directory);
             throw $e;
         }
@@ -117,6 +133,25 @@ final class UploadSessionService
         int $chunkSize,
         string $conflict
     ): array {
+        if ($owner === '' || $filename === '') {
+            throw new RuntimeException('Invalid upload session owner or filename.');
+        }
+        if ($chunkSize < self::MIN_CHUNK_SIZE || $chunkSize > self::MAX_CHUNK_SIZE) {
+            throw new RuntimeException('Invalid upload chunk size.');
+        }
+        if ($totalChunks < 1 || $totalChunks > self::MAX_CHUNKS) {
+            throw new RuntimeException('Invalid upload chunk count.');
+        }
+        if ($totalSize !== null) {
+            if ($totalSize < 0) {
+                throw new RuntimeException('Invalid upload size.');
+            }
+            $expectedChunks = max(1, (int)ceil($totalSize / $chunkSize));
+            if ($totalChunks !== $expectedChunks) {
+                throw new RuntimeException('Upload chunk count does not match the declared size.');
+            }
+        }
+
         $id = hash_hmac('sha256', $owner . '|' . $legacyKey, $this->signingKey);
         $directory = $this->directory($id);
         $manifestPath = $this->manifestPath($id);
@@ -136,10 +171,17 @@ final class UploadSessionService
                 'total_chunks' => $totalChunks,
                 'conflict' => $conflict,
                 'created_at' => time(),
-                'expires_at' => time() + self::DEFAULT_TTL,
+                'expires_at' => $this->expirationTime(),
                 'chunks' => [],
             ];
-            $this->writeManifest($id, $manifest);
+            try {
+                $this->writeManifest($id, $manifest);
+                $this->reserveManifest($manifest, $totalSize ?? 0);
+            } catch (\Throwable $e) {
+                $this->stagingResources->release($this->reservationId($id));
+                $this->removeDirectory($directory);
+                throw $e;
+            }
         }
 
         $manifest = $this->get($id);
@@ -149,9 +191,12 @@ final class UploadSessionService
             || $manifest['relative_path'] !== $relativePath
             || $manifest['filename'] !== $filename
             || (int)$manifest['total_chunks'] !== $totalChunks
+            || ($manifest['total_size'] ?? null) !== $totalSize
         ) {
             throw new RuntimeException('Upload session metadata changed.');
         }
+
+        $this->reserveManifest($manifest, array_sum(array_map('intval', $manifest['chunks'] ?? [])));
 
         return [
             'id' => $id,
@@ -170,7 +215,10 @@ final class UploadSessionService
         }
 
         if ((int)($manifest['expires_at'] ?? 0) <= time()) {
-            $this->abort($id);
+            // Do not mutate a session before its owner has been checked by the
+            // caller. Cleanup is performed by cleanupExpired(), while this
+            // read-only path must not let an unauthenticated request delete a
+            // session merely by presenting its identifier.
             throw new RuntimeException('Upload session expired.');
         }
 
@@ -224,8 +272,25 @@ final class UploadSessionService
                 throw new RuntimeException('Uploaded chunk is missing.');
             }
 
-            $manifest['chunks'][(string)$index] = $size;
-            $this->writeManifest($id, $manifest);
+            $previousBytes = array_sum(array_map('intval', $manifest['chunks'] ?? []));
+            $nextBytes = $previousBytes + $size;
+            if ($manifest['total_size'] !== null && $nextBytes > (int)$manifest['total_size']) {
+                throw new RuntimeException('Uploaded chunks exceed the declared size.');
+            }
+            try {
+                $manifest['chunks'][(string)$index] = $size;
+                $this->updateManifestReservation($manifest, $nextBytes);
+                $this->writeManifest($id, $manifest);
+            } catch (\Throwable $e) {
+                unset($manifest['chunks'][(string)$index]);
+                try {
+                    $this->reserveManifest($manifest, $previousBytes);
+                } catch (\Throwable $rollbackException) {
+                    log_message('error', 'Unable to roll back upload staging reservation: ' . $rollbackException->getMessage());
+                }
+                @unlink($path);
+                throw $e;
+            }
         });
     }
 
@@ -254,10 +319,17 @@ final class UploadSessionService
             }
 
             try {
+                $previousBytes = array_sum(array_map('intval', $manifest['chunks'] ?? []));
+                $nextBytes = $previousBytes + $size;
+                if ($manifest['total_size'] !== null && $nextBytes > (int)$manifest['total_size']) {
+                    throw new RuntimeException('Uploaded chunks exceed the declared size.');
+                }
                 $manifest['chunks'][(string)$index] = $size;
+                $this->updateManifestReservation($manifest, $nextBytes);
                 $this->writeManifest($id, $manifest);
             } catch (\Throwable $e) {
                 @unlink($destination);
+                $this->reserveManifest($manifest, $previousBytes ?? 0);
                 throw $e;
             }
         });
@@ -281,7 +353,8 @@ final class UploadSessionService
 
     public function assemble(string $id, string $destination): int
     {
-        return $this->withLock($id, function () use ($id, $destination): int {
+        try {
+            return $this->withLock($id, function () use ($id, $destination): int {
             $manifest = $this->get($id);
             $missing = $this->missingChunks($manifest);
             if ($missing !== []) {
@@ -340,22 +413,43 @@ final class UploadSessionService
                 }
 
                 $this->removeDirectory($this->directory($id));
+                $this->stagingResources->release($this->reservationId($id));
                 return $actualSize;
             } finally {
                 if (is_file($temporary)) {
                     @unlink($temporary);
                 }
             }
-        });
+            });
+        } catch (\Throwable $e) {
+            // Missing chunks are retriable. Other assembly errors are
+            // terminal and must not leave attacker-controlled staging data.
+            if (!str_starts_with($e->getMessage(), 'Upload is incomplete.')) {
+                $this->abort($id);
+            }
+            throw $e;
+        }
     }
 
     public function abort(string $id): void
     {
         $this->assertValidId($id);
         $directory = $this->directory($id);
+        $owner = null;
+        $manifestPath = $this->manifestPath($id);
+        if (is_file($manifestPath)) {
+            try {
+                $manifest = AtomicFileStore::read($manifestPath);
+                $owner = is_string($manifest['owner'] ?? null) ? $manifest['owner'] : null;
+            } catch (\Throwable) {
+                // The directory is still removed below; stale reservations are
+                // handled by the scheduled cleanup.
+            }
+        }
         if (is_dir($directory)) {
             $this->removeDirectory($directory);
         }
+        $this->stagingResources->release($this->reservationId($id), $owner);
     }
 
     public function cleanupExpired(): int
@@ -375,6 +469,7 @@ final class UploadSessionService
                 $manifestPath = $this->manifestPath($id);
                 if (!is_file($manifestPath)) {
                     $this->removeDirectory($this->directory($id));
+                    $this->stagingResources->release($this->reservationId($id));
                     return true;
                 }
 
@@ -390,6 +485,10 @@ final class UploadSessionService
                 }
 
                 $this->removeDirectory($this->directory($id));
+                $this->stagingResources->release(
+                    $this->reservationId($id),
+                    is_string($manifest['owner'] ?? null) ? $manifest['owner'] : null
+                );
                 return true;
             });
 
@@ -404,6 +503,10 @@ final class UploadSessionService
     private function withLock(string $id, Closure $callback): mixed
     {
         $this->assertValidId($id);
+        $this->assertNoSymlinkComponents($this->root);
+        if (is_link($this->directory($id))) {
+            throw new RuntimeException('Upload session storage uses a symbolic link.');
+        }
         $lockPath = $this->root . DIRECTORY_SEPARATOR . '.lock-' . $id;
         $lock = @fopen($lockPath, 'c');
         if ($lock === false || !flock($lock, LOCK_EX)) {
@@ -482,5 +585,45 @@ final class UploadSessionService
             }
             $current = dirname($current);
         }
+    }
+
+    private function assertNoSymlinkComponents(string $path): void
+    {
+        $current = rtrim($path, '/\\');
+        while ($current !== dirname($current)) {
+            if (is_link($current)) {
+                throw new RuntimeException('Upload session storage uses a symbolic link.');
+            }
+            $current = dirname($current);
+        }
+    }
+
+    /** @param array<string, mixed> $manifest */
+    private function reserveManifest(array $manifest, int $bytes): void
+    {
+        $this->stagingResources->reserve(
+            (string)$manifest['owner'],
+            $this->reservationId((string)$manifest['id']),
+            $bytes,
+            1,
+            ['kind' => 'upload', 'session_id' => (string)$manifest['id']],
+            (int)$manifest['expires_at']
+        );
+    }
+
+    /** @param array<string, mixed> $manifest */
+    private function updateManifestReservation(array $manifest, int $bytes): void
+    {
+        $this->reserveManifest($manifest, $bytes);
+    }
+
+    private function reservationId(string $id): string
+    {
+        return 'upload:' . $id;
+    }
+
+    private function expirationTime(): int
+    {
+        return time() + (new ResourcePolicy())->uploadStagingTtlSeconds();
     }
 }

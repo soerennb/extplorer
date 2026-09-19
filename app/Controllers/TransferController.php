@@ -8,6 +8,8 @@ use App\Services\SettingsService;
 use App\Services\LogService;
 use App\Services\VFS\VfsFactory;
 use App\Services\ResourcePolicy;
+use App\Services\FileNamePolicy;
+use App\Services\StagingResourceService;
 
 class TransferController extends BaseController
 {
@@ -16,12 +18,14 @@ class TransferController extends BaseController
     private ShareService $shareService;
     private EmailService $emailService;
     private SettingsService $settingsService;
+    private StagingResourceService $stagingResources;
 
     public function __construct()
     {
         $this->shareService = new ShareService();
         $this->emailService = new EmailService();
         $this->settingsService = new SettingsService();
+        $this->stagingResources = new StagingResourceService();
     }
 
     public function status()
@@ -46,6 +50,15 @@ class TransferController extends BaseController
         $fileName = basename($fileName);
         $tempDir = $this->getTransferTempDir($sessionId);
         $tempPath = $tempDir . '/' . $fileName . '.part';
+
+        try {
+            $this->assertNoSymlinkComponents($tempDir);
+        } catch (\Throwable $e) {
+            return $this->fail('Invalid transfer storage.', 500);
+        }
+        if (is_link($tempDir) || is_link($tempPath) || is_link($tempDir . '/' . $fileName)) {
+            return $this->fail('Invalid transfer storage.', 500);
+        }
 
         // Check if full file already exists
         if (file_exists($tempDir . '/' . $fileName)) {
@@ -104,18 +117,34 @@ class TransferController extends BaseController
         }
 
         $tempDir = $this->getTransferTempDir($sessionId);
+        try {
+            $this->assertNoSymlinkComponents($tempDir);
+        } catch (\Throwable $e) {
+            return $this->fail('Invalid transfer storage.', 500);
+        }
         if (!is_dir($tempDir) && !mkdir($tempDir, 0700, true) && !is_dir($tempDir)) {
             return $this->fail('Server Error: Cannot create transfer storage.', 500);
         }
 
-        $vfs = VfsFactory::createFileSystem(
-            (string)(session('username') ?? ''),
-            (array)(session('connection') ?? ['mode' => 'local'])
-        );
-        $stagedCount = 0;
-        $totalBytes = 0;
+        try {
+            $sessionLock = $this->openTransferSessionLock($sessionId);
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage(), 500);
+        }
 
-        foreach ($paths as $path) {
+        try {
+            $this->assertNoSymlinkComponents($tempDir);
+            if (is_link($tempDir)) {
+                return $this->fail('Invalid transfer storage.', 500);
+            }
+            $vfs = VfsFactory::createFileSystem(
+                (string)(session('username') ?? ''),
+                (array)(session('connection') ?? ['mode' => 'local'])
+            );
+            $stagedCount = 0;
+            $totalBytes = 0;
+
+            foreach ($paths as $path) {
             $meta = $vfs->getMetadata((string)$path);
             if (!$meta || (($meta['type'] ?? '') === 'dir')) {
                 continue; // Skip directories or non-existent files for now
@@ -140,9 +169,31 @@ class TransferController extends BaseController
                 return $this->fail('Invalid transfer storage.', 500);
             }
 
+            $before = $this->getTransferStagingStats($tempDir);
+            $existingSize = is_file($destPath) ? (int)filesize($destPath) : 0;
+            $existingFiles = is_file($destPath) ? 1 : 0;
+            try {
+                $this->reserveTransferStaging(
+                    $sessionId,
+                    $tempDir,
+                    $before['bytes'] - $existingSize + $size,
+                    $before['files'] - $existingFiles + 1
+                );
+            } catch (\Throwable $e) {
+                if (str_contains($e->getMessage(), 'staging resource limit')) {
+                    return $this->fail('Transfer staging resource limit exceeded.', 413);
+                }
+                return $this->fail($e->getMessage(), 500);
+            }
+
             $stream = null;
             $output = null;
+            $copied = 0;
+            $activated = false;
             $temporaryPath = $destPath . '.part-' . bin2hex(random_bytes(8));
+            if (is_link($temporaryPath)) {
+                return $this->fail('Invalid transfer storage.', 500);
+            }
             try {
                 $stream = $vfs->openReadStream((string)$path);
                 $output = fopen($temporaryPath, 'wb');
@@ -153,13 +204,41 @@ class TransferController extends BaseController
                 if ($size > 0 && $copied !== $size) {
                     throw new \RuntimeException('Transfer source changed while it was being staged.');
                 }
-                if (!fclose($output) || !rename($temporaryPath, $destPath)) {
+                if (!fclose($output)) {
                     $output = null;
-                    throw new \RuntimeException('Unable to activate transfer staging file.');
+                    throw new \RuntimeException('Unable to finalize transfer staging file.');
                 }
                 $output = null;
+                // Reserve the measured stream size before activation. A lying
+                // source metadata value must not create an over-limit file that
+                // remains behind when the post-activation accounting fails.
+                $this->reserveTransferStaging(
+                    $sessionId,
+                    $tempDir,
+                    $before['bytes'] - $existingSize + $copied,
+                    $before['files'] - $existingFiles + 1
+                );
+                if (!rename($temporaryPath, $destPath)) {
+                    throw new \RuntimeException('Unable to activate transfer staging file.');
+                }
+                $activated = true;
+                // Source metadata is advisory. Recalculate the actual staged
+                // tree after activation so a changing/lying source cannot
+                // bypass aggregate staging limits.
+                $this->syncTransferReservation($sessionId, $tempDir);
             } catch (\Throwable $e) {
                 @unlink($temporaryPath);
+                if ($activated) {
+                    @unlink($destPath);
+                }
+                try {
+                    $this->syncTransferReservation($sessionId, $tempDir);
+                } catch (\Throwable) {
+                    // The original failure is more actionable to the caller.
+                }
+                if (str_contains($e->getMessage(), 'staging resource limit')) {
+                    return $this->fail('Transfer staging resource limit exceeded.', 413);
+                }
                 continue;
             } finally {
                 if (is_resource($stream)) {
@@ -171,14 +250,17 @@ class TransferController extends BaseController
             }
             
             $stagedCount++;
-            $totalBytes += $size;
-        }
+            $totalBytes += $copied;
+            }
 
-        return $this->respond([
-            'status' => 'success',
-            'count' => $stagedCount,
-            'bytes' => $totalBytes
-        ]);
+            return $this->respond([
+                'status' => 'success',
+                'count' => $stagedCount,
+                'bytes' => $totalBytes
+            ]);
+        } finally {
+            $this->closeTransferSessionLock($sessionLock);
+        }
     }
 
     /**
@@ -203,7 +285,8 @@ class TransferController extends BaseController
         $fileOffset = (int)($this->request->getPost('fileOffset') ?? 0);
         $fileSize = (int)($this->request->getPost('fileSize') ?? 0);
 
-        if (!$file || !$sessionId || strlen($sessionId) < 16 || !$fileName || $totalChunks < 1 || $totalChunks > 100000) {
+        if (!$file || !$sessionId || strlen($sessionId) < 16 || !$fileName || $chunkIndex < 0
+            || $totalChunks < 1 || $totalChunks > 100000 || $chunkIndex >= $totalChunks) {
             return $this->fail('Missing parameters');
         }
 
@@ -218,7 +301,8 @@ class TransferController extends BaseController
         }
 
         $chunkBytes = (int)$file->getSize();
-        if ($chunkBytes < 1 || $chunkBytes > 8 * 1024 * 1024 || $fileOffset + $chunkBytes > $fileSize) {
+        if ($fileOffset > $fileSize || $chunkBytes < 1 || $chunkBytes > 8 * 1024 * 1024
+            || $chunkBytes > ($fileSize - $fileOffset)) {
             return $this->fail('Invalid transfer chunk size.');
         }
 
@@ -228,27 +312,59 @@ class TransferController extends BaseController
         }
 
         $tempDir = $this->getTransferTempDir($sessionId);
+        try {
+            $this->assertNoSymlinkComponents($tempDir);
+        } catch (\Throwable $e) {
+            return $this->fail('Invalid transfer storage.', 500);
+        }
         
         if (!is_dir($tempDir) && !mkdir($tempDir, 0700, true) && !is_dir($tempDir)) {
             return $this->fail('Server Error: Cannot create transfer storage.');
         }
 
-        $tempPath = $tempDir . '/' . $fileName . '.part';
-
-        if (is_link($tempPath)) {
-            return $this->fail('Invalid transfer storage.');
-        }
-
-        $lock = @fopen($tempPath . '.lock', 'c');
-        if ($lock === false || !flock($lock, LOCK_EX)) {
-            if (is_resource($lock)) fclose($lock);
-            return $this->fail('Server Error: Cannot lock transfer upload.');
+        try {
+            $sessionLock = $this->openTransferSessionLock($sessionId);
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage(), 500);
         }
 
         try {
+            $this->assertNoSymlinkComponents($tempDir);
+            if (is_link($tempDir)) {
+                return $this->fail('Invalid transfer storage.', 500);
+            }
+            $tempPath = $tempDir . '/' . $fileName . '.part';
+
+            if (is_link($tempPath)) {
+                return $this->fail('Invalid transfer storage.');
+            }
+
+            $lock = @fopen($tempPath . '.lock', 'c');
+            if ($lock === false || !flock($lock, LOCK_EX)) {
+                if (is_resource($lock)) fclose($lock);
+                return $this->fail('Server Error: Cannot lock transfer upload.');
+            }
+
+            try {
             $existingSize = file_exists($tempPath) ? (int)filesize($tempPath) : 0;
             if ($fileOffset !== $existingSize) {
                 return $this->fail('Upload offset mismatch; please resume the transfer.');
+            }
+
+            $before = $this->getTransferStagingStats($tempDir);
+            $existingFile = is_file($tempPath) ? 1 : 0;
+            try {
+                $this->reserveTransferStaging(
+                    $sessionId,
+                    $tempDir,
+                    $before['bytes'] - $existingSize + $fileSize,
+                    $before['files'] - $existingFile + 1
+                );
+            } catch (\Throwable $e) {
+                if (str_contains($e->getMessage(), 'staging resource limit')) {
+                    return $this->fail('Transfer staging resource limit exceeded.', 413);
+                }
+                throw $e;
             }
 
             $input = fopen($file->getTempName(), 'rb');
@@ -278,7 +394,11 @@ class TransferController extends BaseController
                 if ($currentSize !== $fileSize) {
                     return $this->fail('Upload incomplete; please resume the transfer.');
                 }
-                if (!rename($tempPath, $tempDir . '/' . $fileName)) {
+                $finalPath = $tempDir . '/' . $fileName;
+                if (is_link($finalPath)) {
+                    return $this->fail('Invalid transfer storage.', 500);
+                }
+                if (!rename($tempPath, $finalPath)) {
                     return $this->fail('Server Error: Cannot finalize upload.');
                 }
             }
@@ -287,10 +407,18 @@ class TransferController extends BaseController
                 'status' => $chunkIndex === $totalChunks - 1 ? 'complete' : 'partial',
                 'uploaded' => $currentSize
             ]);
+            } finally {
+                try {
+                    $this->syncTransferReservation($sessionId, $tempDir);
+                } catch (\Throwable $e) {
+                    log_message('error', 'Unable to refresh transfer staging reservation: ' . $e->getMessage());
+                }
+                flock($lock, LOCK_UN);
+                fclose($lock);
+                @unlink($tempPath . '.lock');
+            }
         } finally {
-            flock($lock, LOCK_UN);
-            fclose($lock);
-            @unlink($tempPath . '.lock');
+            $this->closeTransferSessionLock($sessionLock);
         }
     }
 
@@ -339,6 +467,23 @@ class TransferController extends BaseController
             return $this->fail('Upload session expired or invalid');
         }
 
+        try {
+            $sessionLock = $this->openTransferSessionLock($sessionId);
+        } catch (\Throwable $e) {
+            return $this->fail($e->getMessage(), 500);
+        }
+
+        try {
+            try {
+                $this->assertNoSymlinkComponents($tempDir);
+                if (is_link($tempDir)) {
+                    return $this->fail('Invalid transfer storage.', 500);
+                }
+                $this->syncTransferReservation($sessionId, $tempDir);
+            } catch (\Throwable $e) {
+                return $this->fail('Transfer staging resource limit exceeded.', 413);
+            }
+
         // Generate Hash and move files
         $hash = bin2hex(random_bytes(8)); // Use Service to ensure unique?
         // Actually, let's just use createShare to get the hash, then move files.
@@ -347,10 +492,17 @@ class TransferController extends BaseController
         
         // Define storage path
         $relPath = $hash; // For transfers, path is just the Hash folder name in uploads/shares
-        $absPath = config('Storage')->uploads . '/shares/' . $hash;
+        $absPath = $this->shareService->resolveTransferDirectory($relPath);
         
         if (!mkdir($absPath, 0700, true) && !is_dir($absPath)) {
             return $this->fail('Server Error: Cannot create storage', 500);
+        }
+        // Re-resolve after creation. A filesystem race must not turn the
+        // generated transfer directory into a symlink target.
+        try {
+            $absPath = $this->shareService->resolveTransferDirectory($relPath, true);
+        } catch (\Throwable $e) {
+            return $this->fail('Invalid transfer storage.', 500);
         }
 
         // Move files
@@ -359,7 +511,7 @@ class TransferController extends BaseController
         $totalSize = 0;
         foreach ($files as $f) {
             if ($f === '.' || $f === '..') continue;
-            if (str_ends_with($f, '.part')) {
+            if (str_ends_with($f, '.part') || str_ends_with($f, '.lock') || str_starts_with($f, '.part-')) {
                 continue;
             }
             $source = $tempDir . '/' . $f;
@@ -387,6 +539,7 @@ class TransferController extends BaseController
             $totalSize += (int)$size;
         }
         $this->cleanupTempDir($tempDir);
+        $this->releaseTransferReservation($sessionId);
 
         if (empty($fileList)) {
             $this->rrmdir($absPath);
@@ -473,6 +626,14 @@ class TransferController extends BaseController
             'link' => $link,
             'email_failures' => $emailFailures,
         ]);
+        } finally {
+            try {
+                $this->syncTransferReservation($sessionId, $tempDir);
+            } catch (\Throwable $e) {
+                log_message('error', 'Unable to finalize transfer staging reservation: ' . $e->getMessage());
+            }
+            $this->closeTransferSessionLock($sessionLock);
+        }
     }
 
     private function emailDeliveryGate()
@@ -506,14 +667,15 @@ class TransferController extends BaseController
 
         $now = time();
         $items = array_map(function (array $t) use ($now): array {
-            $expiresAt = (int)($t['expires_at'] ?? 0);
-            $downloads = (int)($t['downloads'] ?? 0);
+            $view = $this->shareService->transferView($t);
+            $expiresAt = (int)($view['expires_at'] ?? 0);
+            $downloads = (int)($view['downloads'] ?? 0);
             $expired = $expiresAt > 0 && $now > $expiresAt;
             $status = $expired ? 'expired' : ($downloads > 0 ? 'downloaded' : 'active');
-            $t['status'] = $status;
-            $t['is_expired'] = $expired;
-            $t['expires_in'] = $expiresAt > 0 ? max(0, $expiresAt - $now) : null;
-            return $t;
+            $view['status'] = $status;
+            $view['is_expired'] = $expired;
+            $view['expires_in'] = $expiresAt > 0 ? max(0, $expiresAt - $now) : null;
+            return $view;
         }, array_values($transfers));
 
         return $this->respond($items);
@@ -529,6 +691,8 @@ class TransferController extends BaseController
             return $this->failForbidden();
         }
 
+        $hash = is_scalar($hash) ? (string)$hash : '';
+        if (!$this->shareService->isValidHash($hash)) return $this->failNotFound();
         $share = $this->shareService->getShareRaw($hash);
         if (!$share) return $this->failNotFound();
 
@@ -538,7 +702,7 @@ class TransferController extends BaseController
 
         // Delete physical files
         if (isset($share['source']) && $share['source'] === 'transfer') {
-            $dir = config('Storage')->uploads . '/shares/' . $share['path'];
+            $dir = $this->shareService->resolveTransferDirectory((string)($share['path'] ?? ''), true);
             // Recursive delete
             $this->rrmdir($dir);
         }
@@ -548,7 +712,7 @@ class TransferController extends BaseController
     }
 
     private function rrmdir($dir) {
-        if (is_dir($dir)) {
+        if (is_dir($dir) && !is_link($dir)) {
             $objects = scandir($dir);
             foreach ($objects as $object) {
                 if ($object != "." && $object != "..") {
@@ -564,7 +728,8 @@ class TransferController extends BaseController
 
     private function normalizeSessionId(string $sessionId): string
     {
-        return preg_replace('/[^a-zA-Z0-9]/', '', $sessionId) ?? '';
+        $normalized = preg_replace('/[^a-zA-Z0-9]/', '', $sessionId) ?? '';
+        return strlen($normalized) >= 16 && strlen($normalized) <= 64 ? $normalized : '';
     }
 
     private function sanitizeTransferFilename(string $fileName): string
@@ -577,16 +742,13 @@ class TransferController extends BaseController
             throw new \RuntimeException('Invalid transfer filename.');
         }
 
-        return $fileName;
+        return (new FileNamePolicy())->assertSafe($fileName);
     }
 
     private function getTransferTempDir(string $sessionId): string
     {
         $user = (string)(session('username') ?? '');
-        $userKey = preg_replace('/[^a-zA-Z0-9._-]/', '_', $user) ?? '';
-        if ($userKey === '') {
-            $userKey = 'anonymous';
-        }
+        $userKey = hash('sha256', $user !== '' ? $user : 'anonymous');
         return config('Storage')->uploads . '/temp/' . $userKey . '/' . $sessionId;
     }
 
@@ -668,6 +830,9 @@ class TransferController extends BaseController
 
     private function cleanupTempDir(string $dir): void
     {
+        if (is_link($dir)) {
+            throw new \RuntimeException('Transfer staging uses a symbolic link.');
+        }
         if (!is_dir($dir)) {
             return;
         }
@@ -675,7 +840,10 @@ class TransferController extends BaseController
             if ($entry === '.' || $entry === '..') {
                 continue;
             }
-            @unlink($dir . DIRECTORY_SEPARATOR . $entry);
+            $path = $dir . DIRECTORY_SEPARATOR . $entry;
+            if (is_link($path) || is_file($path)) {
+                @unlink($path);
+            }
         }
         @rmdir($dir);
     }
@@ -728,5 +896,119 @@ class TransferController extends BaseController
         }
 
         return $usage;
+    }
+
+    /** @return resource */
+    private function openTransferSessionLock(string $sessionId)
+    {
+        $tempDir = $this->getTransferTempDir($sessionId);
+        $parent = dirname($tempDir);
+        $this->assertNoSymlinkComponents($parent);
+        if (is_link($tempDir)) {
+            throw new \RuntimeException('Transfer staging uses a symbolic link.');
+        }
+        if (!is_dir($parent) && !mkdir($parent, 0700, true) && !is_dir($parent)) {
+            throw new \RuntimeException('Unable to create transfer lock storage.');
+        }
+        $this->assertNoSymlinkComponents($parent);
+        if (is_link($parent)) {
+            throw new \RuntimeException('Transfer staging uses a symbolic link.');
+        }
+        $lock = @fopen($parent . DIRECTORY_SEPARATOR . '.session-' . $sessionId . '.lock', 'c');
+        if ($lock === false || !flock($lock, LOCK_EX)) {
+            if (is_resource($lock)) {
+                fclose($lock);
+            }
+            throw new \RuntimeException('Unable to lock transfer staging.');
+        }
+
+        return $lock;
+    }
+
+    /** @param resource $lock */
+    private function closeTransferSessionLock($lock): void
+    {
+        flock($lock, LOCK_UN);
+        fclose($lock);
+    }
+
+    /** @return array{bytes: int, files: int} */
+    private function getTransferStagingStats(string $directory): array
+    {
+        if (is_link($directory)) {
+            throw new \RuntimeException('Invalid transfer storage.');
+        }
+        if (!is_dir($directory)) {
+            return ['bytes' => 0, 'files' => 0];
+        }
+
+        $bytes = 0;
+        $files = 0;
+        foreach (scandir($directory) ?: [] as $entry) {
+            if ($entry === '.' || $entry === '..' || str_ends_with($entry, '.lock')) {
+                continue;
+            }
+            $path = $directory . DIRECTORY_SEPARATOR . $entry;
+            if (is_link($path) || !is_file($path)) {
+                throw new \RuntimeException('Invalid transfer storage.');
+            }
+            $size = filesize($path);
+            if ($size === false) {
+                throw new \RuntimeException('Unable to read transfer staging size.');
+            }
+            $bytes += (int)$size;
+            $files++;
+        }
+
+        return ['bytes' => $bytes, 'files' => $files];
+    }
+
+    private function transferReservationId(string $sessionId): string
+    {
+        return 'transfer:' . hash('sha256', (string)session('username') . '|' . $sessionId);
+    }
+
+    private function reserveTransferStaging(string $sessionId, string $directory, int $bytes, int $files): void
+    {
+        $this->stagingResources->reserve(
+            (string)session('username'),
+            $this->transferReservationId($sessionId),
+            $bytes,
+            $files,
+            [
+                'kind' => 'transfer',
+                'session_id' => $sessionId,
+                'directory' => $directory,
+            ]
+        );
+    }
+
+    private function syncTransferReservation(string $sessionId, string $directory): void
+    {
+        if (!is_dir($directory)) {
+            $this->stagingResources->release($this->transferReservationId($sessionId));
+            return;
+        }
+        $stats = $this->getTransferStagingStats($directory);
+        $this->reserveTransferStaging($sessionId, $directory, $stats['bytes'], $stats['files']);
+    }
+
+    private function releaseTransferReservation(string $sessionId): void
+    {
+        $this->stagingResources->release(
+            $this->transferReservationId($sessionId),
+            (string)session('username')
+        );
+    }
+
+    private function assertNoSymlinkComponents(string $path): void
+    {
+        $current = rtrim($path, '/\\');
+        while ($current !== dirname($current)) {
+            if (is_link($current)) {
+                throw new \RuntimeException('Transfer staging uses a symbolic link.');
+            }
+            $current = dirname($current);
+        }
     }
 }

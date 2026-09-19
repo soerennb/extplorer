@@ -39,10 +39,8 @@ class MountServiceTest extends CIUnitTestCase
 
         $this->originalAllowlist = config('App')->mountRootAllowlist ?? [];
 
-        $this->allowedRoot = config('Storage')->fileManagerRoot . '/tests/mount-root';
-        if (!is_dir($this->allowedRoot)) {
-            mkdir($this->allowedRoot, 0777, true);
-        }
+        $this->allowedRoot = sys_get_temp_dir() . '/extplorer3-mount-' . bin2hex(random_bytes(8));
+        mkdir($this->allowedRoot, 0777, true);
 
         $settingsService = new SettingsService();
         $settingsService->saveSettings([
@@ -87,6 +85,8 @@ class MountServiceTest extends CIUnitTestCase
         } else {
             file_put_contents($this->settingsPath, $this->settingsBackup);
         }
+
+        $this->removeDirectory($this->allowedRoot);
     }
 
     public function testUpdateLocalMountNormalizesPath(): void
@@ -133,5 +133,24 @@ class MountServiceTest extends CIUnitTestCase
 
         $this->assertSame('success', $result['status']);
         $this->assertSame(realpath($path), $result['config']['path']);
+    }
+
+    private function removeDirectory(string $directory): void
+    {
+        if (!is_dir($directory) || is_link($directory)) {
+            return;
+        }
+        foreach (scandir($directory) ?: [] as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            $path = $directory . DIRECTORY_SEPARATOR . $entry;
+            if (is_link($path) || is_file($path)) {
+                unlink($path);
+            } elseif (is_dir($path)) {
+                $this->removeDirectory($path);
+            }
+        }
+        rmdir($directory);
     }
 }

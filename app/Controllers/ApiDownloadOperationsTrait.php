@@ -272,7 +272,14 @@ trait ApiDownloadOperationsTrait
 
             try {
 
-                $octalMode = intval(strval($mode), 8);
+                $modeString = trim((string)$mode);
+                if (!preg_match('/\A[0-7]{3,4}\z/', $modeString)) {
+                    return $this->fail('Mode must be an octal value between 000 and 0777.');
+                }
+                $octalMode = intval($modeString, 8);
+                if ($octalMode > 0777) {
+                    return $this->fail('Mode must be an octal value between 000 and 0777.');
+                }
 
                 foreach ($paths as $path) {
 

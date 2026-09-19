@@ -2,6 +2,7 @@
 
 namespace App\Services\VFS;
 
+use App\Services\FileNamePolicy;
 use App\Services\RemoteEndpointPolicy;
 use App\Services\ResourcePolicy;
 use Exception;
@@ -181,6 +182,7 @@ class FtpAdapter implements IFileSystem
 
     public function writeFile(string $path, string $content): bool
     {
+        $this->assertWritableTarget($path);
         $temp = fopen('php://temp', 'r+');
         fwrite($temp, $content);
         rewind($temp);
@@ -225,11 +227,13 @@ class FtpAdapter implements IFileSystem
 
     public function createDirectory(string $path): bool
     {
+        $this->assertWritableTarget($path);
         return (bool)@ftp_mkdir($this->conn, $this->resolvePath($path));
     }
 
     public function rename(string $from, string $to): bool
     {
+        $this->assertWritableTarget($to);
         return ftp_rename($this->conn, $this->remotePath($from), $this->remotePath($to));
     }
 
@@ -240,6 +244,7 @@ class FtpAdapter implements IFileSystem
 
     public function copy(string $from, string $to): bool
     {
+        $this->assertWritableTarget($to);
         $meta = $this->getMetadata($from);
         if (!$meta) {
             throw new Exception("Source not found: $from");
@@ -317,6 +322,15 @@ class FtpAdapter implements IFileSystem
         if ($size >= 0 && $size > $limit) {
             throw new Exception('Remote file exceeds the configured resource limit.');
         }
+    }
+
+    private function assertWritableTarget(string $path): void
+    {
+        $normalized = trim(str_replace('\\', '/', $path), '/');
+        if ($normalized === '') {
+            throw new Exception('A target filename is required.');
+        }
+        (new FileNamePolicy())->assertSafePath($normalized);
     }
 
     public function getMetadata(string $path): ?array

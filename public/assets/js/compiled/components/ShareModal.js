@@ -192,7 +192,7 @@ return function render(_ctx, _cache) {
                       _createElementVNode("div", null, [
                         _createElementVNode("strong", null, _toDisplayString(t('password') || 'Password') + ":", 1 /* TEXT */),
                         _cache[5] || (_cache[5] = _createTextVNode("  ", -1 /* CACHED */)),
-                        _createElementVNode("span", null, _toDisplayString(currentShare.password_hash ? t('password_protected') : t('share_no_password', 'No password')), 1 /* TEXT */)
+                        _createElementVNode("span", null, _toDisplayString(currentShare.password_protected ? t('password_protected') : t('share_no_password', 'No password')), 1 /* TEXT */)
                       ]),
                       _createElementVNode("div", null, [
                         _createElementVNode("strong", null, _toDisplayString(t('downloads') || 'Downloads') + ":", 1 /* TEXT */),

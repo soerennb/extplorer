@@ -198,7 +198,7 @@ const TransferModal = {
                                     <tr>
                                         <th>{{ t('transfer_col_status', 'Status') }}</th>
                                         <th>{{ t('transfer_col_subject', 'Subject') }}</th>
-                                        <th>{{ t('transfer_col_to', 'To') }}</th>
+                                        <th>{{ t('transfer_recipients', 'Recipients') }}</th>
                                         <th>{{ t('transfer_col_date', 'Date') }}</th>
                                         <th>{{ t('transfer_col_size', 'Size') }}</th>
                                         <th>{{ t('transfer_col_downloads', 'Downloads') }}</th>
@@ -212,8 +212,8 @@ const TransferModal = {
                                             <span class="badge" :class="statusBadgeClass(item.status)">{{ statusLabel(item.status) }}</span>
                                         </td>
                                         <td class="fw-bold">{{ item.subject || t('transfer_no_subject', '(No Subject)') }}</td>
-                                        <td class="text-truncate transfer-recipient" :title="item.recipients?.join(', ')">
-                                            {{ item.recipients ? item.recipients[0] + (item.recipients.length > 1 ? ' +' + (item.recipients.length-1) : '') : '-' }}
+                                        <td>
+                                            {{ item.recipient_count || 0 }}
                                         </td>
                                         <td>{{ formatDate(item.created_at) }}</td>
                                         <td>{{ formatSize(item.total_size) }}</td>
