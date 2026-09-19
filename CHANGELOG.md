@@ -13,6 +13,10 @@ All notable changes to eXtplorer 3 are documented here.
 - Production now requires an explicit HTTPS `EXTPLORER_BASE_URL` and a persistent cache backend.
 - WebDAV uploads now enforce account extension rules, streaming size limits and per-user quota.
 
+### Fixed
+
+- Kept production URL validation fail-closed for web traffic while allowing URL-independent CLI maintenance and explicit loopback E2E stacks.
+
 ### Security
 
 - Authorization changes immediately invalidate affected sessions and persistent login grants.

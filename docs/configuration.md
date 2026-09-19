@@ -12,6 +12,9 @@ cp env .env
 Set `EXTPLORER_BASE_URL` to the public HTTPS URL before starting a production
 installation. For local development, explicitly change `CI_ENVIRONMENT` to
 `development`; production intentionally refuses Host-header URL discovery.
+Production web URLs must use HTTPS. Plain HTTP is accepted only for explicit
+loopback URLs (`localhost`, `127.0.0.1` or `::1`) used by local container tests;
+CLI maintenance commands do not require a web URL.
 
 ### Essential Settings
 | Variable | Description | Recommended (Prod) |

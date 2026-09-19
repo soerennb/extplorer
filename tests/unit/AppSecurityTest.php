@@ -111,6 +111,27 @@ final class AppSecurityTest extends CIUnitTestCase
         new App();
     }
 
+    public function testProductionUrlPolicyAllowsHttpsAndLoopbackHttpOnly(): void
+    {
+        $method = (new \ReflectionClass(App::class))->getMethod('productionUrlAllowed');
+        $config = new App();
+
+        $this->assertTrue($method->invoke($config, 'https', 'files.example.test'));
+        $this->assertTrue($method->invoke($config, 'http', '127.0.0.1'));
+        $this->assertTrue($method->invoke($config, 'http', 'localhost'));
+        $this->assertFalse($method->invoke($config, 'http', 'files.example.test'));
+    }
+
+    public function testProductionBaseUrlRequirementExcludesCliOnly(): void
+    {
+        $method = (new \ReflectionClass(App::class))->getMethod('baseUrlRequiredForContext');
+        $config = new App();
+
+        $this->assertFalse($method->invoke($config, true, 'cli'));
+        $this->assertTrue($method->invoke($config, true, 'fpm-fcgi'));
+        $this->assertFalse($method->invoke($config, false, 'fpm-fcgi'));
+    }
+
     private function rememberEnvironment(string $key): void
     {
         if (!array_key_exists($key, $this->environment)) {

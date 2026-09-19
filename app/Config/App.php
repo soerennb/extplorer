@@ -42,7 +42,9 @@ class App extends BaseConfig
             ) {
                 throw new \RuntimeException('EXTPLORER_BASE_URL must not contain credentials, a query, or a fragment.');
             }
-            if ($this->isProduction() && ($parts['scheme'] ?? '') !== 'https') {
+            if ($this->isProduction()
+                && !$this->productionUrlAllowed((string)($parts['scheme'] ?? ''), $parts['host'])
+            ) {
                 throw new \RuntimeException('EXTPLORER_BASE_URL must use HTTPS in production.');
             }
             $this->baseURL = $configuredBaseUrl;
@@ -50,7 +52,7 @@ class App extends BaseConfig
         }
 
         if (empty($this->baseURL)) {
-            if ($this->isProduction()) {
+            if ($this->requiresConfiguredBaseUrl()) {
                 throw new \RuntimeException('EXTPLORER_BASE_URL is required in production.');
             }
             if (isset($_SERVER['HTTP_HOST']) && preg_match('/\A[A-Za-z0-9.-]+(?::[0-9]{1,5})?\z/', $_SERVER['HTTP_HOST'])) {
@@ -76,6 +78,26 @@ class App extends BaseConfig
     private function isProduction(): bool
     {
         return defined('ENVIRONMENT') && constant('ENVIRONMENT') === 'production';
+    }
+
+    private function isLoopbackHost(string $host): bool
+    {
+        return in_array(strtolower(trim($host, '[]')), ['127.0.0.1', '::1', 'localhost'], true);
+    }
+
+    private function productionUrlAllowed(string $scheme, string $host): bool
+    {
+        return $scheme === 'https' || ($scheme === 'http' && $this->isLoopbackHost($host));
+    }
+
+    private function requiresConfiguredBaseUrl(): bool
+    {
+        return $this->baseUrlRequiredForContext($this->isProduction(), PHP_SAPI);
+    }
+
+    private function baseUrlRequiredForContext(bool $production, string $sapi): bool
+    {
+        return $production && $sapi !== 'cli';
     }
 
     /**
