@@ -4,6 +4,27 @@ All notable changes to eXtplorer 3 are documented here.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-09-19
+
+### Added
+
+- Added aggregate, owner-scoped limits and expiry handling for resumable upload and transfer staging data.
+- Added fail-closed storage boundary and mount validation for writable roots, local mounts, symlinks and managed application paths.
+- Added centralized filename policy enforcement across uploads, editor saves, file operations, archive extraction and WebDAV.
+
+### Changed
+
+- Hardened share and transfer flows with explicit public, owner and transfer payloads, strict path resolution and public-share CSRF protection.
+- Hardened local, FTP, SFTP and WebDAV file operations against path traversal, symlink escapes and unsafe archive entries.
+- Improved remote endpoint allowlist validation and localized invalid-settings responses.
+- Switched application asset cache-busting to the application version for predictable deployments.
+
+### Security
+
+- Added protections for executable and server-configuration filenames, storage/webroot overlap, unsafe mounts and staging-resource exhaustion.
+- Added ownership, locking, quota and cleanup checks for resumable uploads and internal transfers.
+- Added regression coverage for share-data redaction, public uploads, login redirects, remote throttling, archive extraction and filesystem boundaries.
+
 ## [3.0.0-beta.6] - 2026-09-08
 
 ### Added
@@ -36,6 +57,7 @@ All notable changes to eXtplorer 3 are documented here.
 
 - Improved Docker runtime and secret handling checks during release quality validation.
 
-[Unreleased]: https://github.com/soerennb/extplorer/compare/v3.0.0-beta.6...HEAD
+[Unreleased]: https://github.com/soerennb/extplorer/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/soerennb/extplorer/releases/tag/v3.0.0
 [3.0.0-beta.6]: https://github.com/soerennb/extplorer/releases/tag/v3.0.0-beta.6
 [3.0.0-beta.5]: https://github.com/soerennb/extplorer/releases/tag/v3.0.0-beta.5

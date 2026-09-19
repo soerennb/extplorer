@@ -99,7 +99,7 @@ that synchronization.
 Production deployments should set `EXTPLORER_IMAGE_REF` to an immutable
 release tag or digest when reproducibility and controlled rollback matter.
 The moving `latest` tag follows the newest release that passed the release
-gates and is intended for installations that want automatic beta updates.
+gates and is intended for installations that want automatic updates.
 
 To inspect or roll back a release:
 
