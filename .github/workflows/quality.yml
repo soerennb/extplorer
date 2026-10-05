@@ -89,7 +89,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           extensions: curl, dom, gd, intl, mbstring, sqlite3, xml, zip
-          tools: composer:2.10.2
+          tools: composer:2.10.3
           coverage: none
 
       - name: Cache Composer downloads
@@ -263,7 +263,7 @@ jobs:
               docker/nginx/default.conf > "$temporary_directory/default.conf"
           docker run --rm \
             -v "$temporary_directory/default.conf:/etc/nginx/conf.d/default.conf:ro" \
-            nginx:1.31.3-alpine3.24 nginx -t
+            nginx:1.31.6-alpine3.24 nginx -t
 
       - name: Validate Apache configuration
         if: matrix.server == 'apache'

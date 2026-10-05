@@ -54,6 +54,15 @@ When adding new user-facing strings to the application:
 - Test routing changes at the domain root and in a subdirectory, both with and without `index.php`, using real `SiteURI` instances and the CSRF verifier.
 - Before releasing a native archive, run the [native release routing checks](tests/e2e/README.md#native-release-routing-checks) against the extracted final ZIP. The existing Docker smoke suite uses root URLs and does not cover this deployment matrix.
 
+## Dependency Maintenance & Release Checks
+
+- Prioritize security fixes, then patch/minor updates within the existing release lines. Track major migrations separately; never suppress an advisory to avoid a required migration.
+- Keep Docker, Compose, CI and documented tool versions consistent. Update lockfiles with the package manager and minimize unrelated dependency changes.
+- Audit locked Composer/NPM packages and the built container before release. Network errors and jobs that never acquire a GitHub runner are incomplete checks, not successful audits; rerun them.
+- Review the copied browser asset inventory as well as package-managed dependencies. Do not infer a version for unidentified bundles.
+- Record the commit, tool/dependency versions, audit and test results, archive checksums and all four native routing results with release evidence.
+- Follow the [dependency update and release checks](docs/dependency-updates.md) for commands, inventory and required evidence.
+
 ## Docker Note
 
 - Docker uses an init container to populate the shared code volume; updates refresh automatically based on the image version marker.

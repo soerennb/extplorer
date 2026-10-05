@@ -14,7 +14,7 @@ runs:
       with:
         php-version: "8.2"
         extensions: curl, dom, gd, intl, mbstring, mysqli, pdo_mysql, pdo_pgsql, pgsql, redis, sqlite3, xml, zip
-        tools: composer:2.10.2
+        tools: composer:2.10.3
         coverage: none
 
     - name: Cache Composer downloads

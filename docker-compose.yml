@@ -128,7 +128,7 @@ services:
       start_period: 10s
 
   extplorer-web:
-    image: nginx:1.31.3-alpine3.24
+    image: nginx:1.31.6-alpine3.24
     restart: unless-stopped
     read_only: true
     security_opt:

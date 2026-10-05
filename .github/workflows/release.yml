@@ -115,7 +115,7 @@ jobs:
         with:
           php-version: "8.5"
           extensions: zip, json, gd, ftp
-          tools: composer:2.10.2
+          tools: composer:2.10.3
 
       - name: Cache Composer downloads
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

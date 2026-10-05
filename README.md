@@ -75,7 +75,7 @@ still executed as `www-data` (UID 82). Keep the host secret file readable only b
 **Note for Portainer Users:** Do **not** simply paste the `docker-compose.yml` into the Web Editor. Use the "Repository" method to ensure Portainer clones the configuration files along with the compose file.
 
 - `ghcr.io/soerennb/extplorer3:latest` for the `extplorer-app` service (php-fpm); `latest` tracks the newest release that passed the release gates
-- `nginx:alpine` for the `extplorer-web` service
+- `nginx:1.31.6-alpine3.24` for the `extplorer-web` service
 - An `extplorer-init` service that populates the shared code volume on first run and on image updates
 
 ### Volumes
@@ -181,8 +181,8 @@ installation (`DOKPLOY_NETWORK_NAME` defaults to `dokploy-network`). Do not publ
 If you are contributing to eXtplorer or building from source:
 
 1.  Clone the repository.
-2.  Use a supported PHP version (8.2 through 8.5) and Composer 2.10.
-3.  Optional for frontend asset maintenance: use Node.js `24.18.0` LTS (`.nvmrc` / `.node-version`).
+2.  Use a supported PHP version (8.2 through 8.5) and Composer `2.10.3`.
+3.  Optional for frontend asset maintenance: use Node.js `24.21.0` LTS (`.nvmrc` / `.node-version`).
 4.  Install development dependencies: `./composer install`.
 5.  After changing translations, run `composer i18n:build` and `composer i18n:check`.
 6.  To create deployable archives, run `./build.sh`. It verifies the packaged login translations in every archive before reporting success.
@@ -192,3 +192,6 @@ Translation contribution details and the required files and checks for future bu
 
 Before publishing a native release, also run the [native release routing checks](tests/e2e/README.md#native-release-routing-checks)
 against the extracted final ZIP, covering settings saves at the domain root and in a subdirectory, with and without `index.php`.
+
+For dependency maintenance and every release build, follow the [dependency update and release checks](docs/dependency-updates.md).
+They prioritize security fixes and patch/minor updates and include copied browser assets that package audits do not cover.
