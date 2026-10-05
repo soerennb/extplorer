@@ -127,12 +127,6 @@ parameters:
 			path: app/Config/Exceptions.php
 
 		-
-			message: '#^Constant FCPATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: app/Config/I18n.php
-
-		-
 			message: '#^Constant ROOTPATH not found\.$#'
 			identifier: constant.notFound
 			count: 1
@@ -161,12 +155,6 @@ parameters:
 			identifier: constant.notFound
 			count: 1
 			path: app/Config/Logger.php
-
-		-
-			message: '#^Constant FCPATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: app/Config/Publisher.php
 
 		-
 			message: '#^Constant ROOTPATH not found\.$#'
@@ -397,12 +385,6 @@ parameters:
 			path: app/Controllers/Install.php
 
 		-
-			message: '#^Constant ROOTPATH not found\.$#'
-			identifier: constant.notFound
-			count: 1
-			path: app/Controllers/Login.php
-
-		-
 			message: '#^Function config not found\.$#'
 			identifier: function.notFound
 			count: 1
@@ -489,12 +471,6 @@ parameters:
 		-
 			message: '#^Call to an undefined method CodeIgniter\\HTTP\\CLIRequest\|CodeIgniter\\HTTP\\IncomingRequest\:\:negotiateLanguage\(\)\.$#'
 			identifier: method.notFound
-			count: 1
-			path: app/Controllers/ShareController.php
-
-		-
-			message: '#^Constant FCPATH not found\.$#'
-			identifier: constant.notFound
 			count: 1
 			path: app/Controllers/ShareController.php
 

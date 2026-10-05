@@ -383,15 +383,18 @@ class Login extends BaseController
      */
     private function loadLocaleMessages(string $locale): array
     {
-        $messages = [];
-        foreach (glob(ROOTPATH . 'resources/i18n/' . $locale . '/*.json') ?: [] as $path) {
-            $decoded = json_decode((string)file_get_contents($path), true);
-            if (is_array($decoded)) {
-                $messages = array_merge($messages, $decoded);
-            }
+        $path = FCPATH . 'assets/i18n/' . $locale . '.json';
+        if (!is_file($path) || !is_readable($path)) {
+            return [];
         }
 
-        return $messages;
+        $raw = file_get_contents($path);
+        if ($raw === false) {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+        return is_array($decoded) ? $decoded : [];
     }
 
     private function validateRemoteConnectionInput(

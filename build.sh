@@ -82,6 +82,13 @@ else
 fi
 cd ../..
 
+# Verify the final artifacts, including installations without translation sources.
+echo "Verifying packaged login translations..."
+php scripts/check-release-i18n.php "${TAR_NAME}"
+if [ -f "${ZIP_NAME}" ]; then
+    php scripts/check-release-i18n.php "${ZIP_NAME}"
+fi
+
 # 6. Reinstall dev dependencies for local development
 echo "Restoring dev dependencies..."
 if command -v composer >/dev/null 2>&1; then

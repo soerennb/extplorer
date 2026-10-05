@@ -185,6 +185,7 @@ If you are contributing to eXtplorer or building from source:
 3.  Optional for frontend asset maintenance: use Node.js `24.18.0` LTS (`.nvmrc` / `.node-version`).
 4.  Install development dependencies: `./composer install`.
 5.  After changing translations, run `composer i18n:build` and `composer i18n:check`.
-6.  To create a deployable archive, run: `./build.sh`.
+6.  To create deployable archives, run `./build.sh`. It verifies the packaged login translations in every archive before reporting success.
 
-Translation contribution details are documented in [docs/translations.md](docs/translations.md).
+Translation contribution details and the required files and checks for future builds are documented in the
+[translation runtime and release contract](docs/translations.md#runtime-and-release-contract).

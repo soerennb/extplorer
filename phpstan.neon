@@ -5,6 +5,8 @@ parameters:
     level: 5
     paths:
         - app
+    scanFiles:
+        - public/index.php
     excludePaths:
         - app/Database/Migrations/*
     tmpDir: writable/cache/phpstan

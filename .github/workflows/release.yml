@@ -158,6 +158,7 @@ jobs:
       - name: Verify archive and create checksum
         run: |
           unzip -t "eXtplorer-${GITHUB_REF_NAME#v}-release.zip"
+          php scripts/check-release-i18n.php "eXtplorer-${GITHUB_REF_NAME#v}-release.zip"
           sha256sum "eXtplorer-${GITHUB_REF_NAME#v}-release.zip" > "eXtplorer-${GITHUB_REF_NAME#v}-release.zip.sha256"
 
       - name: Publish GitHub release

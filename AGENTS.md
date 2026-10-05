@@ -39,6 +39,14 @@ When adding new user-facing strings to the application:
 - **Maintain Consistency**: Keep keys identical across all files. If a translation is unknown, use the English version as a temporary placeholder rather than leaving the key out.
 - **Verify JSON**: After editing, run `composer i18n:build` and `composer i18n:check`.
 
+## Translation Runtime & Build Contract
+
+- PHP and browser translation loaders must use `public/assets/i18n/<locale>.json`. `resources/i18n/` is a build input and must not be required by an installed application.
+- Every deployable archive and image must contain `public/assets/i18n/locales.json` and every language bundle listed in it, including English.
+- Generate and validate runtime bundles before packaging. Verify each final ZIP and TAR.GZ with `php scripts/check-release-i18n.php <archive>` before release; local and GitHub archive builds enforce this automatically.
+- Preserve the archive gate even when CI checks are reused. It tests the packaged Login controller without translation sources; checkout tests alone do not catch missing packaged files.
+- See [the translation runtime and release contract](docs/translations.md#runtime-and-release-contract) for the build sequence and requirements.
+
 ## Docker Note
 
 - Docker uses an init container to populate the shared code volume; updates refresh automatically based on the image version marker.

@@ -98,6 +98,13 @@ Release tags first verify successful Quality, Security and Secret scanning runs 
 exist, the release reuses them; otherwise it executes the full reusable gates before publishing. Archive and container
 publishing are blocked unless either path succeeds.
 
+The archive job also runs `scripts/check-release-i18n.php` on the final ZIP before creating its checksum and publishing,
+even when existing same-SHA checks are reused. Local `build.sh` builds run the same check on each ZIP and TAR.GZ they
+create. This checks the packaged Login controller and autoloader with translation sources removed from a temporary
+extraction. Checkout tests alone cannot detect omitted runtime dependencies in deployable archives.
+PHP and browser translations must resolve from the generated `public/assets/i18n` bundles; see the
+[translation runtime and release contract](translations.md#runtime-and-release-contract) for required files and commands.
+
 The repository ruleset currently does not require individual path-filtered checks. If required checks are introduced later,
 use a stable aggregate gate rather than making skipped path-filtered workflows required, because GitHub can leave skipped
 checks pending.
