@@ -47,6 +47,13 @@ When adding new user-facing strings to the application:
 - Preserve the archive gate even when CI checks are reused. It tests the packaged Login controller without translation sources; checkout tests alone do not catch missing packaged files.
 - See [the translation runtime and release contract](docs/translations.md#runtime-and-release-contract) for the build sequence and requirements.
 
+## HTTP Routing & CSRF Regression Contract
+
+- Match HTTP routes using `IncomingRequest::getPath()`, which excludes the installation directory and configured index page. Do not classify routes using the full URL path.
+- Preserve `X-CSRF-HASH` on API and public-share responses, including the `428` step-up challenge and controller validation errors. Keep CSRF randomization and regeneration enabled.
+- Test routing changes at the domain root and in a subdirectory, both with and without `index.php`, using real `SiteURI` instances and the CSRF verifier.
+- Before releasing a native archive, run the [native release routing checks](tests/e2e/README.md#native-release-routing-checks) against the extracted final ZIP. The existing Docker smoke suite uses root URLs and does not cover this deployment matrix.
+
 ## Docker Note
 
 - Docker uses an init container to populate the shared code volume; updates refresh automatically based on the image version marker.

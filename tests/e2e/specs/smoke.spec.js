@@ -208,6 +208,12 @@ test("admin can save settings after current-password confirmation", async ({
   // Whitespace-only input must be accepted as an empty allowlist and does not
   // change the persisted policy, making the test safe for a shared smoke stack.
   await endpointAllowlist.fill("\n  \r\n");
+  const challengeResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/settings") &&
+      response.request().method() === "POST" &&
+      response.status() === 428,
+  );
   const saveResponse = page.waitForResponse(
     (response) =>
       response.url().endsWith("/api/settings") &&
@@ -215,12 +221,21 @@ test("admin can save settings after current-password confirmation", async ({
       response.status() === 200,
   );
   await page.getByRole("button", { name: "Save Settings" }).click();
+  expect((await challengeResponse).headers()["x-csrf-hash"]).toBeTruthy();
 
   const stepUpInput = page.locator("#step-up-password");
   await expect(stepUpInput).toBeVisible();
   await stepUpInput.fill(password);
+  const stepUpResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/security/step-up") &&
+      response.request().method() === "POST",
+  );
   await page.locator(".swal2-confirm").click();
-  await saveResponse;
+  const confirmed = await stepUpResponse;
+  expect(confirmed.status()).toBe(200);
+  expect(confirmed.headers()["x-csrf-hash"]).toBeTruthy();
+  expect((await saveResponse).headers()["x-csrf-hash"]).toBeTruthy();
   await expect(page.locator(".swal2-toast")).toContainText("Settings saved.");
 
   await endpointAllowlist.fill(" \n");
@@ -230,7 +245,9 @@ test("admin can save settings after current-password confirmation", async ({
       response.request().method() === "POST",
   );
   await page.getByRole("button", { name: "Save Settings" }).click();
-  expect((await repeatedSaveResponse).status()).toBe(200);
+  const repeatedSave = await repeatedSaveResponse;
+  expect(repeatedSave.status()).toBe(200);
+  expect(repeatedSave.headers()["x-csrf-hash"]).toBeTruthy();
   await expect(stepUpInput).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Save Settings" })).toBeDisabled();
 

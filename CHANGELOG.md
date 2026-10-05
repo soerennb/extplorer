@@ -15,6 +15,7 @@ All notable changes to eXtplorer 3 are documented here.
 
 ### Fixed
 
+- Fixed external-mount allowlist saves and other API/share token refreshes in subdirectory and `index.php` installations by matching relative routing paths; added permanent CSRF regression tests and native release checks (#60).
 - Fixed login labels displaying translation keys in native ZIP installations by loading the bundled runtime translations; local and GitHub release archives now verify all login locales without translation sources (#59).
 - Kept production URL validation fail-closed for web traffic while allowing URL-independent CLI maintenance and explicit loopback E2E stacks.
 

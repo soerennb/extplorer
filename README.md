@@ -189,3 +189,6 @@ If you are contributing to eXtplorer or building from source:
 
 Translation contribution details and the required files and checks for future builds are documented in the
 [translation runtime and release contract](docs/translations.md#runtime-and-release-contract).
+
+Before publishing a native release, also run the [native release routing checks](tests/e2e/README.md#native-release-routing-checks)
+against the extracted final ZIP, covering settings saves at the domain root and in a subdirectory, with and without `index.php`.

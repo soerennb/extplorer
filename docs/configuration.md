@@ -26,6 +26,37 @@ CLI maintenance commands do not require a web URL.
 | `EXTPLORER_ENCRYPTION_KEY_FILE` | File containing the encryption key. | `/run/secrets/extplorer-encryption-key` |
 | `app.forceGlobalSecureRequests` | Force HTTPS redirection. | `true` |
 
+### Subdirectory and index.php installations
+
+Set `EXTPLORER_BASE_URL` to the externally visible application directory,
+including its installation prefix and a trailing slash. Keep `index.php` out
+of that URL; configure `app.indexPage` separately:
+
+```dotenv
+EXTPLORER_BASE_URL=https://files.example.com/extplorer/public/
+app.indexPage=''
+```
+
+Use an empty `app.indexPage` for rewritten controller URLs. For explicit
+front-controller URLs, set `app.indexPage=index.php`; the settings endpoint
+can then be reached at
+`https://files.example.com/extplorer/public/index.php/api/settings`.
+The browser also constructs API URLs directly under `EXTPLORER_BASE_URL`,
+so the web server must continue forwarding those requests to the front
+controller when an index page is configured.
+At the domain root, use `EXTPLORER_BASE_URL=https://files.example.com/` with
+the same index-page choices.
+
+API and public-share responses return the current CSRF token in
+`X-CSRF-HASH` for all these URL layouts. The browser sends it as
+`X-CSRF-TOKEN` on the next mutation. This also applies to the `428` response
+that requests password confirmation before saving administrator settings.
+Missing this refreshed token can make confirmation fail with `403` and the
+generic permission error even for an administrator (issue #60).
+Keep token randomization and regeneration enabled; the native release
+[routing checks](../tests/e2e/README.md#native-release-routing-checks) verify
+the supported URL layouts.
+
 ### Storage backends
 
 The default `file` state/session/cache configuration is intended for a single
