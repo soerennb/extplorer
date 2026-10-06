@@ -152,7 +152,7 @@ jobs:
           cp -r app release/
           cp -r public release/
           cp -r vendor release/
-          cp LICENSE.md README.md .htaccess nginx.conf.example release/
+          cp LICENSE.md README.md spark .htaccess nginx.conf.example release/
           cd release && zip -r "../eXtplorer-${VERSION}-release.zip" .
 
       - name: Verify archive and create checksum

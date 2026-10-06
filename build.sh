@@ -46,6 +46,7 @@ cp -r resources ${BUILD_DIR}/
 cp -r vendor ${BUILD_DIR}/
 cp LICENSE.md ${BUILD_DIR}/
 cp README.md ${BUILD_DIR}/
+cp spark ${BUILD_DIR}/
 cp composer.json ${BUILD_DIR}/
 cp .htaccess ${BUILD_DIR}/
 cp nginx.conf.example ${BUILD_DIR}/

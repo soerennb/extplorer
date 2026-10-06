@@ -31,6 +31,7 @@ require __DIR__ . '/codeigniter4/framework/system/Controller.php';
 require __DIR__ . '/../app/Controllers/BaseController.php';
 require __DIR__ . '/../app/Controllers/Login.php';
 PHP;
+        $this->files['spark'] = "#!/usr/bin/env php\n<?php\n";
         $this->files['resources/i18n/en/01-common.json'] = '{"login_submit":"Source must not be needed"}';
     }
 
@@ -76,6 +77,14 @@ PHP;
         [$status, $output] = $this->check($this->archive('zip'));
         $this->assertSame(1, $status, $output);
         $this->assertStringContainsString('de: missing or incorrect packaged login translation: login_submit', $output);
+    }
+
+    public function testMissingSparkEntryPointFailsTheArchiveCheck(): void
+    {
+        unset($this->files['spark']);
+        [$status, $output] = $this->check($this->archive('zip'));
+        $this->assertSame(1, $status, $output);
+        $this->assertStringContainsString('Release archive is missing the spark CLI entry point', $output);
     }
 
     private function archive(string $format): string
