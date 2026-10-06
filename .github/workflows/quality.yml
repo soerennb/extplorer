@@ -217,8 +217,14 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Ensure Ace assets
+        run: bash ./scripts/ensure-ace-assets.sh
+
       - name: Compile Vue templates
         run: npm run build:js
+
+      - name: Verify copied browser vendor assets
+        run: npm run check:vendor-assets
 
       - name: Build and check translations
         run: |
@@ -316,6 +322,9 @@ jobs:
 
       - name: Ensure Ace assets
         run: bash ./scripts/ensure-ace-assets.sh
+
+      - name: Verify copied browser vendor assets
+        run: node scripts/check-vendor-assets.js
 
       - name: Prepare chmod-600 secret overlay fixture
         run: |

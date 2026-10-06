@@ -1,0 +1,110 @@
+{
+  "generatedAt": "2026-10-06",
+  "packages": [
+    {
+      "name": "vue",
+      "version": "3.5.43",
+      "source": "https://registry.npmjs.org/vue/-/vue-3.5.43.tgz",
+      "integrity": "sha512-o5qZoksdnjIKvW1srZ3ab7pcDNYAerBjRe54D0LBLfRdCYFrSgBHVXokMas35czQc0//lmx4/tuY4ZNQ+Rf2Ng==",
+      "files": {
+        "public/assets/js/vue.runtime.global.prod.js": "f2f1547993b942e5e24f2d6e63577b21739a37a920e09c656b0e87eb0ad55175"
+      }
+    },
+    {
+      "name": "bootstrap",
+      "version": "5.3.8",
+      "source": "https://registry.npmjs.org/bootstrap/-/bootstrap-5.3.8.tgz",
+      "integrity": "sha512-HP1SZDqaLDPwsNiqRqi5NcP0SSXciX2s9E+RyqJIIqGo+vJeN5AJVM98CXmW/Wux0nQ5L7jeWUdplCEf0Ee+tg==",
+      "files": {
+        "public/assets/js/bootstrap.bundle.min.js": "e4fd49181388c48ec5040bd3fe66f57c29c8e67fcd8502b3354b96ec7ab47cc7",
+        "public/assets/css/bootstrap.min.css": "d85327d99c7a3ee1f9b5d0500d1370acea3ad2db39c163c2f51f232baedbdede"
+      }
+    },
+    {
+      "name": "remixicon",
+      "version": "4.9.1",
+      "source": "https://registry.npmjs.org/remixicon/-/remixicon-4.9.1.tgz",
+      "integrity": "sha512-36gLSoujkabnCFZFDyP17VNh9piuBA/rsXUb4auSJWLGsHVXtmxLj/EM5FjaEAGnk8oIAj1Azob/DZ2N+90lAQ==",
+      "notes": "The CSS keeps the upstream icon rules but narrows @font-face to the shipped WOFF2 font and local path.",
+      "files": {
+        "public/assets/css/remixicon.css": "cbf49f56eaaf3c08047070c2558255fa826e12beea6482a0f6d7e755eb5d1bba",
+        "public/assets/fonts/remixicon.woff2": "e92dc38bfb1d15dbb9d9ca9e645754f68e7c5b224e33c45a17048bd0cf2407a6"
+      }
+    },
+    {
+      "name": "sweetalert2",
+      "version": "11.26.25",
+      "source": "https://registry.npmjs.org/sweetalert2/-/sweetalert2-11.26.25.tgz",
+      "integrity": "sha512-+hunCOJdJ6FLj04T9YSLvvZXRjsvIkTeTKP2e4VF8CaBias961BTnWiSFAy7F/CM5eq3QK2Rraoc5Gzftslvkg==",
+      "files": {
+        "public/assets/js/sweetalert2.min.js": "520341374aa1ee4387d6564e46c0fb0485addc98431ee246cd1be6368fedb1b0",
+        "public/assets/js/sweetalert2.all.min.js": "4e86f0e22e4771b5b8aac24c613c661806a678b1afa284d03cf6ad03d3e21a0a",
+        "public/assets/css/sweetalert2.min.css": "a1173e56fd474be04ddbefa81bd75cc465627ef2f5db261792e7d25fb7871743"
+      }
+    },
+    {
+      "name": "diff",
+      "version": "9.0.0",
+      "source": "https://registry.npmjs.org/diff/-/diff-9.0.0.tgz",
+      "integrity": "sha512-svtcdpS8CgJyqAjEQIXdb3OjhFVVYjzGAPO8WGCmRbrml64SPw/jJD4GoE98aR7r25A0XcgrK3F02yw9R/vhQw==",
+      "files": {
+        "public/assets/js/diff.min.js": "b51a9d2885f2c090dc97b981027395f7e7e6558a46c75ae3747db267913a89ab"
+      }
+    },
+    {
+      "name": "diff2html",
+      "version": "3.4.56",
+      "source": "https://registry.npmjs.org/diff2html/-/diff2html-3.4.56.tgz",
+      "integrity": "sha512-u9gfn+BlbHcyO7vItCIC4z49LJDUt31tODzOfAuJ5R1E7IdlRL6KjugcB9zOpejD+XiR+dDZbsnHSQ3g6A/u8A==",
+      "embeddedDependencies": [
+        "diff@^8.0.3",
+        "@profoundlogic/hogan@^3.0.4",
+        "highlight.js@11.11.1"
+      ],
+      "files": {
+        "public/assets/js/diff2html-ui.min.js": "997a0ea9db84c0abcce35c64159afe46d30dcfdfd243415619d9b3e81017138b",
+        "public/assets/css/diff2html.min.css": "d3ecc0e9b2b1e5c8466c19de29bed052fd0863475d25829ecc858446efded372"
+      }
+    },
+    {
+      "name": "ace-builds",
+      "version": "1.44.0",
+      "source": "https://registry.npmjs.org/ace-builds/-/ace-builds-1.44.0.tgz",
+      "integrity": "sha512-PFNMSYqFdEUkul2Ntud0HvA09AgY+F1ag0UYdpMH60wNI/qOA8cB8tlTgoALMEwIdUPJK2CjrIQ7OnbiSS/ugQ==",
+      "files": {
+        "public/assets/vendor/ace/ace.js": "116962fc63b120f6f6973e7e82ec8faa02c3bf1ceb59a3effaafb57ea09bee88",
+        "public/assets/vendor/ace/ace.min.js": "116962fc63b120f6f6973e7e82ec8faa02c3bf1ceb59a3effaafb57ea09bee88",
+        "public/assets/vendor/ace/mode-css.js": "5aa2be6dbf16aec775317d956e6e902a5ceb765b486d80d550eb821f678dbbb3",
+        "public/assets/vendor/ace/mode-css.min.js": "5aa2be6dbf16aec775317d956e6e902a5ceb765b486d80d550eb821f678dbbb3",
+        "public/assets/vendor/ace/mode-html.js": "0f21cde86f32f3f479378de794797eb438701c3793db0c6618f4dd4c2671538a",
+        "public/assets/vendor/ace/mode-html.min.js": "0f21cde86f32f3f479378de794797eb438701c3793db0c6618f4dd4c2671538a",
+        "public/assets/vendor/ace/mode-javascript.js": "6036918585bb03161f4ac775230aaf451e4a192a3d3335d87d7f6d1166b6a730",
+        "public/assets/vendor/ace/mode-javascript.min.js": "6036918585bb03161f4ac775230aaf451e4a192a3d3335d87d7f6d1166b6a730",
+        "public/assets/vendor/ace/mode-json.js": "816362476a7cb347e422e03c8cb5c81918cce5de11ac4da7df1aec5b38cc8a31",
+        "public/assets/vendor/ace/mode-json.min.js": "816362476a7cb347e422e03c8cb5c81918cce5de11ac4da7df1aec5b38cc8a31",
+        "public/assets/vendor/ace/mode-markdown.js": "39627a8bd0a3d7273540ecec0bbea844b7588eb963d698f9ffd0b24450907b3e",
+        "public/assets/vendor/ace/mode-markdown.min.js": "39627a8bd0a3d7273540ecec0bbea844b7588eb963d698f9ffd0b24450907b3e",
+        "public/assets/vendor/ace/mode-php.js": "98c9c170c432d6dd428d74784caf89335b0bb5d6d8cea7dd6c12e90888be3f55",
+        "public/assets/vendor/ace/mode-php.min.js": "98c9c170c432d6dd428d74784caf89335b0bb5d6d8cea7dd6c12e90888be3f55",
+        "public/assets/vendor/ace/mode-sql.js": "8bf2c079b89e25de21463aa83a8ae79c1a5cc81188f2673595c00344420a5faa",
+        "public/assets/vendor/ace/mode-sql.min.js": "8bf2c079b89e25de21463aa83a8ae79c1a5cc81188f2673595c00344420a5faa",
+        "public/assets/vendor/ace/mode-xml.js": "fc3415cbcede2eaa8ee75b47225dc6de30ab119f647884c8d246a170b14d317f",
+        "public/assets/vendor/ace/mode-xml.min.js": "fc3415cbcede2eaa8ee75b47225dc6de30ab119f647884c8d246a170b14d317f",
+        "public/assets/vendor/ace/theme-chrome.js": "4746f938ad581ec1c4003f5d8414aab440d548327a1689c241ea74c1713a4357",
+        "public/assets/vendor/ace/theme-chrome.min.js": "4746f938ad581ec1c4003f5d8414aab440d548327a1689c241ea74c1713a4357",
+        "public/assets/vendor/ace/theme-monokai.js": "d8a164b9d4eb6af1bd915bc733658b26f5b3afdd135fe0c673a4f6431a06d64f",
+        "public/assets/vendor/ace/theme-monokai.min.js": "d8a164b9d4eb6af1bd915bc733658b26f5b3afdd135fe0c673a4f6431a06d64f",
+        "public/assets/vendor/ace/worker-css.js": "09268aee2f7da5833eeec8db0ebc0c59eb13cf37e2241dc8fede967973468403",
+        "public/assets/vendor/ace/worker-css.min.js": "09268aee2f7da5833eeec8db0ebc0c59eb13cf37e2241dc8fede967973468403",
+        "public/assets/vendor/ace/worker-html.js": "cda50dff75f72ee3bba99d253177d105ebe9e7c51475a2eaef0cada859299b97",
+        "public/assets/vendor/ace/worker-html.min.js": "cda50dff75f72ee3bba99d253177d105ebe9e7c51475a2eaef0cada859299b97",
+        "public/assets/vendor/ace/worker-javascript.js": "f50bcad13a425f0165c169c5e29ed019f6510bee9ba4780a130698f766277157",
+        "public/assets/vendor/ace/worker-javascript.min.js": "f50bcad13a425f0165c169c5e29ed019f6510bee9ba4780a130698f766277157",
+        "public/assets/vendor/ace/worker-json.js": "660e4591862c50691802f2b252564499f65dfe6495aa034cc144e92dac74bb64",
+        "public/assets/vendor/ace/worker-json.min.js": "660e4591862c50691802f2b252564499f65dfe6495aa034cc144e92dac74bb64",
+        "public/assets/vendor/ace/worker-php.js": "c5cade47a167a876caeed5d4727c056d3d8532a5b9ab00e7cc642c1f5be0e188",
+        "public/assets/vendor/ace/worker-php.min.js": "c5cade47a167a876caeed5d4727c056d3d8532a5b9ab00e7cc642c1f5be0e188"
+      }
+    }
+  ]
+}

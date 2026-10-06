@@ -31,6 +31,7 @@ fi
 # 2.5 Ensure bundled frontend vendor assets exist
 echo "Ensuring Ace assets..."
 bash ./scripts/ensure-ace-assets.sh
+node ./scripts/check-vendor-assets.js
 
 # 2.6 Generate and validate runtime translation bundles
 echo "Building translations..."

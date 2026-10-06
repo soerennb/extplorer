@@ -59,22 +59,37 @@ dependencies embedded in their bundles.
 | Library | Bundled version | Files and update source |
 | --- | --- | --- |
 | Vue, active runtime | 3.5.43 | `public/assets/js/vue.runtime.global.prod.js`; `npm run build:js` copies it from the locked `vue` package and uses the locked compiler. |
-| Vue, legacy full builds | 3.5.41 | `vue.global.js` and `vue.global.prod.js`; retained copied files with no current view references. Review their inclusion separately; do not load a template compiler to work around CSP. |
+| Vue, legacy full builds | Removed | The unused 3.5.41 full builds are no longer shipped; only the locked 3.5.43 runtime used by the application remains. The audit advisory applied to the package's server-renderer dependency, which was not present in those browser files. |
 | Bootstrap | 5.3.8 | `bootstrap.bundle.min.js` and `bootstrap.min.css`; obtain matching JS/CSS from the [Bootstrap package](https://www.npmjs.com/package/bootstrap). |
 | SweetAlert2 | 11.26.25 | `sweetalert2.min.js` and `sweetalert2.all.min.js`; use matching files from the [publisher release](https://github.com/sweetalert2/sweetalert2/releases). |
-| SweetAlert2, copied stylesheet | Unidentified | `sweetalert2.min.css` has no reliable version marker; verify it against the matching publisher package before assigning a version or replacing it. |
-| Remix Icon | 4.9.1 | `remixicon.css` and matching icon fonts; update the complete set from the [Remix Icon package](https://www.npmjs.com/package/remixicon). |
-| Ace | 1.44.0 | `public/assets/vendor/ace/`; `scripts/ensure-ace-assets.sh` downloads the pinned `ace-builds` tarball and copies modes, workers and themes. |
-| jsdiff | Unidentified | `public/assets/js/diff.min.js`; there is no reliable version marker. Compare against [publisher releases](https://github.com/kpdecker/jsdiff/releases) before selecting an update. |
-| diff2html | Unidentified | `diff2html-ui.min.js` and `diff2html.min.css`; identify the matching bundle and embedded dependencies using the [publisher releases](https://github.com/rtfpessoa/diff2html/releases). |
+| SweetAlert2, copied stylesheet | 11.26.25 | `sweetalert2.min.css` is byte-for-byte identical to the CSS shipped by `sweetalert2@11.26.25`. |
+| Remix Icon | 4.9.1 | `remixicon.css` and `remixicon.woff2`; icon rules match the upstream package, with the font-face narrowed to the shipped WOFF2 font and local path. |
+| Ace | 1.44.0 | `public/assets/vendor/ace/`; `scripts/ensure-ace-assets.sh` verifies the pinned `ace-builds` tarball's SHA-512 SRI before copying modes, workers and themes. |
+| jsdiff (`diff` npm package) | 9.0.0 | `public/assets/js/diff.min.js`; byte-for-byte identical to the publisher's package bundle. |
+| diff2html | 3.4.56 | `diff2html-ui.min.js` and `diff2html.min.css`; byte-for-byte identical to the publisher's npm bundle. The UI bundle includes `diff@^8.0.3`, `@profoundlogic/hogan@^3.0.4` and optional `highlight.js@11.11.1`. |
 
-For every copied-asset update, record the exact publisher version, artifact URL,
-publisher integrity/checksum where supplied, and SHA-256 of the shipped files.
-Verify the downloaded artifact and retain license notices. For Ace, the existing
-script pins a version but does not verify the downloaded tarball's integrity;
-its successful download is not an integrity or advisory check. Do not infer an
-unknown bundle's version from the publisher's current release. Resolve its
-provenance before treating the inventory or vulnerability review as complete.
+The machine-readable [vendor asset manifest](../scripts/vendor-assets.json)
+records the exact npm package version, registry tarball URL, publisher SRI and
+SHA-256 of all 43 copied browser vendor files. Package downloads were verified
+with `npm pack`, and shipped files were compared with their publisher artifact.
+Remix Icon's font is byte-for-byte upstream; its CSS only changes the font-face
+to use that WOFF2 file at the local path, while the icon rules match after
+whitespace normalization. The manifest checker runs in the frontend quality
+job and before archive packaging:
+
+```bash
+npm run check:vendor-assets
+```
+
+To update a copied asset, download the exact reviewed package with `npm pack`,
+compare the shipped files with the publisher artifact, retain the package
+license notice, then update both the SRI source record and shipped-file hashes
+in the manifest. Do not infer an unknown bundle's version from the publisher's
+current release. `scripts/ensure-ace-assets.sh` checks the `ace-builds@1.44.0`
+tarball's pinned SHA-512 SRI before extracting or copying files. An
+`ACE_VERSION` override also requires an explicit `ACE_TARBALL_INTEGRITY`;
+archive packaging then checks the generated files against the manifest. A
+download with a missing or mismatched integrity value fails closed.
 
 Keep JS/CSS/fonts and Ace workers consistent. Exercise the affected editor,
 dialogs, icons and file-history diff view, and check browser exceptions and CSP
@@ -92,6 +107,8 @@ composer validate --strict
 composer test
 composer static:phpstan
 npm run build:js
+npm run check:vendor-assets
+npm run audit:vendor-assets
 composer i18n:build
 composer i18n:check
 composer audit --locked --no-interaction

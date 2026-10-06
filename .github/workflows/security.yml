@@ -170,6 +170,9 @@ jobs:
       - name: Audit locked NPM dependencies
         run: npm audit --package-lock-only --audit-level=high
 
+      - name: Audit copied browser vendor dependencies
+        run: npm run audit:vendor-assets
+
   container:
     name: Container vulnerability scan
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
