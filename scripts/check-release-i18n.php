@@ -47,6 +47,10 @@ function runCommand(array $command, string $directory): void
 /** This runs in a fresh process, using only the extracted application's autoloader. */
 function verifyDirectory(string $root): void
 {
+    if (!is_file($root . '/spark')) {
+        throw new \RuntimeException('Release archive is missing the spark CLI entry point.');
+    }
+
     define('ROOTPATH', $root . DIRECTORY_SEPARATOR);
     define('FCPATH', ROOTPATH . 'public' . DIRECTORY_SEPARATOR);
     require ROOTPATH . 'vendor/autoload.php';

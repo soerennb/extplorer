@@ -60,7 +60,8 @@ php scripts/check-release-i18n.php builds/extplorer3-3.0.0.tar.gz
 Replace the version in these examples with the version in `app/Config/App.php`. The checker requires PHP with ZIP
 support and the `tar` executable for TAR.GZ archives. It extracts the archive into a temporary directory, removes any
 packaged translation sources and runs the packaged Login controller in a separate PHP process using the packaged
-autoloader. Every manifest locale must have
+autoloader. It also requires the packaged `spark` CLI entry point for native maintenance commands and the container
+release stager. Every manifest locale must have
 a readable, valid runtime bundle and all login translations must resolve to the bundled texts rather than key names.
 The checker exits nonzero on failure and removes its temporary files on success or failure.
 
