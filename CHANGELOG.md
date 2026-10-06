@@ -4,20 +4,22 @@ All notable changes to eXtplorer 3 are documented here.
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-06
+
 ### Added
 
 - Added revocable, one-time-display WebDAV app passwords in the user security profile.
 
 ### Changed
 
-- Production now requires an explicit HTTPS `EXTPLORER_BASE_URL` and a persistent cache backend.
+- Production URL discovery for native Apache/Nginx PHP-FPM installations can use the canonical server name when `EXTPLORER_BASE_URL` is unset; Docker Compose still requires the explicit URL. A persistent cache backend is still required in production.
 - WebDAV uploads now enforce account extension rules, streaming size limits and per-user quota.
 
 ### Fixed
 
 - Fixed external-mount allowlist saves and other API/share token refreshes in subdirectory and `index.php` installations by matching relative routing paths; added permanent CSRF regression tests and native release checks (#60).
 - Fixed login labels displaying translation keys in native ZIP installations by loading the bundled runtime translations; local and GitHub release archives now verify all login locales without translation sources (#59).
-- Kept production URL validation fail-closed for web traffic while allowing URL-independent CLI maintenance and explicit loopback E2E stacks.
+- Derived native production URLs from canonical `SERVER_NAME`, direct HTTPS state or a configured trusted proxy, and the front-controller directory; invalid names and non-HTTPS public URLs still fail closed.
 
 ### Security
 
@@ -78,7 +80,8 @@ All notable changes to eXtplorer 3 are documented here.
 
 - Improved Docker runtime and secret handling checks during release quality validation.
 
-[Unreleased]: https://github.com/soerennb/extplorer/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/soerennb/extplorer/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/soerennb/extplorer/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/soerennb/extplorer/releases/tag/v3.0.0
 [3.0.0-beta.6]: https://github.com/soerennb/extplorer/releases/tag/v3.0.0-beta.6
 [3.0.0-beta.5]: https://github.com/soerennb/extplorer/releases/tag/v3.0.0-beta.5

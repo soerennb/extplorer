@@ -52,24 +52,23 @@ class App extends BaseConfig
         }
 
         if (empty($this->baseURL)) {
-            if ($this->requiresConfiguredBaseUrl()) {
-                throw new \RuntimeException('EXTPLORER_BASE_URL is required in production.');
-            }
-            if (isset($_SERVER['HTTP_HOST']) && preg_match('/\A[A-Za-z0-9.-]+(?::[0-9]{1,5})?\z/', $_SERVER['HTTP_HOST'])) {
-                $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
-                
-                // Determine the script path (subfolder)
-                $scriptPath = dirname($_SERVER['SCRIPT_NAME']);
-                $scriptPath = $scriptPath === '/' || $scriptPath === '\\' ? '' : $scriptPath;
-                // Fix windows paths if necessary
-                $scriptPath = str_replace('\\', '/', $scriptPath);
-                
-                // If running via 'spark serve', SCRIPT_NAME might be /index.php, so path is empty.
-                // If running in apache/nginx alias /myapp/, SCRIPT_NAME is /myapp/index.php.
-                
-                $this->baseURL = $protocol . '://' . $_SERVER['HTTP_HOST'] . $scriptPath . '/';
+            $serverBaseUrl = NativeBaseUrlResolver::resolve($_SERVER, array_keys($this->proxyIPs));
+            if ($serverBaseUrl !== null) {
+                if ($this->isProduction()
+                    && !$this->productionUrlAllowed($serverBaseUrl['scheme'], $serverBaseUrl['host'])
+                ) {
+                    throw new \RuntimeException('EXTPLORER_BASE_URL must use HTTPS in production.');
+                }
+
+                $this->baseURL = $serverBaseUrl['url'];
+                $this->allowedHostnames = [$serverBaseUrl['host']];
+            } elseif ($this->requiresConfiguredBaseUrl()) {
+                throw new \RuntimeException(
+                    'EXTPLORER_BASE_URL is required in production when SERVER_NAME is not a valid canonical hostname.'
+                );
             } else {
-                // CLI Fallback
+                // Local development and CLI commands do not need an externally
+                // visible URL when the server does not provide a canonical name.
                 $this->baseURL = 'http://localhost:8080/';
             }
         }
@@ -304,7 +303,7 @@ class App extends BaseConfig
      * Application Version
      * --------------------------------------------------------------------------
      */
-    public string $version = '3.0.0';
+    public string $version = '3.1.0';
 
     private function configureTrustedProxies(): void
     {
