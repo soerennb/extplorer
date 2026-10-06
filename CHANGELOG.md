@@ -14,6 +14,7 @@ All notable changes to eXtplorer 3 are documented here.
 
 - Production URL discovery for native Apache/Nginx PHP-FPM installations can use the canonical server name when `EXTPLORER_BASE_URL` is unset; Docker Compose still requires the explicit URL. A persistent cache backend is still required in production.
 - WebDAV uploads now enforce account extension rules, streaming size limits and per-user quota.
+- Removed unused legacy Vue full-build assets and added verified provenance and integrity checks for copied browser vendor files and Ace build downloads.
 
 ### Fixed
 

@@ -106,6 +106,39 @@ async function confirmDialog(page) {
   await page.locator(".swal2-confirm").click();
 }
 
+async function uploadTextFile(page, name, content) {
+  await page.getByTestId("upload").click();
+  await page.locator("#uploadFileInput").setInputFiles({
+    name,
+    mimeType: "text/plain",
+    buffer: Buffer.from(content),
+  });
+  await page.getByTestId("upload-submit").click();
+  await expect(page.locator(".swal2-success")).toBeVisible();
+  await confirmDialog(page);
+  await page.getByTestId("upload-close").click();
+  await expect(fileItem(page, name)).toBeVisible();
+}
+
+async function verifyVendorBundles(page) {
+  const loadedBundles = await page.evaluate(() => ({
+    vue: typeof window.Vue?.createApp === "function",
+    bootstrap: typeof window.bootstrap?.Modal === "function",
+    sweetalert: typeof window.Swal?.fire === "function",
+    ace: typeof window.ace?.edit === "function",
+    diff: typeof window.Diff?.createPatch === "function",
+    diff2html: typeof window.Diff2HtmlUI === "function",
+  }));
+  expect(loadedBundles).toEqual({
+    vue: true,
+    bootstrap: true,
+    sweetalert: true,
+    ace: true,
+    diff: true,
+    diff2html: true,
+  });
+}
+
 test("running stack exposes health and protects application routes", async ({
   page,
   request,
@@ -254,15 +287,14 @@ test("admin can save settings after current-password confirmation", async ({
   await assertCleanBrowser();
 });
 
-test("local user can create, upload, download, rename, trash, and restore a file", async ({
-  page,
-}) => {
+test("local user can edit, compare, download, and restore files", async ({ page }) => {
   const assertCleanBrowser = await monitorPage(page);
   const folderName = "e2e-smoke-folder";
   const originalName = "smoke-upload.txt";
   const renamedName = "smoke-renamed.txt";
 
   await login(page);
+  await verifyVendorBundles(page);
 
   await fileItem(page, "Home").dblclick();
   await expect(page.getByTestId("current-path")).toContainText("Home");
@@ -282,6 +314,65 @@ test("local user can create, upload, download, rename, trash, and restore a file
   await page.getByTestId("upload-close").click();
   await expect(fileItem(page, originalName)).toBeVisible();
 
+  await fileItem(page, originalName).dblclick();
+  await expect(page.locator("#editorModal")).toBeVisible();
+  const updatedContent = "updated vendor editor line\nshared line\n";
+  await expect(page.locator("#aceEditor")).toContainText("end-to-end smoke fixture.");
+  await page.evaluate(
+    (content) => window.ace.edit("aceEditor").setValue(content, -1),
+    updatedContent,
+  );
+  expect(await page.evaluate(() => window.ace.edit("aceEditor").getValue())).toBe(
+    updatedContent,
+  );
+  const saveResponsePromise = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/save") &&
+      response.request().method() === "POST",
+  );
+  await page.locator("#editorModal .modal-footer .btn-primary").click();
+  expect((await saveResponsePromise).status()).toBe(200);
+  await expect(page.locator("#editorModal")).toBeHidden();
+  await expect(page.locator(".swal2-success")).toBeVisible();
+  await confirmDialog(page);
+
+  await fileItem(page, originalName).click();
+  await page.getByTestId("selection-more").click();
+  await page.getByRole("link", { name: "Version History" }).click();
+  await expect(page.locator("#fileHistoryModal")).toBeVisible();
+  await expect(page.locator("#fileHistoryModal tbody tr")).toHaveCount(1);
+  const historyIcon = await page
+    .locator("#fileHistoryModal .ri-history-line")
+    .evaluate((element) => getComputedStyle(element, "::before").content);
+  expect(historyIcon).not.toBe("none");
+  await page.locator("#fileHistoryModal .btn-close").click();
+  await expect(page.locator("#fileHistoryModal")).toBeHidden();
+
+  const comparisonName = `vendor-diff-${Date.now().toString(36)}.txt`;
+  await uploadTextFile(
+    page,
+    comparisonName,
+    "comparison vendor diff line\nshared line\n",
+  );
+  await fileItem(page, originalName).click();
+  await fileItem(page, comparisonName).click({ modifiers: ["Control"] });
+  await page.getByTestId("selection-more").click();
+  await page.getByRole("link", { name: "Diff" }).click();
+  await expect(page.locator("#diffModal")).toBeVisible();
+  await expect(page.locator("#diffViewer .d2h-file-wrapper")).toBeVisible();
+  await expect(page.locator("#diffViewer")).toContainText(
+    "updated vendor editor line",
+  );
+  await expect(page.locator("#diffViewer")).toContainText(
+    "comparison vendor diff line",
+  );
+  await page.locator("#diffModal .btn-close").click();
+
+  await fileItem(page, comparisonName).click();
+  await page.getByTestId("selection-delete").click();
+  await confirmDialog(page);
+  await expect(fileItem(page, comparisonName)).toHaveCount(0);
+
   await fileItem(page, originalName).click();
   const downloadPromise = page.waitForEvent("download");
   await page.getByTestId("selection-download").click();
@@ -289,9 +380,7 @@ test("local user can create, upload, download, rename, trash, and restore a file
   expect(download.suggestedFilename()).toBe(originalName);
   const downloadedPath = await download.path();
   expect(downloadedPath).not.toBeNull();
-  expect(await fs.readFile(downloadedPath, "utf8")).toBe(
-    await fs.readFile(fixturePath, "utf8"),
-  );
+  expect(await fs.readFile(downloadedPath, "utf8")).toBe(updatedContent);
 
   await page.getByTestId("selection-more").click();
   await page.getByTestId("selection-rename").click();
