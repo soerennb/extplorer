@@ -10,25 +10,54 @@ cp env .env
 ```
 
 Set `EXTPLORER_BASE_URL` to the public HTTPS URL before starting a production
-installation. For local development, explicitly change `CI_ENVIRONMENT` to
-`development`; production intentionally refuses Host-header URL discovery.
-Production web URLs must use HTTPS. Plain HTTP is accepted only for explicit
-loopback URLs (`localhost`, `127.0.0.1` or `::1`) used by local container tests;
-CLI maintenance commands do not require a web URL.
+installation when you need to pin a public hostname, path or nonstandard port.
+Native Apache and Nginx/PHP-FPM installs may omit it when the web server passes
+a valid canonical `SERVER_NAME`; see [Canonical URLs for native web servers]
+below. Production URLs still require HTTPS, either directly or through a
+configured trusted proxy. Plain HTTP is accepted only for loopback URLs
+(`localhost`, `127.0.0.1` or `::1`) used by local container tests; CLI
+maintenance commands do not require a web URL. Docker Compose continues to
+require `EXTPLORER_BASE_URL` explicitly.
 
 ### Essential Settings
 | Variable | Description | Recommended (Prod) |
 | :--- | :--- | :--- |
 | `CI_ENVIRONMENT` | Application mode. | `production` |
-| `EXTPLORER_BASE_URL` | Full public URL (with trailing slash). | `https://yourdomain.com/` |
+| `EXTPLORER_BASE_URL` | Full public URL (with trailing slash); optional for native installs with a canonical vhost name, required by Docker Compose. | `https://yourdomain.com/` |
 | `EXTPLORER_WRITE_PATH` | Persistent writable root. | `/var/lib/extplorer/writable` |
 | `EXTPLORER_FILE_MANAGER_ROOT` | Optional local file root; must stay outside the public webroot and application source tree. | `/var/lib/extplorer/writable/file_manager_root` |
 | `EXTPLORER_ENCRYPTION_KEY_FILE` | File containing the encryption key. | `/run/secrets/extplorer-encryption-key` |
 | `app.forceGlobalSecureRequests` | Force HTTPS redirection. | `true` |
 
+### Canonical URLs for native web servers
+
+When `EXTPLORER_BASE_URL` is unset, production PHP-FPM uses the web server's
+`SERVER_NAME`, never the request's `HTTP_HOST`. It reads the scheme from the
+direct HTTPS server variables or from `X-Forwarded-Proto` only when
+`REMOTE_ADDR` matches an address in `EXTPLORER_TRUSTED_PROXY_IPS`. Forwarded
+host values are not used. The script directory is included when the server
+reports the front controller under a subdirectory.
+
+Configure a concrete canonical vhost name. With Apache, set the same
+`ServerName` as the public hostname and enable `UseCanonicalName On`; this
+prevents Apache from deriving `SERVER_NAME` from the incoming Host header. With
+Nginx, use an exact `server_name` and pass `SERVER_NAME` from `$server_name`
+through FastCGI parameters (the standard `fastcgi_params`/`fastcgi.conf` files
+usually do this). Do not pass `HTTP_HOST` as `SERVER_NAME`.
+
+For TLS terminated by a reverse proxy, set `EXTPLORER_TRUSTED_PROXY_IPS` to
+the concrete proxy address or narrow CIDR and have that proxy overwrite
+`X-Forwarded-Proto`. Keep `SERVER_NAME` set to the public vhost name. If the
+server cannot provide a valid canonical name, the path differs from the
+front-controller directory, or it cannot report the external nonstandard
+port, set `EXTPLORER_BASE_URL` explicitly. A missing or wildcard `SERVER_NAME`
+fails closed for production web requests.
+
 ### Subdirectory and index.php installations
 
-Set `EXTPLORER_BASE_URL` to the externally visible application directory,
+When the installation prefix matches the directory containing the front
+controller, native Apache/Nginx can derive it from `SCRIPT_NAME`. Otherwise,
+set `EXTPLORER_BASE_URL` to the externally visible application directory,
 including its installation prefix and a trailing slash. Keep `index.php` out
 of that URL; configure `app.indexPage` separately:
 
@@ -255,15 +284,19 @@ Apache is supported out-of-the-box via the included `.htaccess` files.
     ServerName files.example.com
     DocumentRoot /var/www/html/extplorer3/public
     
-    # Redirect HTTP to HTTPS
+    # Keep SERVER_NAME tied to this configured vhost, not the request Host header.
+    UseCanonicalName On
+
+    # Redirect HTTP to the canonical vhost name.
     RewriteEngine On
     RewriteCond %{HTTPS} off
-    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    RewriteRule ^(.*)$ https://%{SERVER_NAME}%{REQUEST_URI} [L,R=301]
 </VirtualHost>
 
 <VirtualHost *:443>
     ServerName files.example.com
     DocumentRoot /var/www/html/extplorer3/public
+    UseCanonicalName On
     
     SSLEngine on
     SSLCertificateFile /path/to/cert.pem
@@ -310,7 +343,7 @@ This configuration assumes you have set the root to the `public/` directory, whi
 server {
     listen 80;
     server_name files.example.com;
-    return 301 https://$host$request_uri;
+    return 301 https://files.example.com$request_uri;
 }
 
 server {
@@ -346,6 +379,7 @@ server {
         # FastCGI Params
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         include fastcgi_params;
+        # The included FastCGI parameters must set SERVER_NAME from $server_name.
         
         # Timeouts (increase for large file operations/archives)
         fastcgi_read_timeout 300; 

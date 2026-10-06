@@ -7,6 +7,7 @@ use CodeIgniter\HTTP\URI;
 use CodeIgniter\HTTP\UserAgent;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\App;
+use Config\NativeBaseUrlResolver;
 
 final class AppSecurityTest extends CIUnitTestCase
 {
@@ -111,6 +112,125 @@ final class AppSecurityTest extends CIUnitTestCase
         new App();
     }
 
+    public function testCanonicalServerNameBuildsBaseUrlInsteadOfRequestHost(): void
+    {
+        $resolved = $this->resolveServerBaseUrl([
+            'SERVER_NAME' => 'files.example.test',
+            'HTTP_HOST' => 'attacker.example.test',
+            'HTTPS' => 'on',
+            'SERVER_PORT' => '443',
+            'SCRIPT_NAME' => '/index.php',
+        ]);
+
+        $this->assertSame([
+            'url' => 'https://files.example.test/',
+            'scheme' => 'https',
+            'host' => 'files.example.test',
+        ], $resolved);
+    }
+
+    public function testAppUsesCanonicalServerNameWhenExplicitBaseUrlIsUnset(): void
+    {
+        foreach (['EXTPLORER_BASE_URL', 'app.baseURL', 'app_baseURL'] as $key) {
+            $this->rememberEnvironment($key);
+            putenv($key);
+        }
+
+        $originalServer = $_SERVER;
+        $_SERVER = [
+            'SERVER_NAME' => 'files.example.test',
+            'HTTP_HOST' => 'attacker.example.test',
+            'HTTPS' => 'on',
+            'SERVER_PORT' => '443',
+            'SCRIPT_NAME' => '/index.php',
+        ];
+
+        try {
+            $config = new App();
+        } finally {
+            $_SERVER = $originalServer;
+        }
+
+        $this->assertSame('https://files.example.test/', $config->baseURL);
+        $this->assertSame(['files.example.test'], $config->allowedHostnames);
+    }
+
+    public function testCanonicalServerNamePreservesNativeSubdirectory(): void
+    {
+        $resolved = $this->resolveServerBaseUrl([
+            'SERVER_NAME' => 'files.example.test',
+            'HTTPS' => 'on',
+            'SERVER_PORT' => '443',
+            'SCRIPT_NAME' => '/extplorer/public/index.php',
+        ]);
+
+        $this->assertSame('https://files.example.test/extplorer/public/', $resolved['url']);
+    }
+
+    public function testCanonicalIpv6ServerNameIsBracketedInTheUrlAndAllowedHost(): void
+    {
+        $resolved = $this->resolveServerBaseUrl([
+            'SERVER_NAME' => '::1',
+            'HTTPS' => 'on',
+            'SERVER_PORT' => '443',
+            'SCRIPT_NAME' => '/index.php',
+        ]);
+
+        $this->assertSame('https://[::1]/', $resolved['url']);
+        $this->assertSame('[::1]', $resolved['host']);
+    }
+
+    public function testCanonicalServerNameIncludesNonstandardHttpsPort(): void
+    {
+        $resolved = $this->resolveServerBaseUrl([
+            'SERVER_NAME' => 'files.example.test',
+            'HTTPS' => 'on',
+            'SERVER_PORT' => '8443',
+            'SCRIPT_NAME' => '/index.php',
+        ]);
+
+        $this->assertSame('https://files.example.test:8443/', $resolved['url']);
+    }
+
+    public function testForwardedHttpsIsUsedOnlyFromConfiguredProxy(): void
+    {
+        $server = [
+            'SERVER_NAME' => 'files.example.test',
+            'REMOTE_ADDR' => '10.0.0.12',
+            'HTTP_X_FORWARDED_PROTO' => 'https',
+            'HTTP_X_FORWARDED_PORT' => '9443',
+            'SERVER_PORT' => '80',
+            'SCRIPT_NAME' => '/index.php',
+        ];
+
+        $trusted = $this->resolveServerBaseUrl($server, ['10.0.0.0/24']);
+        $untrusted = $this->resolveServerBaseUrl($server, ['192.0.2.0/24']);
+
+        $this->assertSame('https://files.example.test/', $trusted['url']);
+        $this->assertSame('http://files.example.test/', $untrusted['url']);
+    }
+
+    public function testCanonicalServerNameRejectsRequestHostsAndWildcards(): void
+    {
+        foreach (['_', '*.example.test', 'files.example.test:443', 'files..example.test'] as $serverName) {
+            $this->assertNull($this->resolveServerBaseUrl([
+                'SERVER_NAME' => $serverName,
+                'HTTP_HOST' => 'files.example.test',
+                'HTTPS' => 'on',
+                'SCRIPT_NAME' => '/index.php',
+            ]));
+        }
+    }
+
+    public function testServerNameRejectsInvalidScriptPaths(): void
+    {
+        $this->assertNull($this->resolveServerBaseUrl([
+            'SERVER_NAME' => 'files.example.test',
+            'HTTPS' => 'on',
+            'SCRIPT_NAME' => '/extplorer/%2e%2e/index.php',
+        ]));
+    }
+
     public function testProductionUrlPolicyAllowsHttpsAndLoopbackHttpOnly(): void
     {
         $method = (new \ReflectionClass(App::class))->getMethod('productionUrlAllowed');
@@ -138,5 +258,10 @@ final class AppSecurityTest extends CIUnitTestCase
             $value = getenv($key);
             $this->environment[$key] = $value === false ? null : $value;
         }
+    }
+
+    private function resolveServerBaseUrl(array $server, array $trustedProxies = []): ?array
+    {
+        return NativeBaseUrlResolver::resolve($server, $trustedProxies);
     }
 }
