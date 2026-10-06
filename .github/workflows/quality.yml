@@ -217,6 +217,9 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Ensure Ace assets
+        run: bash ./scripts/ensure-ace-assets.sh
+
       - name: Compile Vue templates
         run: npm run build:js
 
