@@ -9,6 +9,7 @@ bd.sock
 bd.sock.startlock
 sync-state.json
 last-touched
+last_pull
 .exclusive-lock
 
 # Daemon runtime (lock, log, pid)
@@ -19,6 +20,7 @@ push-state.json
 
 # Lock files (various runtime locks)
 *.lock
+*.gate.lock*
 
 # Credential key (encryption key for federation peer auth — never commit)
 .beads-credential-key
@@ -45,6 +47,7 @@ ephemeral.sqlite3-wal
 ephemeral.sqlite3-shm
 
 # Dolt server management (auto-started by bd)
+dolt-server-config.yaml
 dolt-server.pid
 dolt-server.log
 dolt-server.lock

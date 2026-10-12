@@ -192,3 +192,4 @@ temp_ci4/
 # Beads / Dolt files (added by bd init)
 .beads-credential-key
 .beads/proxieddb/
+*.gate.lock*

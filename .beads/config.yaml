@@ -63,8 +63,6 @@ issue-prefix: "ex3-"
 
 dolt.database: "extplorer3"
 
-dolt.data-dir: "/home/soeren/.beads-dolt"
-
 dolt.port: 14233
 
 federation.remote: "git+ssh://git@github.com/soerennb/extplorer.git"

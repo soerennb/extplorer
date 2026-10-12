@@ -1,81 +1,92 @@
-# Beads - AI-Native Issue Tracking
+# Beads issue tracking
 
-Welcome to Beads! This repository uses **Beads** for issue tracking - a modern, AI-native tool designed to live directly in your codebase alongside your code.
+This project uses [Beads](https://github.com/gastownhall/beads) in Dolt server
+mode. The database is `extplorer3`, served on `127.0.0.1:14233` from the real
+directory `.beads/dolt/`. Keep this directory local and ignored by Git; do not
+replace it with a symlink, because Beads needs to lock the physical data root.
 
-## What is Beads?
+The supported tool versions for this setup are Beads **1.3.1** (schema v66) and
+Dolt **2.2.0**. Dolt is pinned to the version tested by Beads, rather than the
+latest release. Check `which -a bd dolt` and the actual versions when upgrading.
 
-Beads is issue tracking that lives in your repo, making it perfect for AI coding agents and developers who want their issues close to their code. No web UI required - everything works through the CLI and integrates seamlessly with git.
-
-**Learn more:** [github.com/steveyegge/beads](https://github.com/steveyegge/beads)
-
-## Quick Start
-
-### Essential Commands
+## Daily workflow
 
 ```bash
-# Create new issues
-bd create "Add user authentication"
-
-# View all issues
-bd list
-
-# View issue details
+bd prime
+bd ready
 bd show <issue-id>
-
-# Update issue status
 bd update <issue-id> --status in_progress
-bd update <issue-id> --status done
-
-# Sync with git remote
-bd sync
+bd create --title="Describe the work" --type task --priority 2
+bd close <issue-id>
 ```
 
-### Working with Issues
-
-Issues in Beads are:
-- **Git-native**: Stored in `.beads/issues.jsonl` and synced like code
-- **AI-friendly**: CLI-first design works perfectly with AI coding agents
-- **Branch-aware**: Issues can follow your branch workflow
-- **Always in sync**: Auto-syncs with your commits
-
-## Why Beads?
-
-✨ **AI-Native Design**
-- Built specifically for AI-assisted development workflows
-- CLI-first interface works seamlessly with AI coding agents
-- No context switching to web UIs
-
-🚀 **Developer Focused**
-- Issues live in your repo, right next to your code
-- Works offline, syncs when you push
-- Fast, lightweight, and stays out of your way
-
-🔧 **Git Integration**
-- Automatic sync with git commits
-- Branch-aware issue tracking
-- Intelligent JSONL merge resolution
-
-## Get Started with Beads
-
-Try Beads in your own projects:
+The Dolt database is the source of truth. JSONL files are exports or interaction
+logs; they are not the issue database. Git commits do not replace Dolt sync.
 
 ```bash
-# Install Beads
-curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
-
-# Initialize in your repo
-bd init
-
-# Create your first issue
-bd create "Try out Beads"
+bd dolt pull
+bd dolt push
 ```
 
-## Learn More
+Dolt data is synchronized to `git+ssh://git@github.com/soerennb/extplorer.git`
+through `refs/dolt/data`, separately from the application's Git branches.
+Follow the session-completion steps in `AGENTS.md` for both Beads and Git.
+The generic `bd doctor` warning that the Dolt remote matches Git's origin is
+expected with this Git-backed setup; retain the remote and verify both syncs.
 
-- **Documentation**: [github.com/steveyegge/beads/docs](https://github.com/steveyegge/beads/tree/main/docs)
-- **Quick Start Guide**: Run `bd quickstart`
-- **Examples**: [github.com/steveyegge/beads/examples](https://github.com/steveyegge/beads/tree/main/examples)
+## Server and hooks
 
----
+```bash
+bd version
+dolt version
+bd dolt status
+bd dolt start
+bd doctor --server
+bd doctor --check=validate
+bd hooks install
+```
 
-*Beads: Issue tracking that moves at the speed of thought* ⚡
+`bd dolt stop` stops only this project's managed server. The next Beads command
+can start it again. After changing the Dolt executable, restart this server to
+use the new version. Existing servers for other projects keep their running
+version until separately restarted.
+
+`bd hooks install` refreshes the Beads sections in `.git/hooks/` while retaining
+other hook content. Generated server configuration, process files, locks,
+backups and database contents must remain ignored by Git.
+
+## Backups and schema upgrades
+
+Use the binary compatible with the current schema to synchronize and export
+before migrating:
+
+```bash
+bd dolt pull
+bd dolt push
+bd export --all -o <backup-directory>/issues.jsonl
+```
+
+An issue export does not preserve the full database. Take a Dolt-native backup
+with `bd backup init <backup-directory>` and `bd backup sync`, or stop the server
+and make a complete offline copy, including history and Dolt configuration.
+Keep backups outside tracked files and verify them before replacing data.
+
+For a remote-backed schema upgrade, designate exactly one installation to
+migrate. Synchronize every client first and upgrade all clients sharing the
+server before promoting its schema. On the designated installation:
+
+```bash
+bd migrate schema --force
+bd recompute-blocked
+bd doctor --server
+bd doctor --check=validate
+bd dolt push
+```
+
+`--force` acknowledges the designated-migrator role; do not set a permanent
+migration bypass or independently migrate other clones. Verify issue contents
+and dependencies, test a server restart, then verify a separate clone of the
+published database before discarding recovery copies.
+
+See the [Beads upgrade guide](https://beads.gascity.com/getting-started/upgrading)
+and the [Dolt backend guide](https://github.com/gastownhall/beads/blob/v1.3.1/docs/architecture/dolt.md).
