@@ -12,5 +12,13 @@ interface StateBackendInterface
 
     public function exists(string $path): bool;
 
+    public function delete(string $path): void;
+
+    /** @param array<string, array> $defaults @return array<string, array> */
+    public function readMany(array $defaults): array;
+
+    /** @param array<string, array> $defaults */
+    public function transactionMany(array $defaults, callable $callback): mixed;
+
     public function verify(): void;
 }

@@ -31,11 +31,6 @@ class TrashService
             throw new Exception('Trash index is not safe.');
         }
 
-        // Ensure index file exists. Legacy conversion is performed centrally by
-        // DataMigrationService before the application is marked ready.
-        if (!file_exists($this->getIndexFile())) {
-            $this->saveIndex([]);
-        }
     }
 
     private function getIndexFile(): string
@@ -45,13 +40,7 @@ class TrashService
 
     private function getIndex(): array
     {
-        if (!file_exists($this->getIndexFile())) return [];
         return AtomicFileStore::read($this->getIndexFile());
-    }
-
-    private function saveIndex(array $index): void
-    {
-        AtomicFileStore::write($this->getIndexFile(), $index);
     }
 
     /**

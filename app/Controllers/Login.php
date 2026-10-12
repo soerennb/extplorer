@@ -122,26 +122,28 @@ class Login extends BaseController
             if (!empty($user['2fa_enabled'])) {
                 $code = $this->request->getPost('2fa_code');
                 if (!$code) {
-                    return redirect()->back()->withInput()->with('2fa_required', true);
+                    return redirect()->back()->withInput()->with('2fa_required', '1');
                 }
                 
                 $service = new \App\Services\TwoFactorService();
                 $secret = $userModel->get2faSecret($username);
                 
                 if (!$service->verifyCode($secret, $code)) {
-                     $validRecovery = $userModel->consumeRecoveryCode($username, trim((string)$code));
+                     $validRecovery = $userModel->consumeRecoveryCode($username, trim((string)$code), (int)($user['auth_version'] ?? 1));
                      if ($validRecovery) {
+                         $user['auth_version'] = (int)($user['auth_version'] ?? 1) + 1;
                          LogService::log('Use recovery code', '', 'Recovery code consumed', $username);
                      }
                      
                      if (!$validRecovery) {
-                         return redirect()->back()->withInput()->with('2fa_required', true)->with('error', $loginMessages['login_invalid_2fa']);
+                         return redirect()->back()->withInput()->with('2fa_required', '1')->with('error', $loginMessages['login_invalid_2fa']);
                      }
                 }
             }
 
-            $user = $userModel->getUser($username) ?? $user;
-            (new AuthenticationService($userModel))->startLocalSession($user);
+            if (!(new AuthenticationService($userModel))->startLocalSession($user)) {
+                return redirect()->back()->with('error', $loginMessages['login_invalid_credentials']);
+            }
 
             $remember = new RememberMeService();
             $response = redirect()->to($returnTo);

@@ -3,10 +3,17 @@ includes:
 
 parameters:
     level: 5
+    dynamicConstantNames:
+        - ENVIRONMENT
+        - CI_DEBUG
+    bootstrapFiles:
+        - scripts/phpstan-bootstrap.php
     paths:
         - app
     scanFiles:
         - public/index.php
+        - vendor/codeigniter4/framework/system/Common.php
+        - app/Helpers/auth_helper.php
     excludePaths:
         - app/Database/Migrations/*
     tmpDir: writable/cache/phpstan

@@ -18,20 +18,12 @@ class MountService
         $this->mountsFile = config('Storage')->state . '/mounts.php';
         $this->encryptionRawData = (bool)config('Encryption')->rawData;
 
-        if (!AtomicFileStore::exists($this->mountsFile)) {
-            $this->saveMounts([]);
-        }
     }
 
     private function getMounts(): array
     {
         if (!AtomicFileStore::exists($this->mountsFile)) return [];
         return AtomicFileStore::read($this->mountsFile);
-    }
-
-    private function saveMounts(array $mounts): void
-    {
-        AtomicFileStore::write($this->mountsFile, $mounts);
     }
 
     /**

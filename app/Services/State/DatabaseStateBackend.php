@@ -36,58 +36,83 @@ final class DatabaseStateBackend implements StateBackendInterface
 
     public function write(string $path, array $data): void
     {
-        $this->ensureSchema();
+        $this->locked([dirname($path)], fn() => $this->writeDocument($path, $data));
+    }
+
+    private function writeDocument(string $path, array $data): void
+    {
         $key = $this->key($path);
-        $payload = $this->encode($data, $path);
         $existing = $this->find($path);
-
-        if ($existing === null) {
-            $ok = $this->db->table(self::TABLE)->insert([
-                'state_key' => $key,
-                'state_path' => $this->normalizePath($path),
-                'payload' => $payload,
-                'revision' => 1,
-                'updated_at' => gmdate(DATE_ATOM),
-            ]);
-        } else {
-            $ok = $this->db->table(self::TABLE)
-                ->where('state_key', $key)
-                ->update([
-                    'state_path' => $this->normalizePath($path),
-                    'payload' => $payload,
-                    'revision' => ((int)$existing['revision']) + 1,
-                    'updated_at' => gmdate(DATE_ATOM),
-                ]);
-        }
-
-        if ($ok === false) {
-            throw new RuntimeException("Unable to write SQL state: {$path}");
-        }
+        $record = [
+            'state_path' => $this->normalizePath($path),
+            'payload' => $this->encode($data, $path),
+            'revision' => (int)($existing['revision'] ?? 0) + 1,
+            'updated_at' => gmdate(DATE_ATOM),
+        ];
+        $builder = $this->db->table(self::TABLE);
+        $ok = $existing === null ? $builder->insert(['state_key' => $key] + $record) : $builder->where('state_key', $key)->update($record);
+        if ($ok === false) throw new RuntimeException("Unable to write SQL state: {$path}");
     }
 
     public function transaction(string $path, callable $callback, array $default = []): mixed
     {
+        return $this->transactionMany([$path => $default], function (array &$documents) use ($path, $callback): mixed {
+            return $callback($documents[$path]);
+        });
+    }
+
+    public function readMany(array $defaults): array
+    {
+        if ($defaults === []) return [];
+        return $this->locked(array_map('dirname', array_keys($defaults)), function () use ($defaults): array {
+            $documents = [];
+            foreach ($defaults as $path => $default) $documents[$path] = $this->read($path, $default);
+            return $documents;
+        });
+    }
+
+    public function transactionMany(array $defaults, callable $callback): mixed
+    {
+        if ($defaults === []) throw new RuntimeException('A state transaction needs documents.');
+        return $this->locked(array_map('dirname', array_keys($defaults)), function () use ($defaults, $callback): mixed {
+            $documents = $this->readMany($defaults);
+            $result = $callback($documents);
+            if (array_keys($documents) !== array_keys($defaults)) throw new RuntimeException('State transaction changed its document set.');
+            foreach ($documents as $path => $data) $this->writeDocument($path, $data);
+            return $result;
+        });
+    }
+
+    /** Serialize metadata mutations across processes, including absent documents. */
+    private function locked(array $directories, callable $callback): mixed
+    {
         $this->ensureSchema();
-        $outerTransaction = $this->db->transDepth > 0;
-        if (!$outerTransaction) {
-            $this->db->transBegin();
-        }
-
+        $outer = $this->db->transDepth > 0;
+        if (!$outer && !$this->db->transBegin()) throw new RuntimeException('Unable to start SQL state transaction.');
         try {
-            $row = $this->find($path);
-            $data = $row === null ? $default : $this->decode((string)$row['payload'], $path);
-            $result = $callback($data);
-
-            $this->write($path, $data);
-            if (!$outerTransaction) {
-                $this->db->transCommit();
+            $directories = array_values(array_unique($directories));
+            sort($directories, SORT_STRING);
+            $table = $this->db->escapeIdentifiers($this->table);
+            $sqlite = str_contains(strtolower($this->db->getPlatform()), 'sqlite');
+            $mysql = str_contains(strtolower($this->db->getPlatform()), 'mysql');
+            foreach ($directories as $directory) {
+                $key = hash('sha256', 'extplorer-state-lock:' . $this->normalizePath($directory));
+                $insert = $mysql
+                    ? "INSERT IGNORE INTO {$table} (state_key,state_path,payload,revision,updated_at) VALUES (?,?,?,?,?)"
+                    : "INSERT INTO {$table} (state_key,state_path,payload,revision,updated_at) VALUES (?,?,?,?,?) ON CONFLICT (state_key) DO NOTHING";
+                if ($this->db->query($insert, [$key, $directory . '/.extplorer-state.lock', '{}', 0, gmdate(DATE_ATOM)]) === false) throw new RuntimeException('Unable to initialize SQL state lock.');
+                // SQLite has no row locks. Acquiring a write reservation before
+                // reading also avoids deferred read-to-write upgrade failures.
+                $lock = $sqlite
+                    ? "UPDATE {$table} SET revision=revision WHERE state_key=?"
+                    : "SELECT state_key FROM {$table} WHERE state_key=? FOR UPDATE";
+                if ($this->db->query($lock, [$key]) === false) throw new RuntimeException('Unable to acquire SQL state lock.');
             }
-
+            $result = $callback();
+            if (!$outer && !$this->db->transCommit()) throw new RuntimeException('Unable to commit SQL state transaction.');
             return $result;
         } catch (\Throwable $exception) {
-            if (!$outerTransaction) {
-                $this->db->transRollback();
-            }
+            if (!$outer) $this->db->transRollback();
             throw $exception;
         }
     }
@@ -95,6 +120,13 @@ final class DatabaseStateBackend implements StateBackendInterface
     public function exists(string $path): bool
     {
         return $this->find($path) !== null;
+    }
+
+    public function delete(string $path): void
+    {
+        $this->locked([dirname($path)], function () use ($path): void {
+            if (!$this->db->table(self::TABLE)->where('state_key', $this->key($path))->delete()) throw new RuntimeException("Unable to delete SQL state: {$path}");
+        });
     }
 
     public function verify(): void

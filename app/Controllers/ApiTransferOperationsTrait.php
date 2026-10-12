@@ -505,7 +505,7 @@ trait ApiTransferOperationsTrait
         }
 
         $segments = [];
-        if (str_starts_with($relativePath, '/') || preg_match('/\A[A-Za-z]:[\\\/]/', $relativePath)) {
+        if (str_starts_with($relativePath, '/') || preg_match('~\A[A-Za-z]:~', $relativePath)) {
             throw new Exception('Upload path must be relative.');
         }
         foreach (explode('/', $relativePath) as $segment) {

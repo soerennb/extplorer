@@ -156,7 +156,7 @@ final class UploadSessionService
         $directory = $this->directory($id);
         $manifestPath = $this->manifestPath($id);
 
-        if (!is_file($manifestPath)) {
+        if (!AtomicFileStore::exists($manifestPath)) {
             if (!mkdir($directory, 0700, true)) {
                 throw new RuntimeException('Unable to create upload session.');
             }
@@ -437,7 +437,7 @@ final class UploadSessionService
         $directory = $this->directory($id);
         $owner = null;
         $manifestPath = $this->manifestPath($id);
-        if (is_file($manifestPath)) {
+        if (AtomicFileStore::exists($manifestPath)) {
             try {
                 $manifest = AtomicFileStore::read($manifestPath);
                 $owner = is_string($manifest['owner'] ?? null) ? $manifest['owner'] : null;
@@ -467,7 +467,7 @@ final class UploadSessionService
 
             $wasRemoved = $this->withLock($id, function () use ($id): bool {
                 $manifestPath = $this->manifestPath($id);
-                if (!is_file($manifestPath)) {
+                if (!AtomicFileStore::exists($manifestPath)) {
                     $this->removeDirectory($this->directory($id));
                     $this->stagingResources->release($this->reservationId($id));
                     return true;
@@ -521,7 +521,8 @@ final class UploadSessionService
         } finally {
             flock($lock, LOCK_UN);
             fclose($lock);
-            @unlink($lockPath);
+            // Keep the lock inode: unlinking can let a third process acquire
+            // a different lock while a waiting process still owns this one.
         }
     }
 
@@ -552,6 +553,7 @@ final class UploadSessionService
 
     private function removeDirectory(string $directory): void
     {
+        AtomicFileStore::delete($directory . DIRECTORY_SEPARATOR . 'session.php');
         if (!is_dir($directory) || is_link($directory)) {
             return;
         }

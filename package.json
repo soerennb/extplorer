@@ -9,7 +9,8 @@
     "audit:vendor-assets": "node scripts/audit-vendor-assets.js",
     "check:vendor-assets": "node scripts/check-vendor-assets.js",
     "e2e": "playwright test",
-    "e2e:install": "playwright install --with-deps chromium"
+    "e2e:install": "playwright install --with-deps chromium",
+    "test:frontend": "node --test tests/frontend/*.test.cjs"
   },
   "devDependencies": {
     "@playwright/test": "1.64.0",

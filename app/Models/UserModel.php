@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\AtomicFileStore;
+use App\Services\AuthorizationState;
 use App\Services\PasswordPolicy;
 use Config\Services;
 use InvalidArgumentException;
@@ -71,13 +72,16 @@ class UserModel
         }
 
         if (password_verify($password, $user['password_hash'])) {
-            return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username, $password): ?array {
+            return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username, $password, $user): ?array {
                 foreach ($users as &$candidate) {
                     if (($candidate['username'] ?? null) !== $username) {
                         continue;
                     }
 
                     $candidate = $this->withAuthDefaults($candidate);
+                    if ($candidate['disabled'] || $candidate['locked_until'] > time()
+                        || $candidate['password_hash'] !== $user['password_hash']
+                        || $candidate['auth_version'] !== $user['auth_version']) return null;
                     $candidate['failed_login_count'] = 0;
                     $candidate['locked_until'] = 0;
                     if (password_needs_rehash($candidate['password_hash'], PASSWORD_DEFAULT)) {
@@ -399,14 +403,15 @@ class UserModel
      * Atomically consumes one recovery code. The plaintext code is never
      * persisted and a simultaneous request can consume it only once.
      */
-    public function consumeRecoveryCode(string $username, string $code): bool
+    public function consumeRecoveryCode(string $username, string $code, ?int $expectedVersion = null): bool
     {
-        return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username, $code): bool {
+        return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username, $code, $expectedVersion): bool {
             foreach ($users as &$user) {
                 if (($user['username'] ?? null) !== $username) {
                     continue;
                 }
 
+                if ($expectedVersion !== null && (int)($user['auth_version'] ?? 1) !== $expectedVersion) return false;
                 $codes = $this->decodeRecoveryCodes($user['recovery_codes'] ?? []);
                 $index = array_search($code, $codes, true);
                 if ($index === false) {
@@ -519,32 +524,17 @@ class UserModel
 
     public function saveRoles(array $roles): void
     {
-        $current = $this->getRoles();
-        $changedRoles = [];
-        foreach (array_unique(array_merge(array_keys($current), array_keys($roles))) as $name) {
-            if (($current[$name] ?? null) !== ($roles[$name] ?? null)) {
-                $changedRoles[] = $name;
-            }
-        }
-        $affected = [];
-        if ($changedRoles !== []) {
-            $groups = $this->getGroups();
-            foreach ($this->getUsers() as $user) {
-                $direct = (string)($user['role'] ?? '');
-                $groupNames = is_array($user['groups'] ?? null) ? $user['groups'] : [];
-                $groupRoles = [];
-                foreach ($groupNames as $groupName) {
-                    if (is_array($groups[$groupName] ?? null)) {
-                        $groupRoles = array_merge($groupRoles, $groups[$groupName]);
-                    }
-                }
-                if (in_array($direct, $changedRoles, true) || array_intersect($groupRoles, $changedRoles)) {
-                    $affected[] = (string)($user['username'] ?? '');
-                }
-            }
-        }
-        $this->bumpAuthVersions($affected);
-        $this->saveData($this->rolesFile, $roles);
+        (new AuthorizationState())->replaceRoles($roles);
+    }
+
+    public function saveRole(string $name, array $permissions): void
+    {
+        (new AuthorizationState())->saveRole($name, $permissions);
+    }
+
+    public function deleteRole(string $name): void
+    {
+        (new AuthorizationState())->deleteRole($name);
     }
 
     /**
@@ -603,48 +593,17 @@ class UserModel
 
     public function saveGroups(array $groups): void
     {
-        $current = $this->getGroups();
-        $changedGroups = [];
-        foreach (array_unique(array_merge(array_keys($current), array_keys($groups))) as $name) {
-            if (($current[$name] ?? null) !== ($groups[$name] ?? null)) {
-                $changedGroups[] = $name;
-            }
-        }
-        $affected = [];
-        if ($changedGroups !== []) {
-            foreach ($this->getUsers() as $user) {
-                $userGroups = is_array($user['groups'] ?? null) ? $user['groups'] : [];
-                if (array_intersect($userGroups, $changedGroups)) {
-                    $affected[] = (string)($user['username'] ?? '');
-                }
-            }
-        }
-        $this->bumpAuthVersions($affected);
-        $this->saveData($this->groupsFile, $groups);
+        (new AuthorizationState())->replaceGroups($groups);
     }
 
-    /**
-     * Role and group definitions are authorization state. Invalidate every
-     * directly or indirectly affected account so cached grants cannot survive
-     * a policy change.
-     */
-    /** @param list<string> $usernames */
-    private function bumpAuthVersions(array $usernames): void
+    public function saveGroup(string $name, array $roles): void
     {
-        $usernames = array_values(array_filter(array_unique($usernames)));
-        if ($usernames === []) {
-            return;
-        }
-        AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($usernames): void {
-            foreach ($users as &$user) {
-                if (!is_array($user) || !in_array((string)($user['username'] ?? ''), $usernames, true)) {
-                    continue;
-                }
-                $user = $this->withAuthDefaults($user);
-                $user['auth_version']++;
-            }
-            unset($user);
-        });
+        (new AuthorizationState())->saveGroup($name, $roles);
+    }
+
+    public function deleteGroup(string $name): void
+    {
+        (new AuthorizationState())->deleteGroup($name);
     }
 
     /**
@@ -685,35 +644,20 @@ class UserModel
 
     public function getPermissions(string $username): array
     {
-        $user = $this->getUser($username);
-        if (!$user) return [];
+        $snapshot = $this->authorizationSnapshot($username);
+        return $snapshot['permissions'] ?? [];
+    }
 
-        $allRoles = $this->getRoles();
-        $allGroups = $this->getGroups();
-
-        $userRoles = [];
-        // Direct role
-        if (!empty($user['role'])) {
-            $userRoles[] = $user['role'];
-        }
-        // Group roles
-        if (!empty($user['groups']) && is_array($user['groups'])) {
-            foreach ($user['groups'] as $groupName) {
-                if (isset($allGroups[$groupName])) {
-                    $userRoles = array_merge($userRoles, $allGroups[$groupName]);
-                }
+    /** @return array{user: array, permissions: array}|null */
+    public function authorizationSnapshot(string $username): ?array
+    {
+        $state = (new AuthorizationState())->snapshot();
+        foreach ($state['users'] as $user) {
+            if (($user['username'] ?? '') === $username) {
+                $user = $this->withAuthDefaults($user);
+                return ['user' => $user, 'permissions' => AuthorizationState::permissions($user, $state['roles'], $state['groups'])];
             }
         }
-
-        $permissions = [];
-        foreach ($userRoles as $role) {
-            if (isset($allRoles[$role])) {
-                $permissions = array_merge($permissions, $allRoles[$role]);
-            }
-        }
-
-        if (in_array('*', $permissions)) return ['*'];
-
-        return array_values(array_unique($permissions));
+        return null;
     }
 }

@@ -118,7 +118,10 @@ class RememberMeService
             return false;
         }
 
-        (new AuthenticationService($this->userModel))->startLocalSession($user, true);
+        if (!(new AuthenticationService($this->userModel))->startLocalSession($user, true)) {
+            $this->clearCookie($response);
+            return false;
+        }
         $this->remember($user['username'], $response);
 
         return true;

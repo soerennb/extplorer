@@ -16,8 +16,14 @@ final class AuthenticationService
         $this->userModel ??= new UserModel();
     }
 
-    public function startLocalSession(array $user, bool $remembered = false): void
+    public function startLocalSession(array $user, bool $remembered = false): bool
     {
+        $snapshot = $this->userModel->authorizationSnapshot((string)$user['username']);
+        $current = $snapshot['user'] ?? null;
+        if ($current === null || !empty($current['disabled']) || (int)($current['locked_until'] ?? 0) > time()
+            || (int)($current['auth_version'] ?? 1) !== (int)($user['auth_version'] ?? 1)
+            || ($current['password_hash'] ?? null) !== ($user['password_hash'] ?? null)) return false;
+        $user = $current;
         StepUpAuthenticationService::clearGrant();
         session()->regenerate();
         session()->set([
@@ -27,13 +33,14 @@ final class AuthenticationService
             'home_dir' => (string)($user['home_dir'] ?? '/'),
             'allowed_extensions' => (string)($user['allowed_extensions'] ?? ''),
             'blocked_extensions' => (string)($user['blocked_extensions'] ?? ''),
-            'permissions' => $this->userModel->getPermissions((string)$user['username']),
+            'permissions' => $snapshot['permissions'],
             'connection' => ['mode' => 'local'],
             'force_password_change' => !empty($user['must_change_password']),
             'auth_version' => max(1, (int)($user['auth_version'] ?? 1)),
             'remembered_login' => $remembered,
             'last_activity_ts' => time(),
         ]);
+        return true;
     }
 
     public function startRemoteSession(string $username, array $connection): void

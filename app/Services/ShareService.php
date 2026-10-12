@@ -17,19 +17,11 @@ class ShareService
         $this->storage = config('Storage');
         $this->sharesFile = $sharesFile ?? ($this->storage->state . '/shares.php');
 
-        if (!AtomicFileStore::exists($this->sharesFile)) {
-            $this->saveShares([]);
-        }
     }
 
     private function getShares(): array
     {
         return AtomicFileStore::read($this->sharesFile);
-    }
-
-    private function saveShares(array $shares): void
-    {
-        AtomicFileStore::write($this->sharesFile, $shares);
     }
 
     /**

@@ -36,16 +36,11 @@ class AuthFilter implements FilterInterface
 
         $settingsService = new SettingsService();
         $timeoutMinutes = (int)$settingsService->get('session_idle_timeout_minutes', 0);
-        if ($timeoutMinutes <= 0) {
-            $this->touchLastActivity();
-            return null;
-        }
-
         $now = time();
         $lastActivity = (int)(session('last_activity_ts') ?? 0);
         $timeoutSeconds = $timeoutMinutes * 60;
 
-        if ($lastActivity > 0 && ($now - $lastActivity) > $timeoutSeconds) {
+        if ($timeoutMinutes > 0 && $lastActivity > 0 && ($now - $lastActivity) > $timeoutSeconds) {
             $this->terminateSession($request);
             return $this->handleExpiredSession($request, true);
         }
@@ -142,7 +137,7 @@ class AuthFilter implements FilterInterface
             $query = $uri->getQuery();
         }
 
-        if (str_starts_with($path, 'api/') || $this->expectsJson($request)) {
+        if (str_starts_with($this->routePath($request), 'api/') || $this->expectsJson($request)) {
             $response = Services::response();
             $response->setStatusCode(401);
             $response->setJSON([
@@ -175,7 +170,7 @@ class AuthFilter implements FilterInterface
 
     private function isPasswordChangeRoute(RequestInterface $request): bool
     {
-        $path = trim($request->getUri()->getPath(), '/');
+        $path = $this->routePath($request);
         return $path === ''
             || $path === 'api/profile/details'
             || $path === 'api/profile/password'
@@ -184,7 +179,7 @@ class AuthFilter implements FilterInterface
 
     private function handlePasswordChangeRequired(RequestInterface $request)
     {
-        if ($this->expectsJson($request) || str_starts_with(trim($request->getUri()->getPath(), '/'), 'api/')) {
+        if ($this->expectsJson($request) || str_starts_with($this->routePath($request), 'api/')) {
             return Services::response()
                 ->setStatusCode(403)
                 ->setJSON([
@@ -205,6 +200,11 @@ class AuthFilter implements FilterInterface
         }
 
         return $query !== '' ? $return . '?' . $query : $return;
+    }
+
+    private function routePath(RequestInterface $request): string
+    {
+        return $request instanceof IncomingRequest ? trim($request->getPath(), '/') : '';
     }
 
     private function loginUrl(bool $expired, string $returnPath): string

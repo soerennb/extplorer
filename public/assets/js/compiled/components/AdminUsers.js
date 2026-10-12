@@ -455,7 +455,9 @@ return function render(_ctx, _cache) {
                 if (this.isNew) {
                     await Api.post('users', this.editingUser);
                 } else {
-                    await Api.put('users/' + this.editingUser.username, this.editingUser);
+                    const payload = { ...this.editingUser };
+                    if (payload.password === '') delete payload.password;
+                    await Api.put('users/' + this.editingUser.username, payload);
                 }
                 await this.loadUsers();
                 this.toastSuccess(this.t('admin_users_saved', 'User saved.'));

@@ -82,9 +82,7 @@ class UserAdminController extends BaseController
             return $this->fail('The admin role must retain wildcard permissions');
         }
 
-        $roles = $this->userModel->getRoles();
-        $roles[$name] = $permissions;
-        $this->userModel->saveRoles($roles);
+        $this->userModel->saveRole($name, $permissions);
         LogService::log('Save Role', $name);
         return $this->respond(['status' => 'success']);
     }
@@ -120,8 +118,8 @@ class UserAdminController extends BaseController
             ], 409);
         }
 
-        unset($roles[$name]);
-        $this->userModel->saveRoles($roles);
+        try { $this->userModel->deleteRole($name); }
+        catch (\RuntimeException $exception) { return $this->fail($exception->getMessage(), 409); }
         LogService::log('Delete Role', $name);
         return $this->respond(['status' => 'success']);
     }
@@ -172,9 +170,8 @@ class UserAdminController extends BaseController
         }
         $roles = array_values(array_unique($roles));
 
-        $groups = $this->userModel->getGroups();
-        $groups[$name] = $roles;
-        $this->userModel->saveGroups($groups);
+        try { $this->userModel->saveGroup($name, $roles); }
+        catch (\RuntimeException $exception) { return $this->fail($exception->getMessage(), 409); }
         LogService::log('Save Group', $name);
         return $this->respond(['status' => 'success']);
     }
@@ -199,8 +196,8 @@ class UserAdminController extends BaseController
             ], 409);
         }
 
-        unset($groups[$name]);
-        $this->userModel->saveGroups($groups);
+        try { $this->userModel->deleteGroup($name); }
+        catch (\RuntimeException $exception) { return $this->fail($exception->getMessage(), 409); }
         LogService::log('Delete Group', $name);
         return $this->respond(['status' => 'success']);
     }

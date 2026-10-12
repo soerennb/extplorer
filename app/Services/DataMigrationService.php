@@ -191,7 +191,7 @@ final class DataMigrationService
             $this->backup($source, $name . '-' . md5($source) . '-' . basename($source));
             $data = str_ends_with($source, '.json')
                 ? AtomicFileStore::readLegacyJson($source)
-                : AtomicFileStore::read($source);
+                : AtomicFileStore::readLegacyProtected($source);
             if ($sourceData !== null && $sourceData !== $data) {
                 throw new RuntimeException("Conflicting legacy {$name} state files detected.");
             }

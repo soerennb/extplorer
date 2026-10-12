@@ -2091,7 +2091,11 @@ return function render(_ctx, _cache) {
             try {
                 const savedUsername = this.editingUser.username;
                 if (this.isNew) await Api.post('users', this.editingUser);
-                else await Api.put('users/' + this.editingUser.username, this.editingUser);
+                else {
+                    const payload = { ...this.editingUser };
+                    if (payload.password === '') delete payload.password;
+                    await Api.put('users/' + this.editingUser.username, payload);
+                }
                 await this.loadUsers();
                 this.editingUser = null;
                 this.toastSuccess('User saved.');

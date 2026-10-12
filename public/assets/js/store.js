@@ -12,6 +12,7 @@ const store = Vue.reactive({
     viewMode: localStorage.getItem('extplorer_view_mode') || 'grid',
     isMobile: window.innerWidth < 992,
     isLoading: false,
+    navigationGeneration: 0,
     isDraggingOver: false,
     treeVersion: 0,
     uploadProgress: 0,
@@ -64,18 +65,20 @@ const store = Vue.reactive({
     
     // Trash Actions
     async loadTrash() {
+        const generation = ++this.navigationGeneration;
         this.isLoading = true;
         this.error = null;
         this.isTrashMode = true;
         this.selectedItems = [];
         try {
             const res = await Api.get('trash/list');
+            if (generation !== this.navigationGeneration) return;
             this.trashItems = res.items.map(i => ({...i, mtime: i.deletedAt})); // Map deletedAt to mtime for sorting
             this.pagination.total = this.trashItems.length;
         } catch (e) {
-            this.error = e.message;
+            if (generation === this.navigationGeneration) this.error = e.message;
         } finally {
-            this.isLoading = false;
+            if (generation === this.navigationGeneration) this.isLoading = false;
         }
     },
 
@@ -136,6 +139,7 @@ const store = Vue.reactive({
     },
 
     async loadPath(path, page = 1) {
+        const generation = ++this.navigationGeneration;
         this.isLoading = true;
         this.isTrashMode = false; // Always exit trash mode when navigating
         this.error = null;
@@ -153,6 +157,7 @@ const store = Vue.reactive({
                 sortDesc: this.sortDesc
             });
             
+            if (generation !== this.navigationGeneration) return;
             const items = res.items;
             this.pagination.total = res.total;
             this.pagination.page = page;
@@ -162,14 +167,15 @@ const store = Vue.reactive({
             // Persist Last Path
             localStorage.setItem('extplorer_last_path', path);
         } catch (e) {
-            this.error = e.message;
+            if (generation === this.navigationGeneration) this.error = e.message;
             console.error(e);
         } finally {
-            this.isLoading = false;
+            if (generation === this.navigationGeneration) this.isLoading = false;
         }
     },
 
     async performSearch(query) {
+        const generation = ++this.navigationGeneration;
         if (!query) {
             return this.loadPath(this.cwd);
         }
@@ -178,13 +184,14 @@ const store = Vue.reactive({
         this.selectedItems = [];
         try {
             const res = await Api.get('search', { q: query });
+            if (generation !== this.navigationGeneration) return;
             this.files = res.items;
             this.pagination.total = res.total;
             this.pagination.page = 1;
         } catch (e) {
-            this.error = e.message;
+            if (generation === this.navigationGeneration) this.error = e.message;
         } finally {
-            this.isLoading = false;
+            if (generation === this.navigationGeneration) this.isLoading = false;
         }
     },
 

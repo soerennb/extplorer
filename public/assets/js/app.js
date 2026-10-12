@@ -487,6 +487,7 @@ const app = createApp({
                         const headers = { 'X-Requested-With': 'XMLHttpRequest' };
                         if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
                         const res = await fetch(window.baseUrl + 'api/upload', { method: 'POST', headers, body: fd });
+                        Api.refreshCsrfToken(res);
                         if (!res.ok) {
                             throw new Error(await Api.readErrorMessage(res, 'Upload failed'));
                         }
@@ -513,6 +514,7 @@ const app = createApp({
                             const headers = { 'X-Requested-With': 'XMLHttpRequest' };
                             if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
                             const res = await fetch(window.baseUrl + 'api/upload/session/' + encodeURIComponent(uploadSessionId) + '/chunk/' + i, { method: 'PUT', headers, body: fd });
+                            Api.refreshCsrfToken(res);
                             if (!res.ok) {
                                 throw new Error(await Api.readErrorMessage(res, 'Upload chunk failed'));
                             }
