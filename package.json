@@ -12,7 +12,7 @@
     "e2e:install": "playwright install --with-deps chromium"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0",
+    "@playwright/test": "1.64.0",
     "@vue/compiler-dom": "^3.5.43",
     "vue": "^3.5.43"
   }
