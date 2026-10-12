@@ -303,6 +303,10 @@ class UserModel
     public function migrateLegacyInitialAdminPasswordState(): int
     {
         return AtomicFileStore::transaction($this->usersFile, function (array &$users): int {
+            if ($users === []) {
+                return 0;
+            }
+
             $activeAdministrators = 0;
             foreach ($users as $user) {
                 if (is_array($user)
@@ -313,7 +317,7 @@ class UserModel
                 }
             }
 
-            if ($activeAdministrators !== 1 || $users === []) {
+            if ($activeAdministrators !== 1) {
                 return 0;
             }
 

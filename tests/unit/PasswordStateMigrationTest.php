@@ -52,6 +52,15 @@ class PasswordStateMigrationTest extends CIUnitTestCase
         $this->assertSame(0, $model->migratePasswordState());
     }
 
+    public function testLegacyInitialAdminMigrationLeavesEmptyUserListUnchanged(): void
+    {
+        $model = new UserModel();
+        $model->saveUsers([]);
+
+        $this->assertSame(0, $model->migrateLegacyInitialAdminPasswordState());
+        $this->assertSame([], $model->getUsers());
+    }
+
     public function testLegacyInitialAdminWithCustomPasswordIsReleasedOnce(): void
     {
         $model = new UserModel();
