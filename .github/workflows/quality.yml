@@ -399,7 +399,7 @@ jobs:
       - name: Verify FTP, FTPS and SFTP writes against real servers
         env:
           EXTPLORER_TEST_IMAGE: extplorer3:e2e
-        run: tests/integration/remote/run.sh
+        run: bash tests/integration/remote/run.sh
 
       - name: Run Chromium smoke tests
         run: npm run e2e
