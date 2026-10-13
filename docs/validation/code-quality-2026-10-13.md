@@ -1,7 +1,7 @@
 # Code-quality remediation validation — 2026-10-13
 
 Application version: **3.1.0**. Implementation commits: `2068102` and
-`13889a7`, `3653c53` and `d74b683`, based on `8400343`. Beads epic `ex3-l0v` and routing bug `ex3-w32`
+`13889a7`, `3653c53`, `d74b683` and `23ce89c`, based on `8400343`. Beads epic `ex3-l0v` and routing bug `ex3-w32`
 are complete. Genuine remaining PHPStan type contracts are tracked in `ex3-1ip`.
 
 The implementation coordinates metadata lifecycle and authorization snapshots,
@@ -23,7 +23,7 @@ random_compat 9.99.100. Existing locked packages were not updated.
 | Check | Result |
 | --- | --- |
 | Complete PHP suite | 321 tests, 1,266 assertions; six environment-dependent integration cases skipped locally and exercised separately below |
-| Frontend behavior contracts | Ten tests passed |
+| Frontend behavior contracts | Eleven tests passed |
 | PHPStan | Passed; no new suppressions; baseline reduced from 271 patterns / 678 diagnostics to 66 / 87 |
 | Composer validation and locked package audit | Passed; zero advisories |
 | NPM audit | Zero vulnerabilities |
@@ -46,7 +46,7 @@ File, SQLite, MySQL and PostgreSQL concurrency tests check coherent multi-docume
 snapshots while two processes update the documents.
 
 Built runtime image: `extplorer3:audit`, image ID
-`sha256:704d0179f53d9875971649b918535af7b37de878a4a2b868f9ab57fae5928312`.
+`sha256:ebb7df27664e035199bb607c8ddfa5013b92a625a07afc0c1873f40f2549d77c`.
 Trivy image digest:
 `sha256:af6acf9a6b85dfe389a1941505c0ce9efef52a4719635e1a962f022a3d855daa`.
 The scan checks Alpine 3.24.2 and installed Composer packages. Scan JSON and
@@ -59,8 +59,8 @@ packaged Login controller without translation sources.
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `builds/extplorer3-3.1.0.zip` | `ae6c943dea52fff109b618debbd1629252400243181f8de4308e6f3598cc8134` |
-| `builds/extplorer3-3.1.0.tar.gz` | `ea5ea2d3e862388b9a4fa8d7c2b8df755f0b0fbf620845c6f5c6ee0a58143395` |
+| `builds/extplorer3-3.1.0.zip` | `daa270c86e8af6832fb53b7caa9ec0092b570711bf2daf87afe52ed4d706a0ed` |
+| `builds/extplorer3-3.1.0.tar.gz` | `2f22d8ba27a0ffb13f884647d341486f9223b50a13a6e02800949e037c36ce23` |
 
 The browser matrix runs the extracted final ZIP with isolated writable state,
 production dependencies and no translation sources. Each layout passes a large
@@ -80,7 +80,9 @@ commit before publication. The release workflow retains the packaged translation
 gate and now always runs all four native URL layouts, including when earlier
 Quality checks are reused.
 
-The code commit `d74b683` is checked by [Quality](https://github.com/soerennb/extplorer/actions/runs/38357239651),
-[Security audit](https://github.com/soerennb/extplorer/actions/runs/38357239663)
-and [Secret scanning](https://github.com/soerennb/extplorer/actions/runs/38357239657).
+The code commit `23ce89c` passes [Quality](https://github.com/soerennb/extplorer/actions/runs/38357684921),
+[Security audit](https://github.com/soerennb/extplorer/actions/runs/38357684875)
+and [Secret scanning](https://github.com/soerennb/extplorer/actions/runs/38357684863).
+This includes the PHP 8.2–8.5 matrix, storage integrations, real remote fixtures,
+frontend/CSP checks and production Docker browser suite.
 Subsequent evidence-only changes do not alter the application or its archives.
