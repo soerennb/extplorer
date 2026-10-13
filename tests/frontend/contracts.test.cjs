@@ -52,3 +52,17 @@ for (const name of ['AdminUsers']) {
         assert.equal(sent[1].password, 'replacement-password');
     });
 }
+
+
+test('the compiled quick administration overview renders without the removed mode', async () => {
+    const Vue = require('vue');
+    const { renderToString } = require('@vue/server-renderer');
+    const component = load('compiled/components/UserAdmin.js', 'UserAdmin', {
+        Vue, Api: { route: (path) => 'https://example.test/' + path }
+    });
+    const app = Vue.createSSRApp(component);
+    app.config.warnHandler = () => {};
+    const html = await renderToString(app);
+    assert.match(html, /Recent activity/);
+    assert.match(html, /https:\/\/example.test\/admin#users/);
+});

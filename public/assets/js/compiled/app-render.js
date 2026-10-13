@@ -69,9 +69,9 @@ const _hoisted_47 = {
   class: "text-center text-muted small py-4"
 }
 const _hoisted_48 = { class: "bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap app-toolbar" }
-const _hoisted_49 = ["onClick", "title"]
+const _hoisted_49 = ["onClick", "disabled", "title"]
 const _hoisted_50 = { class: "d-none d-md-inline" }
-const _hoisted_51 = ["onClick", "title"]
+const _hoisted_51 = ["onClick", "disabled", "title"]
 const _hoisted_52 = ["onClick", "disabled", "title"]
 const _hoisted_53 = { class: "d-none d-xl-inline" }
 const _hoisted_54 = ["onClick", "disabled", "title"]
@@ -218,8 +218,8 @@ const _hoisted_153 = {
   key: 0,
   class: "d-flex gap-2"
 }
-const _hoisted_154 = ["onClick"]
-const _hoisted_155 = ["onClick"]
+const _hoisted_154 = ["onClick", "disabled"]
+const _hoisted_155 = ["onClick", "disabled"]
 const _hoisted_156 = ["onClick"]
 const _hoisted_157 = ["onClick", "title", "aria-label"]
 const _hoisted_158 = {
@@ -814,6 +814,7 @@ return function render(_ctx, _cache) {
               _createElementVNode("button", {
                 class: "btn btn-primary btn-sm d-none d-sm-inline-flex align-items-center",
                 onClick: createFolder,
+                disabled: store.isLoading,
                 title: t('new_folder'),
                 "data-testid": "create-folder"
               }, [
@@ -824,6 +825,7 @@ return function render(_ctx, _cache) {
               _createElementVNode("button", {
                 class: "btn btn-primary btn-sm app-toolbar-primary d-inline-flex align-items-center",
                 onClick: uploadFile,
+                disabled: store.isLoading,
                 title: t('upload'),
                 "data-testid": "upload"
               }, [
@@ -855,7 +857,7 @@ return function render(_ctx, _cache) {
               _createElementVNode("button", {
                 class: "btn btn-outline-success btn-sm d-none d-sm-inline-flex align-items-center",
                 onClick: paste,
-                disabled: store.clipboard.items.length === 0,
+                disabled: store.isLoading || store.clipboard.items.length === 0,
                 title: t('paste')
               }, [
                 _cache[28] || (_cache[28] = _createElementVNode("i", { class: "ri-clipboard-line" }, null, -1 /* CACHED */)),
@@ -930,7 +932,7 @@ return function render(_ctx, _cache) {
                   ]),
                   _createElementVNode("li", _hoisted_73, [
                     _createElementVNode("a", {
-                      class: _normalizeClass(["dropdown-item", {disabled: store.clipboard.items.length === 0}]),
+                      class: _normalizeClass(["dropdown-item", {disabled: store.isLoading || store.clipboard.items.length === 0}]),
                       href: "#",
                       onClick: _withModifiers(paste, ["prevent"])
                     }, [
@@ -1546,14 +1548,16 @@ return function render(_ctx, _cache) {
                           ? (_openBlock(), _createElementBlock("div", _hoisted_153, [
                               _createElementVNode("button", {
                                 class: "btn btn-primary btn-sm px-3",
-                                onClick: createFolder
+                                onClick: createFolder,
+                                disabled: store.isLoading
                               }, [
                                 _cache[85] || (_cache[85] = _createElementVNode("i", { class: "ri-folder-add-line me-1" }, null, -1 /* CACHED */)),
                                 _createTextVNode(" " + _toDisplayString(t('new_folder')), 1 /* TEXT */)
                               ], 8 /* PROPS */, _hoisted_154),
                               _createElementVNode("button", {
                                 class: "btn btn-outline-secondary btn-sm px-3",
-                                onClick: uploadFile
+                                onClick: uploadFile,
+                                disabled: store.isLoading
                               }, [
                                 _cache[86] || (_cache[86] = _createElementVNode("i", { class: "ri-upload-cloud-2-line me-1" }, null, -1 /* CACHED */)),
                                 _createTextVNode(" " + _toDisplayString(t('upload')), 1 /* TEXT */)
@@ -2326,7 +2330,7 @@ return function render(_ctx, _cache) {
                     _createTextVNode(" " + _toDisplayString(t('cut')), 1 /* TEXT */)
                   ], 8 /* PROPS */, _hoisted_308),
                   _createElementVNode("a", {
-                    class: _normalizeClass(["dropdown-item", {disabled: store.clipboard.items.length === 0}]),
+                    class: _normalizeClass(["dropdown-item", {disabled: store.isLoading || store.clipboard.items.length === 0}]),
                     href: "#",
                     onClick: _withModifiers($event => (cmAction('paste')), ["prevent"])
                   }, [

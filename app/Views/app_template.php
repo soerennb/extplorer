@@ -148,10 +148,10 @@
         <!-- Toolbar -->
         <div class="bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap app-toolbar">
             <template v-if="!store.isTrashMode">
-                <button class="btn btn-primary btn-sm d-none d-sm-inline-flex align-items-center" @click="createFolder" :title="t('new_folder')" data-testid="create-folder">
+                <button class="btn btn-primary btn-sm d-none d-sm-inline-flex align-items-center" @click="createFolder" :disabled="store.isLoading" :title="t('new_folder')" data-testid="create-folder">
                     <i class="ri-folder-add-line"></i> <span class="d-none d-md-inline">{{ t('new_folder') }}</span>
                 </button>
-                <button class="btn btn-primary btn-sm app-toolbar-primary d-inline-flex align-items-center" @click="uploadFile" :title="t('upload')" data-testid="upload">
+                <button class="btn btn-primary btn-sm app-toolbar-primary d-inline-flex align-items-center" @click="uploadFile" :disabled="store.isLoading" :title="t('upload')" data-testid="upload">
                     <i class="ri-upload-cloud-2-line"></i> <span>{{ t('upload') }}</span>
                 </button>
 
@@ -163,7 +163,7 @@
                 <button class="btn btn-outline-secondary btn-sm d-none d-sm-inline-flex align-items-center" @click="cutSelected" :disabled="store.selectedItems.length === 0" :title="t('cut')">
                     <i class="ri-scissors-cut-line"></i> <span class="d-none d-xl-inline">{{ t('cut') }}</span>
                 </button>
-                <button class="btn btn-outline-success btn-sm d-none d-sm-inline-flex align-items-center" @click="paste" :disabled="store.clipboard.items.length === 0" :title="t('paste')">
+                <button class="btn btn-outline-success btn-sm d-none d-sm-inline-flex align-items-center" @click="paste" :disabled="store.isLoading || store.clipboard.items.length === 0" :title="t('paste')">
                     <i class="ri-clipboard-line"></i>
                     <span class="d-none d-md-inline">{{ t('paste') }}</span>
                     <span v-if="store.clipboard.items.length > 0" class="badge bg-success ms-1">{{ store.clipboard.items.length }}</span>
@@ -194,7 +194,7 @@
                         <li class="d-sm-none"><a class="dropdown-item" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="cutSelected">
                             <i class="ri-scissors-cut-line me-2"></i> {{ t('cut') }}
                         </a></li>
-                        <li class="d-sm-none"><a class="dropdown-item" :class="{disabled: store.clipboard.items.length === 0}" href="#" @click.prevent="paste">
+                        <li class="d-sm-none"><a class="dropdown-item" :class="{disabled: store.isLoading || store.clipboard.items.length === 0}" href="#" @click.prevent="paste">
                             <i class="ri-clipboard-line me-2"></i> {{ t('paste') }}
                         </a></li>
                         <li class="d-sm-none"><a class="dropdown-item text-danger" :class="{disabled: store.selectedItems.length === 0}" href="#" @click.prevent="deleteSelected">
@@ -483,10 +483,10 @@
 
                         <!-- CTAs (only for normal directory) -->
                         <div v-if="!store.isTrashMode && !store.searchQuery" class="d-flex gap-2">
-                            <button class="btn btn-primary btn-sm px-3" @click="createFolder">
+                            <button class="btn btn-primary btn-sm px-3" @click="createFolder" :disabled="store.isLoading">
                                 <i class="ri-folder-add-line me-1"></i> {{ t('new_folder') }}
                             </button>
-                            <button class="btn btn-outline-secondary btn-sm px-3" @click="uploadFile">
+                            <button class="btn btn-outline-secondary btn-sm px-3" @click="uploadFile" :disabled="store.isLoading">
                                 <i class="ri-upload-cloud-2-line me-1"></i> {{ t('upload') }}
                             </button>
                         </div>
@@ -884,7 +884,7 @@
                 <a class="dropdown-item" href="#" @click.prevent="cmAction('cut')">
                     <i class="ri-scissors-cut-line me-2"></i> {{ t('cut') }}
                 </a>
-                <a class="dropdown-item" href="#" @click.prevent="cmAction('paste')" :class="{disabled: store.clipboard.items.length === 0}">
+                <a class="dropdown-item" href="#" @click.prevent="cmAction('paste')" :class="{disabled: store.isLoading || store.clipboard.items.length === 0}">
                     <i class="ri-clipboard-line me-2"></i> {{ t('paste') }}
                 </a>
                 <div class="dropdown-divider"></div>

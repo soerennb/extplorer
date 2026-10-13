@@ -17,7 +17,7 @@ const UserAdmin = {
                             <i class="ri-external-link-line me-1"></i> {{ t('admin_open_console', 'Open Admin Console') }}
                         </a>
                     </div>
-                    <div v-if="quickAdmin">
+                    <div>
                         <div class="row g-2 mb-3">
                             <div class="col-sm-4">
                                 <div class="border rounded p-3 h-100 bg-body-tertiary">

@@ -96,15 +96,15 @@ const app = createApp({
             const unavailable = i18n.t('command_unavailable');
             return [
                 { id: 'search', label: i18n.t('command_open_search'), icon: 'ri-search-line', enabled: true, action: focusSearch },
-                { id: 'upload', label: i18n.t('upload'), icon: 'ri-upload-cloud-2-line', enabled: store.capabilities.upload !== false, action: uploadFile },
-                { id: 'new-folder', label: i18n.t('new_folder'), icon: 'ri-folder-add-line', enabled: !store.isTrashMode, reason: unavailable, action: createFolder },
+                { id: 'upload', label: i18n.t('upload'), icon: 'ri-upload-cloud-2-line', enabled: !store.isLoading && store.capabilities.upload !== false, action: uploadFile },
+                { id: 'new-folder', label: i18n.t('new_folder'), icon: 'ri-folder-add-line', enabled: !store.isLoading && !store.isTrashMode, reason: unavailable, action: createFolder },
                 { id: 'send-files', label: i18n.t('send_files'), icon: 'ri-send-plane-line', enabled: transferAvailable.value === true, reason: i18n.t('transfer_email_test_required'), action: openTransfer },
                 { id: 'share', label: i18n.t('share'), icon: 'ri-share-line', enabled: hasSingleSelection && !store.isTrashMode && supports(store.selectedItems[0], 'share'), reason: i18n.t('command_requires_one_selection'), action: openShare },
                 { id: 'properties', label: i18n.t('properties'), icon: 'ri-information-line', enabled: hasSelection, reason: i18n.t('command_requires_selection'), action: showProperties },
                 { id: 'perms', label: i18n.t('perms'), icon: 'ri-lock-2-line', enabled: hasSelection && !store.isTrashMode, reason: i18n.t('command_requires_selection'), action: chmodSelected },
                 { id: 'download', label: i18n.t('download'), icon: 'ri-download-line', enabled: hasSingleSelection && !store.isTrashMode, reason: i18n.t('command_requires_one_selection'), action: downloadSelected },
                 { id: 'copy', label: i18n.t('copy'), icon: 'ri-file-copy-line', enabled: hasSelection && !store.isTrashMode, reason: i18n.t('command_requires_selection'), action: copySelected },
-                { id: 'paste', label: i18n.t('paste'), icon: 'ri-clipboard-line', enabled: hasClipboard && !store.isTrashMode, reason: unavailable, action: paste },
+                { id: 'paste', label: i18n.t('paste'), icon: 'ri-clipboard-line', enabled: hasClipboard && !store.isLoading && !store.isTrashMode, reason: unavailable, action: paste },
                 { id: 'go-up', label: i18n.t('up_one_level'), icon: 'ri-arrow-up-line', enabled: Boolean(store.cwd), reason: unavailable, action: goUp },
                 { id: 'refresh', label: i18n.t('refresh'), icon: 'ri-refresh-line', enabled: true, action: reload },
                 { id: 'details', label: i18n.t('command_toggle_details'), icon: 'ri-sidebar-right-line', enabled: true, action: toggleDetailsPane },
@@ -421,9 +421,11 @@ const app = createApp({
 
         // --- File Operations ---
         const createFolder = async () => {
+            if (store.isLoading) return;
+            const target = store.cwd;
             const { value: name } = await Swal.fire({ title: i18n.t('new_folder'), input: 'text', showCancelButton: true });
             if (name) {
-                try { await Api.post('mkdir', { path: store.cwd ? store.cwd + '/' + name : name }); reload(); store.refreshTree(); }
+                try { await Api.post('mkdir', { path: target ? target + '/' + name : name }); reload(); store.refreshTree(); }
                 catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
             }
         };
@@ -456,7 +458,7 @@ const app = createApp({
         };
 
         const uploadFile = () => {
-            if (uploadModal.value) uploadModal.value.open();
+            if (!store.isLoading && uploadModal.value) uploadModal.value.open();
         };
 
         const performUpload = async (files, targetPath = null, silent = false) => {
@@ -505,11 +507,12 @@ const app = createApp({
         const copySelected = () => { if (store.selectedItems.length) { store.clipboard.items = [...store.selectedItems]; store.clipboard.mode = 'copy'; } };
         const cutSelected = () => { if (store.selectedItems.length) { store.clipboard.items = [...store.selectedItems]; store.clipboard.mode = 'cut'; } };
         const paste = async () => {
-            if (!store.clipboard.items.length) return;
+            if (store.isLoading || !store.clipboard.items.length) return;
+            const target = store.cwd;
             try {
                 store.isLoading = true;
                 for (const file of store.clipboard.items) {
-                    const to = (store.cwd ? store.cwd + '/' : '') + file.name;
+                    const to = (target ? target + '/' : '') + file.name;
                     await Api.post(store.clipboard.mode === 'copy' ? 'cp' : 'mv', { from: file.path, to });
                 }
                 if (store.clipboard.mode === 'cut') { store.clipboard.items = []; store.clipboard.mode = null; }

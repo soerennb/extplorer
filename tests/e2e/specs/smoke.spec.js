@@ -454,7 +454,15 @@ test("local user can copy a folder with nested contents", async ({ page }) => {
   await page.locator(".swal2-input").fill(targetName);
   await confirmDialog(page);
   await expect(fileItem(page, targetName)).toBeVisible();
+  await page.route('**/api/ls?*', async (route) => {
+    if (new URL(route.request().url()).searchParams.get('path') === `Home/${targetName}`) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+    await route.continue();
+  });
   await fileItem(page, targetName).dblclick();
+  await expect(page.locator('button[title="Paste"]')).toBeDisabled();
+  await expect(page.getByTestId('current-path')).toContainText(targetName);
 
   const copyResponse = page.waitForResponse(
     (response) =>
