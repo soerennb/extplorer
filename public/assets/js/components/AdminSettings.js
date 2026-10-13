@@ -353,79 +353,10 @@ const AdminSettings = {
                 if (!this.settings.sendmail_path) {
                     this.settings.sendmail_path = '/usr/sbin/sendmail';
                 }
-                this.normalizeSettings();
                 this.settingsOriginal = JSON.parse(JSON.stringify(this.settings));
                 this.clearEmailValidation();
             } catch (e) {
                 this.error = e.message;
-            }
-        },
-        normalizeSettings() {
-            if (!this.settings) return;
-            if (typeof this.settings.log_retention_count !== 'number' || Number.isNaN(this.settings.log_retention_count)) {
-                this.settings.log_retention_count = 2000;
-            }
-            if (typeof this.settings.transfer_max_expiry_days !== 'number' || Number.isNaN(this.settings.transfer_max_expiry_days)) {
-                this.settings.transfer_max_expiry_days = 30;
-            }
-            if (typeof this.settings.default_transfer_expiry !== 'number' || Number.isNaN(this.settings.default_transfer_expiry)) {
-                this.settings.default_transfer_expiry = 7;
-            }
-            if (typeof this.settings.transfer_default_notify_download !== 'boolean') {
-                this.settings.transfer_default_notify_download = false;
-            }
-            if (typeof this.settings.share_default_expiry_days !== 'number' || Number.isNaN(this.settings.share_default_expiry_days)) {
-                this.settings.share_default_expiry_days = 7;
-            }
-            if (typeof this.settings.share_max_expiry_days !== 'number' || Number.isNaN(this.settings.share_max_expiry_days)) {
-                this.settings.share_max_expiry_days = 30;
-            }
-            if (typeof this.settings.share_require_expiry !== 'boolean') {
-                this.settings.share_require_expiry = false;
-            }
-            if (typeof this.settings.share_require_password !== 'boolean') {
-                this.settings.share_require_password = false;
-            }
-            if (typeof this.settings.allow_public_uploads !== 'boolean') {
-                this.settings.allow_public_uploads = false;
-            }
-            if (typeof this.settings.webdav_enabled !== 'boolean') {
-                this.settings.webdav_enabled = true;
-            }
-            if (typeof this.settings.remote_login_enabled !== 'boolean') {
-                this.settings.remote_login_enabled = false;
-            }
-            if (typeof this.settings.remote_endpoint_allowlist_text !== 'string') {
-                if (Array.isArray(this.settings.remote_endpoint_allowlist)) {
-                    this.settings.remote_endpoint_allowlist_text = this.settings.remote_endpoint_allowlist.map((entry) => {
-                        if (typeof entry === 'string') return entry;
-                        return `${entry.protocol}://${entry.host}:${entry.port}`;
-                    }).join('\n');
-                } else {
-                    this.settings.remote_endpoint_allowlist_text = '';
-                }
-            }
-            if (typeof this.settings.share_upload_quota_mb !== 'number' || Number.isNaN(this.settings.share_upload_quota_mb)) {
-                this.settings.share_upload_quota_mb = 0;
-            }
-            if (typeof this.settings.share_upload_max_files !== 'number' || Number.isNaN(this.settings.share_upload_max_files)) {
-                this.settings.share_upload_max_files = 0;
-            }
-            if (typeof this.settings.share_upload_allowed_extensions_text !== 'string') {
-                if (Array.isArray(this.settings.share_upload_allowed_extensions)) {
-                    this.settings.share_upload_allowed_extensions_text = this.settings.share_upload_allowed_extensions.join('\n');
-                } else {
-                    this.settings.share_upload_allowed_extensions_text = '';
-                }
-            }
-            if (typeof this.settings.session_idle_timeout_minutes !== 'number' || Number.isNaN(this.settings.session_idle_timeout_minutes)) {
-                this.settings.session_idle_timeout_minutes = 120;
-            }
-            if (typeof this.settings.upload_max_file_mb !== 'number' || Number.isNaN(this.settings.upload_max_file_mb)) {
-                this.settings.upload_max_file_mb = 0;
-            }
-            if (typeof this.settings.quota_per_user_mb !== 'number' || Number.isNaN(this.settings.quota_per_user_mb)) {
-                this.settings.quota_per_user_mb = 0;
             }
         },
         async saveSettings() {

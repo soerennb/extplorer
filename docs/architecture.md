@@ -4,7 +4,7 @@
 
 * **Backend:** PHP 8.2+ with CodeIgniter 4 Framework.
 * **Frontend:** Vue.js 3 and Bootstrap 5.
-* **Data storage:** Atomic PHP-wrapped JSON state files. No SQL database is required.
+* **Data storage:** PHP-wrapped JSON documents or transactional SQL metadata (SQLite, MySQL/MariaDB, PostgreSQL). File payloads remain on the filesystem.
 
 ## 2. Persistent Storage Layout
 
@@ -25,6 +25,14 @@ independently:
 State files are written through an atomic temporary-file-and-rename operation and are protected from direct web reads by a
 PHP access-denied header. The web server's document root is limited to `public/`.
 
+All state document reads, mutations, existence checks and deletion use the selected
+`StateBackendInterface`. File transactions coordinate through a stable directory
+lock and recover interrupted multi-document commits from a private journal before
+reading. SQL transactions acquire the directory lock row before reading, including
+when a document does not exist yet. Account, role and group mutations share one
+transaction; authentication reads their matching snapshot and validates its version
+before establishing a session. Migration reads physical legacy documents explicitly.
+
 Legacy root-level JSON/PHP files are converted by the versioned `security:migrate` command. Each migration creates a backup,
 validates the target and removes the legacy source only after the target has been read back successfully.
 
@@ -41,6 +49,27 @@ The VFS abstraction decouples the UI from physical storage.
   default.
 * **WebDAV:** The endpoint has an explicit method allowlist and rejects
   symlinks to keep filesystem operations inside the authenticated home.
+
+`StreamWritableFileSystem` and `LocalPathFileSystem` are additive capabilities.
+Local, FTP/FTPS and SFTP writes stage bytes beside the destination before rename;
+failed activation retains the previous file. The VFS publishes supported operations
+in listings so clients can hide unavailable trash, version, thumbnail and share actions.
+Local archive handling lives in `LocalArchiveService`; cross-adapter copies stream
+bytes through the VFS rather than loading entire files into memory.
+
+Upload HTTP endpoints share `FileUploadPolicy` and `FileUploadService`. Resumable
+sessions retain chunks after activation failure, and consume them after successful
+activation or acceptance into quarantine. Frozen `UploadTarget` references bind the
+namespace to the account authorization version, mount identity or direct remote
+connection. Promotion rechecks authorization, endpoint policy, quota, conflicts and
+payload integrity. Direct remote connections use encrypted, expiring credential
+leases; quarantine manifests never contain passwords or private keys.
+
+Transfer staging and finalization have separate owners. Finalization copies staged
+files before publishing; a quota or complete notification failure retains the source
+for retry. Partial notification delivery preserves links already sent and reports
+failed recipients. Expiry cleanup and notification delivery run outside metadata
+transactions and use per-session or per-share operation locks.
 
 ## 4. Security Model
 
@@ -81,6 +110,14 @@ Previous code releases and migration backups are retained for controlled rollbac
 
 The frontend is a Vue 3 single-page application. Assets are located in `public/assets`, routing is hash-based, and state uses
 Vue's reactivity system. CSP rules require external scripts/styles or an explicit nonce for unavoidable inline content.
+
+`Api` owns route generation, JSON/binary/multipart transport and CSRF refresh.
+Mutations serialize token regeneration; a delayed read cannot overwrite a newer
+token. Step-up confirmation releases the mutation queue before prompting. The
+modal and drag-and-drop upload flows share `FileUploadClient`, with binary PUT
+chunks. Profile security, WebDAV credentials, mount management, file preview and
+drag-and-drop behavior are separate modules. Quick Admin links to the canonical
+administration components rather than maintaining another full administration UI.
 
 ## 7. CI and Beads Tracking
 

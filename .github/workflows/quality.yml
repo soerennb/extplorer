@@ -220,6 +220,9 @@ jobs:
       - name: Ensure Ace assets
         run: bash ./scripts/ensure-ace-assets.sh
 
+      - name: Run browser contract tests
+        run: npm run test:frontend
+
       - name: Compile Vue templates
         run: npm run build:js
 
@@ -381,6 +384,22 @@ jobs:
           docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml run --rm extplorer-init --rollback "$initial_release"
           test "$(docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app readlink /var/www/html/current | sed 's#^.releases/##')" = "$initial_release"
           docker compose -f docker-compose.yml -f docker-compose.secrets.yml.example -f tests/e2e/docker-compose.yml exec --no-TTY extplorer-app php /var/www/html/current/spark system:readiness
+
+      - name: Setup PHP for remote test dependencies
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: "8.5"
+          extensions: curl, dom, gd, intl, mbstring, sqlite3, xml, zip
+          tools: composer:2.10.3
+          coverage: none
+
+      - name: Install remote test dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Verify FTP, FTPS and SFTP writes against real servers
+        env:
+          EXTPLORER_TEST_IMAGE: extplorer3:e2e
+        run: tests/integration/remote/run.sh
 
       - name: Run Chromium smoke tests
         run: npm run e2e

@@ -128,7 +128,7 @@ const _hoisted_93 = ["onClick"]
 const _hoisted_94 = ["onClick"]
 const _hoisted_95 = ["onClick"]
 const _hoisted_96 = ["onClick"]
-const _hoisted_97 = ["onClick"]
+const _hoisted_97 = ["onClick", "disabled"]
 const _hoisted_98 = { class: "dropdown" }
 const _hoisted_99 = ["aria-label"]
 const _hoisted_100 = { class: "dropdown-menu dropdown-menu-end shadow" }
@@ -320,7 +320,7 @@ const _hoisted_222 = {
   class: "btn btn-secondary btn-sm",
   "data-bs-dismiss": "modal"
 }
-const _hoisted_223 = ["onClick"]
+const _hoisted_223 = ["disabled", "onClick"]
 const _hoisted_224 = {
   class: "modal fade",
   id: "diffModal",
@@ -653,7 +653,7 @@ return function render(_ctx, _cache) {
                   ? (_openBlock(), _createElementBlock("li", _hoisted_30, [
                       _createElementVNode("a", {
                         class: "dropdown-item",
-                        href: baseUrl + 'admin'
+                        href: routeBaseUrl + 'admin'
                       }, [...(_cache[8] || (_cache[8] = [
                         _createElementVNode("i", { class: "ri-settings-3-line me-2" }, null, -1 /* CACHED */),
                         _createTextVNode(" Admin Console", -1 /* CACHED */)
@@ -1161,6 +1161,7 @@ return function render(_ctx, _cache) {
                       type: "button",
                       class: "btn btn-outline-danger btn-sm",
                       onClick: deleteSelected,
+                      disabled: !store.selectedItems.every(f => supports(f, 'trash')),
                       "data-testid": "selection-delete"
                     }, [
                       _cache[61] || (_cache[61] = _createElementVNode("i", {
@@ -1200,7 +1201,7 @@ return function render(_ctx, _cache) {
                               ], 8 /* PROPS */, _hoisted_102)
                             ]))
                           : _createCommentVNode("v-if", true),
-                        (store.selectedItems.length === 1)
+                        (store.selectedItems.length === 1 && supports(store.selectedItems[0], 'share'))
                           ? (_openBlock(), _createElementBlock("li", _hoisted_103, [
                               _createElementVNode("a", {
                                 class: "dropdown-item",
@@ -1269,7 +1270,7 @@ return function render(_ctx, _cache) {
                               ], 8 /* PROPS */, _hoisted_109)
                             ]))
                           : _createCommentVNode("v-if", true),
-                        (store.selectedItems.length === 1 && store.selectedItems[0].type !== 'dir')
+                        (store.selectedItems.length === 1 && store.selectedItems[0].type !== 'dir' && supports(store.selectedItems[0], 'versions'))
                           ? (_openBlock(), _createElementBlock("li", _hoisted_110, [
                               _createElementVNode("a", {
                                 class: "dropdown-item",
@@ -1800,7 +1801,7 @@ return function render(_ctx, _cache) {
                         }, null, -1 /* CACHED */)),
                         _createTextVNode(_toDisplayString(t('properties')), 1 /* TEXT */)
                       ], 8 /* PROPS */, _hoisted_196),
-                      (store.selectedItems.length === 1)
+                      (store.selectedItems.length === 1 && supports(store.selectedItems[0], 'share'))
                         ? (_openBlock(), _createElementBlock("button", {
                             key: 0,
                             class: "btn btn-outline-primary btn-sm",
@@ -1916,6 +1917,7 @@ return function render(_ctx, _cache) {
               _createElementVNode("button", {
                 type: "button",
                 class: "btn btn-primary btn-sm",
+                disabled: !supports(editorFile, 'edit'),
                 onClick: saveFile
               }, _toDisplayString(t('save')), 9 /* TEXT, PROPS */, _hoisted_223)
             ])
@@ -2295,14 +2297,17 @@ return function render(_ctx, _cache) {
                     _cache[115] || (_cache[115] = _createElementVNode("i", { class: "ri-download-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('download')), 1 /* TEXT */)
                   ], 8 /* PROPS */, _hoisted_305),
-                  _createElementVNode("a", {
-                    class: "dropdown-item",
-                    href: "#",
-                    onClick: _withModifiers($event => (cmAction('share')), ["prevent"])
-                  }, [
-                    _cache[116] || (_cache[116] = _createElementVNode("i", { class: "ri-share-line me-2" }, null, -1 /* CACHED */)),
-                    _createTextVNode(" " + _toDisplayString(t('share_title') || 'Share'), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_306),
+                  (supports(contextMenu.file, 'share'))
+                    ? (_openBlock(), _createElementBlock("a", {
+                        key: 0,
+                        class: "dropdown-item",
+                        href: "#",
+                        onClick: _withModifiers($event => (cmAction('share')), ["prevent"])
+                      }, [
+                        _cache[116] || (_cache[116] = _createElementVNode("i", { class: "ri-share-line me-2" }, null, -1 /* CACHED */)),
+                        _createTextVNode(" " + _toDisplayString(t('share_title') || 'Share'), 1 /* TEXT */)
+                      ], 8 /* PROPS */, _hoisted_306))
+                    : _createCommentVNode("v-if", true),
                   _cache[125] || (_cache[125] = _createElementVNode("div", { class: "dropdown-divider" }, null, -1 /* CACHED */)),
                   _createElementVNode("a", {
                     class: "dropdown-item",
@@ -2353,9 +2358,9 @@ return function render(_ctx, _cache) {
                     _cache[122] || (_cache[122] = _createElementVNode("i", { class: "ri-information-line me-2" }, null, -1 /* CACHED */)),
                     _createTextVNode(" " + _toDisplayString(t('properties')), 1 /* TEXT */)
                   ], 8 /* PROPS */, _hoisted_312),
-                  (contextMenu.file && contextMenu.file.type !== 'dir')
+                  (contextMenu.file && contextMenu.file.type !== 'dir' && supports(contextMenu.file, 'versions'))
                     ? (_openBlock(), _createElementBlock("a", {
-                        key: 0,
+                        key: 1,
                         class: "dropdown-item",
                         href: "#",
                         onClick: _withModifiers($event => (cmAction('history')), ["prevent"])
@@ -2365,14 +2370,17 @@ return function render(_ctx, _cache) {
                       ], 8 /* PROPS */, _hoisted_313))
                     : _createCommentVNode("v-if", true),
                   _cache[127] || (_cache[127] = _createElementVNode("div", { class: "dropdown-divider" }, null, -1 /* CACHED */)),
-                  _createElementVNode("a", {
-                    class: "dropdown-item text-danger",
-                    href: "#",
-                    onClick: _withModifiers($event => (cmAction('delete')), ["prevent"])
-                  }, [
-                    _cache[124] || (_cache[124] = _createElementVNode("i", { class: "ri-delete-bin-line me-2" }, null, -1 /* CACHED */)),
-                    _createTextVNode(" " + _toDisplayString(t('delete')), 1 /* TEXT */)
-                  ], 8 /* PROPS */, _hoisted_314)
+                  (supports(contextMenu.file, 'trash'))
+                    ? (_openBlock(), _createElementBlock("a", {
+                        key: 2,
+                        class: "dropdown-item text-danger",
+                        href: "#",
+                        onClick: _withModifiers($event => (cmAction('delete')), ["prevent"])
+                      }, [
+                        _cache[124] || (_cache[124] = _createElementVNode("i", { class: "ri-delete-bin-line me-2" }, null, -1 /* CACHED */)),
+                        _createTextVNode(" " + _toDisplayString(t('delete')), 1 /* TEXT */)
+                      ], 8 /* PROPS */, _hoisted_314))
+                    : _createCommentVNode("v-if", true)
                 ], 64 /* STABLE_FRAGMENT */))
               : (_openBlock(), _createElementBlock(_Fragment, { key: 1 }, [
                   _createElementVNode("a", {

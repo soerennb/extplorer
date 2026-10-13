@@ -49,6 +49,19 @@ visiting an indexed page while API requests still use rewritten paths.
 | Domain root, explicit index | `https://files.example.com/` | `index.php` | `/index.php/api/settings` |
 | Subdirectory, explicit index | `https://files.example.com/extplorer/public/` | `index.php` | `/extplorer/public/index.php/api/settings` |
 
+The browser matrix can be run directly against the final ZIP:
+
+```bash
+node tests/e2e/native-routing.cjs builds/extplorer3-3.1.0.zip
+```
+
+It creates an isolated installation and writable state for each layout, removes
+translation sources, and checks a large binary chunk upload plus the settings
+step-up flow. API requests must use the configured index prefix. Results and the
+ZIP checksum are written to `build/native-routing-results.json`. The Release
+workflow runs this gate against the actual ZIP even when earlier CI checks are
+reused.
+
 For each layout:
 
 1. Log in and open **Admin Settings → Mounts → External Mounts**.

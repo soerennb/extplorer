@@ -14,6 +14,7 @@ parameters:
         - public/index.php
         - vendor/codeigniter4/framework/system/Common.php
         - app/Helpers/auth_helper.php
+        - vendor/codeigniter4/framework/system/Helpers/url_helper.php
     excludePaths:
         - app/Database/Migrations/*
     tmpDir: writable/cache/phpstan

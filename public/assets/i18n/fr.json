@@ -276,6 +276,7 @@
     "allowed": "Autorisé",
     "blocked_user": "Bloqué (Utilisateur)",
     "blocked_system": "Bloqué (Système)",
+    "upload_pending_scan": "En attente de l’analyse antivirus",
     "share_title": "Partager",
     "share_desc": "Créer un lien public pour cet élément.",
     "shared_page_title": "Partage - eXtplorer",

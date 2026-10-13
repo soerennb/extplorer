@@ -52,7 +52,6 @@ RUN apk add --no-cache \
         icu-libs \
         libpng \
         libzip \
-        libssh2 \
         sqlite-libs \
         su-exec \
     && apk add --no-cache --virtual .build-deps \
@@ -60,14 +59,13 @@ RUN apk add --no-cache \
         icu-dev \
         libpng-dev \
         libzip-dev \
-        libssh2-dev \
+        openssl-dev \
         sqlite-dev \
         mariadb-connector-c-dev \
     && cd /tmp \
     && printf '\n\n\n\n\n' | pecl install redis-6.3.0 \
     && docker-php-ext-enable redis \
-    && printf '\n\n\n\n\n' | pecl install ssh2-1.5.0 \
-    && docker-php-ext-enable ssh2 \
+    && docker-php-ext-configure ftp --with-ftp-ssl \
     && docker-php-ext-install -j"$(nproc)" \
         ftp \
         intl \
@@ -76,7 +74,8 @@ RUN apk add --no-cache \
         mysqli \
         pdo_mysql \
         pdo_sqlite \
-    && apk del .build-deps
+    && apk del .build-deps \
+    && php -r 'if (!function_exists("ftp_ssl_connect")) { exit(1); }'
 
 RUN sed -i -e 's#^error_log = /proc/self/fd/2#error_log = /var/www/html/writable/logs/php-fpm.log#' \
     -e 's#^access.log = /proc/self/fd/2#access.log = /var/www/html/writable/logs/php-fpm-access.log#' \

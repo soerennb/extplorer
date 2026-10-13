@@ -34,5 +34,6 @@
     "file_extensions": "File Extensions",
     "allowed": "Allowed",
     "blocked_user": "Blocked (User)",
-    "blocked_system": "Blocked (System)"
+    "blocked_system": "Blocked (System)",
+    "upload_pending_scan": "Waiting for virus scan"
 }

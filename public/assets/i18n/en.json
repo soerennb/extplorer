@@ -276,6 +276,7 @@
     "allowed": "Allowed",
     "blocked_user": "Blocked (User)",
     "blocked_system": "Blocked (System)",
+    "upload_pending_scan": "Waiting for virus scan",
     "share_title": "Share",
     "share_desc": "Create a public link for this item.",
     "shared_page_title": "Shared - eXtplorer",

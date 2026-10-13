@@ -34,5 +34,6 @@
     "file_extensions": "Prípony súborov",
     "allowed": "Povolené",
     "blocked_user": "Blokované (používateľ)",
-    "blocked_system": "Blokované (systém)"
+    "blocked_system": "Blokované (systém)",
+    "upload_pending_scan": "Čaká na antivírusovú kontrolu"
 }

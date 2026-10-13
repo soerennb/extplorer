@@ -68,7 +68,7 @@
                         <ul class="dropdown-menu dropdown-menu-end shadow">
 	                            <li><a class="dropdown-item" href="#" @click.prevent="openProfile"><i class="ri-user-settings-line me-2"></i>{{ t('profile_settings') || 'Profile & Settings' }}</a></li>
 	                            <li v-if="isAdmin"><a class="dropdown-item" href="#" @click.prevent="openAdmin"><i class="ri-flashlight-line me-2"></i>Quick Admin</a></li>
-                            <li v-if="isAdmin"><a class="dropdown-item" :href="baseUrl + 'admin'"><i class="ri-settings-3-line me-2"></i> Admin Console</a></li>
+                            <li v-if="isAdmin"><a class="dropdown-item" :href="routeBaseUrl + 'admin'"><i class="ri-settings-3-line me-2"></i> Admin Console</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><h6 class="dropdown-header">Appearance</h6></li>
                             <li><a class="dropdown-item" :class="{active: theme === 'light'}" href="#" @click.prevent="setTheme('light')">
@@ -290,7 +290,7 @@
                         <i class="ri-scissors-cut-line" aria-hidden="true"></i>
                         <span>{{ t('cut') }}</span>
                     </button>
-                    <button type="button" class="btn btn-outline-danger btn-sm" @click="deleteSelected" data-testid="selection-delete">
+                    <button type="button" class="btn btn-outline-danger btn-sm" @click="deleteSelected" :disabled="!store.selectedItems.every(f => supports(f, 'trash'))" data-testid="selection-delete">
                         <i class="ri-delete-bin-line" aria-hidden="true"></i>
                         <span>{{ t('delete') }}</span>
                     </button>
@@ -310,7 +310,7 @@
                                     <i class="ri-edit-line me-2" aria-hidden="true"></i>{{ t('rename') }}
                                 </a>
                             </li>
-                            <li v-if="store.selectedItems.length === 1">
+                            <li v-if="store.selectedItems.length === 1 && supports(store.selectedItems[0], 'share')">
                                 <a class="dropdown-item" href="#" @click.prevent="openShare">
                                     <i class="ri-share-line me-2" aria-hidden="true"></i>{{ t('share_title') || 'Share' }}
                                 </a>
@@ -335,7 +335,7 @@
                                     <i class="ri-folder-zip-line me-2" aria-hidden="true"></i>{{ t('extract') }}
                                 </a>
                             </li>
-                            <li v-if="store.selectedItems.length === 1 && store.selectedItems[0].type !== 'dir'">
+                            <li v-if="store.selectedItems.length === 1 && store.selectedItems[0].type !== 'dir' && supports(store.selectedItems[0], 'versions')">
                                 <a class="dropdown-item" href="#" @click.prevent="openHistory">
                                     <i class="ri-history-line me-2" aria-hidden="true"></i>{{ t('version_history') }}
                                 </a>
@@ -610,7 +610,7 @@
                         <button class="btn btn-outline-primary btn-sm" @click="showProperties" :disabled="store.selectedItems.length === 0">
                             <i class="ri-information-line me-1" aria-hidden="true"></i>{{ t('properties') }}
                         </button>
-                        <button v-if="store.selectedItems.length === 1" class="btn btn-outline-primary btn-sm" @click="openShare" :disabled="store.isTrashMode">
+                        <button v-if="store.selectedItems.length === 1 && supports(store.selectedItems[0], 'share')" class="btn btn-outline-primary btn-sm" @click="openShare" :disabled="store.isTrashMode">
                             <i class="ri-share-line me-1" aria-hidden="true"></i>{{ t('share') }}
                         </button>
                     </div>
@@ -676,7 +676,7 @@
                     </div>
                     <div class="modal-footer py-2">
                         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ t('close') }}</button>
-                        <button type="button" class="btn btn-primary btn-sm" @click="saveFile">{{ t('save') }}</button>
+                        <button type="button" class="btn btn-primary btn-sm" :disabled="!supports(editorFile, 'edit')" @click="saveFile">{{ t('save') }}</button>
                     </div>
                 </div>
             </div>
@@ -874,7 +874,7 @@
                 <a class="dropdown-item" href="#" @click.prevent="cmAction('download')">
                     <i class="ri-download-line me-2"></i> {{ t('download') }}
                 </a>
-                <a class="dropdown-item" href="#" @click.prevent="cmAction('share')">
+                <a v-if="supports(contextMenu.file, 'share')" class="dropdown-item" href="#" @click.prevent="cmAction('share')">
                     <i class="ri-share-line me-2"></i> {{ t('share_title') || 'Share' }}
                 </a>
                 <div class="dropdown-divider"></div>
@@ -897,11 +897,11 @@
                 <a class="dropdown-item" href="#" @click.prevent="cmAction('properties')">
                     <i class="ri-information-line me-2"></i> {{ t('properties') }}
                 </a>
-                <a v-if="contextMenu.file && contextMenu.file.type !== 'dir'" class="dropdown-item" href="#" @click.prevent="cmAction('history')">
+                <a v-if="contextMenu.file && contextMenu.file.type !== 'dir' && supports(contextMenu.file, 'versions')" class="dropdown-item" href="#" @click.prevent="cmAction('history')">
                     <i class="ri-history-line me-2"></i> {{ t('version_history') || 'Version History' }}
                 </a>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item text-danger" href="#" @click.prevent="cmAction('delete')">
+                <a v-if="supports(contextMenu.file, 'trash')" class="dropdown-item text-danger" href="#" @click.prevent="cmAction('delete')">
                     <i class="ri-delete-bin-line me-2"></i> {{ t('delete') }}
                 </a>
             </template>

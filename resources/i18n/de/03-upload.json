@@ -34,5 +34,6 @@
     "file_extensions": "Dateierweiterungen",
     "allowed": "Erlaubt",
     "blocked_user": "Blockiert (Benutzer)",
-    "blocked_system": "Blockiert (System)"
+    "blocked_system": "Blockiert (System)",
+    "upload_pending_scan": "Wartet auf Virenprüfung"
 }

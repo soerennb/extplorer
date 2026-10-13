@@ -112,7 +112,7 @@ class TrashService
             }
             $originalPath = (string)($item['originalPath'] ?? '');
             (new FileNamePolicy())->assertSafe(basename(str_replace('\\', '/', $originalPath)));
-            $targetPath = $fs->resolvePath($originalPath);
+            $targetPath = \App\Services\VFS\FileCapabilities::localPath($fs, $originalPath) ?? throw new Exception('Recycle bin is unavailable for this storage.');
 
             if (file_exists($targetPath)) {
                 $info = pathinfo($targetPath);

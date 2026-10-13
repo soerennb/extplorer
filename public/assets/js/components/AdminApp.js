@@ -53,7 +53,7 @@ const AdminApp = {
     `,
     data() {
         return {
-            baseUrl: window.baseUrl || '/',
+            baseUrl: Api.route(''),
             currentUsername: window.username || '',
             activeSection: 'users',
             activeSettingsTab: 'email',

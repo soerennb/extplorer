@@ -394,7 +394,7 @@ return function render(_ctx, _cache) {
 
         const shareUrl = computed(() => {
             if (!currentShare.value) return '';
-            return window.baseUrl + 's/' + currentShare.value.hash;
+            return Api.route('s/' + currentShare.value.hash);
         });
         const uploadPolicy = computed(() => policy.upload_policy || {});
         const modeOptions = computed(() => {

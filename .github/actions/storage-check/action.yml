@@ -13,7 +13,7 @@ runs:
       uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
       with:
         php-version: "8.2"
-        extensions: curl, dom, gd, intl, mbstring, mysqli, pdo_mysql, pdo_pgsql, pgsql, redis, sqlite3, xml, zip
+        extensions: curl, dom, gd, intl, mbstring, mysqli, pcntl, pdo_mysql, pdo_pgsql, pgsql, redis, sqlite3, xml, zip
         tools: composer:2.10.3
         coverage: none
 
@@ -69,6 +69,13 @@ runs:
         esac
         php spark security:migrate
         php spark storage:check
+        if [ "$BACKEND" != redis ]; then
+          env "database.tests.DBDriver=$EXTPLORER_DB_DRIVER" \
+            "database.tests.hostname=$EXTPLORER_DB_HOST" "database.tests.port=$EXTPLORER_DB_PORT" \
+            "database.tests.database=$EXTPLORER_DB_NAME" "database.tests.username=$EXTPLORER_DB_USER" \
+            "database.tests.password=$EXTPLORER_DB_PASSWORD" "database.tests.charset=$([ "$BACKEND" = postgres ] && echo utf8 || echo utf8mb4)" \
+            vendor/bin/phpunit --no-coverage --filter 'MetadataLifecycleTest|StateTransactionsTest|StateConcurrencyTest'
+        fi
         if [ "$BACKEND" = redis ]; then
           EXTPLORER_RUN_REDIS_SESSION_TEST=1 vendor/bin/phpunit --no-coverage tests/integration/RedisSessionSharingTest.php
         fi

@@ -109,7 +109,7 @@ class VersionService
             throw new Exception("Version not found.");
         }
 
-        $targetPath = $fs->resolvePath($relativePath);
+        $targetPath = \App\Services\VFS\FileCapabilities::localPath($fs, $relativePath) ?? throw new Exception('Version history is unavailable for this storage.');
         
         // Before restoring, create a version of the CURRENT state so we can undo the restore
         $this->createVersion($targetPath, $relativePath);

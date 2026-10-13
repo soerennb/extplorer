@@ -10,12 +10,12 @@ Ensure your server meets the following criteria:
 * **Web Server:** Apache or Nginx.
 * **PHP:** Version **8.2** or higher.
 * **PHP Extensions:** `intl`, `mbstring`, `json`, `xml`, `curl`, `gd`, and `zip`.
-* **Optional Extensions:** `ftp` for FTP/FTPS mounts, `ssh2` for SFTP mounts, and
+* **Optional Extensions:** `ftp` for FTP/FTPS mounts, and
   `sqlite3`, `mysqli` or `pgsql` when using the corresponding database backend.
 * **Encryption key:** Set `EXTPLORER_ENCRYPTION_KEY_FILE` (recommended) or `EXTPLORER_ENCRYPTION_KEY` to store remote
   mount credentials securely.
   FTPS additionally requires a usable system CA trust store. The official
-  container image includes `ftp`, `ssh2` and the CA bundle.
+  container image includes SSL-enabled `ftp` and the CA bundle. SFTP uses the bundled phpseclib library and does not require the `ssh2` extension.
 
 ## 2. Installation Steps
 

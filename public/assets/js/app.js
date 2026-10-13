@@ -28,12 +28,10 @@ const app = createApp({
         const commandPaletteSelectedIndex = ref(0);
         const detailsPaneOpen = ref(localStorage.getItem('extplorer_details_pane') === 'true');
         const contextMenu = Vue.reactive({ visible: false, x: 0, y: 0, file: null });
-        const previewState = Vue.reactive({ src: '', index: 0, list: [], type: '', filename: '' });
         const theme = ref(localStorage.getItem('extplorer_theme') || 'auto');
-        const dragIndicatorMode = ref(null);
+
         let aceEditor = null;
         let editorModal = null;
-        let previewModal = null;
         let diffModal = null;
         let propModal = null;
         let webdavModal = null;
@@ -44,6 +42,7 @@ const app = createApp({
         }, { immediate: true });
 
         // --- Computed ---
+        const supports = (file, capability) => Boolean(file) && file.capabilities?.[capability] !== false;
         const isAdmin = computed(() => {
             const role = String(window.userRole || '').toLowerCase();
             const user = String(window.username || '').toLowerCase();
@@ -51,7 +50,7 @@ const app = createApp({
             return role === 'admin' || user === 'admin' || perms.includes('*') || perms.includes('admin_users');
         });
 
-        const webDavUrl = computed(() => window.baseUrl.replace(/\/$/, '') + '/dav');
+        const webDavUrl = computed(() => Api.route('dav'));
         const propertiesTargetSummary = computed(() => {
             if (!propFile.value) return '';
             if (propFile.value.isBulk) {
@@ -87,6 +86,8 @@ const app = createApp({
             return store.files;
         });
 
+        const { previewState, openPreview, nextPreview, prevPreview, isPreviewable } = useFilePreview(() => filteredFiles.value);
+
         const totalPages = computed(() => Math.max(1, Math.ceil(store.pagination.total / store.pagination.pageSize)));
         const commandActions = computed(() => {
             const hasSelection = store.selectedItems.length > 0;
@@ -95,10 +96,10 @@ const app = createApp({
             const unavailable = i18n.t('command_unavailable');
             return [
                 { id: 'search', label: i18n.t('command_open_search'), icon: 'ri-search-line', enabled: true, action: focusSearch },
-                { id: 'upload', label: i18n.t('upload'), icon: 'ri-upload-cloud-2-line', enabled: true, action: uploadFile },
+                { id: 'upload', label: i18n.t('upload'), icon: 'ri-upload-cloud-2-line', enabled: store.capabilities.upload !== false, action: uploadFile },
                 { id: 'new-folder', label: i18n.t('new_folder'), icon: 'ri-folder-add-line', enabled: !store.isTrashMode, reason: unavailable, action: createFolder },
                 { id: 'send-files', label: i18n.t('send_files'), icon: 'ri-send-plane-line', enabled: transferAvailable.value === true, reason: i18n.t('transfer_email_test_required'), action: openTransfer },
-                { id: 'share', label: i18n.t('share'), icon: 'ri-share-line', enabled: hasSingleSelection && !store.isTrashMode, reason: i18n.t('command_requires_one_selection'), action: openShare },
+                { id: 'share', label: i18n.t('share'), icon: 'ri-share-line', enabled: hasSingleSelection && !store.isTrashMode && supports(store.selectedItems[0], 'share'), reason: i18n.t('command_requires_one_selection'), action: openShare },
                 { id: 'properties', label: i18n.t('properties'), icon: 'ri-information-line', enabled: hasSelection, reason: i18n.t('command_requires_selection'), action: showProperties },
                 { id: 'perms', label: i18n.t('perms'), icon: 'ri-lock-2-line', enabled: hasSelection && !store.isTrashMode, reason: i18n.t('command_requires_selection'), action: chmodSelected },
                 { id: 'download', label: i18n.t('download'), icon: 'ri-download-line', enabled: hasSingleSelection && !store.isTrashMode, reason: i18n.t('command_requires_one_selection'), action: downloadSelected },
@@ -113,7 +114,7 @@ const app = createApp({
                 { id: 'theme', label: i18n.t('command_toggle_theme'), icon: 'ri-contrast-2-line', enabled: true, action: toggleTheme },
                 { id: 'profile', label: i18n.t('command_open_profile'), icon: 'ri-user-settings-line', enabled: true, action: openProfile },
                 { id: 'quick-admin', label: i18n.t('command_open_quick_admin'), icon: 'ri-flashlight-line', enabled: isAdmin.value, reason: unavailable, action: openAdmin },
-                { id: 'admin-console', label: i18n.t('command_open_admin_console'), icon: 'ri-settings-3-line', enabled: isAdmin.value, reason: unavailable, action: () => { window.location.href = window.baseUrl + 'admin'; } }
+                { id: 'admin-console', label: i18n.t('command_open_admin_console'), icon: 'ri-settings-3-line', enabled: isAdmin.value, reason: unavailable, action: () => { window.location.href = Api.route('admin'); } }
             ];
         });
         const filteredCommandActions = computed(() => {
@@ -208,9 +209,9 @@ const app = createApp({
         });
 
         // --- Helpers ---
-        const isImage = (f) => f.type !== 'dir' && ['jpg','jpeg','png','gif','webp','svg'].includes(f.extension?.toLowerCase());
+        const isImage = (f) => supports(f, 'thumbnail') && f.type !== 'dir' && ['jpg','jpeg','png','gif','webp','svg'].includes(f.extension?.toLowerCase());
         const isArchive = (f) => f.type !== 'dir' && ['zip','tar','gz'].includes(f.extension?.toLowerCase());
-        const getThumbUrl = (f) => window.baseUrl + 'api/thumb?path=' + encodeURIComponent(f.path);
+        const getThumbUrl = (f) => (window.routeBaseUrl || window.baseUrl) + 'api/thumb?path=' + encodeURIComponent(f.path);
         const formatSize = (b) => {
             if (b === 0 || !b) return b === 0 ? '' : '-';
             const k = 1024, sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -385,9 +386,6 @@ const app = createApp({
             } else {
                 const ext = file.extension?.toLowerCase();
                 const textExts = ['php','js','css','html','json','xml','txt','md','sql','gitignore','env'];
-                const imgExts = ['jpg','jpeg','png','gif','webp','svg'];
-                const vidExts = ['mp4','webm','ogv'];
-                const audExts = ['mp3','wav','ogg'];
 
                 if (textExts.includes(ext)) {
                     try {
@@ -403,24 +401,15 @@ const app = createApp({
                         if (aceEditor) setContent();
                         else document.getElementById('editorModal').addEventListener('shown.bs.modal', setContent, { once: true });
                     } catch(e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
-                } else if (imgExts.includes(ext) || vidExts.includes(ext) || audExts.includes(ext) || ext === 'pdf') {
-                    store.addToRecent(file);
-                    
-                    const isMedia = (f) => {
-                        const e = f.extension?.toLowerCase();
-                        return imgExts.includes(e) || vidExts.includes(e) || audExts.includes(e) || e === 'pdf';
-                    };
-
-                    previewState.list = filteredFiles.value.filter(f => isMedia(f));
-                    previewState.index = previewState.list.findIndex(f => f.name === file.name);
-                    updatePreviewer();
-                    previewModal.show();
+                } else if (isPreviewable(file)) {
+                    openPreview(file);
                     closeOffcanvas();
                 } else Swal.fire('Info', 'Preview not supported for this file type.', 'info');
             }
         };
 
         const saveFile = async () => {
+            if (!supports(editorFile.value, 'edit')) return;
             if (!editorFile.value || !aceEditor) return;
             try {
                 await Api.post('save', { path: editorFile.value.path, content: aceEditor.getValue() });
@@ -440,7 +429,7 @@ const app = createApp({
         };
 
         const deleteSelected = async () => {
-            if (!store.selectedItems.length) return;
+            if (!store.selectedItems.length || !store.selectedItems.every(f => supports(f, 'trash'))) return;
             const res = await Swal.fire({ title: i18n.t('confirm_title'), text: i18n.t('confirm_text'), icon: 'warning', showCancelButton: true });
             if (res.isConfirmed) {
                 try {
@@ -472,7 +461,6 @@ const app = createApp({
 
         const performUpload = async (files, targetPath = null, silent = false) => {
             const path = targetPath !== null ? targetPath : store.cwd;
-            const CHUNK_SIZE = 1024 * 1024;
             try {
                 if (!silent) {
                     store.isLoading = true;
@@ -482,46 +470,10 @@ const app = createApp({
                 for (let file of files) {
                     store.uploadFileName = file.name;
                     store.uploadProgress = 0;
-                    if (file.size <= CHUNK_SIZE) {
-                        const fd = new FormData(); fd.append('file', file); fd.append('path', path);
-                        const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-                        if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
-                        const res = await fetch(window.baseUrl + 'api/upload', { method: 'POST', headers, body: fd });
-                        Api.refreshCsrfToken(res);
-                        if (!res.ok) {
-                            throw new Error(await Api.readErrorMessage(res, 'Upload failed'));
-                        }
-                        store.uploadProgress = 100;
-                    } else {
-                        const total = Math.ceil(file.size / CHUNK_SIZE);
-                        const uploadSession = await Api.post('upload/session', {
-                            filename: file.name,
-                            path,
-                            relativePath: '',
-                            totalSize: file.size,
-                            chunkSize: CHUNK_SIZE,
-                            totalChunks: total,
-                            conflict: 'replace'
-                        });
-                        const uploadSessionId = uploadSession.id;
-                        if (!uploadSessionId) {
-                            throw new Error('Upload session could not be created.');
-                        }
-
-                        for (let i = 0; i < total; i++) {
-                            const chunk = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-                            const fd = new FormData(); fd.append('file', chunk);
-                            const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-                            if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
-                            const res = await fetch(window.baseUrl + 'api/upload/session/' + encodeURIComponent(uploadSessionId) + '/chunk/' + i, { method: 'PUT', headers, body: fd });
-                            Api.refreshCsrfToken(res);
-                            if (!res.ok) {
-                                throw new Error(await Api.readErrorMessage(res, 'Upload chunk failed'));
-                            }
-                            store.uploadProgress = Math.round(((i + 1) / total) * 100);
-                        }
-                        await Api.post(`upload/session/${encodeURIComponent(uploadSessionId)}/complete`);
-                    }
+                    await FileUploadClient.upload(file, {
+                        path, relativePath: file.webkitRelativePath || '',
+                        onProgress: (fraction) => { store.uploadProgress = Math.round(fraction * 100); }
+                    });
                     store.uploadCurrent++;
                 }
                 if (!silent) {
@@ -569,7 +521,7 @@ const app = createApp({
         };
 
         const downloadSelected = () => {
-            if (store.selectedItems.length === 1) window.location.href = window.baseUrl + 'api/download?path=' + encodeURIComponent(store.selectedItems[0].path);
+            if (store.selectedItems.length === 1) window.location.href = (window.routeBaseUrl || window.baseUrl) + 'api/download?path=' + encodeURIComponent(store.selectedItems[0].path);
         };
 
         const createArchive = async () => {
@@ -660,13 +612,13 @@ const app = createApp({
         };
 
         const openShare = () => {
-            if (store.selectedItems.length === 1 && shareModal.value) {
+            if (store.selectedItems.length === 1 && supports(store.selectedItems[0], 'share') && shareModal.value) {
                 shareModal.value.open(store.selectedItems[0]);
             }
         };
 
         const openHistory = () => {
-            if (store.selectedItems.length === 1 && fileHistoryModal.value) {
+            if (supports(store.selectedItems[0], 'versions') && store.selectedItems.length === 1 && fileHistoryModal.value) {
                 fileHistoryModal.value.open(store.selectedItems[0]);
             }
         };
@@ -695,7 +647,7 @@ const app = createApp({
         const transferAvailable = computed(() => transferCapability.value?.available === true);
         const transferSettingsUrl = computed(() => {
             if (transferCapability.value?.settings_url) return transferCapability.value.settings_url;
-            return isAdmin.value ? `${window.baseUrl}admin#settings/email` : '';
+            return isAdmin.value ? `${window.routeBaseUrl || window.baseUrl}admin#settings/email` : '';
         });
 
         const loadTransferCapability = async () => {
@@ -706,7 +658,7 @@ const app = createApp({
                 transferCapability.value = {
                     available: false,
                     reason: 'unavailable',
-                    settings_url: isAdmin.value ? `${window.baseUrl}admin#settings/email` : null
+                    settings_url: isAdmin.value ? `${window.routeBaseUrl || window.baseUrl}admin#settings/email` : null
                 };
             } finally {
                 transferCapabilityLoading.value = false;
@@ -755,144 +707,8 @@ const app = createApp({
         };
         const changePassword = () => openProfile('security');
 
-        // --- Preview Viewer ---
-        const updatePreviewer = () => {
-            if (previewState.index >= 0) {
-                const file = previewState.list[previewState.index];
-                const ext = file.extension?.toLowerCase();
-                previewState.filename = file.name;
-                previewState.src = window.baseUrl + 'api/download?path=' + encodeURIComponent(file.path) + '&inline=1';
-                
-                if (['jpg','jpeg','png','gif','webp','svg'].includes(ext)) previewState.type = 'image';
-                else if (['mp4','webm','ogv'].includes(ext)) previewState.type = 'video';
-                else if (['mp3','wav','ogg'].includes(ext)) previewState.type = 'audio';
-                else if (ext === 'pdf') previewState.type = 'pdf';
-            }
-        };
-        const nextPreview = () => { if (previewState.index < previewState.list.length - 1) { previewState.index++; updatePreviewer(); } };
-        const prevPreview = () => { if (previewState.index > 0) { previewState.index--; updatePreviewer(); } };
-
-        // Drag & Drop
-        const getInternalDropOperation = (e) => (e.ctrlKey || e.metaKey ? 'copy' : 'move');
-        const isExternalFileDrag = (e) => {
-            const items = e.dataTransfer?.items;
-            return Boolean(items && items.length > 0 && items[0].kind === 'file');
-        };
-
-        const onDragStart = (e, f) => {
-            const items = store.isSelected(f) ? store.selectedItems : [f];
-            e.dataTransfer.setData('text/plain', JSON.stringify(items));
-            e.dataTransfer.effectAllowed = 'copyMove';
-        };
-
-        const onDragEnd = () => {
-            dragIndicatorMode.value = null;
-            store.isDraggingOver = false;
-        };
-
-        const onDragOver = (e, file = null) => {
-            e.preventDefault();
-            const operation = isExternalFileDrag(e) ? 'copy' : getInternalDropOperation(e);
-            e.dataTransfer.dropEffect = operation === 'copy' ? 'copy' : 'move';
-            dragIndicatorMode.value = isExternalFileDrag(e) ? null : operation;
-            if (file && file.type === 'dir') {
-                file.isDragOver = true;
-            } else if (!file) {
-                store.isDraggingOver = true;
-            }
-        };
-
-        const onDragLeave = (file = null) => {
-            if (file) file.isDragOver = false;
-            else {
-                store.isDraggingOver = false;
-                dragIndicatorMode.value = null;
-            }
-        };
-
-        const traverseFileTree = async (item, path) => {
-            if (item.isFile) {
-                const file = await new Promise(resolve => item.file(resolve));
-                await performUpload([file], path, true);
-            } else if (item.isDirectory) {
-                const newPath = (path ? path + '/' : '') + item.name;
-                try { await Api.post('mkdir', { path: newPath }); } catch(e) {} // Ignore if exists
-                const dirReader = item.createReader();
-                const entries = await new Promise(resolve => dirReader.readEntries(resolve));
-                for (let entry of entries) {
-                    await traverseFileTree(entry, newPath);
-                }
-            }
-        };
-
-        const countEntries = async (item) => {
-            if (item.isFile) return 1;
-            if (item.isDirectory) {
-                let count = 0;
-                const dirReader = item.createReader();
-                const entries = await new Promise(resolve => dirReader.readEntries(resolve));
-                for (let entry of entries) count += await countEntries(entry);
-                return count;
-            }
-            return 0;
-        };
-
-        const onDrop = async (e, target) => {
-            e.preventDefault();
-            store.isDraggingOver = false;
-            dragIndicatorMode.value = null;
-            if (target) target.isDragOver = false;
-
-            // 1. External Files/Folders (Upload)
-            const items = e.dataTransfer.items;
-            if (items && items.length > 0 && items[0].kind === 'file') {
-                const targetPath = target ? target.path : store.cwd;
-                store.isLoading = true;
-                store.uploadProgress = 0;
-                store.uploadCurrent = 0;
-                store.uploadTotal = 0;
-
-                // Scan for total items first
-                try {
-                    for (let i = 0; i < items.length; i++) {
-                        const entry = items[i].webkitGetAsEntry();
-                        if (entry) store.uploadTotal += await countEntries(entry);
-                    }
-
-                    for (let i = 0; i < items.length; i++) {
-                        const entry = items[i].webkitGetAsEntry();
-                        if (entry) await traverseFileTree(entry, targetPath);
-                    }
-                    Swal.fire(i18n.t('uploaded'), '', 'success');
-                } catch (e) {
-                    Swal.fire(i18n.t('error'), e.message, 'error');
-                } finally {
-                    store.isLoading = false;
-                    resetUploadProgress();
-                    reload();
-                    store.refreshTree();
-                }
-                return;
-            }
-
-            // 2. Internal Transfer
-            try {
-                const s = e.dataTransfer.getData('text/plain');
-                if (!s) return;
-                const items = JSON.parse(s);
-                const list = Array.isArray(items) ? items : [items];
-                if (!target) return;
-                const operation = getInternalDropOperation(e);
-
-                for (let item of list) {
-                    if (item.path === target.path) continue;
-                    await Api.post(operation === 'copy' ? 'cp' : 'mv', { from: item.path, to: target.path + '/' + item.name });
-                }
-                reload();
-                store.refreshTree();
-                store.selectedItems = [];
-            } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
-        };
+        const { dragIndicatorMode, onDragStart, onDragEnd, onDragOver, onDragLeave, onDrop } =
+            useFileDragDrop(performUpload, resetUploadProgress, reload);
 
         const setSort = (k) => {
             if (store.sortBy === k) store.sortDesc = !store.sortDesc;
@@ -901,8 +717,6 @@ const app = createApp({
                 store.loadPath(store.cwd, 1);
             }
         };
-
-                
 
                 // Touch Support
 
@@ -934,8 +748,6 @@ const app = createApp({
 
                 };
 
-        
-
                 const updateContextMenuStyle = () => {
                     const styleEl = document.getElementById('context-menu-style');
                     if (!styleEl) return;
@@ -963,7 +775,7 @@ const app = createApp({
         const logout = () => {
             const form = document.createElement('form');
             form.method = 'post';
-            form.action = window.baseUrl + 'logout';
+            form.action = Api.route('logout');
             const token = document.createElement('input');
             token.type = 'hidden';
             token.name = window.csrfTokenName;
@@ -993,7 +805,6 @@ const app = createApp({
             
             ace.config.set('basePath', window.baseUrl + 'assets/vendor/ace');
             editorModal = new bootstrap.Modal(document.getElementById('editorModal'));
-            previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
             diffModal = new bootstrap.Modal(document.getElementById('diffModal'));
             propModal = new bootstrap.Modal(document.getElementById('propModal'));
             webdavModal = new bootstrap.Modal(document.getElementById('webdavModal'));
@@ -1048,7 +859,7 @@ const app = createApp({
             openCommandPalette, closeCommandPalette, moveCommandSelection, runCommand, runSelectedCommand,
             toggleDetailsPane, closeDetailsPane, toggleBookmark,
             emptyStateIcon, emptyStateTitle, emptyStateDescription,
-            isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer, openTransferWithFile, openShare, openHistory,
+            supports, isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer, openTransferWithFile, openShare, openHistory,
             transferCapability, transferCapabilityLoading, transferAvailable, transferSettingsUrl,
             contextMenu, showContextMenu, hideContextMenu, logout, cmAction,
             previewState, nextPreview, prevPreview, showWebDav, copyWebDavUrl, webDavUrl,
@@ -1060,6 +871,7 @@ const app = createApp({
             toggleTrash, restoreSelected, deletePermanent, emptyTrash,
             username: window.username,
             baseUrl: window.baseUrl,
+            routeBaseUrl: window.routeBaseUrl || window.baseUrl,
             connectionMode: window.connectionMode,
             appVersion: window.appVersion,
             webdavEnabled: window.webdavEnabled,

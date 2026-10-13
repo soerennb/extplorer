@@ -61,18 +61,6 @@ parameters:
 			path: app/Config/View.php
 
 		-
-			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
-			identifier: method.notFound
-			count: 7
-			path: app/Controllers/ApiController.php
-
-		-
-			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: app/Controllers/ApiDownloadController.php
-
-		-
 			message: '#^Offset 0 on array\{0\: int\<0, max\>, 1\: int\<0, max\>, 2\: int, 3\: string, mime\: string, channels\?\: int, bits\?\: int\} on left side of \?\? always exists and is not nullable\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
@@ -85,46 +73,10 @@ parameters:
 			path: app/Controllers/ApiDownloadOperationsTrait.php
 
 		-
-			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: app/Controllers/ApiFileController.php
-
-		-
-			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Controllers/ApiShareController.php
-
-		-
-			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: app/Controllers/ApiTransferController.php
-
-		-
-			message: '#^Offset ''filename'' on array\{dirname\?\: string, basename\: string, extension\?\: string, filename\: string\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Controllers/ApiTransferOperationsTrait.php
-
-		-
 			message: '#^Call to an undefined method CodeIgniter\\HTTP\\RequestInterface\:\:isSecure\(\)\.$#'
 			identifier: method.notFound
 			count: 1
 			path: app/Controllers/BaseController.php
-
-		-
-			message: '#^Function site_url not found\.$#'
-			identifier: function.notFound
-			count: 1
-			path: app/Controllers/DavController.php
-
-		-
-			message: '#^Function base_url not found\.$#'
-			identifier: function.notFound
-			count: 1
-			path: app/Controllers/Home.php
 
 		-
 			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
@@ -151,12 +103,6 @@ parameters:
 			path: app/Controllers/ShareController.php
 
 		-
-			message: '#^Function site_url not found\.$#'
-			identifier: function.notFound
-			count: 1
-			path: app/Controllers/TransferController.php
-
-		-
 			message: '#^Parameter \#1 \$array \(list\<mixed\>\) of array_values is already a list, call has no effect\.$#'
 			identifier: arrayValues.list
 			count: 1
@@ -167,12 +113,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: app/Controllers/TransferController.php
-
-		-
-			message: '#^Function site_url not found\.$#'
-			identifier: function.notFound
-			count: 2
-			path: app/Filters/AuthFilter.php
 
 		-
 			message: '#^Method App\\Filters\\AuthFilter\:\:after\(\) should return CodeIgniter\\HTTP\\ResponseInterface\|null but return statement is missing\.$#'
@@ -229,12 +169,6 @@ parameters:
 			path: app/Services/RememberMeService.php
 
 		-
-			message: '#^Parameter \#1 \$session of function ssh2_fingerprint expects resource, object given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/RemoteSecurityPolicy.php
-
-		-
 			message: '#^Offset ''opsys'' on array\{name\: string, index\: int, crc\: int, size\: int, mtime\: int, comp_size\: int, comp_method\: int, encryption_method\: int\} on left side of \?\? does not exist\.$#'
 			identifier: nullCoalesce.offset
 			count: 1
@@ -263,12 +197,6 @@ parameters:
 			identifier: deadCode.unreachable
 			count: 1
 			path: app/Services/StorageArchiveService.php
-
-		-
-			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Services/TrashService.php
 
 		-
 			message: '#^Property App\\Services\\TrashService\:\:\$username is never read, only written\.$#'
@@ -313,88 +241,10 @@ parameters:
 			path: app/Services/VFS/LocalAdapter.php
 
 		-
-			message: '#^Offset ''external_attributes'' on array\{name\: string, index\: int, crc\: int, size\: int, mtime\: int, comp_size\: int, comp_method\: int, encryption_method\: int\} on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/VFS/LocalAdapter.php
-
-		-
-			message: '#^Offset ''opsys'' on array\{name\: string, index\: int, crc\: int, size\: int, mtime\: int, comp_size\: int, comp_method\: int, encryption_method\: int\} on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Services/VFS/LocalAdapter.php
-
-		-
-			message: '#^Result of \|\| is always true\.$#'
-			identifier: booleanOr.alwaysTrue
-			count: 1
-			path: app/Services/VFS/LocalAdapter.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between 0 and 3 will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: app/Services/VFS/LocalAdapter.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between 0 and 0 will always evaluate to true\.$#'
-			identifier: identical.alwaysTrue
-			count: 1
-			path: app/Services/VFS/LocalAdapter.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
-			count: 1
-			path: app/Services/VFS/LocalAdapter.php
-
-		-
-			message: '#^Function ssh2_connect invoked with 5 parameters, 1\-4 required\.$#'
-			identifier: arguments.count
-			count: 1
-			path: app/Services/VFS/Ssh2Adapter.php
-
-		-
-			message: '#^Parameter \#1 \$connection of method App\\Services\\RemoteSecurityPolicy\:\:assertSshFingerprint\(\) expects object, resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/VFS/Ssh2Adapter.php
-
-		-
-			message: '#^Parameter \#3 \$methods of function ssh2_connect expects array, null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/VFS/Ssh2Adapter.php
-
-		-
-			message: '#^Parameter \#4 \$callbacks of function ssh2_connect expects array, null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/VFS/Ssh2Adapter.php
-
-		-
-			message: '#^Call to an undefined method App\\Services\\VFS\\IFileSystem\:\:resolvePath\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Services/VersionService.php
-
-		-
 			message: '#^Property App\\Services\\VersionService\:\:\$username is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
 			path: app/Services/VersionService.php
-
-		-
-			message: '#^Function base_url not found\.$#'
-			identifier: function.notFound
-			count: 17
-			path: app/Views/admin.php
-
-		-
-			message: '#^Function base_url not found\.$#'
-			identifier: function.notFound
-			count: 24
-			path: app/Views/app.php
 
 		-
 			message: '#^Variable \$webdavEnabled might not be defined\.$#'
@@ -499,46 +349,10 @@ parameters:
 			path: app/Views/errors/html/error_exception.php
 
 		-
-			message: '#^Function base_url not found\.$#'
-			identifier: function.notFound
-			count: 1
-			path: app/Views/install/error.php
-
-		-
-			message: '#^Function site_url not found\.$#'
-			identifier: function.notFound
-			count: 1
-			path: app/Views/install/error.php
-
-		-
-			message: '#^Function base_url not found\.$#'
-			identifier: function.notFound
-			count: 1
-			path: app/Views/install/index.php
-
-		-
-			message: '#^Function site_url not found\.$#'
-			identifier: function.notFound
-			count: 1
-			path: app/Views/install/index.php
-
-		-
 			message: '#^Variable \$checks might not be defined\.$#'
 			identifier: variable.undefined
 			count: 6
 			path: app/Views/install/index.php
-
-		-
-			message: '#^Function base_url not found\.$#'
-			identifier: function.notFound
-			count: 4
-			path: app/Views/login.php
-
-		-
-			message: '#^Function site_url not found\.$#'
-			identifier: function.notFound
-			count: 2
-			path: app/Views/login.php
 
 		-
 			message: '#^Variable \$login_t on left side of \?\? always exists and is not nullable\.$#'
@@ -550,12 +364,6 @@ parameters:
 			message: '#^Call to function is_array\(\) with array\<mixed\> will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
-			path: app/Views/shared.php
-
-		-
-			message: '#^Function base_url not found\.$#'
-			identifier: function.notFound
-			count: 7
 			path: app/Views/shared.php
 
 		-
@@ -581,18 +389,6 @@ parameters:
 			identifier: nullCoalesce.variable
 			count: 1
 			path: app/Views/shared.php
-
-		-
-			message: '#^Function base_url not found\.$#'
-			identifier: function.notFound
-			count: 3
-			path: app/Views/shared_password.php
-
-		-
-			message: '#^Function site_url not found\.$#'
-			identifier: function.notFound
-			count: 1
-			path: app/Views/shared_password.php
 
 		-
 			message: '#^Variable \$hash might not be defined\.$#'

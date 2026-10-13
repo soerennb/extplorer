@@ -1,4 +1,14 @@
 const Api = {
+    mutationQueue: Promise.resolve(),
+    csrfRevision: 0,
+    route(path) {
+        return new URL(path, window.routeBaseUrl || window.baseUrl).href;
+    },
+    serializeMutation(send) {
+        const pending = this.mutationQueue.then(send, send);
+        this.mutationQueue = pending.catch(() => {});
+        return pending;
+    },
     sessionExpiredDialogOpen: false,
     stepUpDialogOpen: false,
     genericServerError() {
@@ -146,7 +156,7 @@ const Api = {
         const currentReturn = window.location.pathname + window.location.search;
         const expiredParam = payload.code === 'session_expired' ? 'expired=1&' : '';
         const loginUrl = window.baseUrl
-            ? window.baseUrl + 'login?' + expiredParam + 'return=' + encodeURIComponent(currentReturn || '/')
+            ? this.route('login') + '?' + expiredParam + 'return=' + encodeURIComponent(currentReturn || '/')
             : (payload.login_url || 'login');
 
         if (window.Swal && typeof Swal.fire === 'function') {
@@ -168,7 +178,9 @@ const Api = {
     },
     blockForSessionExpired(payload = {}) {
         this.handleSessionExpired(payload);
-        return new Promise(() => {});
+        const error = new Error(this.sessionExpiredMessage(payload));
+        error.name = 'SessionExpiredError';
+        throw error;
     },
     async handleNonOk(res, payload, fallback = '') {
         if (this.isSessionExpiredPayload(payload, res.status)) {
@@ -194,72 +206,87 @@ const Api = {
         const statusFallback = fallback || (res.status ? `HTTP ${res.status}` : '');
         return this.errorFromPayload(payload, statusFallback);
     },
-    async get(endpoint, params = {}) {
-        const url = new URL('api/' + endpoint, window.baseUrl);
+    get(endpoint, params = {}) { return this.read('api/' + endpoint, params); },
+    async read(endpoint, params = {}) {
+        const url = new URL(this.route(endpoint));
         Object.keys(params).forEach((key) => url.searchParams.append(key, params[key]));
-
+        await this.mutationQueue;
+        const revision = this.csrfRevision;
         let res;
-        try {
-            res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-        } catch (e) {
-            throw new Error(this.genericNetworkError());
-        }
-
-        this.refreshCsrfToken(res);
+        try { res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } }); }
+        catch (error) { throw new Error(this.genericNetworkError()); }
+        if (revision === this.csrfRevision) this.refreshCsrfToken(res);
         const payload = await this.parseResponseBody(res);
-        if (!res.ok) {
-            return this.handleNonOk(res, payload);
-        }
-
+        if (!res.ok) return this.handleNonOk(res, payload);
         return payload ?? {};
     },
-    async post(endpoint, data = {}) {
-        return this.request(endpoint, 'POST', data);
-    },
-    async put(endpoint, data = {}) {
-        return this.request(endpoint, 'PUT', data);
-    },
-    async delete(endpoint, data = {}) {
-        return this.request(endpoint, 'DELETE', data);
-    },
-    async request(endpoint, method, data = {}, stepUpToken = null, stepUpRetried = false) {
-        const url = window.baseUrl + 'api/' + endpoint;
-        const headers = {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        };
-
-        if (window.csrfTokenName && window.csrfHash) {
-            headers['X-CSRF-TOKEN'] = window.csrfHash;
-        }
-        if (stepUpToken) {
-            headers['X-Extplorer-Step-Up'] = stepUpToken;
-        }
-
-        let res;
+    post(endpoint, data = {}, options = {}) { return this.request(endpoint, 'POST', data, null, false, options); },
+    put(endpoint, data = {}, options = {}) { return this.request(endpoint, 'PUT', data, null, false, options); },
+    delete(endpoint, data = {}, options = {}) { return this.request(endpoint, 'DELETE', data, null, false, options); },
+    async recoverCsrf() {
         try {
-            res = await fetch(url, {
-                method: method,
-                headers: headers,
-                body: JSON.stringify(data)
-            });
-        } catch (e) {
-            throw new Error(this.genericNetworkError());
-        }
-
-        this.refreshCsrfToken(res);
-        const payload = await this.parseResponseBody(res);
+            const response = await fetch(this.route('api/profile/details'), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            this.refreshCsrfToken(response);
+        } catch (error) { /* The next request will report an unavailable connection. */ }
+    },
+    async request(endpoint, method, data = {}, stepUpToken = null, stepUpRetried = false, options = {}) {
+        const { res, payload } = await this.serializeMutation(async () => {
+            const headers = { 'Content-Type': options.contentType || 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
+            if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
+            if (stepUpToken) headers['X-Extplorer-Step-Up'] = stepUpToken;
+            this.csrfRevision++;
+            let res;
+            try {
+                res = await fetch(this.route('api/' + endpoint), {
+                    method, headers, body: options.contentType ? data : JSON.stringify(data), signal: options.signal
+                });
+            } catch (error) {
+                if (error.name === 'AbortError') { await this.recoverCsrf(); throw error; }
+                throw new Error(this.genericNetworkError());
+            }
+            this.refreshCsrfToken(res);
+            return { res, payload: await this.parseResponseBody(res) };
+        });
         if (!res.ok) {
+            // The network queue is released before prompting: step-up itself is a mutation.
             if (!stepUpRetried && this.isStepUpRequiredPayload(payload, res.status)) {
                 const token = await this.requestStepUp(payload.action);
-                if (token) {
-                    return this.request(endpoint, method, data, token, true);
-                }
+                if (token) return this.request(endpoint, method, data, token, true, options);
             }
             return this.handleNonOk(res, payload);
         }
-
         return payload ?? {};
+    },
+    async upload(endpoint, form, { signal, onProgress = () => {} } = {}) {
+        const { res, payload } = await this.serializeMutation(() => new Promise((resolve, reject) => {
+            if (signal?.aborted) { reject(new DOMException('Upload canceled', 'AbortError')); return; }
+            const xhr = new XMLHttpRequest();
+            const abort = () => xhr.abort();
+            const cleanup = () => signal?.removeEventListener('abort', abort);
+            xhr.open('POST', this.route(endpoint));
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            if (window.csrfHash) xhr.setRequestHeader('X-CSRF-TOKEN', window.csrfHash);
+            this.csrfRevision++;
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) onProgress(event.loaded / event.total);
+            };
+            xhr.onload = () => {
+                cleanup();
+                const res = { status: xhr.status, ok: xhr.status >= 200 && xhr.status < 300,
+                    headers: { get: (name) => xhr.getResponseHeader(name) } };
+                this.refreshCsrfToken(res);
+                let payload;
+                try { payload = xhr.responseText ? JSON.parse(xhr.responseText) : {}; }
+                catch (error) { payload = { message: xhr.responseText }; }
+                resolve({ res, payload });
+            };
+            xhr.onerror = () => { cleanup(); reject(new Error(this.genericNetworkError())); };
+            xhr.onabort = async () => { cleanup(); await this.recoverCsrf(); reject(new DOMException('Upload canceled', 'AbortError')); };
+            signal?.addEventListener('abort', abort, { once: true });
+            xhr.send(form);
+        }));
+        if (!res.ok) return this.handleNonOk(res, payload);
+        return payload;
     },
     initGlobalErrorHandlers() {
         if (window.__extplorerGlobalErrorHandlers) {
@@ -277,6 +304,7 @@ const Api = {
 
         window.addEventListener('unhandledrejection', (event) => {
             const reason = event && event.reason ? event.reason : null;
+            if (reason?.name === 'SessionExpiredError' || reason?.name === 'AbortError') return;
             const message = this.errorFromPayload(reason, this.genericServerError());
             showError(message);
             if (event && typeof event.preventDefault === 'function') {

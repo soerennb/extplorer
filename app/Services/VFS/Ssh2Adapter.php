@@ -2,317 +2,208 @@
 
 namespace App\Services\VFS;
 
-use Exception;
 use App\Services\FileNamePolicy;
-use App\Services\RemoteSecurityPolicy;
-use App\Services\RemoteEndpointPolicy;
 use App\Services\ResourcePolicy;
+use App\Services\RemoteEndpointPolicy;
+use App\Services\RemoteSecurityPolicy;
+use phpseclib3\Crypt\PublicKeyLoader;
+use phpseclib3\Crypt\Common\PrivateKey;
+use phpseclib3\Net\SFTP;
+use RuntimeException;
 
-class Ssh2Adapter implements IFileSystem
+/** SFTP transport with negotiated host-key verification and atomic stream activation. */
+class Ssh2Adapter implements IFileSystem, StreamWritableFileSystem
 {
-    private $conn;
-    private $sftp;
+    private SFTP $sftp;
     private string $root;
+    private ResourcePolicy $policy;
 
-    public function __construct(
-        string $host,
-        string $user,
-        string $pass,
-        int $port = 22,
-        string $root = '/',
-        string $hostKeyFingerprint = '',
-        string $privateKey = '',
-        string $publicKey = '',
-        string $privateKeyPassphrase = ''
-    )
+    public function __construct(string $host, string $user, string $pass, int $port = 22, string $root = '/',
+        string $hostKeyFingerprint = '', string $privateKey = '', string $publicKey = '', string $privateKeyPassphrase = '')
     {
-        if (!function_exists('ssh2_connect')) {
-            throw new Exception("SSH2 extension not installed");
-        }
-
+        $this->policy = new ResourcePolicy();
         $this->root = RemotePathPolicy::normalizeRoot($root);
-        $policy = new RemoteSecurityPolicy();
         $endpoint = (new RemoteEndpointPolicy())->authorize('sftp', $host, $port, $hostKeyFingerprint);
-
-        $timeout = (new ResourcePolicy())->remoteTimeoutSeconds();
-        $parameters = (new \ReflectionFunction('ssh2_connect'))->getNumberOfParameters();
-        $this->conn = $parameters >= 5
-            ? ssh2_connect($endpoint['connect_host'], $port, null, null, $timeout)
-            : ssh2_connect($endpoint['connect_host'], $port);
-        if (!$this->conn) throw new Exception("Could not connect to SSH host: $host");
-
-        $policy->assertSshFingerprint($this->conn, $hostKeyFingerprint);
-
+        $this->sftp = new SFTP($endpoint['connect_host'], $port, $this->policy->remoteTimeoutSeconds());
+        $this->sftp->setTimeout($this->policy->remoteTimeoutSeconds());
+        $this->sftp->disableStatCache();
+        $hostKey = $this->sftp->getServerPublicHostKey();
+        if (!is_string($hostKey)) throw new RuntimeException('Unable to obtain the negotiated SFTP host key.');
+        (new RemoteSecurityPolicy())->assertSshHostKey($hostKey, $hostKeyFingerprint);
+        $credential = $pass;
         if ($privateKey !== '' || $publicKey !== '') {
-            $this->authenticateWithKey($user, $privateKey, $publicKey, $privateKeyPassphrase);
-        } elseif (!@ssh2_auth_password($this->conn, $user, $pass)) {
-            throw new Exception('SSH authentication failed.');
+            if ($privateKey === '' || $publicKey === '') throw new RuntimeException('SFTP private and public keys are required.');
+            $key = PublicKeyLoader::load($privateKey, $privateKeyPassphrase === '' ? false : $privateKeyPassphrase);
+            if (!$key instanceof PrivateKey) throw new RuntimeException('SFTP private key is invalid.');
+            $expected = PublicKeyLoader::loadPublicKey($publicKey)->toString('OpenSSH');
+            if ($key->getPublicKey()->toString('OpenSSH') !== $expected) throw new RuntimeException('SFTP public and private keys do not match.');
+            $credential = $key;
         }
-
-        $this->sftp = ssh2_sftp($this->conn);
-        if (!$this->sftp) throw new Exception("Could not initialize SFTP subsystem");
-
-    }
-
-    private function authenticateWithKey(string $user, string $privateKey, string $publicKey, string $passphrase): void
-    {
-        if ($privateKey === '' || $publicKey === '') {
-            throw new Exception('SFTP private and public keys are required.');
-        }
-        if (!function_exists('ssh2_auth_pubkey_file')) {
-            throw new Exception('SFTP public-key authentication is not available on this server.');
-        }
-
-        $privatePath = $this->writeTemporaryKey($privateKey, 'extplorer-private-');
-        $publicPath = $this->writeTemporaryKey($publicKey, 'extplorer-public-');
-        try {
-            if (!@ssh2_auth_pubkey_file($this->conn, $user, $publicPath, $privatePath, $passphrase !== '' ? $passphrase : null)) {
-                throw new Exception('SFTP public-key authentication failed.');
-            }
-        } finally {
-            @unlink($privatePath);
-            @unlink($publicPath);
-        }
-    }
-
-    private function writeTemporaryKey(string $contents, string $prefix): string
-    {
-        $path = tempnam(sys_get_temp_dir(), $prefix);
-        if ($path === false || file_put_contents($path, $contents, LOCK_EX) !== strlen($contents)) {
-            if (is_string($path)) {
-                @unlink($path);
-            }
-            throw new Exception('Unable to prepare SFTP key material.');
-        }
-        chmod($path, 0600);
-        return $path;
-    }
-
-    private function resolvePath(string $path): string
-    {
-        return 'ssh2.sftp://' . intval($this->sftp) . $this->remotePath($path);
+        if (!$this->sftp->login($user, $credential)) throw new RuntimeException('SSH authentication failed.');
     }
 
     private function remotePath(string $path): string
     {
-        $relative = RemotePathPolicy::normalizeRelative($path);
-        return $this->root . ($this->root === '/' ? '' : '/') . $relative;
+        return rtrim($this->root, '/') . '/' . RemotePathPolicy::normalizeRelative($path);
     }
 
     public function listDirectory(string $path, bool $showHidden = true): array
     {
-        $budget = (new ResourcePolicy())->startOperation();
-        $fullPath = $this->resolvePath($path);
-        $handle = opendir($fullPath);
-        if (!$handle) return [];
-
+        $items = $this->sftp->rawlist($this->remotePath($path));
+        if (!is_array($items)) throw new RuntimeException('Unable to list SFTP directory.');
+        $this->policy->assertDirectoryEntries(count($items));
+        $budget = $this->policy->startOperation();
         $results = [];
-        while (false !== ($file = readdir($handle))) {
+        foreach ($items as $name => $stat) {
             $budget->tick();
-            if ($file === '.' || $file === '..') continue;
-            if (!$showHidden && str_starts_with($file, '.')) continue;
-            if (count($results) >= (new ResourcePolicy())->maxDirectoryEntries()) {
-                closedir($handle);
-                throw new Exception('Directory listing exceeds the configured resource limit.');
-            }
-
-            $itemPath = $fullPath . '/' . $file;
-            $relPath = ($path === '' || $path === '/' ? '' : trim($path, '/') . '/') . $file;
-            
-            $stat = ssh2_sftp_stat($this->sftp, $this->remotePath($relPath));
-            $isDir = ($stat['mode'] & 040000) === 040000;
-
-            $results[] = [
-                'name' => $file,
-                'path' => $relPath,
-                'type' => $isDir ? 'dir' : 'file',
-                'size' => $stat['size'] ?? 0,
-                'mtime' => $stat['mtime'] ?? 0,
-                'perms' => substr(sprintf('%o', $stat['mode']), -4),
-                'owner' => $stat['uid'] ?? 'unknown',
-                'group' => $stat['gid'] ?? 'unknown',
-                'extension' => $isDir ? null : pathinfo($file, PATHINFO_EXTENSION),
-                'mime' => $isDir ? 'directory' : 'application/octet-stream'
-            ];
+            if ($name === '.' || $name === '..' || (!$showHidden && str_starts_with($name, '.'))) continue;
+            $relative = trim($path, '/') === '' ? $name : trim($path, '/') . '/' . $name;
+            $results[] = $this->metadata($relative, $stat);
         }
-        closedir($handle);
         return $results;
+    }
+
+    public function getMetadata(string $path): ?array
+    {
+        $stat = $this->sftp->lstat($this->remotePath($path));
+        return is_array($stat) ? $this->metadata($path, $stat) : null;
+    }
+
+    private function metadata(string $path, array $stat): array
+    {
+        $directory = (($stat['mode'] ?? 0) & 0170000) === 0040000;
+        return ['name' => basename($path), 'path' => $path, 'type' => $directory ? 'dir' : 'file',
+            'size' => $stat['size'] ?? 0, 'mtime' => $stat['mtime'] ?? 0,
+            'perms' => substr(sprintf('%o', $stat['mode'] ?? 0), -4), 'owner' => $stat['uid'] ?? 'unknown',
+            'group' => $stat['gid'] ?? 'unknown', 'extension' => $directory ? null : pathinfo($path, PATHINFO_EXTENSION),
+            'mime' => $directory ? 'directory' : 'application/octet-stream'];
     }
 
     public function readFile(string $path): string
     {
-        $stream = $this->openReadStream($path);
-        try {
-            return (new ResourcePolicy())->readStream($stream);
-        } finally {
-            fclose($stream);
-        }
+        $stream = $this->readStream($path, $this->policy->maxContentBytes());
+        try { return $this->policy->readStream($stream); }
+        finally { fclose($stream); }
     }
 
-    public function openReadStream(string $path)
+    public function openReadStream(string $path) { return $this->readStream($path, $this->policy->maxDownloadBytes()); }
+
+    private function readStream(string $path, int $limit)
     {
-        $policy = new ResourcePolicy();
-        $stat = @ssh2_sftp_stat($this->sftp, $this->remotePath($path));
-        if (is_array($stat) && (int)$stat['size'] > $policy->maxDownloadBytes()) {
-            throw new Exception('Remote file exceeds the configured download limit.');
-        }
-        $stream = fopen($this->resolvePath($path), 'rb');
-        if ($stream === false) {
-            throw new Exception("Could not open SFTP file: {$path}");
-        }
-        return $stream;
+        $metadata = $this->getMetadata($path);
+        if ($metadata === null || $metadata['type'] !== 'file') throw new RuntimeException('SFTP source is not a file.');
+        if ($metadata['size'] > $limit) throw new RuntimeException('Remote file exceeds the configured read limit.');
+        $stream = tmpfile();
+        if ($stream === false) throw new RuntimeException('Unable to allocate SFTP read staging.');
+        try {
+            if (!$this->sftp->get($this->remotePath($path), $stream, 0, $limit + 1)) throw new RuntimeException('Unable to read SFTP source.');
+            $size = ftell($stream);
+            if ($size === false || $size > $limit) throw new RuntimeException('Remote file exceeds the configured read limit.');
+            rewind($stream);
+            return $stream;
+        } catch (\Throwable $error) { fclose($stream); throw $error; }
     }
 
     public function writeFile(string $path, string $content): bool
     {
+        $stream = fopen('php://temp', 'w+b');
+        if ($stream === false) throw new RuntimeException('Unable to allocate content stream.');
+        try {
+            if (fwrite($stream, $content) !== strlen($content)) throw new RuntimeException('Unable to buffer content.');
+            rewind($stream);
+            return $this->writeStream($path, $stream);
+        } finally { fclose($stream); }
+    }
+
+    public function writeStream(string $path, $source): bool
+    {
         $this->assertWritableTarget($path);
-        return file_put_contents($this->resolvePath($path), $content) !== false;
-    }
-
-    public function delete(string $path): bool
-    {
-        $full = $this->resolvePath($path);
-        
-        if (is_dir($full)) {
-            return $this->deleteRecursive($path);
+        $directory = dirname(RemotePathPolicy::normalizeRelative($path));
+        $temporary = ($directory === '.' ? '' : $directory . '/') . '.extplorer-write-' . bin2hex(random_bytes(16));
+        $buffer = tmpfile();
+        if ($buffer === false) throw new RuntimeException('Unable to allocate SFTP write staging.');
+        try {
+            $this->policy->copyStream($source, $buffer);
+            rewind($buffer);
+            if (!$this->sftp->put($this->remotePath($temporary), $buffer)) throw new RuntimeException('Unable to write SFTP staging file.');
+            // Unsupported atomic overwrite is a retryable failure, never a delete-before-rename fallback.
+            $activated = $this->sftp->posix_rename($this->remotePath($temporary), $this->remotePath($path));
+            if (!$activated) throw new RuntimeException('Remote server could not activate the staged file.');
+            return true;
+        } finally {
+            fclose($buffer);
+            $this->sftp->delete($this->remotePath($temporary), false);
         }
-        return ssh2_sftp_unlink($this->sftp, $this->remotePath($path));
-    }
-
-    private function deleteRecursive(string $relPath): bool
-    {
-        $items = $this->listDirectory($relPath);
-        foreach ($items as $item) {
-            if ($item['type'] === 'dir') {
-                $this->deleteRecursive($item['path']);
-            } else {
-                ssh2_sftp_unlink($this->sftp, $this->remotePath($item['path']));
-            }
-        }
-        return ssh2_sftp_rmdir($this->sftp, $this->remotePath($relPath));
     }
 
     public function createDirectory(string $path): bool
     {
         $this->assertWritableTarget($path);
-        return ssh2_sftp_mkdir($this->sftp, $this->remotePath($path), 0755, true);
+        return $this->sftp->mkdir($this->remotePath($path), 0755, true);
+    }
+
+    public function delete(string $path): bool
+    {
+        $budget = $this->policy->startOperation();
+        return $this->deleteTree($path, $budget);
+    }
+
+    private function deleteTree(string $path, \App\Services\OperationBudget $budget): bool
+    {
+        $budget->tick();
+        $metadata = $this->getMetadata($path);
+        if ($metadata === null) return true;
+        if ($metadata['type'] !== 'dir') return $this->sftp->delete($this->remotePath($path), false);
+        foreach ($this->listDirectory($path) as $item) if (!$this->deleteTree($item['path'], $budget)) return false;
+        return $this->sftp->rmdir($this->remotePath($path));
     }
 
     public function rename(string $from, string $to): bool
     {
         $this->assertWritableTarget($to);
-        return ssh2_sftp_rename($this->sftp, $this->remotePath($from), $this->remotePath($to));
+        return $this->sftp->rename($this->remotePath($from), $this->remotePath($to));
     }
 
-    public function move(string $from, string $to): bool
-    {
-        return $this->rename($from, $to);
-    }
+    public function move(string $from, string $to): bool { return $this->rename($from, $to); }
 
     public function copy(string $from, string $to): bool
     {
-        $this->assertWritableTarget($to);
-        $meta = $this->getMetadata($from);
-        if (!$meta) {
-            throw new Exception("Source not found: $from");
-        }
+        $source = RemotePathPolicy::normalizeRelative($from);
+        $target = RemotePathPolicy::normalizeRelative($to);
+        if ($source === $target || ($source !== '' && str_starts_with($target, $source . '/'))) throw new RuntimeException('Cannot copy a directory into itself.');
+        return $this->copyTree($source, $target, $this->policy->startOperation());
+    }
 
-        if ($meta['type'] === 'dir') {
-            $this->assertValidCopyTarget($from, $to);
-            return $this->copyDirectory($from, $to);
+    private function copyTree(string $from, string $to, \App\Services\OperationBudget $budget): bool
+    {
+        $budget->tick();
+        $metadata = $this->getMetadata($from);
+        if ($metadata === null) throw new RuntimeException('SFTP source was not found.');
+        if ($metadata['type'] === 'dir') {
+            if ($this->getMetadata($to) === null && !$this->createDirectory($to)) return false;
+            foreach ($this->listDirectory($from) as $item) if (!$this->copyTree($item['path'], $to . '/' . $item['name'], $budget)) return false;
+            return true;
         }
-
         $stream = $this->openReadStream($from);
-        try {
-            return file_put_contents($this->resolvePath($to), $stream) !== false;
-        } finally {
-            fclose($stream);
-        }
-    }
-
-    private function copyDirectory(string $from, string $to): bool
-    {
-        if (!$this->createDirectory($to)) {
-            $existing = $this->getMetadata($to);
-            if (!$existing || $existing['type'] !== 'dir') {
-                throw new Exception("Could not create destination directory: $to");
-            }
-        }
-
-        foreach ($this->listDirectory($from) as $item) {
-            $targetPath = $this->joinRelativePath($to, $item['name']);
-            if ($item['type'] === 'dir') {
-                $this->copyDirectory($item['path'], $targetPath);
-                continue;
-            }
-
-            $content = $this->readFile($item['path']);
-            if (!$this->writeFile($targetPath, $content)) {
-                throw new Exception("Could not copy file to: $targetPath");
-            }
-        }
-
-        return true;
-    }
-
-    private function assertValidCopyTarget(string $from, string $to): void
-    {
-        $source = $this->normalizeRelativePath($from);
-        $target = $this->normalizeRelativePath($to);
-
-        if ($source === $target) {
-            throw new Exception('Cannot copy a directory onto itself.');
-        }
-
-        if ($source !== '' && str_starts_with($target, $source . '/')) {
-            throw new Exception('Cannot copy a directory into one of its descendants.');
-        }
-    }
-
-    private function joinRelativePath(string $base, string $name): string
-    {
-        $base = trim($base, '/');
-        return $base === '' ? $name : $base . '/' . $name;
-    }
-
-    private function normalizeRelativePath(string $path): string
-    {
-        return RemotePathPolicy::normalizeRelative($path);
+        try { return $this->writeStream($to, $stream); }
+        finally { fclose($stream); }
     }
 
     private function assertWritableTarget(string $path): void
     {
-        $normalized = trim(str_replace('\\', '/', $path), '/');
-        if ($normalized === '') {
-            throw new Exception('A target filename is required.');
-        }
-        (new FileNamePolicy())->assertSafePath($normalized);
-    }
-
-    public function getMetadata(string $path): ?array
-    {
-        $dir = dirname($path);
-        $name = basename($path);
-        $items = $this->listDirectory($dir === '.' ? '' : $dir);
-        foreach ($items as $item) {
-            if ($item['name'] === $name) return $item;
-        }
-        return null;
+        (new FileNamePolicy())->assertSafePath(RemotePathPolicy::normalizeRelative($path));
+        if (trim($path, '/') === '') throw new RuntimeException('A target filename is required.');
     }
 
     public function chmod(string $path, int $mode, bool $recursive = false): bool
     {
-        if ($recursive) throw new Exception("Recursive chmod not supported on SFTP");
-        return ssh2_sftp_chmod($this->sftp, $this->remotePath($path), $mode);
+        if ($recursive) throw new RuntimeException('Recursive chmod is unavailable on SFTP.');
+        return $this->sftp->chmod($mode, $this->remotePath($path)) !== false;
     }
 
-    public function chown(string $path, $user, $group, bool $recursive = false): bool
-    {
-        throw new Exception("SFTP chown not implemented via SSH2 extension wrapper");
-    }
-
-    public function archive(array $sources, string $destination): bool { throw new Exception("Not supported"); }
-    public function extract(string $archive, string $destination): bool { throw new Exception("Not supported"); }
-    public function search(string $query): array { throw new Exception("Not supported"); }
+    public function chown(string $path, $user, $group, bool $recursive = false): bool { throw new RuntimeException('SFTP chown is unavailable.'); }
+    public function archive(array $sources, string $destination): bool { throw new RuntimeException('Archives are unavailable on SFTP.'); }
+    public function extract(string $archive, string $destination): bool { throw new RuntimeException('Archives are unavailable on SFTP.'); }
+    public function search(string $query): array { throw new RuntimeException('Search is unavailable on SFTP.'); }
     public function getDirectorySize(string $path): int { return 0; }
 }

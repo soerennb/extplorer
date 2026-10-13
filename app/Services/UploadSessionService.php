@@ -260,6 +260,7 @@ final class UploadSessionService
             $totalChunks = (int)($manifest['total_chunks'] ?? 0);
             $chunkSize = (int)($manifest['chunk_size'] ?? 0);
             if ($index < 0 || $index >= $totalChunks || $size < 0 || $size > $chunkSize) {
+                log_message('error', 'Invalid chunk index={index} count={count} bytes={bytes} chunk_size={chunk_size}', ['index' => $index, 'count' => $totalChunks, 'bytes' => $size, 'chunk_size' => $chunkSize]);
                 throw new RuntimeException('Invalid upload chunk metadata.');
             }
 
@@ -301,6 +302,7 @@ final class UploadSessionService
             $totalChunks = (int)($manifest['total_chunks'] ?? 0);
             $chunkSize = (int)($manifest['chunk_size'] ?? 0);
             if ($index < 0 || $index >= $totalChunks || $size < 0 || $size > $chunkSize) {
+                log_message('error', 'Invalid chunk index={index} count={count} bytes={bytes} chunk_size={chunk_size}', ['index' => $index, 'count' => $totalChunks, 'bytes' => $size, 'chunk_size' => $chunkSize]);
                 throw new RuntimeException('Invalid upload chunk metadata.');
             }
             if (array_key_exists((string)$index, $manifest['chunks'] ?? [])) {
@@ -351,105 +353,78 @@ final class UploadSessionService
         return $missing;
     }
 
-    public function assemble(string $id, string $destination): int
+    public function bindTarget(string $id, \App\Services\VFS\UploadTarget $target): void
     {
-        try {
-            return $this->withLock($id, function () use ($id, $destination): int {
+        $this->withLock($id, function () use ($id, $target): void {
+            $manifest = $this->get($id);
+            $this->assertOwner($manifest, $target->owner);
+            if (isset($manifest['target'])) throw new RuntimeException('Upload target is already bound.');
+            $manifest['target'] = $target->toArray();
+            $this->writeManifest($id, $manifest);
+        });
+    }
+
+    /** The callback accepts a complete private payload; consume chunks only after acceptance. */
+    public function finalize(string $id, callable $callback): array
+    {
+        return $this->withLock($id, function () use ($id, $callback): array {
             $manifest = $this->get($id);
             $missing = $this->missingChunks($manifest);
-            if ($missing !== []) {
-                throw new RuntimeException('Upload is incomplete. Missing chunks: ' . implode(',', $missing));
-            }
-
-            $expectedSize = $manifest['total_size'];
-            $actualSize = 0;
-            $directory = dirname($destination);
-            $this->assertSafeDestinationDirectory($directory);
-
-            $temporary = tempnam($directory, '.extplorer-upload-');
-            if ($temporary === false) {
-                throw new RuntimeException('Unable to create final upload temporary file.');
-            }
-
+            if ($missing !== []) throw new RuntimeException('Upload is incomplete. Missing chunks: ' . implode(',', $missing));
+            $temporary = tempnam($this->root, '.assembled-' . $id . '-');
+            if ($temporary === false) throw new RuntimeException('Unable to create assembled payload.');
+            $output = null;
             try {
                 $output = fopen($temporary, 'wb');
-                if ($output === false) {
-                    throw new RuntimeException('Unable to open final upload temporary file.');
+                if ($output === false) throw new RuntimeException('Unable to open assembled payload.');
+                $bytes = 0;
+                $policy = new \App\Services\ResourcePolicy();
+                $budget = $policy->startOperation();
+                for ($index = 0; $index < (int)$manifest['total_chunks']; $index++) {
+                    $budget->tick();
+                    $path = $this->chunkPath($id, $index);
+                    $this->assertNoSymlinkComponents($path);
+                    $input = fopen($path, 'rb');
+                    if ($input === false) throw new RuntimeException('Unable to read upload chunk.');
+                    try {
+                        $expected = (int)$manifest['chunks'][(string)$index];
+                        $copied = $policy->copyStream($input, $output, max(1, $expected));
+                        if ($copied !== $expected) throw new RuntimeException('Upload chunk changed during assembly.');
+                        $bytes += $copied;
+                    } finally { fclose($input); }
                 }
-
-                $totalChunks = (int)$manifest['total_chunks'];
-                for ($index = 0; $index < $totalChunks; $index++) {
-                    $chunkPath = $this->chunkPath($id, $index);
-                    $input = fopen($chunkPath, 'rb');
-                    if ($input === false) {
-                        fclose($output);
-                        throw new RuntimeException('Unable to read upload chunk.');
-                    }
-
-                    $copied = stream_copy_to_stream($input, $output);
-                    fclose($input);
-                    if ($copied === false) {
-                        fclose($output);
-                        throw new RuntimeException('Unable to assemble upload.');
-                    }
-                    $actualSize += $copied;
-                }
-
-                if (!fclose($output)) {
-                    throw new RuntimeException('Unable to finalize upload.');
-                }
-
-                if ($expectedSize !== null && (int)$expectedSize !== $actualSize) {
-                    throw new RuntimeException('Assembled upload size does not match the declared size.');
-                }
-
-                // Re-check immediately before activation. The application-level
-                // path policy validates the managed root; this additional check
-                // prevents a direct service/CLI caller from activating through
-                // a symlinked directory.
-                $this->assertSafeDestinationDirectory($directory);
-                if (is_link($destination) || !rename($temporary, $destination)) {
-                    throw new RuntimeException('Unable to activate assembled upload.');
-                }
-
+                fclose($output);
+                $output = null;
+                if ($manifest['total_size'] !== null && (int)$manifest['total_size'] !== $bytes) throw new RuntimeException('Assembled upload size does not match the declared size.');
+                $result = $callback($manifest, $temporary, $bytes);
                 $this->removeDirectory($this->directory($id));
                 $this->stagingResources->release($this->reservationId($id));
-                return $actualSize;
+                return $result;
             } finally {
-                if (is_file($temporary)) {
-                    @unlink($temporary);
-                }
+                if (is_resource($output)) fclose($output);
+                if (is_file($temporary)) unlink($temporary);
             }
-            });
-        } catch (\Throwable $e) {
-            // Missing chunks are retriable. Other assembly errors are
-            // terminal and must not leave attacker-controlled staging data.
-            if (!str_starts_with($e->getMessage(), 'Upload is incomplete.')) {
-                $this->abort($id);
-            }
-            throw $e;
-        }
+        });
+    }
+
+    public function assemble(string $id, string $destination): int
+    {
+        $result = $this->finalize($id, function (array $manifest, string $payload, int $bytes) use ($destination): array {
+            $this->assertSafeDestinationDirectory(dirname($destination));
+            if (is_link($destination) || !rename($payload, $destination)) throw new RuntimeException('Unable to activate assembled upload.');
+            return ['bytes' => $bytes];
+        });
+        return $result['bytes'];
     }
 
     public function abort(string $id): void
     {
-        $this->assertValidId($id);
-        $directory = $this->directory($id);
-        $owner = null;
-        $manifestPath = $this->manifestPath($id);
-        if (AtomicFileStore::exists($manifestPath)) {
-            try {
-                $manifest = AtomicFileStore::read($manifestPath);
-                $owner = is_string($manifest['owner'] ?? null) ? $manifest['owner'] : null;
-            } catch (\Throwable) {
-                // The directory is still removed below; stale reservations are
-                // handled by the scheduled cleanup.
-            }
-        }
-        if (is_dir($directory)) {
-            $this->removeDirectory($directory);
-        }
-        $this->stagingResources->release($this->reservationId($id), $owner);
+        $this->withLock($id, function () use ($id): void {
+            $manifest = AtomicFileStore::read($this->manifestPath($id));
+            if (isset($manifest['target'])) (new UploadTargetResolver())->release(\App\Services\VFS\UploadTarget::fromArray($manifest['target']));
+            $this->removeDirectory($this->directory($id));
+            $this->stagingResources->release($this->reservationId($id), $manifest['owner'] ?? null);
+        });
     }
 
     public function cleanupExpired(): int
@@ -484,6 +459,7 @@ final class UploadSessionService
                     return false;
                 }
 
+                if (isset($manifest['target'])) (new UploadTargetResolver())->release(\App\Services\VFS\UploadTarget::fromArray($manifest['target']));
                 $this->removeDirectory($this->directory($id));
                 $this->stagingResources->release(
                     $this->reservationId($id),

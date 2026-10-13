@@ -147,6 +147,26 @@ final class CsrfHeaderFilterTest extends CIUnitTestCase
         (new CSRF())->before($request);
     }
 
+    #[DataProvider('deployments')]
+    public function testBinaryUploadBytesSurviveCsrfVerification(string $baseURL, string $indexPage): void
+    {
+        $request = $this->request($baseURL, $indexPage, 'api/upload/session/fixture/chunk/0');
+        $request->setMethod('PUT');
+        $request->setGlobal('cookie', []);
+        $request->setHeader('X-Requested-With', 'XMLHttpRequest');
+        $request->setHeader('Content-Type', 'application/octet-stream');
+        $request->setBody("binary\0&name=value+space\xff");
+        Services::injectMock('request', $request);
+        $request->setHeader('X-CSRF-TOKEN', csrf_hash());
+        $before = service('security')->getHash();
+        $this->assertNull((new \App\Filters\CsrfFilter())->before($request));
+        $this->assertSame("binary\0&name=value+space\xff", $request->getBody());
+        $this->assertNotSame($before, service('security')->getHash());
+        $request->setHeader('X-CSRF-TOKEN', 'invalid');
+        $this->expectException(SecurityException::class);
+        (new \App\Filters\CsrfFilter())->before($request);
+    }
+
     private function request(string $baseURL, string $indexPage, string $route): IncomingRequest
     {
         $config = clone config('App');

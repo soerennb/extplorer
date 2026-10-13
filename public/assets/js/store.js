@@ -1,6 +1,7 @@
 const store = Vue.reactive({
     cwd: '',
     files: [],
+    capabilities: {},
     selectedItems: [],
     searchQuery: '',
     sortBy: 'name',
@@ -158,6 +159,7 @@ const store = Vue.reactive({
             });
             
             if (generation !== this.navigationGeneration) return;
+            this.capabilities = res.capabilities || {};
             const items = res.items;
             this.pagination.total = res.total;
             this.pagination.page = page;

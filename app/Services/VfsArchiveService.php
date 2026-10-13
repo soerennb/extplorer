@@ -88,15 +88,10 @@ final class VfsArchiveService
 
         // Local adapters can hand ZipArchive a filename, allowing libzip to
         // stream the source instead of materializing it in PHP memory.
-        if (method_exists($fs, 'resolvePath')) {
-            try {
-                $fullPath = $fs->resolvePath($path);
-                if (is_file($fullPath) && $zip->addFile($fullPath, $entryName)) {
-                    return;
-                }
-            } catch (\Throwable $exception) {
-                // Remote adapters intentionally do not expose physical paths.
-            }
+        $fullPath = \App\Services\VFS\FileCapabilities::localPath($fs, $path);
+        if ($fullPath !== null) {
+            if (!is_file($fullPath) || !$zip->addFile($fullPath, $entryName)) throw new RuntimeException('Cannot add local file to download archive.');
+            return;
         }
 
         $temporary = tempnam($this->stagingDirectory, '.extplorer-archive-');

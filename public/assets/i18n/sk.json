@@ -276,6 +276,7 @@
     "allowed": "Povolené",
     "blocked_user": "Blokované (používateľ)",
     "blocked_system": "Blokované (systém)",
+    "upload_pending_scan": "Čaká na antivírusovú kontrolu",
     "share_title": "Zdieľať",
     "share_desc": "Vytvorte verejný odkaz na túto položku.",
     "shared_page_title": "Zdieľané - eXtplorer",

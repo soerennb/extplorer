@@ -232,7 +232,7 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
                 remoteFields.classList.remove('show');
             }
             if (val === 'ftp') port.value = 21;
-            if (val === 'ftps') port.value = 990;
+            if (val === 'ftps') port.value = 21;
             if (val === 'sftp') port.value = 22;
             if (val !== 'sftp' && authMethod) authMethod.value = 'password';
             const keyAuth = val === 'sftp' && authMethod && authMethod.value === 'private_key';

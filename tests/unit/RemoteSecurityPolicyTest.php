@@ -75,15 +75,28 @@ class RemoteSecurityPolicyTest extends CIUnitTestCase
         $this->assertSame('aabbcc', (new RemoteSecurityPolicy())->normalizeFingerprint('AA:BB:CC'));
     }
 
+    public function testNegotiatedHostKeyAcceptsSha256Base64AndRejectsDifferentKey(): void
+    {
+        putenv('EXTPLORER_REMOTE_SECURITY_MODE=strict');
+        $raw = "key bytes with mixed case\0\xff";
+        $public = 'ssh-ed25519 ' . base64_encode($raw);
+        $pin = 'SHA256:' . rtrim(base64_encode(hash('sha256', $raw, true)), '=');
+        $policy = new RemoteSecurityPolicy();
+        $this->assertSame(hash('sha256', $raw), $policy->normalizeFingerprint($pin));
+        $policy->assertSshHostKey($public, $pin);
+        $policy->assertSshHostKey($public, hash('sha256', $raw));
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('fingerprint verification failed');
+        $policy->assertSshHostKey('ssh-ed25519 ' . base64_encode('different key'), $pin);
+    }
+
     public function testRemotePathPolicyRejectsTraversal(): void
     {
         $this->expectException(\RuntimeException::class);
         RemotePathPolicy::normalizeRelative('incoming/../../etc');
     }
 
-    /**
-     * @dataProvider invalidRemotePathProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('invalidRemotePathProvider')]
     public function testRemotePathPolicyRejectsAmbiguousPathForms(string $path): void
     {
         $this->expectException(\RuntimeException::class);

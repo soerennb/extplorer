@@ -98,7 +98,7 @@ final class DatabaseStateBackend implements StateBackendInterface
             foreach ($directories as $directory) {
                 $key = hash('sha256', 'extplorer-state-lock:' . $this->normalizePath($directory));
                 $insert = $mysql
-                    ? "INSERT IGNORE INTO {$table} (state_key,state_path,payload,revision,updated_at) VALUES (?,?,?,?,?)"
+                    ? "INSERT INTO {$table} (state_key,state_path,payload,revision,updated_at) VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE state_key=state_key"
                     : "INSERT INTO {$table} (state_key,state_path,payload,revision,updated_at) VALUES (?,?,?,?,?) ON CONFLICT (state_key) DO NOTHING";
                 if ($this->db->query($insert, [$key, $directory . '/.extplorer-state.lock', '{}', 0, gmdate(DATE_ATOM)]) === false) throw new RuntimeException('Unable to initialize SQL state lock.');
                 // SQLite has no row locks. Acquiring a write reservation before

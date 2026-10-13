@@ -34,5 +34,6 @@
     "file_extensions": "Extensions de fichiers",
     "allowed": "Autorisé",
     "blocked_user": "Bloqué (Utilisateur)",
-    "blocked_system": "Bloqué (Système)"
+    "blocked_system": "Bloqué (Système)",
+    "upload_pending_scan": "En attente de l’analyse antivirus"
 }

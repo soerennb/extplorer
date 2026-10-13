@@ -141,6 +141,20 @@ scanner command:
 php spark uploads:scan-result QUARANTINE_ID clean --reason 'clamav: OK'
 ```
 
+Authenticated uploads support local storage, saved FTP/FTPS/SFTP mounts and direct
+remote sessions, including resumable chunks. FTP remains available only in the
+configured compatibility mode. FTPS uses explicit TLS (`AUTH TLS`), normally on
+port 21; implicit TLS on port 990 is not supported by PHP's FTP extension. The
+container verifies that its FTP extension includes SSL support during the build.
+
+Pending uploads appear as **Waiting for virus scan**. Before activation, the worker
+rechecks the current endpoint allowlist, account permissions, mount namespace,
+filename policy, quota and payload checksum. A failed activation retains pending
+bytes for retry. Direct remote upload credentials are encrypted separately, expire
+with the scan deadline and are released when the scan finishes. Scanner workers
+must use the same writable state and encryption key as the application. Local-only
+trash and version history remain unavailable on remote storage.
+
 Use `infected`, `error` or `expired` to reject a payload. Quarantine capacity
 and retention are bounded by `EXTPLORER_UPLOAD_QUARANTINE_MAX_MB`,
 `EXTPLORER_UPLOAD_QUARANTINE_MAX_FILES` and

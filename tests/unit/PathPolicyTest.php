@@ -24,9 +24,7 @@ class PathPolicyTest extends CIUnitTestCase
         }
     }
 
-    /**
-     * @dataProvider invalidRelativePathProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('invalidRelativePathProvider')]
     public function testInvalidRelativePathFormsAreRejected(string $path, string $message): void
     {
         $this->expectException(RuntimeException::class);

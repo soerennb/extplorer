@@ -2,654 +2,171 @@
 
 namespace App\Controllers;
 
-use App\Services\VFS\LocalAdapter;
 use App\Services\FileNamePolicy;
+use App\Services\FileUploadPolicy;
+use App\Services\FileUploadService;
 use App\Services\LogService;
+use App\Services\UploadChunkInput;
 use App\Services\UploadSessionService;
-use Exception;
+use App\Services\UploadTargetResolver;
+use App\Services\VFS\UploadTarget;
+use RuntimeException;
 
+/** HTTP transport adapters share the same payload acceptance and activation service. */
 trait ApiTransferOperationsTrait
 {
-    private function isExtensionAllowed(string $filename): bool
-    {
-        return (new FileNamePolicy())->isAllowed(
-            $filename,
-            session('allowed_extensions'),
-            session('blocked_extensions')
-        );
-    }
-
     public function upload()
     {
         if (!can('upload')) return $this->failForbidden();
-        $path = $this->request->getPost('path') ?? '/';
-        if ($path === '') {
-            $path = '/';
-        }
-        $file = $this->request->getFile('file');
-        $relativePath = $this->request->getPost('relativePath') ?? '';
-        $conflict = $this->normalizeUploadConflict($this->request->getPost('conflict') ?? 'replace');
-
-        if (!$file || !$file->isValid()) {
-            return $this->fail($file ? $file->getErrorString() : 'No file uploaded');
-        }
-
         try {
-            $name = $this->sanitizeUploadFilename((string)$file->getClientName());
-        } catch (\Throwable $e) {
-            return $this->fail($e->getMessage());
-        }
-        if (!$this->isExtensionAllowed($name)) {
-            return $this->fail("Uploading files with this extension is not allowed.");
-        }
-
-        try {
-            $settingsService = new \App\Services\SettingsService();
-            $settings = $settingsService->getSettings();
-
-            $fileSize = (int)$file->getSize();
-            if ($this->exceedsMaxUploadSize($fileSize, $settings)) {
-                $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
-                return $this->fail("File exceeds the maximum allowed upload size of {$maxMb} MB.");
-            }
-
-            if ($this->wouldExceedUserQuota($fileSize, $settings)) {
-                return $this->fail('Upload would exceed the configured per-user storage quota.');
-            }
-
-            $target = $this->resolveUploadTarget($path, $name, (string)$relativePath, $conflict);
-            if ($target['skip']) {
-                return $this->respond([
-                    'status' => 'skipped',
-                    'filename' => $target['filename'],
-                    'path' => $target['relativePath'],
-                ]);
-            }
-
-            $quarantine = new \App\Services\UploadQuarantineService();
-            if ($quarantine->enabled()) {
-                $incoming = $quarantine->incomingPath();
-                try {
-                    if (!$file->move(dirname($incoming), basename($incoming), false)) {
-                        throw new Exception('Unable to stage uploaded file for security scanning.');
-                    }
-                    $pending = $quarantine->stage($incoming, $target['dir'] . DIRECTORY_SEPARATOR . $target['filename'], [
-                        'owner' => (string)session('username'),
-                        'filename' => $target['filename'],
-                        'relative_path' => $target['relativePath'],
-                        'conflict' => $conflict,
-                        'source' => 'authenticated-upload',
-                    ]);
-                } finally {
-                    if (is_file($incoming)) {
-                        @unlink($incoming);
-                    }
-                }
-                LogService::log('Upload Quarantined', $path, 'File: ' . $target['relativePath']);
-                return $this->respond([
-                    'status' => 'pending_scan',
-                    'quarantine_id' => $pending['id'],
-                    'filename' => $target['filename'],
-                    'path' => $target['relativePath'],
-                ], 202);
-            }
-
-            if (!$file->move($target['dir'], $target['filename'], true)) {
-                throw new Exception('Unable to store uploaded file.');
-            }
-            LogService::log('Upload', $path, 'File: ' . $target['relativePath']);
-            return $this->respond([
-                'status' => 'success',
-                'filename' => $target['filename'],
-                'path' => $target['relativePath'],
-            ]);
-        } catch (\Throwable $e) {
-            return $this->fail($e->getMessage());
-        }
+            $file = $this->request->getFile('file');
+            if (!$file || !$file->isValid()) throw new RuntimeException($file ? $file->getErrorString() : 'No file uploaded');
+            $result = (new FileUploadService())->upload($file->getTempName(), $this->fs, (string)session('username'),
+                (array)(session('connection') ?? ['mode' => 'local']), $this->uploadPostString('path', '/'),
+                $file->getClientName(), $this->uploadPostString('relativePath'),
+                (new FileUploadPolicy())->conflict($this->uploadPostString('conflict', 'replace')));
+            return $this->uploadResult($result, 'Upload');
+        } catch (\Throwable $exception) { return $this->uploadFailure($exception); }
     }
 
     public function uploadChunk()
     {
         if (!can('upload')) return $this->failForbidden();
-
-        $file = $this->request->getFile('file');
-        $filenameRaw = $this->request->getPost('filename');
-        $chunkIndex = (int)$this->request->getPost('chunkIndex');
-        $totalChunks = (int)$this->request->getPost('totalChunks');
-        $declaredSizeRaw = $this->request->getPost('fileSize');
-        $declaredSize = is_numeric($declaredSizeRaw) ? (int)$declaredSizeRaw : null;
-        $targetPath = $this->request->getPost('path') ?? '/';
-        if ($targetPath === '') {
-            $targetPath = '/';
-        }
-        $relativePath = $this->request->getPost('relativePath') ?? '';
-        $conflict = $this->normalizeUploadConflict($this->request->getPost('conflict') ?? 'replace');
-
-        if (!$file || !$file->isValid()) return $this->fail('Invalid chunk');
-
         try {
-            $filename = $this->sanitizeUploadFilename((string)$filenameRaw);
-        } catch (\Throwable $e) {
-            return $this->fail($e->getMessage());
-        }
-
-        if ($totalChunks < 1 || $chunkIndex < 0 || $chunkIndex >= $totalChunks) {
-            return $this->fail('Invalid chunk metadata.');
-        }
-
-        if (!$this->isExtensionAllowed($filename)) {
-            return $this->fail("Uploading files with this extension is not allowed.");
-        }
-
-        try {
-            $settings = (new \App\Services\SettingsService())->getSettings();
-            $chunkSize = (int)$file->getSize();
-            if ($this->exceedsMaxUploadSize($chunkSize, $settings)) {
-                $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
-                return $this->fail("Chunk exceeds the maximum allowed upload size of {$maxMb} MB.");
-            }
-
+            $file = $this->request->getFile('file');
+            if (!$file || !$file->isValid()) throw new RuntimeException('Invalid chunk');
+            $policy = new FileUploadPolicy();
+            $filename = $policy->filename($this->uploadPostString('filename'));
+            $base = $this->uploadPostString('path', '/');
+            $relative = $this->uploadPostString('relativePath');
+            $index = (int)$this->request->getPost('chunkIndex');
+            $count = (int)$this->request->getPost('totalChunks');
+            $declared = $this->request->getPost('fileSize');
+            $size = is_numeric($declared) ? (int)$declared : null;
+            $conflict = $policy->conflict($this->uploadPostString('conflict', 'replace'));
             $sessions = new UploadSessionService();
-            $owner = (string)session('username');
-            $legacyKey = $targetPath . '|' . $relativePath . '|' . $filename;
-            $session = $sessions->legacy(
-                $owner,
-                $legacyKey,
-                $targetPath,
-                (string)$relativePath,
-                $filename,
-                $totalChunks,
-                $declaredSize,
-                max(UploadSessionService::MIN_CHUNK_SIZE, 1024 * 1024),
-                $conflict
-            );
-            $manifest = $sessions->get($session['id']);
-            $sessions->assertOwner($manifest, $owner);
-            $stagingPath = $sessions->stagingPath($session['id']);
-            if (!$file->move(dirname($stagingPath), basename($stagingPath), false)) {
-                return $this->fail('Unable to store upload chunk.', 500);
-            }
-            try {
-                $sessions->storeChunkFromPath($session['id'], $chunkIndex, $stagingPath, $chunkSize);
-            } finally {
-                if (is_file($stagingPath)) {
-                    @unlink($stagingPath);
-                }
-            }
-
-            if ($chunkIndex !== $totalChunks - 1) {
-                return $this->respond(['status' => 'chunk_saved', 'index' => $chunkIndex]);
-            }
-
+            $key = $base . '|' . $relative . '|' . $filename;
+            $connection = (array)(session('connection') ?? ['mode' => 'local']);
+            if (($connection['mode'] ?? 'local') !== 'local') $key .= '|' . \App\Services\RemoteUploadCredentials::fingerprint($connection);
+            $session = $sessions->legacy((string)session('username'), $key, $base, $relative, $filename, $count, $size, 1024 * 1024, $conflict);
+            $this->bindUploadTarget($sessions, $session['id']);
+            (new UploadChunkInput())->store($this->request, $sessions, $session['id'], $index);
             $manifest = $sessions->get($session['id']);
             $missing = $sessions->missingChunks($manifest);
-            if ($missing !== []) {
-                return $this->respond([
-                    'status' => 'chunk_saved',
-                    'index' => $chunkIndex,
-                    'missing' => $missing,
-                ], 202);
+            if ($index !== $count - 1 || $missing !== []) {
+                $result = ['status' => 'chunk_saved', 'index' => $index];
+                if ($index === $count - 1 && $missing !== []) $result['missing'] = $missing;
+                return $this->respond($result, isset($result['missing']) ? 202 : 200);
             }
-
-            $settingsService = new \App\Services\SettingsService();
-            $settings = $settingsService->getSettings();
-            $assembledSize = array_sum(array_map('intval', $manifest['chunks'] ?? []));
-            if ($this->exceedsMaxUploadSize($assembledSize, $settings)) {
-                $sessions->abort($session['id']);
-                $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
-                return $this->fail("File exceeds the maximum allowed upload size of {$maxMb} MB.");
-            }
-            if ($this->wouldExceedUserQuota($assembledSize, $settings)) {
-                $sessions->abort($session['id']);
-                return $this->fail('Upload would exceed the configured per-user storage quota.');
-            }
-
-            $target = $this->resolveUploadTarget($targetPath, $filename, (string)$relativePath, $conflict);
-            if ($target['skip']) {
-                $sessions->abort($session['id']);
-                return $this->respond([
-                    'status' => 'skipped',
-                    'filename' => $target['filename'],
-                    'path' => $target['relativePath'],
-                ]);
-            }
-
-            $quarantine = new \App\Services\UploadQuarantineService();
-            $finalPath = $target['dir'] . DIRECTORY_SEPARATOR . $target['filename'];
-            if ($quarantine->enabled()) {
-                $incoming = $quarantine->incomingPath();
-                try {
-                    $sessions->assemble($session['id'], $incoming);
-                    $pending = $quarantine->stage($incoming, $finalPath, [
-                        'owner' => $owner,
-                        'filename' => $target['filename'],
-                        'relative_path' => $target['relativePath'],
-                        'conflict' => $conflict,
-                        'source' => 'legacy-chunked-upload',
-                    ]);
-                } finally {
-                    if (is_file($incoming)) {
-                        @unlink($incoming);
-                    }
-                }
-                LogService::log('Upload Quarantined', $targetPath, 'File: ' . $target['relativePath']);
-                return $this->respond([
-                    'status' => 'pending_scan',
-                    'quarantine_id' => $pending['id'],
-                    'filename' => $target['filename'],
-                    'path' => $target['relativePath'],
-                ], 202);
-            }
-
-            $sessions->assemble($session['id'], $finalPath);
-            LogService::log('Upload (Chunked)', $targetPath, 'File: ' . $target['relativePath']);
-            return $this->respond([
-                'status' => 'assembled',
-                'filename' => $target['filename'],
-                'path' => $target['relativePath'],
-            ]);
-        } catch (\Throwable $e) {
-            return $this->fail($e->getMessage());
-        }
+            return $this->completeUpload($sessions, $session['id']);
+        } catch (\Throwable $exception) { return $this->uploadFailure($exception); }
     }
 
     public function uploadSessionCreate()
     {
         if (!can('upload')) return $this->failForbidden();
-
-        $json = $this->request->getJSON(true) ?? [];
-        $filename = (string)($json['filename'] ?? '');
-        $targetPath = (string)($json['path'] ?? '/');
-        $relativePath = (string)($json['relativePath'] ?? '');
-        $totalSize = filter_var($json['totalSize'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
-        $chunkSize = (int)($json['chunkSize'] ?? 1024 * 1024);
-        $totalChunks = filter_var($json['totalChunks'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        $conflict = $this->normalizeUploadConflict((string)($json['conflict'] ?? 'replace'));
-
         try {
-            $filename = $this->sanitizeUploadFilename($filename);
-            if (!$this->isExtensionAllowed($filename)) {
-                return $this->fail('Uploading files with this extension is not allowed.');
-            }
-            $this->fs->resolvePath($targetPath);
-            $this->sanitizeUploadRelativeSegments($relativePath);
-            $settings = (new \App\Services\SettingsService())->getSettings();
-            if ($totalSize === false || $this->exceedsMaxUploadSize((int)$totalSize, $settings)) {
-                return $this->fail('Upload exceeds the configured size limit.', 413);
-            }
-
-            $service = new UploadSessionService();
-            $session = $service->create(
-                (string)session('username'),
-                $targetPath,
-                $relativePath,
-                $filename,
-                (int)$totalSize,
-                $chunkSize,
-                $totalChunks === false ? null : (int)$totalChunks,
-                $conflict
-            );
-
+            $input = $this->request->getJSON(true);
+            if (!is_array($input)) throw new RuntimeException('A JSON object is required.');
+            $policy = new FileUploadPolicy();
+            $filename = $policy->filename($this->uploadJsonString($input, 'filename'));
+            $size = filter_var($input['totalSize'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+            if ($size === false) throw new RuntimeException('Invalid upload size.');
+            $policy->assertSize($size);
+            $count = filter_var($input['totalChunks'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            $sessions = new UploadSessionService();
+            $session = $sessions->create((string)session('username'), $this->uploadJsonString($input, 'path', '/'),
+                $this->uploadJsonString($input, 'relativePath'), $filename, $size, (int)($input['chunkSize'] ?? 1024 * 1024),
+                $count === false ? null : $count, $policy->conflict($this->uploadJsonString($input, 'conflict', 'replace')));
+            try { $this->bindUploadTarget($sessions, $session['id']); }
+            catch (\Throwable $exception) { $sessions->abort($session['id']); throw $exception; }
             return $this->respondCreated(['status' => 'created'] + $session);
-        } catch (\Throwable $e) {
-            return $this->fail($e->getMessage());
-        }
+        } catch (\Throwable $exception) { return $this->uploadFailure($exception); }
     }
 
     public function uploadSessionChunk(string $id, int $index)
     {
         if (!can('upload')) return $this->failForbidden();
-
-        $file = $this->request->getFile('file');
-        if (!$file || !$file->isValid()) {
-            return $this->fail('Invalid upload chunk.');
-        }
-
         try {
-            $service = new UploadSessionService();
-            $manifest = $service->get($id);
-            $service->assertOwner($manifest, (string)session('username'));
-            $size = (int)$file->getSize();
-            $stagingPath = $service->stagingPath($id);
-            if (!$file->move(dirname($stagingPath), basename($stagingPath), false)) {
-                return $this->fail('Unable to store upload chunk.', 500);
-            }
-            try {
-                $service->storeChunkFromPath($id, $index, $stagingPath, $size);
-            } finally {
-                if (is_file($stagingPath)) {
-                    @unlink($stagingPath);
-                }
-            }
-
+            $sessions = new UploadSessionService();
+            $this->bindUploadTarget($sessions, $id);
+            (new UploadChunkInput())->store($this->request, $sessions, $id, $index);
             return $this->respond(['status' => 'chunk_saved', 'index' => $index]);
-        } catch (\Throwable $e) {
-            return $this->fail($e->getMessage());
-        }
+        } catch (\Throwable $exception) { return $this->uploadFailure($exception); }
     }
 
     public function uploadSessionComplete(string $id)
     {
         if (!can('upload')) return $this->failForbidden();
-
-        try {
-            $service = new UploadSessionService();
-            $manifest = $service->get($id);
-            $service->assertOwner($manifest, (string)session('username'));
-            $settings = (new \App\Services\SettingsService())->getSettings();
-            $size = array_sum(array_map('intval', $manifest['chunks'] ?? []));
-            if ($this->exceedsMaxUploadSize($size, $settings) || $this->wouldExceedUserQuota($size, $settings)) {
-                $service->abort($id);
-                return $this->fail('Upload exceeds the configured storage limit.', 413);
-            }
-
-            $target = $this->resolveUploadTarget(
-                (string)$manifest['target_path'],
-                (string)$manifest['filename'],
-                (string)$manifest['relative_path'],
-                (string)$manifest['conflict']
-            );
-            if ($target['skip']) {
-                $service->abort($id);
-                return $this->respond([
-                    'status' => 'skipped',
-                    'filename' => $target['filename'],
-                    'path' => $target['relativePath'],
-                ]);
-            }
-
-            $quarantine = new \App\Services\UploadQuarantineService();
-            $finalPath = $target['dir'] . DIRECTORY_SEPARATOR . $target['filename'];
-            if ($quarantine->enabled()) {
-                $incoming = $quarantine->incomingPath();
-                try {
-                    $service->assemble($id, $incoming);
-                    $pending = $quarantine->stage($incoming, $finalPath, [
-                        'owner' => (string)session('username'),
-                        'filename' => $target['filename'],
-                        'relative_path' => $target['relativePath'],
-                        'conflict' => (string)$manifest['conflict'],
-                        'source' => 'resumable-upload',
-                    ]);
-                } finally {
-                    if (is_file($incoming)) {
-                        @unlink($incoming);
-                    }
-                }
-                LogService::log('Upload Quarantined', (string)$manifest['target_path'], 'File: ' . $target['relativePath']);
-                return $this->respond([
-                    'status' => 'pending_scan',
-                    'quarantine_id' => $pending['id'],
-                    'filename' => $target['filename'],
-                    'path' => $target['relativePath'],
-                ], 202);
-            }
-
-            $service->assemble($id, $finalPath);
-            LogService::log('Upload (Resumable)', (string)$manifest['target_path'], 'File: ' . $target['relativePath']);
-            return $this->respond([
-                'status' => 'assembled',
-                'filename' => $target['filename'],
-                'path' => $target['relativePath'],
-            ]);
-        } catch (\Throwable $e) {
-            return $this->fail($e->getMessage());
-        }
+        try { return $this->completeUpload(new UploadSessionService(), $id); }
+        catch (\Throwable $exception) { return $this->uploadFailure($exception); }
     }
 
     public function uploadSessionAbort(string $id)
     {
         if (!can('upload')) return $this->failForbidden();
-
         try {
-            $service = new UploadSessionService();
-            $manifest = $service->get($id);
-            $service->assertOwner($manifest, (string)session('username'));
-            $service->abort($id);
+            $sessions = new UploadSessionService();
+            $manifest = $sessions->get($id);
+            $sessions->assertOwner($manifest, (string)session('username'));
+            $sessions->abort($id);
             return $this->respond(['status' => 'aborted']);
-        } catch (\Throwable $e) {
-            return $this->fail($e->getMessage());
-        }
+        } catch (\Throwable $exception) { return $this->uploadFailure($exception); }
     }
 
-    private function exceedsMaxUploadSize(int $bytes, array $settings): bool
+    private function bindUploadTarget(UploadSessionService $sessions, string $id): void
     {
-        $maxMb = (int)($settings['upload_max_file_mb'] ?? 0);
-        if ($maxMb <= 0) {
-            return false;
+        $manifest = $sessions->get($id);
+        $owner = (string)session('username');
+        $connection = (array)(session('connection') ?? ['mode' => 'local']);
+        $sessions->assertOwner($manifest, $owner);
+        $resolver = new UploadTargetResolver();
+        if (isset($manifest['target'])) {
+            $resolver->assertContext(UploadTarget::fromArray($manifest['target']), $owner, $connection);
+            return;
         }
-        $maxBytes = $maxMb * 1024 * 1024;
-        return $bytes > $maxBytes;
+        $prepared = (new FileUploadService())->prepare($this->fs, (string)$manifest['target_path'],
+            (string)$manifest['filename'], (string)$manifest['relative_path']);
+        if (!(new FileNamePolicy())->isAllowed($prepared['filename'], session('allowed_extensions'), session('blocked_extensions'))) throw new RuntimeException('Uploading files with this extension is not allowed.');
+        $sessions->bindTarget($id, $resolver->capture($owner, $connection, $prepared['path']));
     }
 
-    private function normalizeUploadConflict(string $conflict): string
+    private function completeUpload(UploadSessionService $sessions, string $id)
     {
-        $conflict = strtolower(trim($conflict));
-        if (!in_array($conflict, ['replace', 'skip', 'keep_both'], true)) {
-            return 'replace';
-        }
-
-        return $conflict;
+        $this->bindUploadTarget($sessions, $id);
+        $result = $sessions->finalize($id, function (array $manifest, string $payload): array {
+            $result = (new FileUploadService())->accept($payload, UploadTarget::fromArray($manifest['target']),
+                (string)$manifest['conflict'], (new FileUploadPolicy())->target((string)$manifest['target_path'],
+                    (string)$manifest['filename'], (string)$manifest['relative_path'])['relativePath']);
+            if ($result['status'] === 'success') $result['status'] = 'assembled';
+            return $result;
+        });
+        return $this->uploadResult($result, 'Upload (Chunked)');
     }
 
-    /**
-     * @return array{dir: string, filename: string, relativePath: string, skip: bool}
-     */
-    private function resolveUploadTarget(string $basePath, string $filename, string $relativePath, string $conflict): array
+    private function uploadResult(array $result, string $action)
     {
-        $targetDir = $this->fs->resolvePath($basePath);
-        if (!is_dir($targetDir)) {
-            throw new Exception('Target directory does not exist.');
-        }
-        $this->assertNoSymlinkComponents($targetDir);
-
-        $segments = $this->sanitizeUploadRelativeSegments($relativePath);
-        if ($segments !== []) {
-            $filename = array_pop($segments) ?: $filename;
-        }
-
-        if ($segments !== []) {
-            foreach ($segments as $segment) {
-                $targetDir .= DIRECTORY_SEPARATOR . $segment;
-                if (is_link($targetDir)) {
-                    throw new Exception('Upload path contains a symbolic link.');
-                }
-                if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
-                    throw new Exception('Unable to create upload folder.');
-                }
-                $this->assertNoSymlinkComponents($targetDir);
-            }
-        }
-
-        $filename = $this->sanitizeUploadFilename($filename);
-        $targetPath = $targetDir . DIRECTORY_SEPARATOR . $filename;
-        if (is_link($targetPath)) {
-            throw new Exception('Upload target contains a symbolic link.');
-        }
-        if (file_exists($targetPath)) {
-            if ($conflict === 'skip') {
-                return [
-                    'dir' => $targetDir,
-                    'filename' => $filename,
-                    'relativePath' => $this->joinUploadRelativePath($segments, $filename),
-                    'skip' => true,
-                ];
-            }
-
-            if ($conflict === 'keep_both') {
-                if (!is_file($targetPath)) {
-                    throw new Exception('An upload directory already uses this name.');
-                }
-                $filename = $this->nextUploadFilename($targetDir, $filename);
-            } elseif (!is_file($targetPath)) {
-                throw new Exception('An upload directory already uses this name.');
-            }
-        }
-
-        return [
-            'dir' => $targetDir,
-            'filename' => $filename,
-            'relativePath' => $this->joinUploadRelativePath($segments, $filename),
-            'skip' => false,
-        ];
+        LogService::log($action, $result['path'] ?? '', 'File: ' . ($result['filename'] ?? ''));
+        return $this->respond($result, $result['status'] === 'pending_scan' ? 202 : 200);
     }
 
-    /**
-     * @return array<int, string>
-     */
-    private function sanitizeUploadRelativeSegments(string $relativePath): array
+    private function uploadFailure(\Throwable $exception)
     {
-        $relativePath = str_replace('\\', '/', $relativePath);
-        if ($relativePath === '') {
-            return [];
-        }
-
-        $segments = [];
-        if (str_starts_with($relativePath, '/') || preg_match('~\A[A-Za-z]:~', $relativePath)) {
-            throw new Exception('Upload path must be relative.');
-        }
-        foreach (explode('/', $relativePath) as $segment) {
-            if ($segment === '' || $segment === '.') {
-                continue;
-            }
-            if ($segment === '..') {
-                throw new Exception('Upload path traversal is not allowed.');
-            }
-            $segments[] = $this->sanitizeUploadFilename($segment);
-        }
-
-        return $segments;
+        $status = $exception->getCode();
+        return $this->fail($exception->getMessage(), $status >= 400 && $status <= 599 ? $status : 400);
     }
 
-    /**
-     * @param array<int, string> $segments
-     */
-    private function joinUploadRelativePath(array $segments, string $filename): string
+    private function uploadPostString(string $key, string $default = ''): string
     {
-        return implode('/', array_merge($segments, [$filename]));
+        $value = $this->request->getPost($key) ?? $default;
+        if (!is_string($value)) throw new RuntimeException('Invalid upload parameter.');
+        return $value;
     }
 
-    private function nextUploadFilename(string $targetDir, string $filename): string
+    private function uploadJsonString(array $input, string $key, string $default = ''): string
     {
-        $info = pathinfo($filename);
-        $base = $info['filename'] ?? $filename;
-        $extension = isset($info['extension']) && $info['extension'] !== '' ? '.' . $info['extension'] : '';
-
-        for ($i = 1; $i < 1000; $i++) {
-            $candidate = $base . ' (' . $i . ')' . $extension;
-            if (!file_exists($targetDir . DIRECTORY_SEPARATOR . $candidate) && !is_link($targetDir . DIRECTORY_SEPARATOR . $candidate)) {
-                return $candidate;
-            }
-        }
-
-        throw new Exception('Unable to create a non-conflicting filename.');
+        $value = $input[$key] ?? $default;
+        if (!is_string($value)) throw new RuntimeException('Invalid upload parameter.');
+        return $value;
     }
-
-    private function wouldExceedUserQuota(int $incomingBytes, array $settings): bool
-    {
-        $connection = session('connection');
-        if (($connection['mode'] ?? 'local') !== 'local') {
-            return false;
-        }
-
-        $quotaMb = (int)($settings['quota_per_user_mb'] ?? 0);
-        if ($quotaMb <= 0) {
-            return false;
-        }
-
-        $quotaBytes = $quotaMb * 1024 * 1024;
-        $homePath = $this->getUserHomePath();
-        $limit = $quotaBytes - $incomingBytes;
-        if ($limit <= 0) {
-            return true;
-        }
-
-        $currentUsage = $this->calculateDirectorySize($homePath, $limit + 1);
-        return ($currentUsage + $incomingBytes) > $quotaBytes;
-    }
-
-    private function getUserHomePath(): string
-    {
-        $homeDir = (string)(session('home_dir') ?? '/');
-        return (new LocalAdapter(config('Storage')->fileManagerRoot))->resolvePath($homeDir);
-    }
-
-    private function calculateDirectorySize(string $path, ?int $stopAtBytes = null): int
-    {
-        if (is_link($path)) {
-            throw new Exception('Quota path contains a symbolic link.');
-        }
-        if (!is_dir($path)) {
-            return 0;
-        }
-
-        $items = scandir($path);
-        if ($items === false) {
-            throw new Exception('Unable to scan quota path.');
-        }
-
-        $total = 0;
-        foreach ($items as $item) {
-            if ($item === '.' || $item === '..') {
-                continue;
-            }
-            $child = $path . DIRECTORY_SEPARATOR . $item;
-            if (is_link($child)) {
-                throw new Exception('Quota path contains a symbolic link.');
-            }
-            if (is_dir($child)) {
-                $remaining = $stopAtBytes === null ? null : max(1, $stopAtBytes - $total);
-                $total += $this->calculateDirectorySize($child, $remaining);
-            } elseif (is_file($child)) {
-                $size = filesize($child);
-                if ($size === false) {
-                    throw new Exception('Unable to read quota file size.');
-                }
-                $total += (int)$size;
-            }
-            if ($stopAtBytes !== null && $total >= $stopAtBytes) {
-                return $total;
-            }
-        }
-
-        return $total;
-    }
-
-    private function sanitizeUploadFilename(string $name): string
-    {
-        $name = trim($name);
-        if ($name === '') {
-            throw new Exception('Filename is required.');
-        }
-
-        if (preg_match('/[\x00-\x1F\x7F]/', $name) === 1) {
-            throw new Exception('Filename contains invalid characters.');
-        }
-        if (preg_match('/[\/\\\\]/', $name)) {
-            throw new Exception('Invalid filename.');
-        }
-        if (strlen($name) > 255) {
-            throw new Exception('Filename is too long.');
-        }
-
-        $name = basename($name);
-        if ($name === '' || $name === '.' || $name === '..') {
-            throw new Exception('Invalid filename.');
-        }
-
-        return (new FileNamePolicy())->assertSafe($name);
-    }
-
-    private function assertNoSymlinkComponents(string $path): void
-    {
-        $current = rtrim($path, '/\\');
-        while ($current !== dirname($current)) {
-            if (is_link($current)) {
-                throw new Exception('Upload path contains a symbolic link.');
-            }
-            $current = dirname($current);
-        }
-    }
-
-
 }

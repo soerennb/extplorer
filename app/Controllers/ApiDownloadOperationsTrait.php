@@ -19,16 +19,7 @@ trait ApiDownloadOperationsTrait
 
         try {
             $policy = new ResourcePolicy();
-            $fullPath = null;
-            try {
-                $candidate = $this->fs->resolvePath($path);
-                if (is_file($candidate) || is_dir($candidate)) {
-                    $fullPath = $candidate;
-                }
-            } catch (\Throwable $e) {
-                // Remote adapters expose content through the VFS rather than
-                // a local physical path.
-            }
+            $fullPath = \App\Services\VFS\FileCapabilities::localPath($this->fs, $path);
 
             $metadata = $this->fs->getMetadata($path);
             $isDirectory = ($metadata['type'] ?? null) === 'dir' || ($fullPath !== null && is_dir($fullPath));
@@ -111,7 +102,8 @@ trait ApiDownloadOperationsTrait
         if (!$path) return $this->fail('Path required');
 
         try {
-            $fullPath = $this->fs->resolvePath($path);
+            $fullPath = \App\Services\VFS\FileCapabilities::localPath($this->fs, $path);
+            if ($fullPath === null) return $this->fail('Thumbnails are unavailable for this storage.', 422, 'unsupported_operation');
             if (!is_file($fullPath)) return $this->failNotFound();
 
             $sourceSize = filesize($fullPath);

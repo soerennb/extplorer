@@ -982,17 +982,14 @@ return function render(_ctx, _cache) {
             }
         },
         async uploadChunk(formData) {
-             const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-             if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
-
              // Retry logic
              let retries = 3;
              while (retries > 0) {
                  try {
-                     const res = await fetch(window.baseUrl + 'api/transfer/upload', { method: 'POST', headers, body: formData });
-                     if (!res.ok) throw new Error(await Api.readErrorMessage(res, this.t('transfer_upload_failed', 'Upload failed')));
+                     await Api.upload('api/transfer/upload', formData);
                      return;
                  } catch(e) {
+                     if (e.name === 'SessionExpiredError') throw e;
                      retries--;
                      if (retries === 0) throw e;
                      await new Promise(r => setTimeout(r, 1000));
@@ -1063,7 +1060,7 @@ return function render(_ctx, _cache) {
             return this.t('transfer_filter_active', 'Active');
         },
         transferLink(hash) {
-            return window.baseUrl + 's/' + hash;
+            return Api.route('s/' + hash);
         },
         async copyItemLink(hash) {
             const link = this.transferLink(hash);

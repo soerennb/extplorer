@@ -426,12 +426,7 @@ return function render(_ctx, _cache) {
             files.value = files.value.filter((f) => f.id !== item.id);
         };
         const cancelFile = (item) => {
-            if (item.xhr) item.xhr.abort();
             if (item.controller) item.controller.abort();
-            if (item.uploadSessionId) {
-                Api.delete(`upload/session/${encodeURIComponent(item.uploadSessionId)}`).catch(() => {});
-                item.uploadSessionId = null;
-            }
             item.status = 'canceled';
             item.errorMessage = t('upload_canceled', 'Canceled');
         };
@@ -443,7 +438,7 @@ return function render(_ctx, _cache) {
             item.resultPath = '';
         };
         const clearFinished = () => {
-            files.value = files.value.filter((item) => !['done', 'skipped'].includes(item.status));
+            files.value = files.value.filter((item) => !['done', 'skipped', 'pending_scan'].includes(item.status));
         };
 
         const progressClass = (value) => {
@@ -452,115 +447,15 @@ return function render(_ctx, _cache) {
         };
 
         const uploadableCount = computed(() => files.value.filter(f => f.valid && ['pending', 'error', 'canceled'].includes(f.status)).length);
-        const completedCount = computed(() => files.value.filter(f => ['done', 'skipped'].includes(f.status)).length);
+        const completedCount = computed(() => files.value.filter(f => ['done', 'skipped', 'pending_scan'].includes(f.status)).length);
         const hasBlockedFiles = computed(() => files.value.some(f => f.status === 'blocked'));
-        const canUploadHere = computed(() => Boolean(store.cwd && store.cwd !== '/'));
+        const canUploadHere = computed(() => Boolean(store.cwd && store.cwd !== '/' && store.capabilities?.upload !== false));
         const totalBytes = computed(() => files.value.filter(f => f.valid).reduce((sum, item) => sum + item.file.size, 0));
         const totalUploadedBytes = computed(() => files.value.filter(f => f.valid).reduce((sum, item) => {
-            if (['done', 'skipped'].includes(item.status)) return sum + item.file.size;
+            if (['done', 'skipped', 'pending_scan'].includes(item.status)) return sum + item.file.size;
             return sum + Math.round(item.file.size * (item.progress / 100));
         }, 0));
         const totalProgress = computed(() => totalBytes.value > 0 ? Math.round((totalUploadedBytes.value / totalBytes.value) * 100) : 0);
-
-        const updateCsrfFromResponse = (res) => {
-            if (Api.refreshCsrfToken) Api.refreshCsrfToken(res);
-        };
-
-        const uploadSingle = (item, path) => new Promise((resolve, reject) => {
-            const fd = new FormData();
-            fd.append('file', item.file);
-            fd.append('path', path);
-            fd.append('relativePath', item.relativePath);
-            fd.append('conflict', conflictMode.value);
-
-            const xhr = new XMLHttpRequest();
-            item.xhr = xhr;
-            xhr.open('POST', window.baseUrl + 'api/upload');
-            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-            if (window.csrfHash) xhr.setRequestHeader('X-CSRF-TOKEN', window.csrfHash);
-            xhr.upload.onprogress = (event) => {
-                if (!event.lengthComputable) return;
-                item.progress = Math.min(99, Math.round((event.loaded / event.total) * 100));
-            };
-            xhr.onload = async () => {
-                item.xhr = null;
-                const headerToken = xhr.getResponseHeader('X-CSRF-HASH');
-                if (headerToken) window.csrfHash = headerToken;
-                let payload = {};
-                try {
-                    payload = xhr.responseText ? JSON.parse(xhr.responseText) : {};
-                } catch (e) {
-                    payload = { message: xhr.responseText };
-                }
-                if (xhr.status < 200 || xhr.status >= 300) {
-                    if (Api.isSessionExpiredPayload && Api.isSessionExpiredPayload(payload, xhr.status)) {
-                        Api.handleSessionExpired(payload);
-                        return;
-                    }
-                    reject(new Error(Api.errorFromPayload(payload, 'Upload failed')));
-                    return;
-                }
-                resolve(payload);
-            };
-            xhr.onerror = () => {
-                item.xhr = null;
-                reject(new Error(Api.genericNetworkError()));
-            };
-            xhr.onabort = () => {
-                item.xhr = null;
-                reject(new DOMException('Upload canceled', 'AbortError'));
-            };
-            xhr.send(fd);
-        });
-
-        const uploadChunked = async (item, path) => {
-            const CHUNK_SIZE = 1024 * 1024;
-            const total = Math.ceil(item.file.size / CHUNK_SIZE);
-            item.controller = new AbortController();
-
-            const session = await Api.post('upload/session', {
-                filename: item.file.name,
-                path,
-                relativePath: item.relativePath,
-                totalSize: item.file.size,
-                chunkSize: CHUNK_SIZE,
-                totalChunks: total,
-                conflict: conflictMode.value
-            });
-            item.uploadSessionId = session.id;
-            if (!item.uploadSessionId) {
-                throw new Error('Upload session could not be created.');
-            }
-
-            for (let i = 0; i < total; i++) {
-                const chunk = item.file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-                const fd = new FormData();
-                fd.append('file', chunk);
-
-                const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-                if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
-                const res = await fetch(window.baseUrl + 'api/upload/session/' + encodeURIComponent(item.uploadSessionId) + '/chunk/' + i, {
-                    method: 'PUT',
-                    headers,
-                    body: fd,
-                    signal: item.controller.signal
-                });
-                updateCsrfFromResponse(res);
-                const payload = await Api.parseResponseBody(res);
-                if (!res.ok) {
-                    if (Api.isSessionExpiredPayload && Api.isSessionExpiredPayload(payload, res.status)) {
-                        return Api.blockForSessionExpired(payload);
-                    }
-                    throw new Error(Api.errorFromPayload(payload, 'Upload chunk failed'));
-                }
-
-                item.progress = Math.round(((i + 1) / total) * 100);
-            }
-
-            const result = await Api.post(`upload/session/${encodeURIComponent(item.uploadSessionId)}/complete`);
-            item.uploadSessionId = null;
-            return result || {};
-        };
 
         const startUpload = async () => {
             if (!canUploadHere.value) {
@@ -578,12 +473,15 @@ return function render(_ctx, _cache) {
                 item.errorMessage = '';
                 item.resultPath = '';
                 try {
-                    const payload = item.file.size <= 1024 * 1024
-                        ? await uploadSingle(item, path)
-                        : await uploadChunked(item, path);
+                    item.controller = new AbortController();
+                    const payload = await FileUploadClient.upload(item.file, {
+                        path, relativePath: item.relativePath, conflict: conflictMode.value,
+                        signal: item.controller.signal,
+                        onProgress: (fraction) => { item.progress = Math.min(99, Math.round(fraction * 100)); }
+                    });
                     item.progress = 100;
                     item.resultPath = payload.path || item.relativePath || item.file.name;
-                    item.status = payload.status === 'skipped' ? 'skipped' : 'done';
+                    item.status = ['skipped', 'pending_scan'].includes(payload.status) ? payload.status : 'done';
                 } catch(e) {
                     item.status = e.name === 'AbortError' ? 'canceled' : 'error';
                     item.errorMessage = item.status === 'canceled' ? t('upload_canceled', 'Canceled') : e.message;
@@ -601,7 +499,7 @@ return function render(_ctx, _cache) {
                 await store.loadPath(store.cwd);
                 store.refreshTree();
             }
-            if (files.value.length > 0 && files.value.every(f => ['done', 'skipped', 'blocked'].includes(f.status))) {
+            if (files.value.length > 0 && files.value.every(f => ['done', 'skipped', 'pending_scan', 'blocked'].includes(f.status))) {
                 Swal.fire(i18n.t('uploaded'), '', 'success');
             }
         };
@@ -631,6 +529,7 @@ return function render(_ctx, _cache) {
 
         const statusLabel = (item) => {
             const labels = {
+                pending_scan: t('upload_pending_scan', 'Waiting for virus scan'),
                 pending: t('ready', 'Ready'),
                 blocked: t('blocked', 'Blocked'),
                 uploading: t('uploading', 'Uploading...'),
@@ -643,6 +542,7 @@ return function render(_ctx, _cache) {
         };
 
         const statusBadgeClass = (item) => {
+            if (item.status === 'pending_scan') return 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
             if (item.status === 'done') return 'bg-success-subtle text-success border border-success-subtle';
             if (item.status === 'skipped') return 'bg-secondary-subtle text-secondary border border-secondary-subtle';
             if (item.status === 'uploading') return 'bg-primary-subtle text-primary border border-primary-subtle';

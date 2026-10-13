@@ -214,6 +214,22 @@ class LocalAdapterSecurityTest extends CIUnitTestCase
         }
     }
 
+    public function testZipUnixSymlinkAttributesAreRejected(): void
+    {
+        $root = sys_get_temp_dir() . '/extplorer_zip_link_' . bin2hex(random_bytes(8));
+        mkdir($root . '/extract', 0700, true);
+        $zip = new \ZipArchive();
+        $zip->open($root . '/link.zip', \ZipArchive::CREATE);
+        $zip->addFromString('link.txt', '/outside.txt');
+        $zip->setExternalAttributesName('link.txt', \ZipArchive::OPSYS_UNIX, 0120777 << 16);
+        $zip->close();
+        try {
+            $this->expectException(\Exception::class);
+            $this->expectExceptionMessage('symbolic link');
+            (new LocalAdapter($root))->extract('link.zip', 'extract');
+        } finally { $this->removeTree($root); }
+    }
+
     private function removeTree(string $path): void
     {
         if (!is_dir($path)) {

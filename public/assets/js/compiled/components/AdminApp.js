@@ -115,7 +115,7 @@ return function render(_ctx, _cache) {
 })(Vue),
     data() {
         return {
-            baseUrl: window.baseUrl || '/',
+            baseUrl: Api.route(''),
             currentUsername: window.username || '',
             activeSection: 'users',
             activeSettingsTab: 'email',

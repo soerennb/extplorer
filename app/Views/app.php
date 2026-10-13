@@ -567,6 +567,7 @@
     <!-- Scripts -->
     <script <?= csp_script_nonce() ?>>
         window.baseUrl = <?= json_encode(base_url(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.routeBaseUrl = <?= json_encode(rtrim(site_url(), '/') . '/', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         window.appVersion = <?= json_encode(config('App')->version, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         window.appEnvironment = <?= json_encode(ENVIRONMENT, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         window.userRole = <?= json_encode(session('role') ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
@@ -631,16 +632,22 @@
     <script src="<?= base_url('assets/js/diff.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/diff2html-ui.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/api.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/file-upload-client.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/store.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/i18n.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/compiled/components/FileTree.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/compiled/components/UserAdmin.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/profile/mounts.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/profile/webdav.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/profile/security.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/compiled/components/UserProfile.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/compiled/components/ShareModal.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/compiled/components/UploadModal.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/compiled/components/FileHistoryModal.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/compiled/components/TransferModal.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/compiled/app-render.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/file-preview.js?v=' . config('App')->version) ?>"></script>
+    <script src="<?= base_url('assets/js/file-drag-drop.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/app.js?v=' . config('App')->version) ?>"></script>
 </body>
 </html>

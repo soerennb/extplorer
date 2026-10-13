@@ -5,7 +5,7 @@ namespace App\Services\VFS;
 use App\Services\ResourcePolicy;
 use Exception;
 
-class VirtualAdapter implements IFileSystem
+class VirtualAdapter implements IFileSystem, StreamWritableFileSystem, LocalPathFileSystem
 {
     /** @var array<string, IFileSystem> */
     private array $mounts = [];
@@ -38,6 +38,27 @@ class VirtualAdapter implements IFileSystem
         }
 
         return [null, $path];
+    }
+
+    /** @return array{0: IFileSystem, 1: string} */
+    public function resolveTarget(string $path): array
+    {
+        [$adapter, $relative] = $this->resolveMount($path);
+        if ($adapter === null) throw new Exception("Path not found: {$path}");
+        return [$adapter, $relative];
+    }
+
+    public function writeStream(string $path, $source): bool
+    {
+        [$adapter, $relative] = $this->resolveTarget($path);
+        if (!$adapter instanceof StreamWritableFileSystem) throw new Exception('Stream writing is unavailable for this storage.');
+        return $adapter->writeStream($relative, $source);
+    }
+
+    public function resolveLocalPath(string $path): ?string
+    {
+        [$adapter, $relative] = $this->resolveTarget($path);
+        return $adapter instanceof LocalPathFileSystem ? $adapter->resolveLocalPath($relative) : null;
     }
 
     public function listDirectory(string $path, bool $showHidden = true): array
@@ -178,8 +199,7 @@ class VirtualAdapter implements IFileSystem
             throw new Exception("Cross-mount directory move not implemented yet");
         }
 
-        $content = $adapterFrom->readFile($pathFrom);
-        if ($adapterTo->writeFile($pathTo, $content)) {
+        if ($this->copyAcrossAdapters($adapterFrom, $pathFrom, $adapterTo, $pathTo)) {
             return $adapterFrom->delete($pathFrom);
         }
         return false;
@@ -223,14 +243,16 @@ class VirtualAdapter implements IFileSystem
             foreach ($adapterFrom->listDirectory($pathFrom) as $item) {
                 $budget?->tick();
                 $childTarget = $this->joinRelativePath($pathTo, $item['name']);
-                $this->copyAcrossAdapters($adapterFrom, $item['path'], $adapterTo, $childTarget, $budget);
+                if (!$this->copyAcrossAdapters($adapterFrom, $item['path'], $adapterTo, $childTarget, $budget)) return false;
             }
 
             return true;
         }
 
-        $content = $adapterFrom->readFile($pathFrom);
-        return $adapterTo->writeFile($pathTo, $content);
+        if (!$adapterTo instanceof StreamWritableFileSystem) throw new Exception('Stream writing is unavailable for this storage.');
+        $source = $adapterFrom->openReadStream($pathFrom);
+        try { return $adapterTo->writeStream($pathTo, $source); }
+        finally { fclose($source); }
     }
 
     private function joinRelativePath(string $base, string $name): string
@@ -350,13 +372,9 @@ class VirtualAdapter implements IFileSystem
         return $allResults;
     }
 
-    // Proxy for legacy LocalAdapter compatibility
+    /** Legacy callers can still request a required local path. */
     public function resolvePath(string $path): string
     {
-        [$adapter, $relPath] = $this->resolveMount($path);
-        if ($adapter && method_exists($adapter, 'resolvePath')) {
-            return $adapter->resolvePath($relPath);
-        }
-        throw new Exception("Cannot resolve physical path for: $path");
+        return $this->resolveLocalPath($path) ?? throw new Exception("Cannot resolve physical path for: {$path}");
     }
 }

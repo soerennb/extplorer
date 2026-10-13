@@ -1,0 +1,28 @@
+services:
+  remote-fixture:
+    build: .
+    networks:
+      default:
+        aliases: [remote.fixture]
+    healthcheck:
+      test: [CMD-SHELL, 'nc -z 127.0.0.1 21 && nc -z 127.0.0.1 22']
+      interval: 1s
+      timeout: 2s
+      retries: 20
+  php:
+    image: ${EXTPLORER_TEST_IMAGE:-extplorer3:audit}
+    entrypoint: php
+    working_dir: /workspace
+    volumes:
+      - ../../..:/workspace
+    depends_on:
+      remote-fixture:
+        condition: service_healthy
+    environment:
+      EXTPLORER_RUN_REMOTE_TEST: '1'
+      EXTPLORER_REMOTE_ALLOW_PRIVATE_TARGETS: '1'
+      EXTPLORER_REMOTE_ENDPOINT_ALLOWLIST: |-
+        ftp://remote.fixture:21
+        ftps://remote.fixture:21
+        sftp://remote.fixture:22
+    command: ['-d', 'opcache.enable_cli=0', vendor/bin/phpunit, '--no-coverage', tests/integration/RemoteFileSystemTest.php]

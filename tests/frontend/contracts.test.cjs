@@ -39,7 +39,7 @@ test('navigation after search discards the stale search result', async () => {
     assert.equal(store.files[0].name, 'current');
 });
 
-for (const name of ['AdminUsers', 'UserAdmin']) {
+for (const name of ['AdminUsers']) {
     test(`${name} omits an unchanged password and sends a deliberate replacement`, async () => {
         const sent = [];
         const component = load(`components/${name}.js`, name, { Api: { put: async (_, payload) => sent.push(payload) } });

@@ -25,6 +25,9 @@ trait ApiFileOperationsTrait
 
         try {
             $data = $this->fs->listDirectory($path, $showHidden);
+            $capabilities = \App\Services\VFS\FileCapabilities::forPath($this->fs, $path);
+            foreach ($data as &$entry) $entry['capabilities'] = \App\Services\VFS\FileCapabilities::forPath($this->fs, (string)$entry['path']);
+            unset($entry);
             $maxEntries = (new ResourcePolicy())->maxDirectoryEntries();
             if (count($data) > $maxEntries) {
                 return $this->fail('Directory exceeds the configured entry limit.', 413);
@@ -65,7 +68,8 @@ trait ApiFileOperationsTrait
 
             return $this->respond([
                 'items' => $data,
-                'total' => $total
+                'total' => $total,
+                'capabilities' => $capabilities,
             ]);
         } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
@@ -114,9 +118,10 @@ trait ApiFileOperationsTrait
             }
             // Versioning: Backup existing file before saving
             $username = session('username');
-            $fullPath = $this->fs->resolvePath($path);
-            $versionService = new \App\Services\VersionService($username);
-            $versionService->createVersion($fullPath, $path);
+            $fullPath = \App\Services\VFS\FileCapabilities::localPath($this->fs, $path);
+            if ($fullPath !== null) {
+                (new \App\Services\VersionService($username))->createVersion($fullPath, $path);
+            }
 
             if (!$this->fs->writeFile($path, $content)) {
                 throw new Exception('Unable to save file.');
@@ -135,6 +140,7 @@ trait ApiFileOperationsTrait
         if (!$path) return $this->fail('Path required');
 
         try {
+            if (\App\Services\VFS\FileCapabilities::localPath($this->fs, $path) === null) return $this->fail('Version history is unavailable for this storage.', 422, 'unsupported_operation');
             $username = session('username');
             $versionService = new \App\Services\VersionService($username);
             return $this->respond(['versions' => $versionService->listVersions($path)]);
@@ -155,6 +161,7 @@ trait ApiFileOperationsTrait
         try {
             $username = session('username');
             $versionService = new \App\Services\VersionService($username);
+            if (\App\Services\VFS\FileCapabilities::localPath($this->fs, $path) === null) return $this->fail('Version history is unavailable for this storage.', 422, 'unsupported_operation');
             $versionService->restoreVersion($path, $versionId, $this->fs);
             LogService::log('Restore Version', $path, 'Version: ' . $versionId);
             return $this->respond(['status' => 'success']);
@@ -174,8 +181,6 @@ trait ApiFileOperationsTrait
         try {
             // Use TrashService instead of direct delete
             $username = session('username');
-            $trashService = new \App\Services\TrashService($username);
-
             $path = (string)$path;
             $normalizedPath = trim(str_replace('\\', '/', $path), '/');
             if ($normalizedPath === '') {
@@ -187,9 +192,10 @@ trait ApiFileOperationsTrait
             }
 
             // Resolve full path to verify existence and for the move operation
-            $fullPath = $this->fs->resolvePath($path);
+            $fullPath = \App\Services\VFS\FileCapabilities::localPath($this->fs, $path);
+            if ($fullPath === null) return $this->fail('Recycle bin is unavailable for this storage.', 422, 'unsupported_operation');
 
-            $trashService->moveToTrash($fullPath, $path);
+            (new \App\Services\TrashService($username))->moveToTrash($fullPath, $path);
 
             LogService::log('Move to Trash', $path);
             return $this->respond(['status' => 'success']);

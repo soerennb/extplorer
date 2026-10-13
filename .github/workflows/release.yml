@@ -114,7 +114,7 @@ jobs:
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: "8.5"
-          extensions: zip, json, gd, ftp
+          extensions: zip, json, gd, ftp, intl, mbstring, curl
           tools: composer:2.10.3
 
       - name: Cache Composer downloads
@@ -160,6 +160,18 @@ jobs:
           unzip -t "eXtplorer-${GITHUB_REF_NAME#v}-release.zip"
           php scripts/check-release-i18n.php "eXtplorer-${GITHUB_REF_NAME#v}-release.zip"
           sha256sum "eXtplorer-${GITHUB_REF_NAME#v}-release.zip" > "eXtplorer-${GITHUB_REF_NAME#v}-release.zip.sha256"
+
+      - name: Setup Node.js for native archive routing verification
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Verify all four native archive URL layouts
+        run: |
+          npm ci
+          npm run e2e:install
+          node tests/e2e/native-routing.cjs "eXtplorer-${GITHUB_REF_NAME#v}-release.zip"
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3

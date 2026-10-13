@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use RuntimeException;
+use App\Services\VFS\UploadTarget;
+use App\Services\VFS\FileCapabilities;
 
 /**
  * Holds uploaded content outside the served file tree until an external
@@ -21,12 +23,14 @@ final class UploadQuarantineService
     private string $root;
     private string $lockPath;
     private ResourcePolicy $resourcePolicy;
+    private UploadTargetResolver $targetResolver;
 
-    public function __construct(?string $root = null, ?ResourcePolicy $resourcePolicy = null)
+    public function __construct(?string $root = null, ?ResourcePolicy $resourcePolicy = null, ?UploadTargetResolver $targetResolver = null)
     {
         $this->root = rtrim($root ?? config('Storage')->uploads . DIRECTORY_SEPARATOR . 'quarantine', '/\\');
         $this->lockPath = $this->root . DIRECTORY_SEPARATOR . '.quarantine.lock';
         $this->resourcePolicy = $resourcePolicy ?? new ResourcePolicy();
+        $this->targetResolver = $targetResolver ?? new UploadTargetResolver();
         $this->ensureRoot();
     }
 
@@ -60,11 +64,18 @@ final class UploadQuarantineService
      * @param array<string, scalar|null> $metadata
      * @return array{id: string, status: string, size: int, payload_path: string}
      */
-    public function stage(string $source, string $target, array $metadata = []): array
+    public function stage(string $source, string|UploadTarget $target, array $metadata = []): array
     {
-        return $this->withLock(function () use ($source, $target, $metadata): array {
-            $this->assertSource($source);
+        $localPath = null;
+        if ($target instanceof UploadTarget) {
+            [$fs, $path] = $this->targetResolver->resolve($target);
+            $localPath = FileCapabilities::localPath($fs, $path);
+        } else {
             $this->assertTarget($target);
+            $localPath = $target;
+        }
+        return $this->withLock(function () use ($source, $target, $localPath, $metadata): array {
+            $this->assertSource($source);
             $size = (int)(filesize($source) ?: 0);
             $this->assertPendingBudget($size);
 
@@ -91,9 +102,10 @@ final class UploadQuarantineService
                 $manifest = [
                     'id' => $id,
                     'status' => 'pending',
-                    'owner' => (string)($metadata['owner'] ?? 'unknown'),
-                    'target_path' => $target,
-                    'filename' => (string)($metadata['filename'] ?? basename($target)),
+                    'owner' => $target instanceof UploadTarget ? $target->owner : (string)($metadata['owner'] ?? 'unknown'),
+                    'target_path' => $localPath ?? '',
+                    'format' => $target instanceof UploadTarget ? 2 : 1,
+                    'filename' => (string)($metadata['filename'] ?? ($target instanceof UploadTarget ? basename($target->path) : basename($target))),
                     'conflict' => (string)($metadata['conflict'] ?? 'replace'),
                     'size' => $size,
                     'sha256' => hash_file('sha256', $payloadPath),
@@ -101,6 +113,7 @@ final class UploadQuarantineService
                     'expires_at' => time() + $this->ttl(),
                     'metadata' => $this->safeMetadata($metadata),
                 ];
+                if ($target instanceof UploadTarget) $manifest['target'] = $target->toArray();
                 $this->writeManifest($manifestPath, $manifest);
                 @unlink($source);
 
@@ -163,85 +176,72 @@ final class UploadQuarantineService
      */
     public function markResult(string $id, string $status, string $reason = ''): array
     {
+        $this->assertId($id);
         $status = strtolower(trim($status));
-        if (!in_array($status, self::FINAL_STATUSES, true)) {
-            throw new RuntimeException('Upload scan result must be clean, infected, error or expired.');
-        }
-
-        return $this->withLock(function () use ($id, $status, $reason): array {
+        if (!in_array($status, self::FINAL_STATUSES, true)) throw new RuntimeException('Upload scan result must be clean, infected, error or expired.');
+        return OperationLock::run($this->root . '/.item-' . $id . '.lock', function () use ($id, $status, $reason): array {
             $manifest = $this->get($id);
-            if (($manifest['status'] ?? '') !== 'pending') {
-                throw new RuntimeException('Upload quarantine item has already been finalized.');
-            }
-
+            if (($manifest['status'] ?? '') !== 'pending') throw new RuntimeException('Upload quarantine item has already been finalized.');
             $payload = $this->payloadPath($id);
-            if (!is_file($payload) || is_link($payload)) {
-                throw new RuntimeException('Quarantined upload payload is missing.');
+            $this->assertSource($payload);
+            $target = isset($manifest['target']) ? UploadTarget::fromArray($manifest['target']) : null;
+            if ($status === 'clean') {
+                if ((int)$manifest['expires_at'] <= time()) throw new RuntimeException('Upload scan deadline expired.');
+                if ((int)filesize($payload) !== (int)$manifest['size'] || !hash_equals((string)$manifest['sha256'], (string)hash_file('sha256', $payload))) throw new RuntimeException('Quarantined payload changed after scanning.');
+                if ($target !== null) {
+                    $result = (new FileUploadService(null, $this->targetResolver))->activate($payload, $target, (string)$manifest['conflict']);
+                    $manifest['activation_status'] = $result['status'];
+                    $manifest['activated_path'] = $result['path'];
+                    unlink($payload);
+                } else {
+                    $path = (string)($manifest['target_path'] ?? '');
+                    $this->assertTarget($path);
+                    $this->promote($payload, $path, $id);
+                }
+                $manifest['promoted_at'] = time();
+            } else {
+                unlink($payload);
             }
-
             $manifest['status'] = $status;
             $manifest['result_reason'] = substr($reason, 0, 500);
             $manifest['result_at'] = time();
-            if ($status === 'clean') {
-                $target = (string)($manifest['target_path'] ?? '');
-                $this->assertTarget($target);
-                $this->promote($payload, $target, $id);
-                $manifest['promoted_at'] = time();
-            } else {
-                @unlink($payload);
-            }
             $this->writeManifest($this->manifestPath($id), $manifest);
-
-            return [
-                'id' => $id,
-                'status' => $status,
-                'target_path' => (string)($manifest['target_path'] ?? ''),
-            ];
+            if ($target !== null) $this->targetResolver->release($target);
+            return ['id' => $id, 'status' => $status, 'target_path' => $manifest['target_path'],
+                'activation_status' => $manifest['activation_status'] ?? ($status === 'clean' ? 'success' : $status)];
         });
     }
 
     public function cleanupExpired(): int
     {
-        return $this->withLock(function (): int {
-            $removed = 0;
-            $now = time();
-            foreach (glob($this->root . DIRECTORY_SEPARATOR . '*.json') ?: [] as $path) {
-                $id = basename($path, '.json');
-                if (!preg_match('/\A[a-f0-9]{32}\z/', $id)) {
-                    continue;
-                }
-                try {
-                    $manifest = $this->get($id);
-                } catch (\Throwable $exception) {
-                    continue;
-                }
-                if (($manifest['status'] ?? '') === 'pending' && (int)($manifest['expires_at'] ?? 0) <= $now) {
-                    @unlink($this->payloadPath($id));
-                    $manifest['status'] = 'expired';
-                    $manifest['result_reason'] = 'Scan deadline expired.';
-                    $manifest['result_at'] = $now;
-                    $this->writeManifest($path, $manifest);
-                    $removed++;
-                }
-            }
-
-            // A failed move/assemble can leave a private temporary file behind
-            // without a manifest. Remove only files older than the configured
-            // quarantine TTL; active uploads remain untouched.
-            $cutoff = $now - $this->ttl();
-            foreach (['.incoming-*', '.payload-*', '.manifest-*', '*.payload'] as $pattern) {
-                foreach (glob($this->root . DIRECTORY_SEPARATOR . $pattern) ?: [] as $temporary) {
-                    if (!is_file($temporary) || is_link($temporary)) {
-                        continue;
-                    }
-                    $mtime = filemtime($temporary);
-                    if ($mtime !== false && $mtime <= $cutoff) {
-                        @unlink($temporary);
-                    }
+        $removed = 0;
+        foreach (glob($this->root . '/*.json') ?: [] as $path) {
+            $id = basename($path, '.json');
+            if (preg_match('/\A[a-f0-9]{32}\z/', $id) !== 1) continue;
+            $removed += OperationLock::run($this->root . '/.item-' . $id . '.lock', function () use ($id): int {
+                try { $manifest = $this->get($id); }
+                catch (RuntimeException) { return 0; }
+                if (($manifest['status'] ?? '') !== 'pending' || (int)($manifest['expires_at'] ?? 0) > time()) return 0;
+                $payload = $this->payloadPath($id);
+                if (is_file($payload)) unlink($payload);
+                $manifest['status'] = 'expired';
+                $manifest['result_reason'] = 'Scan deadline expired.';
+                $manifest['result_at'] = time();
+                $this->writeManifest($this->manifestPath($id), $manifest);
+                if (isset($manifest['target'])) $this->targetResolver->release(UploadTarget::fromArray($manifest['target']));
+                return 1;
+            });
+        }
+        $this->withLock(function (): void {
+            $cutoff = time() - $this->ttl();
+            foreach (['.incoming-*', '.payload-*', '.manifest-*'] as $pattern) {
+                foreach (glob($this->root . '/' . $pattern) ?: [] as $path) {
+                    if (is_file($path) && !is_link($path) && (int)filemtime($path) <= $cutoff) unlink($path);
                 }
             }
-            return $removed;
         });
+        (new RemoteUploadCredentials())->cleanupExpired();
+        return $removed;
     }
 
     private function promote(string $payload, string $target, string $id): void

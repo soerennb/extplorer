@@ -84,9 +84,7 @@ class RemoteEndpointPolicyTest extends CIUnitTestCase
             ->authorize('ftp', 'files.example.com', 21);
     }
 
-    /**
-     * @dataProvider reservedAndPrivateIpv6Provider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('reservedAndPrivateIpv6Provider')]
     public function testReservedAndPrivateIpv6TargetsAreRejected(string $ip, string $message): void
     {
         putenv('EXTPLORER_REMOTE_SECURITY_MODE=compat');

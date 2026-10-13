@@ -7,7 +7,7 @@ use App\Services\RemoteEndpointPolicy;
 use App\Services\ResourcePolicy;
 use Exception;
 
-class FtpAdapter implements IFileSystem
+class FtpAdapter implements IFileSystem, StreamWritableFileSystem
 {
     private $conn;
     private string $root;
@@ -69,7 +69,9 @@ class FtpAdapter implements IFileSystem
 
     public function __destruct()
     {
-        if ($this->conn) ftp_close($this->conn);
+        if ($this->conn) {
+            try { @ftp_close($this->conn); } catch (\Throwable) {}
+        }
     }
 
     private function resolvePath(string $path): string
@@ -142,87 +144,83 @@ class FtpAdapter implements IFileSystem
     public function readFile(string $path): string
     {
         $policy = new ResourcePolicy();
-        $this->assertRemoteSize($path, $policy->maxContentBytes());
-        $temp = fopen('php://temp', 'r+');
-        if ($temp === false) {
-            throw new Exception('Unable to allocate a bounded FTP content buffer.');
-        }
-        if (ftp_fget($this->conn, $temp, $this->resolvePath($path), FTP_BINARY)) {
-            $stats = fstat($temp);
-            if (is_array($stats) && (int)$stats['size'] > $policy->maxContentBytes()) {
-                fclose($temp);
-                throw new Exception('Remote file exceeds the configured content limit.');
-            }
-            rewind($temp);
-            return $policy->readStream($temp);
-        }
-        fclose($temp);
-        throw new Exception("Could not read FTP file: $path");
+        $stream = $this->download($path, $policy->maxContentBytes());
+        try { return $policy->readStream($stream); }
+        finally { fclose($stream); }
     }
 
     public function openReadStream(string $path)
     {
-        $policy = new ResourcePolicy();
-        $this->assertRemoteSize($path, $policy->maxDownloadBytes());
+        return $this->download($path, (new ResourcePolicy())->maxDownloadBytes());
+    }
+
+    private function download(string $path, int $limit)
+    {
+        $this->assertRemoteSize($path, $limit);
         $temp = tmpfile();
-        if ($temp === false || !ftp_fget($this->conn, $temp, $this->resolvePath($path), FTP_BINARY)) {
-            if (is_resource($temp)) {
-                fclose($temp);
+        if ($temp === false) throw new Exception('Unable to allocate FTP download stream.');
+        try {
+            if (!ftp_fget($this->conn, $temp, $this->resolvePath($path), FTP_BINARY)) {
+                throw new Exception("Could not open FTP file: {$path}");
             }
-            throw new Exception("Could not open FTP file: {$path}");
-        }
-        $stats = fstat($temp);
-        if (is_array($stats) && (int)$stats['size'] > $policy->maxDownloadBytes()) {
+            $stats = fstat($temp);
+            if ($stats === false || (int)$stats['size'] > $limit) {
+                throw new Exception('Remote file exceeds the configured resource limit.');
+            }
+            rewind($temp);
+            return $temp;
+        } catch (\Throwable $error) {
             fclose($temp);
-            throw new Exception('Remote file exceeds the configured download limit.');
+            throw $error;
         }
-        rewind($temp);
-        return $temp;
     }
 
     public function writeFile(string $path, string $content): bool
     {
+        $source = fopen('php://temp', 'w+b');
+        if ($source === false) throw new Exception('Unable to allocate content stream.');
+        try {
+            if (fwrite($source, $content) !== strlen($content)) throw new Exception('Unable to buffer content.');
+            rewind($source);
+            return $this->writeStream($path, $source);
+        } finally { fclose($source); }
+    }
+
+    public function writeStream(string $path, $source): bool
+    {
         $this->assertWritableTarget($path);
-        $temp = fopen('php://temp', 'r+');
-        fwrite($temp, $content);
-        rewind($temp);
-        return ftp_fput($this->conn, $this->resolvePath($path), $temp, FTP_BINARY);
+        $relative = RemotePathPolicy::normalizeRelative($path);
+        $directory = dirname($relative);
+        $temporary = ($directory === '.' ? '' : $directory . '/') . '.extplorer-write-' . bin2hex(random_bytes(16));
+        $buffer = tmpfile();
+        if ($buffer === false) throw new Exception('Unable to stage remote write.');
+        try {
+            (new ResourcePolicy())->copyStream($source, $buffer);
+            rewind($buffer);
+            if (!ftp_fput($this->conn, $this->remotePath($temporary), $buffer, FTP_BINARY)) throw new Exception('Unable to write remote staging file.');
+            if (!ftp_rename($this->conn, $this->remotePath($temporary), $this->remotePath($relative))) throw new Exception('Remote server could not activate the staged file.');
+            return true;
+        } finally {
+            fclose($buffer);
+            @ftp_delete($this->conn, $this->remotePath($temporary));
+        }
     }
 
     public function delete(string $path): bool
     {
-        $full = $this->resolvePath($path);
-        
-        // Use rawlist to check if it's a directory
-        $raw = @ftp_rawlist($this->conn, $full);
-        if ($raw !== false) {
-            // It's a directory (or file that returns list, but we'll try recursive)
-            return $this->deleteRecursive($full);
-        }
-        
-        return @ftp_delete($this->conn, $full);
+        return $this->deleteTree($path, (new ResourcePolicy())->startOperation());
     }
 
-    private function deleteRecursive(string $fullPath): bool
+    private function deleteTree(string $path, \App\Services\OperationBudget $budget): bool
     {
-        $items = ftp_nlist($this->conn, $fullPath);
-        if ($items !== false) {
-            foreach ($items as $item) {
-                if (basename($item) === '.' || basename($item) === '..') continue;
-                
-                // ftp_nlist behavior varies (full path vs basename). 
-                // We'll normalize to full path.
-                $itemFullPath = str_contains($item, '/') ? $item : $fullPath . '/' . $item;
-
-                $raw = @ftp_rawlist($this->conn, $itemFullPath);
-                if ($raw !== false && !str_starts_with($raw[0], '-')) {
-                    $this->deleteRecursive($itemFullPath);
-                } else {
-                    @ftp_delete($this->conn, $itemFullPath);
-                }
-            }
+        $budget->tick();
+        $metadata = $this->getMetadata($path);
+        if ($metadata === null) return false;
+        if ($metadata['type'] !== 'dir') return ftp_delete($this->conn, $this->remotePath($path));
+        foreach ($this->listDirectory($path) as $item) {
+            if (!$this->deleteTree($item['path'], $budget)) return false;
         }
-        return @ftp_rmdir($this->conn, $fullPath);
+        return ftp_rmdir($this->conn, $this->remotePath($path));
     }
 
     public function createDirectory(string $path): bool
@@ -245,49 +243,29 @@ class FtpAdapter implements IFileSystem
     public function copy(string $from, string $to): bool
     {
         $this->assertWritableTarget($to);
-        $meta = $this->getMetadata($from);
-        if (!$meta) {
-            throw new Exception("Source not found: $from");
-        }
-
-        if ($meta['type'] === 'dir') {
-            $this->assertValidCopyTarget($from, $to);
-            return $this->copyDirectory($from, $to);
-        }
-
-        // FTP doesn't have a native copy. Stream through a bounded temporary
-        // file instead of materializing the complete source in PHP memory.
-        $stream = $this->openReadStream($from);
-        $destination = $this->resolvePath($to);
-        try {
-            return ftp_fput($this->conn, $destination, $stream, FTP_BINARY);
-        } finally {
-            fclose($stream);
-        }
+        $this->assertValidCopyTarget($from, $to);
+        return $this->copyTree($from, $to, (new ResourcePolicy())->startOperation());
     }
 
-    private function copyDirectory(string $from, string $to): bool
+    private function copyTree(string $from, string $to, \App\Services\OperationBudget $budget): bool
     {
+        $budget->tick();
+        $meta = $this->getMetadata($from);
+        if ($meta === null) throw new Exception("Source not found: $from");
+        if ($meta['type'] !== 'dir') {
+            $stream = $this->openReadStream($from);
+            try { return $this->writeStream($to, $stream); }
+            finally { fclose($stream); }
+        }
         if (!$this->createDirectory($to)) {
             $existing = $this->getMetadata($to);
-            if (!$existing || $existing['type'] !== 'dir') {
+            if ($existing === null || $existing['type'] !== 'dir') {
                 throw new Exception("Could not create destination directory: $to");
             }
         }
-
         foreach ($this->listDirectory($from) as $item) {
-            $targetPath = $this->joinRelativePath($to, $item['name']);
-            if ($item['type'] === 'dir') {
-                $this->copyDirectory($item['path'], $targetPath);
-                continue;
-            }
-
-            $content = $this->readFile($item['path']);
-            if (!$this->writeFile($targetPath, $content)) {
-                throw new Exception("Could not copy file to: $targetPath");
-            }
+            if (!$this->copyTree($item['path'], $this->joinRelativePath($to, $item['name']), $budget)) return false;
         }
-
         return true;
     }
 

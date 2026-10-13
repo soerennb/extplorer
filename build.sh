@@ -80,7 +80,7 @@ tar -czf "../../${TAR_NAME}" .
 if command -v zip >/dev/null 2>&1; then
     zip -r "../../${ZIP_NAME}" . -x "*.git*" -x "node_modules*"
 else
-    echo "Warning: zip command not found, skipping ZIP creation."
+    php ../../scripts/create-release-zip.php . "../../${ZIP_NAME}"
 fi
 cd ../..
 

@@ -19,36 +19,7 @@ class VfsFactory
 
         $mode = $connection['mode'] ?? 'local';
 
-        if ($mode === 'ftp' || $mode === 'ftps') {
-            $password = self::revealConnectionSecret((string)($connection['pass'] ?? ''));
-            return new FtpAdapter(
-                $connection['host'],
-                $connection['user'],
-                $password,
-                $connection['port'],
-                '/',
-                $mode === 'ftps',
-                (string)($connection['tls_spki_pin'] ?? '')
-            );
-        }
-
-        if ($mode === 'sftp') {
-            $password = self::revealConnectionSecret((string)($connection['pass'] ?? ''));
-            $privateKey = self::revealConnectionSecret((string)($connection['private_key'] ?? ''));
-            $publicKey = self::revealConnectionSecret((string)($connection['public_key'] ?? ''));
-            $passphrase = self::revealConnectionSecret((string)($connection['private_key_passphrase'] ?? ''));
-            return new Ssh2Adapter(
-                $connection['host'],
-                $connection['user'],
-                $password,
-                $connection['port'],
-                '/',
-                (string)($connection['host_key_fingerprint'] ?? ''),
-                $privateKey,
-                $publicKey,
-                $passphrase
-            );
-        }
+        if ($mode !== 'local') return self::createAdapter($mode, $connection);
 
         // Local Mode
         $baseRoot = config('Storage')->fileManagerRoot;
@@ -61,28 +32,10 @@ class VfsFactory
             return new DeniedFileSystem('Authenticated user no longer exists.');
         }
 
-        // Determine Home Path
-        // Legacy compatibility: If home_dir is set, use it. 
-        // If it is '/', it maps to baseRoot.
-        $userHome = $user['home_dir'] ?? '/';
-        
-        $homePath = (new LocalAdapter($baseRoot))->resolvePath($userHome);
-
-        if (!is_dir($homePath)) {
-            mkdir($homePath, 0755, true);
-        }
-
-        // Create Virtual Adapter
         $vfs = new VirtualAdapter();
-        
-        // Mount Home
-        $vfs->mount('Home', new LocalAdapter($homePath));
+        $vfs->mount('Home', self::createLocalAdapter('Home', $user));
+        $vfs->mount('Shared', self::createLocalAdapter('Shared', $user));
 
-        // Mount Shared
-        $sharedPath = config('Storage')->shared;
-        if (!is_dir($sharedPath)) mkdir($sharedPath, 0755, true);
-        $vfs->mount('Shared', new LocalAdapter($sharedPath));
-        
         // --- Custom Mounts ---
         try {
             $mountService = new \App\Services\MountService();
@@ -95,44 +48,8 @@ class VfsFactory
                         throw new \RuntimeException('Persisted mount record is malformed.');
                     }
 
-                    $mountType = strtolower((string)$mount['type']);
-                    $mountConfig = $mount['config'];
-                    if ($mountType === 'local') {
-                        $localPath = $mountService->assertLocalPathAllowed((string)($mountConfig['path'] ?? ''));
-                        $adapter = new LocalAdapter($localPath);
-                        $vfs->mount($mountName, $adapter, ['is_external' => true]);
-                    }
-                    if ($mountType === 'ftp' || $mountType === 'ftps') {
-                        $config = $mountConfig;
-                        $adapter = new FtpAdapter(
-                            $config['host'] ?? '',
-                            $config['user'] ?? '',
-                            $config['pass'] ?? '',
-                            (int)($config['port'] ?? 21),
-                            $config['root'] ?? '/',
-                            $mountType === 'ftps',
-                            (string)($config['tls_spki_pin'] ?? '')
-                        );
-                        $vfs->mount($mountName, $adapter, ['is_external' => true]);
-                    }
-                    if ($mountType === 'sftp' || $mountType === 'ssh2') {
-                        $config = $mountConfig;
-                        $adapter = new Ssh2Adapter(
-                            $config['host'] ?? '',
-                            $config['user'] ?? '',
-                            $config['pass'] ?? '',
-                            (int)($config['port'] ?? 22),
-                            $config['root'] ?? '/',
-                            (string)($config['host_key_fingerprint'] ?? ''),
-                            self::revealConnectionSecret((string)($config['private_key'] ?? '')),
-                            self::revealConnectionSecret((string)($config['public_key'] ?? '')),
-                            self::revealConnectionSecret((string)($config['private_key_passphrase'] ?? ''))
-                        );
-                        $vfs->mount($mountName, $adapter, ['is_external' => true]);
-                    }
-                    if (!in_array($mountType, ['local', 'ftp', 'ftps', 'sftp', 'ssh2'], true)) {
-                        throw new \RuntimeException('Persisted mount type is invalid.');
-                    }
+                    $adapter = self::createMountAdapter($mount);
+                    $vfs->mount($mountName, $adapter, ['is_external' => true, 'mount_id' => $mountId]);
                 } catch (\Throwable $e) {
                     $message = "Mount " . ($mountName !== '' ? $mountName : ($mountId !== '' ? $mountId : '[unknown]'))
                         . ' was disabled: ' . $e->getMessage();
@@ -158,4 +75,48 @@ class VfsFactory
 
         return $vfs;
     }
+    public static function localRoot(string $alias, array $user): string
+    {
+        return match ($alias) {
+            'Home' => (new LocalAdapter(config('Storage')->fileManagerRoot))->resolvePath((string)($user['home_dir'] ?? '/')),
+            'Shared' => config('Storage')->shared,
+            'Public' => config('Storage')->root . '/public',
+            default => throw new \RuntimeException('Unknown local storage namespace.'),
+        };
+    }
+
+    public static function createLocalAdapter(string $alias, array $user): LocalAdapter
+    {
+        $root = self::localRoot($alias, $user);
+        if ($alias !== 'Public' && !is_dir($root) && !mkdir($root, 0755, true) && !is_dir($root)) throw new \RuntimeException('Unable to create local storage.');
+        return new LocalAdapter($root);
+    }
+
+    public static function createMountAdapter(array $mount): IFileSystem
+    {
+        $type = strtolower((string)($mount['type'] ?? ''));
+        $config = $mount['config'] ?? [];
+        if (!is_array($config)) throw new \RuntimeException('Persisted mount record is malformed.');
+        if ($type === 'local') return new LocalAdapter((new \App\Services\MountService())->assertLocalPathAllowed((string)($config['path'] ?? '')));
+        return self::createAdapter($type, $config);
+    }
+
+    public static function createAdapter(string $type, array $config): IFileSystem
+    {
+        if ($type === 'ftp' || $type === 'ftps') {
+            return new FtpAdapter((string)($config['host'] ?? ''), (string)($config['user'] ?? ''),
+                self::revealConnectionSecret((string)($config['pass'] ?? '')), (int)($config['port'] ?? 21),
+                (string)($config['root'] ?? '/'), $type === 'ftps', (string)($config['tls_spki_pin'] ?? ''));
+        }
+        if ($type === 'sftp' || $type === 'ssh2') {
+            return new Ssh2Adapter((string)($config['host'] ?? ''), (string)($config['user'] ?? ''),
+                self::revealConnectionSecret((string)($config['pass'] ?? '')), (int)($config['port'] ?? 22),
+                (string)($config['root'] ?? '/'), (string)($config['host_key_fingerprint'] ?? ''),
+                self::revealConnectionSecret((string)($config['private_key'] ?? '')),
+                self::revealConnectionSecret((string)($config['public_key'] ?? '')),
+                self::revealConnectionSecret((string)($config['private_key_passphrase'] ?? '')));
+        }
+        throw new \RuntimeException('Persisted mount type is invalid.');
+    }
+
 }

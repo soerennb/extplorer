@@ -126,6 +126,18 @@ class EmailService
         return $this->email->send();
     }
 
+    public function sendExpiryReminder(array $share): bool
+    {
+        $settings = $this->settingsService->getSettings();
+        if (!$this->isConfigured($settings)) return false;
+        $this->email->setFrom($settings['email_from'], $settings['email_from_name']);
+        $this->email->setTo($share['sender_email']);
+        $this->email->setSubject("Your files haven't been downloaded yet");
+        $this->email->setMessage('<h2>Reminder</h2><p>The files you sent with subject <strong>'
+            . esc((string)($share['subject'] ?? 'your transfer')) . '</strong> have not been downloaded yet.</p>');
+        return $this->email->send();
+    }
+
     public function getDebugger(): string
     {
         return $this->email->printDebugger(['headers']);

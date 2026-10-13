@@ -20,7 +20,19 @@ class SettingsService
             return $this->getDefaultSettings();
         }
 
-        return array_merge($this->getDefaultSettings(), AtomicFileStore::read($this->settingsFile));
+        $defaults = $this->getDefaultSettings();
+        $settings = array_merge($defaults, AtomicFileStore::read($this->settingsFile));
+        foreach ($defaults as $key => $default) {
+            $value = $settings[$key];
+            $settings[$key] = match (true) {
+                is_int($default) => filter_var($value, FILTER_VALIDATE_INT) !== false ? (int)$value : $default,
+                is_bool($default) => filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? $default,
+                is_string($default) => is_string($value) ? $value : $default,
+                is_array($default) => is_array($value) ? $value : $default,
+                default => $value,
+            };
+        }
+        return $settings;
     }
 
     /**

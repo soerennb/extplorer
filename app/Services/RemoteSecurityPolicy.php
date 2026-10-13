@@ -49,31 +49,18 @@ final class RemoteSecurityPolicy
         }
     }
 
-    public function assertSshFingerprint(object $connection, string $expected): void
+    /** Verify the public host key returned by the negotiated SSH connection. */
+    public function assertSshHostKey(string $publicKey, string $expected): void
     {
         $expected = $this->normalizeFingerprint($expected);
         if ($expected === '') {
-            if ($this->mode() === self::STRICT) {
-                throw new RuntimeException('SFTP host-key fingerprint is required in strict remote security mode.');
-            }
+            if ($this->mode() === self::STRICT) throw new RuntimeException('SFTP host-key fingerprint is required in strict remote security mode.');
             return;
         }
-
-        if (!function_exists('ssh2_fingerprint')) {
-            throw new RuntimeException('SSH2 host-key verification is not available on this server.');
-        }
-
-        $flags = 0;
-        if (defined('SSH2_FINGERPRINT_SHA256')) {
-            $flags |= SSH2_FINGERPRINT_SHA256;
-        }
-        if (defined('SSH2_FINGERPRINT_HEX')) {
-            $flags |= SSH2_FINGERPRINT_HEX;
-        }
-        $actual = ssh2_fingerprint($connection, $flags);
-        if (!is_string($actual) || !hash_equals($expected, $this->normalizeFingerprint($actual))) {
-            throw new RuntimeException('SFTP host-key fingerprint verification failed.');
-        }
+        $parts = explode(' ', $publicKey, 3);
+        $raw = isset($parts[1]) ? base64_decode($parts[1], true) : false;
+        $algorithm = match (strlen($expected)) { 32 => 'md5', 40 => 'sha1', 64 => 'sha256', default => null };
+        if ($raw === false || $algorithm === null || !hash_equals($expected, hash($algorithm, $raw))) throw new RuntimeException('SFTP host-key fingerprint verification failed.');
     }
 
     /**
@@ -108,7 +95,7 @@ final class RemoteSecurityPolicy
 
         $timeout = (new ResourcePolicy())->remoteTimeoutSeconds();
         $socket = @stream_socket_client(
-            sprintf('tls://%s:%d', $this->formatAddress($connectHost), $port),
+            sprintf('tcp://%s:%d', $this->formatAddress($connectHost), $port),
             $errorCode,
             $errorMessage,
             $timeout,
@@ -120,6 +107,11 @@ final class RemoteSecurityPolicy
         }
 
         try {
+            stream_set_timeout($socket, $timeout);
+            $this->expectFtpReply($socket, 220);
+            if (fwrite($socket, "AUTH TLS\r\n") !== 10) throw new RuntimeException('FTPS TLS negotiation failed.');
+            $this->expectFtpReply($socket, 234);
+            if (@stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT) !== true) throw new RuntimeException('FTPS certificate verification failed.');
             $parameters = stream_context_get_params($socket);
             $certificate = $parameters['options']['ssl']['peer_certificate'] ?? null;
             if (!is_object($certificate)) {
@@ -136,6 +128,21 @@ final class RemoteSecurityPolicy
         } finally {
             fclose($socket);
         }
+    }
+
+    /** Read a bounded FTP reply, including a multiline server greeting. */
+    private function expectFtpReply($socket, int $expected): void
+    {
+        $bytes = 0;
+        for ($lines = 0; $lines < 100; $lines++) {
+            $line = fgets($socket, 4097);
+            if ($line === false || ($bytes += strlen($line)) > 16384) break;
+            if (preg_match('/\A([0-9]{3}) /', $line, $match) === 1) {
+                if ((int)$match[1] === $expected) return;
+                break;
+            }
+        }
+        throw new RuntimeException('FTPS TLS negotiation failed.');
     }
 
     private function normalizePin(string $pin): string
@@ -189,15 +196,11 @@ final class RemoteSecurityPolicy
     public function normalizeFingerprint(string $fingerprint): string
     {
         $fingerprint = trim($fingerprint);
-        if (str_starts_with(strtolower($fingerprint), 'sha256:')) {
-            $fingerprint = substr($fingerprint, 7);
-        }
-        $hex = preg_replace('/[^a-f0-9]/i', '', $fingerprint) ?? '';
-        if ($hex !== '' && preg_match('/\A[a-f0-9]+\z/i', $hex) === 1 && strlen($hex) === strlen(preg_replace('/[:\s-]/', '', $fingerprint))) {
-            return strtolower($hex);
-        }
-
-        // SHA-256 fingerprints are also commonly represented as base64.
-        return strtolower(preg_replace('/\s+/', '', $fingerprint) ?? '');
+        $fingerprint = preg_replace('/\A(?:sha256|sha1|md5):/i', '', $fingerprint) ?? '';
+        $hex = preg_replace('/[:\s-]/', '', $fingerprint) ?? '';
+        if ($hex !== '' && ctype_xdigit($hex)) return strtolower($hex);
+        // Base64 is case-sensitive. Normalize a SHA-256 digest to canonical hex.
+        $raw = base64_decode($fingerprint, true);
+        return is_string($raw) && strlen($raw) === 32 ? bin2hex($raw) : '';
     }
 }

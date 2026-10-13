@@ -439,7 +439,7 @@ class MountService
             $privateKeyInput = (string)($config['private_key'] ?? '');
             $publicKeyInput = (string)($config['public_key'] ?? '');
             $passphraseInput = (string)($config['private_key_passphrase'] ?? '');
-            $portDefault = $type === 'sftp' ? 22 : ($type === 'ftps' ? 990 : 21);
+            $portDefault = $type === 'sftp' ? 22 : 21;
             $port = (int)($config['port'] ?? $portDefault);
             $root = trim((string)($config['root'] ?? '/'));
 

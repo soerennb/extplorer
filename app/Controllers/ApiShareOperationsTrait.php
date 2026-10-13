@@ -48,7 +48,7 @@ trait ApiShareOperationsTrait
 
         // Verify existence within user jail
         try {
-            $absolutePath = $this->fs->resolvePath($path); // Throws if invalid/traversal
+            $absolutePath = \App\Services\VFS\FileCapabilities::localPath($this->fs, $path) ?? throw new Exception('Publishing is unavailable for this storage.'); // Throws if invalid/traversal
         } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
         }
