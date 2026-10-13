@@ -43,7 +43,7 @@
                 </div>
 
                 <div class="d-flex gap-2 navbar-nav-tools">
-                    <button class="btn btn-outline-light btn-sm d-none d-sm-inline-flex align-items-center" @click="goUp" :disabled="!store.cwd" data-testid="go-up">
+                    <button class="btn btn-outline-light btn-sm d-none d-sm-inline-flex align-items-center" @click="goUp" :disabled="store.isLoading || !store.cwd" data-testid="go-up">
                         <i class="ri-arrow-up-line"></i> {{ t('up') }}
                     </button>
                     <button class="btn btn-outline-light btn-sm d-none d-sm-inline-flex align-items-center" @click="reload" aria-label="Refresh" title="Refresh">

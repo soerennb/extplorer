@@ -307,7 +307,7 @@ const app = createApp({
 
         // --- Core Actions ---
         const reload = () => store.reload();
-        const goUp = () => { if (store.cwd) { const p = store.cwd.split('/'); p.pop(); store.loadPath(p.join('/')); } };
+        const goUp = () => { if (!store.isLoading && store.cwd) { const p = store.cwd.split('/'); p.pop(); store.loadPath(p.join('/')); } };
         const toggleDetailsPane = () => {
             detailsPaneOpen.value = !detailsPaneOpen.value;
             localStorage.setItem('extplorer_details_pane', detailsPaneOpen.value ? 'true' : 'false');
@@ -509,6 +509,7 @@ const app = createApp({
         const paste = async () => {
             if (store.isLoading || !store.clipboard.items.length) return;
             const target = store.cwd;
+            const generation = store.navigationGeneration;
             try {
                 store.isLoading = true;
                 for (const file of store.clipboard.items) {
@@ -516,11 +517,10 @@ const app = createApp({
                     await Api.post(store.clipboard.mode === 'copy' ? 'cp' : 'mv', { from: file.path, to });
                 }
                 if (store.clipboard.mode === 'cut') { store.clipboard.items = []; store.clipboard.mode = null; }
-                reload();
-                store.refreshTree();
+                await reload();
                 Swal.fire(i18n.t('success'), '', 'success');
             } catch (e) { Swal.fire(i18n.t('error'), e.message, 'error'); }
-            finally { store.isLoading = false; }
+            finally { if (store.navigationGeneration === generation) store.isLoading = false; }
         };
 
         const downloadSelected = () => {

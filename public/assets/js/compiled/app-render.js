@@ -561,7 +561,7 @@ return function render(_ctx, _cache) {
             _createElementVNode("button", {
               class: "btn btn-outline-light btn-sm d-none d-sm-inline-flex align-items-center",
               onClick: goUp,
-              disabled: !store.cwd,
+              disabled: store.isLoading || !store.cwd,
               "data-testid": "go-up"
             }, [
               _cache[1] || (_cache[1] = _createElementVNode("i", { class: "ri-arrow-up-line" }, null, -1 /* CACHED */)),

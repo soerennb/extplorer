@@ -66,3 +66,23 @@ test('the compiled quick administration overview renders without the removed mod
     assert.match(html, /Recent activity/);
     assert.match(html, /https:\/\/example.test\/admin#users/);
 });
+
+
+test('a reload during navigation refreshes the requested destination', async () => {
+    const pending = [];
+    const paths = [];
+    const store = load('store.js', 'store', { Api: { get: (_, params) => {
+        paths.push(params.path);
+        return new Promise((resolve) => pending.push(resolve));
+    } } });
+    store.cwd = 'Home/previous';
+    const navigation = store.loadPath('Home/current');
+    assert.equal(store.cwd, 'Home/current');
+    const reload = store.reload();
+    assert.deepEqual(paths, ['Home/current', 'Home/current']);
+    pending[0]({ items: [{ name: 'stale' }], total: 1 }); await navigation;
+    assert.equal(store.isLoading, true);
+    pending[1]({ items: [{ name: 'fresh' }], total: 1 }); await reload;
+    assert.equal(store.files[0].name, 'fresh');
+    assert.equal(store.cwd, 'Home/current');
+});

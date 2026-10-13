@@ -142,6 +142,7 @@ const store = Vue.reactive({
     async loadPath(path, page = 1) {
         const generation = ++this.navigationGeneration;
         this.isLoading = true;
+        this.cwd = path;
         this.isTrashMode = false; // Always exit trash mode when navigating
         this.error = null;
         this.selectedItems = []; // Clear selection on navigate
@@ -164,7 +165,6 @@ const store = Vue.reactive({
             this.pagination.total = res.total;
             this.pagination.page = page;
             this.files = items;
-            this.cwd = path;
             
             // Persist Last Path
             localStorage.setItem('extplorer_last_path', path);
