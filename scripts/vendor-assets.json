@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-10-06",
+  "generatedAt": "2026-10-19",
   "packages": [
     {
       "name": "vue",
-      "version": "3.5.43",
-      "source": "https://registry.npmjs.org/vue/-/vue-3.5.43.tgz",
-      "integrity": "sha512-o5qZoksdnjIKvW1srZ3ab7pcDNYAerBjRe54D0LBLfRdCYFrSgBHVXokMas35czQc0//lmx4/tuY4ZNQ+Rf2Ng==",
+      "version": "3.5.44",
+      "source": "https://registry.npmjs.org/vue/-/vue-3.5.44.tgz",
+      "integrity": "sha512-dvvmaOCG7lAMkJTPqPwWeGMsPS6DIsFsfZDUgBp9V6mHf9b3+/wyVwYR4Es+WV6uJC0FKRxp81Obcq0ZwUcGFQ==",
       "files": {
-        "public/assets/js/vue.runtime.global.prod.js": "f2f1547993b942e5e24f2d6e63577b21739a37a920e09c656b0e87eb0ad55175"
+        "public/assets/js/vue.runtime.global.prod.js": "d4ce95b94ad5808c55c26a1de57098bd7aa5fc07c31cc2ceb517b24a80633a13"
       }
     },
     {
