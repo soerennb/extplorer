@@ -11,7 +11,7 @@ permissions:
   checks: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-publication
   cancel-in-progress: false
 
 jobs:
@@ -103,9 +103,9 @@ jobs:
         )
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     permissions:
-      contents: write
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -173,14 +173,24 @@ jobs:
           npm run e2e:install
           node tests/e2e/native-routing.cjs "eXtplorer-${GITHUB_REF_NAME#v}-release.zip"
 
-      - name: Publish GitHub release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+      - name: Verify upgrade from the published v3.1.0 ZIP
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v3.1.0 --repo "$GITHUB_REPOSITORY" --pattern eXtplorer-3.1.0-release.zip --dir baseline
+          node tests/e2e/release-upgrade.cjs baseline/eXtplorer-3.1.0-release.zip "eXtplorer-${GITHUB_REF_NAME#v}-release.zip"
+
+      - name: Retain verified archive and routing evidence
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          files: |
+          name: release-archive
+          path: |
             eXtplorer-*-release.zip
             eXtplorer-*-release.zip.sha256
-          generate_release_notes: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
+            build/native-routing-results.json
+            build/release-upgrade-results.json
+          if-no-files-found: error
+          retention-days: 30
 
   container:
     name: Publish container image
@@ -199,7 +209,65 @@ jobs:
     uses: ./.github/workflows/publish-container.yml
     with:
       release_tag: ${{ github.ref_name }}
-      publish_latest: true
+      publish_latest: false
     permissions:
       contents: read
       packages: write
+
+  publish:
+    name: Publish verified release and aliases
+    needs: [release-preflight, archive, container]
+    if: >-
+      always() &&
+      needs.release-preflight.result == 'success' &&
+      needs.archive.result == 'success' &&
+      needs.container.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Download verified archive
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-archive
+          path: release-artifacts
+      - name: Arrange archive files and prepare release notes
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          MANIFEST_DIGEST: ${{ needs.container.outputs.manifest_digest }}
+        run: |
+          # upload-artifact preserves the common root when routing evidence is included.
+          find release-artifacts -mindepth 2 -maxdepth 2 -name 'eXtplorer-*' -exec mv {} release-artifacts/ \;
+          node scripts/prepare-release-notes.cjs
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Publish immutable assets and move verified aliases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_SHA: ${{ needs.release-preflight.outputs.checked_sha }}
+          MANIFEST_DIGEST: ${{ needs.container.outputs.manifest_digest }}
+          RELEASE_GATES: '{"archive":"${{ needs.archive.result }}","container":"${{ needs.container.result }}"}'
+        run: node scripts/release-publication.cjs publish
+      - name: Retain publication evidence including rollback digests
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-publication
+          path: release-artifacts
+          retention-days: 30
+          overwrite: true

@@ -52,7 +52,7 @@ visiting an indexed page while API requests still use rewritten paths.
 The browser matrix can be run directly against the final ZIP:
 
 ```bash
-node tests/e2e/native-routing.cjs builds/extplorer3-3.1.0.zip
+node tests/e2e/native-routing.cjs builds/extplorer3-3.1.1.zip
 ```
 
 It creates an isolated installation and writable state for each layout, removes
@@ -88,3 +88,33 @@ Record the tested archive checksum and all four layout results with the
 release validation evidence. A missing refresh header or failed confirmation
 must be fixed before publication; do not disable CSRF regeneration to make a
 build pass.
+
+## Cross-version release upgrade
+
+Build the candidate ZIP and image with the release version. Download the
+published baseline ZIP and run the isolated cross-version checks:
+
+```bash
+gh release download v3.1.0 --repo soerennb/extplorer --pattern eXtplorer-3.1.0-release.zip --dir build/upgrade-baseline
+node tests/e2e/release-upgrade.cjs build/upgrade-baseline/eXtplorer-3.1.0-release.zip builds/extplorer3-3.1.1.zip extplorer3:release-3.1.1
+```
+
+The baseline ZIP SHA-256 and multi-platform image digest are pinned in
+`tests/release/baseline-3.1.0.json`. The fixture seeds state using v3.1.0's own
+framework and services, then verifies passwords, permissions, encrypted 2FA
+and mount secrets, a real encrypted SSH key, WebDAV credentials, binary files,
+shares, an external local mount, trash, versions, resumable uploads and quarantine
+across the upgrade. It exercises pending work, restarts the candidate, checks
+code rollback against post-upgrade state, and restores the original data backup.
+Fresh browser sessions verify login and strict CSP at each stage.
+
+Without the last image argument only the native check runs; Release uses this
+mode against its actual final ZIP. With the image argument, the test also pulls
+the pinned published Docker baseline, uses isolated Compose volumes, checks
+atomic code rollback and full data restore, and deletes its temporary stack.
+Results and candidate checksums are recorded in `build/release-upgrade-results.json`.
+No production installation or writable directory is used.
+
+`bash tests/e2e/release-image-smoke.sh <image-ref>` checks a single built image
+with isolated volumes, the chmod-600 secret overlay and Chromium smoke suite.
+Release runs this on each architecture's actual image digest.

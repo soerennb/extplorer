@@ -221,7 +221,9 @@ jobs:
         run: bash ./scripts/ensure-ace-assets.sh
 
       - name: Run browser contract tests
-        run: npm run test:frontend
+        run: |
+          npm run test:frontend
+          npm run test:release
 
       - name: Compile Vue templates
         run: npm run build:js
