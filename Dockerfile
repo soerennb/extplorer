@@ -2,11 +2,13 @@ FROM php:8.5.11-fpm-alpine3.24 AS builder
 
 ARG APP_VERSION=dev
 
+# CVE-2026-58055: require the fixed nghttp2 library in both PHP stages.
 RUN apk add --no-cache \
         ca-certificates \
         icu-libs \
         libpng \
         libzip \
+        'nghttp2-libs>=1.70.0-r0' \
     && apk add --no-cache --virtual .build-deps \
         icu-dev \
         libpng-dev \
@@ -47,11 +49,13 @@ FROM php:8.5.11-fpm-alpine3.24
 ARG APP_VERSION=dev
 ENV EXTPLORER_IMAGE_VERSION=${APP_VERSION}
 
+# CVE-2026-58055: keep this minimum aligned with the builder stage.
 RUN apk add --no-cache \
         ca-certificates \
         icu-libs \
         libpng \
         libzip \
+        'nghttp2-libs>=1.70.0-r0' \
         sqlite-libs \
         su-exec \
     && apk add --no-cache --virtual .build-deps \
