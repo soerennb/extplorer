@@ -92,15 +92,24 @@ function promoteAliases(tag, digest, remote, finish = () => {}, record = () => {
     }
 }
 
-function github(repository) {
-    const api = (...args) => JSON.parse(command('gh', ['api', ...args]));
+function github(repository, execute = command) {
+    const api = (...args) => JSON.parse(execute('gh', ['api', ...args]));
     return {
         get(tag) {
             try { return api(`repos/${repository}/releases/tags/${tag}`); }
-            catch (error) { if (/HTTP 404/.test(error.stderr?.toString() || '')) return null; throw error; }
+            catch (error) {
+                if (!/HTTP 404/.test(error.stderr?.toString() || '')) throw error;
+                // The tag endpoint omits drafts, including drafts just created
+                // by this workflow. The authenticated listing includes them.
+                const draft = execute('gh', ['api', '--paginate', `repos/${repository}/releases?per_page=100`,
+                    '--jq', `.[] | select(.tag_name == ${JSON.stringify(tag)})`]).trim();
+                return draft ? JSON.parse(draft) : null;
+            }
         },
         create(tag, sha, notes) {
-            command('gh', ['release', 'create', tag, '--repo', repository, '--verify-tag', '--target', sha, '--title', `eXtplorer ${versionOf(tag)}`, '--draft', '--notes-file', notes]);
+            // Use the creation response directly rather than racing a second lookup.
+            return api('--method', 'POST', `repos/${repository}/releases`, '-f', `tag_name=${tag}`, '-f', `target_commitish=${sha}`,
+                '-f', `name=eXtplorer ${versionOf(tag)}`, '-F', 'draft=true', '-F', `body=@${notes}`);
         },
         upload(tag, file) { command('gh', ['release', 'upload', tag, file, '--repo', repository]); },
         download(tag, name, directory) {
@@ -113,6 +122,20 @@ function github(repository) {
 }
 
 function sha256(file) { return createHash('sha256').update(fs.readFileSync(file)).digest('hex'); }
+
+function verifySourceRun(run, jobs, tagSha) {
+    versionOf(run.head_branch);
+    if (run.path !== '.github/workflows/release.yml' || run.event !== 'push' || run.status !== 'completed'
+        || !['failure', 'success'].includes(run.conclusion) || run.head_sha !== tagSha) {
+        throw new Error('Source must be a completed tag Release run for the unchanged commit');
+    }
+    for (const name of ['Verify existing gates for release SHA', 'Create deployable archive',
+        'Publish container image / Build amd64 image', 'Publish container image / Build arm64 image',
+        'Publish container image / Create multi-architecture manifest']) {
+        if (!jobs.some((job) => job.name === name && job.conclusion === 'success')) throw new Error(`Source gate did not succeed: ${name}`);
+    }
+    return { tag: run.head_branch, sha: run.head_sha };
+}
 
 function publishRelease(options, remote, releases) {
     const { tag, sha, digest, directory, gates } = options;
@@ -127,10 +150,9 @@ function publishRelease(options, remote, releases) {
     assertManifest(remote.inspect(version), digest);
     let release = releases.get(tag);
     if (!release) {
-        releases.create(tag, sha, path.join(directory, 'release-notes.md'));
-        release = releases.get(tag);
+        release = releases.create(tag, sha, path.join(directory, 'release-notes.md'));
     }
-    if (release.target_commitish !== sha) throw new Error('Release points to a different commit');
+    if (!release || release.target_commitish !== sha) throw new Error('Release points to a different commit');
     const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'extplorer-publish-'));
     try {
         for (const file of files) {
@@ -164,6 +186,31 @@ if (require.main === module) {
         const remote = registry(process.env.IMAGE_NAME || 'ghcr.io/soerennb/extplorer3');
         const releases = github(process.env.GITHUB_REPOSITORY);
         switch (process.argv[2]) {
+            case 'source-run': {
+                const id = process.env.RELEASE_SOURCE_RUN;
+                if (!/^\d+$/.test(id || '')) throw new Error('Invalid source run ID');
+                const endpoint = `repos/${process.env.GITHUB_REPOSITORY}`;
+                const api = (resource) => JSON.parse(command('gh', ['api', `${endpoint}/${resource}`]));
+                const run = api(`actions/runs/${id}`);
+                versionOf(run.head_branch);
+                const commit = api(`commits/${run.head_branch}`).sha;
+                const jobs = [];
+                for (let page = 1; ; page++) {
+                    const batch = api(`actions/runs/${id}/jobs?per_page=100&page=${page}`).jobs;
+                    jobs.push(...batch);
+                    if (batch.length < 100) break;
+                }
+                const source = verifySourceRun(run, jobs, commit);
+                fs.appendFileSync(process.env.GITHUB_OUTPUT, `release_tag=${source.tag}\nrelease_sha=${source.sha}\n`);
+                break;
+            }
+            case 'source-manifest': {
+                const manifest = JSON.parse(fs.readFileSync('release-artifacts/manifest.json'));
+                if (manifest.tag !== tag || manifest.sha !== process.env.RELEASE_SHA) throw new Error('Source manifest differs from verified tag/commit');
+                assertManifest(remote.inspect(versionOf(tag)), manifest.digest);
+                fs.appendFileSync(process.env.GITHUB_OUTPUT, `manifest_digest=${manifest.digest}\n`);
+                break;
+            }
             case 'manifest': {
                 const sources = fs.readdirSync('digests').filter((file) => /^[a-f0-9]{64}$/.test(file)).map((file) => `sha256:${file}`);
                 const digest = createVersionManifest(tag, sources, remote);
@@ -182,9 +229,9 @@ if (require.main === module) {
                 publishRelease({ tag, sha: process.env.RELEASE_SHA, digest: process.env.MANIFEST_DIGEST,
                     directory: process.env.RELEASE_DIRECTORY || 'release-artifacts', gates: JSON.parse(process.env.RELEASE_GATES || '{}') }, remote, releases);
                 break;
-            default: throw new Error('Usage: node scripts/release-publication.cjs <manifest|publish|promote>');
+            default: throw new Error('Usage: node scripts/release-publication.cjs <manifest|publish|promote|source-run|source-manifest>');
         }
     } catch (error) { console.error(error); process.exitCode = 1; }
 }
 
-module.exports = { assertManifest, createVersionManifest, promoteAliases, publishRelease };
+module.exports = { assertManifest, createVersionManifest, promoteAliases, publishRelease, github, verifySourceRun };

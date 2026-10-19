@@ -1,0 +1,90 @@
+name: Resume verified release publication
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run:
+        description: Completed Release run with successful archive and both image verification jobs
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+  packages: write
+
+concurrency:
+  group: release-publication
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Resume publication of existing verified artifacts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout maintained publication tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Verify source run and unchanged release tag
+        id: source
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_SOURCE_RUN: ${{ inputs.source_run }}
+        run: node scripts/release-publication.cjs source-run
+      - name: Download original verified archive
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.source_run }}
+          name: release-archive
+          path: release-artifacts
+      - name: Download original verified manifest
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.source_run }}
+          name: container-manifest
+          path: release-artifacts
+      - name: Download original release notes
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.source_run }}
+          name: release-publication
+          path: original-publication
+      - name: Reuse original release notes
+        run: cp original-publication/release-notes.md release-artifacts/release-notes.md
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Verify original manifest identity
+        id: manifest
+        env:
+          RELEASE_TAG: ${{ steps.source.outputs.release_tag }}
+          RELEASE_SHA: ${{ steps.source.outputs.release_sha }}
+        run: node scripts/release-publication.cjs source-manifest
+      - name: Resume coordinated publication without rebuilding
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.source.outputs.release_tag }}
+          RELEASE_SHA: ${{ steps.source.outputs.release_sha }}
+          MANIFEST_DIGEST: ${{ steps.manifest.outputs.manifest_digest }}
+          RELEASE_GATES: '{"archive":"success","container":"success"}'
+        run: node scripts/release-publication.cjs publish
+      - name: Retain resumed publication evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-publication
+          path: release-artifacts
+          retention-days: 30
+          overwrite: true
