@@ -168,3 +168,38 @@ scanning checks for the exact commit on `main`, or executes reusable gates when
 those checks are missing. Preserve that behavior. File follow-up Beads issues
 for remaining work; an unresolved required check or security blocker prevents
 publication.
+
+## Coordinated publication
+
+The tag workflow builds the native ZIP and the native AMD64/ARM64 images in
+parallel, then requires both jobs to succeed before publication. The ZIP is
+checked for packaged translations, all four native routing layouts and an
+upgrade from the checksum-pinned published v3.1.0 ZIP. Each final image is
+smoke-tested and scanned by digest; the complete scan includes unfixed findings.
+Fixable HIGH/CRITICAL findings or CVE-2026-58055 block publication.
+
+`Publish container image` exposes `manifest_digest`. With `publish_latest: false`
+(the default), it creates only the immutable version tag: neither the major,
+minor nor `latest` alias moves. With `publish_latest: true`, promotion is allowed
+only for an already published stable GitHub release. `Promote container latest`
+also updates the major/minor aliases, verifies all three digests and restores
+their previous values if promotion fails. Both publication and manual promotion
+share a serialized concurrency group. Prereleases do not move stable aliases.
+
+The final release job downloads and verifies the exact checked ZIP, uploads
+immutable ZIP/checksum assets to a draft, promotes the verified container
+aliases, and finally publishes the GitHub release. It records previous alias
+digests before changing them and rolls back aliases if publication fails.
+Publication is coordinated by a shared gate, not an atomic transaction across
+GitHub and GHCR. A failed rollback remains an explicit failure requiring retry.
+
+On failure, rerun **failed jobs**, reusing successful jobs' artifacts rather
+than rebuilding the release. Digests, scans, routing/upgrade results and
+publication evidence are retained for 30 days. Existing version manifests and
+release assets must match the recorded inputs; differing rebuilds fail instead
+of overwriting a version. Never move a published Git tag. If published content
+needs a correction, issue the next patch version.
+
+The publication behavior tests run with `npm run test:release` in Quality.
+Use the [cross-version upgrade checks](../tests/e2e/README.md#cross-version-release-upgrade)
+for native and Docker upgrade/rollback evidence before creating a release tag.

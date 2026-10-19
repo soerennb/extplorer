@@ -4,6 +4,25 @@ All notable changes to eXtplorer 3 are documented here.
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-10-19
+
+### Security
+
+- Require the fixed Alpine nghttp2 library in both PHP image stages to resolve CVE-2026-58055.
+- Strengthen authorization snapshots and atomic state handling across file operations and metadata updates.
+
+### Fixed
+
+- Preserve the requested navigation destination during mutation refreshes and keep file-action targets stable while navigating.
+- Unify local and remote upload activation, quarantine handling and metadata lifecycle operations.
+- Restore quick-administration rendering and reliable remote integration fixtures in clean checkouts.
+
+### Changed
+
+- Update CodeIgniter to 4.7.5, Vue to 3.5.44 and the bundled SFTP implementation to phpseclib 4.0.2. SFTP no longer requires the optional SSH2 extension.
+- Update Playwright and PHPStan and refresh reviewed dependency and deployment validation evidence.
+- Gate release publication and all moving container aliases on the final archive and verified AMD64/ARM64 images.
+
 ## [3.1.0] - 2026-10-06
 
 ### Added
@@ -81,7 +100,8 @@ All notable changes to eXtplorer 3 are documented here.
 
 - Improved Docker runtime and secret handling checks during release quality validation.
 
-[Unreleased]: https://github.com/soerennb/extplorer/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/soerennb/extplorer/compare/v3.1.1...HEAD
+[3.1.1]: https://github.com/soerennb/extplorer/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/soerennb/extplorer/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/soerennb/extplorer/releases/tag/v3.0.0
 [3.0.0-beta.6]: https://github.com/soerennb/extplorer/releases/tag/v3.0.0-beta.6
