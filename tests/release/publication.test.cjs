@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
-const { createVersionManifest, promoteAliases, publishRelease } = require('../../scripts/release-publication.cjs');
+const { createVersionManifest, promoteAliases, publishRelease, github, verifySourceRun } = require('../../scripts/release-publication.cjs');
 const oldDigest = `sha256:${'a'.repeat(64)}`;
 const newDigest = `sha256:${'b'.repeat(64)}`;
 function manifest(digest, architectures = ['amd64', 'arm64']) {
@@ -122,4 +122,59 @@ test('rollback failures remain explicit publication failures', () => {
     const registry = remote();
     registry.set = () => { throw new Error('registry offline'); };
     assert.throws(() => promoteAliases('v3.1.1', newDigest, registry), /rollback incomplete/);
+});
+test('draft lookup uses the authenticated paginated listing after the tag endpoint omits it', () => {
+    const draft = { id: 123, tag_name: 'v3.1.1', draft: true };
+    const calls = [];
+    const releases = github('owner/repo', (program, args) => {
+        calls.push([program, ...args]);
+        if (args[1].includes('/tags/')) throw Object.assign(new Error('not found'), { stderr: 'gh: Not Found (HTTP 404)' });
+        return JSON.stringify(draft);
+    });
+    assert.deepEqual(releases.get('v3.1.1'), draft);
+    assert.equal(calls.length, 2);
+    assert.ok(calls[1].includes('--paginate'));
+    assert.ok(calls[1].includes('repos/owner/repo/releases?per_page=100'));
+});
+test('draft lookup distinguishes an absent release from authentication/network failures', () => {
+    const missing = github('owner/repo', (program, args) => {
+        if (args[1].includes('/tags/')) throw Object.assign(new Error('missing'), { stderr: 'HTTP 404' });
+        return '';
+    });
+    assert.equal(missing.get('v3.1.1'), null);
+    const denied = github('owner/repo', () => { throw Object.assign(new Error('denied'), { stderr: 'HTTP 403' }); });
+    assert.throws(() => denied.get('v3.1.1'), /denied/);
+});
+test('new draft publication uses the create response without a second lookup', (t) => {
+    const { options, releases, release } = fixture(t);
+    let lookups = 0;
+    releases.get = () => { lookups++; return null; };
+    releases.create = () => release;
+    publishRelease(options, remote(), releases);
+    assert.equal(lookups, 1);
+    assert.equal(release.draft, false);
+});
+test('REST draft creation returns the release object and reads notes from a file', () => {
+    const created = { id: 123, target_commitish: 'c'.repeat(40), draft: true, assets: [] };
+    const releases = github('owner/repo', (program, args) => {
+        assert.equal(program, 'gh');
+        assert.deepEqual(args.slice(0, 4), ['api', '--method', 'POST', 'repos/owner/repo/releases']);
+        assert.ok(args.includes('draft=true'));
+        assert.ok(args.includes('body=@/tmp/notes.md'));
+        return JSON.stringify(created);
+    });
+    assert.deepEqual(releases.create('v3.1.1', 'c'.repeat(40), '/tmp/notes.md'), created);
+});
+test('resuming publication requires original successful archive and both image gates', () => {
+    const run = { head_branch: 'v3.1.1', head_sha: 'c'.repeat(40), path: '.github/workflows/release.yml', event: 'push', status: 'completed', conclusion: 'failure' };
+    const jobs = ['Verify existing gates for release SHA', 'Create deployable archive', 'Publish container image / Build amd64 image',
+        'Publish container image / Build arm64 image', 'Publish container image / Create multi-architecture manifest'].map((name) => ({ name, conclusion: 'success' }));
+    assert.deepEqual(verifySourceRun(run, jobs, run.head_sha), { tag: 'v3.1.1', sha: run.head_sha });
+    assert.throws(() => verifySourceRun(run, jobs, 'd'.repeat(40)), /unchanged commit/);
+    assert.throws(() => verifySourceRun({ ...run, event: 'pull_request' }, jobs, run.head_sha), /completed tag/);
+    assert.throws(() => verifySourceRun({ ...run, path: '.github/workflows/quality.yml' }, jobs, run.head_sha), /completed tag/);
+    for (let index = 0; index < jobs.length; index++) {
+        const failed = jobs.map((job, position) => position === index ? { ...job, conclusion: 'failure' } : job);
+        assert.throws(() => verifySourceRun(run, failed, run.head_sha), /gate did not succeed/);
+    }
 });

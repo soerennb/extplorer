@@ -193,6 +193,14 @@ digests before changing them and rolls back aliases if publication fails.
 Publication is coordinated by a shared gate, not an atomic transaction across
 GitHub and GHCR. A failed rollback remains an explicit failure requiring retry.
 
+If publication tooling itself requires a correction, merge the fix into `main`
+and dispatch **Resume verified release publication** with the original Release
+run ID. It checks the unchanged tag/commit and successful archive, AMD64, ARM64
+and manifest jobs, then downloads their original artifacts and release notes.
+It uses the maintained publication script without rebuilding or moving the
+version tag. Authenticated draft lookup uses the releases listing because the
+release-by-tag endpoint does not return drafts.
+
 On failure, rerun **failed jobs**, reusing successful jobs' artifacts rather
 than rebuilding the release. Digests, scans, routing/upgrade results and
 publication evidence are retained for 30 days. Existing version manifests and
