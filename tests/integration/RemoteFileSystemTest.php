@@ -13,6 +13,9 @@ use App\Services\VFS\FileCapabilities;
 use App\Services\VFS\VfsFactory;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Services;
+use phpseclib4\Crypt\PublicKeyLoader;
+use phpseclib4\Exception\FileSystemException;
+use phpseclib4\Net\SFTP\StatusCode;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\StorageSandbox;
 
@@ -162,7 +165,14 @@ final class RemoteFileSystemTest extends CIUnitTestCase
         $this->assertSame('delayed payload', $this->fs->readFile($this->directory . '/delayed.txt'));
     }
 
-    public function testSftpAuthenticatesWithEncryptedKeyAndRejectsWrongHostPin(): void
+    public static function keyProtection(): iterable
+    {
+        yield 'encrypted' => [true];
+        yield 'unencrypted' => [false];
+    }
+
+    #[DataProvider('keyProtection')]
+    public function testSftpAuthenticatesWithKeyAndRejectsWrongHostPin(bool $encrypted): void
     {
         $this->connect('sftp');
         $connection = $this->connection;
@@ -170,6 +180,11 @@ final class RemoteFileSystemTest extends CIUnitTestCase
         $connection['private_key'] = file_get_contents('/workspace/build/remote-fixture/client-key');
         $connection['public_key'] = file_get_contents('/workspace/build/remote-fixture/client-key.pub');
         $connection['private_key_passphrase'] = 'fixture-key-passphrase';
+        if (!$encrypted) {
+            $connection['private_key'] = PublicKeyLoader::loadPrivateKey($connection['private_key'], $connection['private_key_passphrase'])
+                ->withPassword(null)->toString('PKCS8');
+            $connection['private_key_passphrase'] = '';
+        }
         $keyFs = VfsFactory::createAdapter('sftp', $connection);
         $this->assertTrue($keyFs->writeFile($this->directory . '/key-auth.txt', 'key authentication'));
         $this->assertSame('key authentication', $keyFs->readFile($this->directory . '/key-auth.txt'));
@@ -177,6 +192,44 @@ final class RemoteFileSystemTest extends CIUnitTestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('fingerprint');
         VfsFactory::createAdapter('sftp', $connection);
+    }
+
+    public function testSftpRejectsIncorrectPassword(): void
+    {
+        $this->connect('sftp');
+        $connection = $this->connection;
+        $connection['pass'] = 'intentionally-wrong-password';
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('SSH authentication failed');
+        VfsFactory::createAdapter('sftp', $connection);
+    }
+
+    public function testSftpMutationAndMissingFileContracts(): void
+    {
+        $this->connect('sftp');
+        $nested = $this->directory . '/nested';
+        $this->assertNull($this->fs->getMetadata($nested . '/missing'));
+        $this->assertTrue($this->fs->createDirectory($nested));
+        $this->assertTrue($this->fs->writeFile($nested . '/old', 'payload'));
+        $this->assertTrue($this->fs->rename($nested . '/old', $nested . '/new'));
+        $this->assertNull($this->fs->getMetadata($nested . '/old'));
+        $this->assertTrue($this->fs->chmod($nested . '/new', 0600));
+        $this->assertSame('0600', $this->fs->getMetadata($nested . '/new')['perms']);
+        $this->assertSame('payload', $this->fs->readFile($nested . '/new'));
+
+        $this->assertTrue($this->fs->chmod($nested, 0000));
+        try {
+            try {
+                $this->fs->getMetadata($nested . '/new');
+                $this->fail('Permission denied must not be treated as a missing file.');
+            } catch (FileSystemException $error) {
+                $this->assertSame(StatusCode::PERMISSION_DENIED, $error->getCode());
+            }
+        } finally { $this->fs->chmod($nested, 0755); }
+
+        $this->assertTrue($this->fs->delete($nested));
+        $this->assertNull($this->fs->getMetadata($nested));
+        $this->assertTrue($this->fs->delete($nested));
     }
 
     private function connect(string $protocol): void

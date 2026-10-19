@@ -6,9 +6,11 @@ use App\Services\FileNamePolicy;
 use App\Services\ResourcePolicy;
 use App\Services\RemoteEndpointPolicy;
 use App\Services\RemoteSecurityPolicy;
-use phpseclib3\Crypt\PublicKeyLoader;
-use phpseclib3\Crypt\Common\PrivateKey;
-use phpseclib3\Net\SFTP;
+use phpseclib4\Crypt\PublicKeyLoader;
+use phpseclib4\Crypt\Common\PrivateKey;
+use phpseclib4\Exception\FileSystemException;
+use phpseclib4\Net\SFTP;
+use phpseclib4\Net\SFTP\StatusCode;
 use RuntimeException;
 
 /** SFTP transport with negotiated host-key verification and atomic stream activation. */
@@ -33,7 +35,7 @@ class Ssh2Adapter implements IFileSystem, StreamWritableFileSystem
         $credential = $pass;
         if ($privateKey !== '' || $publicKey !== '') {
             if ($privateKey === '' || $publicKey === '') throw new RuntimeException('SFTP private and public keys are required.');
-            $key = PublicKeyLoader::load($privateKey, $privateKeyPassphrase === '' ? false : $privateKeyPassphrase);
+            $key = PublicKeyLoader::load($privateKey, $privateKeyPassphrase === '' ? null : $privateKeyPassphrase);
             if (!$key instanceof PrivateKey) throw new RuntimeException('SFTP private key is invalid.');
             $expected = PublicKeyLoader::loadPublicKey($publicKey)->toString('OpenSSH');
             if ($key->getPublicKey()->toString('OpenSSH') !== $expected) throw new RuntimeException('SFTP public and private keys do not match.');
@@ -50,7 +52,6 @@ class Ssh2Adapter implements IFileSystem, StreamWritableFileSystem
     public function listDirectory(string $path, bool $showHidden = true): array
     {
         $items = $this->sftp->rawlist($this->remotePath($path));
-        if (!is_array($items)) throw new RuntimeException('Unable to list SFTP directory.');
         $this->policy->assertDirectoryEntries(count($items));
         $budget = $this->policy->startOperation();
         $results = [];
@@ -65,8 +66,12 @@ class Ssh2Adapter implements IFileSystem, StreamWritableFileSystem
 
     public function getMetadata(string $path): ?array
     {
-        $stat = $this->sftp->lstat($this->remotePath($path));
-        return is_array($stat) ? $this->metadata($path, $stat) : null;
+        try {
+            return $this->metadata($path, $this->sftp->lstat($this->remotePath($path)));
+        } catch (FileSystemException $error) {
+            if (in_array($error->getCode(), [StatusCode::NO_SUCH_FILE, StatusCode::NO_SUCH_PATH], true)) return null;
+            throw $error;
+        }
     }
 
     private function metadata(string $path, array $stat): array
@@ -96,7 +101,7 @@ class Ssh2Adapter implements IFileSystem, StreamWritableFileSystem
         $stream = tmpfile();
         if ($stream === false) throw new RuntimeException('Unable to allocate SFTP read staging.');
         try {
-            if (!$this->sftp->get($this->remotePath($path), $stream, 0, $limit + 1)) throw new RuntimeException('Unable to read SFTP source.');
+            $this->sftp->get($this->remotePath($path), $stream, 0, $limit + 1);
             $size = ftell($stream);
             if ($size === false || $size > $limit) throw new RuntimeException('Remote file exceeds the configured read limit.');
             rewind($stream);
@@ -125,21 +130,28 @@ class Ssh2Adapter implements IFileSystem, StreamWritableFileSystem
         try {
             $this->policy->copyStream($source, $buffer);
             rewind($buffer);
-            if (!$this->sftp->put($this->remotePath($temporary), $buffer)) throw new RuntimeException('Unable to write SFTP staging file.');
-            // Unsupported atomic overwrite is a retryable failure, never a delete-before-rename fallback.
-            $activated = $this->sftp->posix_rename($this->remotePath($temporary), $this->remotePath($path));
-            if (!$activated) throw new RuntimeException('Remote server could not activate the staged file.');
+            try {
+                $this->sftp->put($this->remotePath($temporary), $buffer);
+                // Unsupported atomic overwrite is a retryable failure, never a delete-before-rename fallback.
+                $this->sftp->posix_rename($this->remotePath($temporary), $this->remotePath($path));
+            } catch (\Throwable $error) {
+                try { $this->sftp->delete($this->remotePath($temporary), false); }
+                catch (\Throwable $cleanupError) {
+                    log_message('warning', 'Unable to remove failed SFTP staging file: {error}', ['error' => $cleanupError->getMessage()]);
+                }
+                throw $error;
+            }
             return true;
         } finally {
             fclose($buffer);
-            $this->sftp->delete($this->remotePath($temporary), false);
         }
     }
 
     public function createDirectory(string $path): bool
     {
         $this->assertWritableTarget($path);
-        return $this->sftp->mkdir($this->remotePath($path), 0755, true);
+        $this->sftp->mkdir($this->remotePath($path), 0755, true);
+        return true;
     }
 
     public function delete(string $path): bool
@@ -153,15 +165,20 @@ class Ssh2Adapter implements IFileSystem, StreamWritableFileSystem
         $budget->tick();
         $metadata = $this->getMetadata($path);
         if ($metadata === null) return true;
-        if ($metadata['type'] !== 'dir') return $this->sftp->delete($this->remotePath($path), false);
+        if ($metadata['type'] !== 'dir') {
+            $this->sftp->delete($this->remotePath($path), false);
+            return true;
+        }
         foreach ($this->listDirectory($path) as $item) if (!$this->deleteTree($item['path'], $budget)) return false;
-        return $this->sftp->rmdir($this->remotePath($path));
+        $this->sftp->rmdir($this->remotePath($path));
+        return true;
     }
 
     public function rename(string $from, string $to): bool
     {
         $this->assertWritableTarget($to);
-        return $this->sftp->rename($this->remotePath($from), $this->remotePath($to));
+        $this->sftp->rename($this->remotePath($from), $this->remotePath($to));
+        return true;
     }
 
     public function move(string $from, string $to): bool { return $this->rename($from, $to); }
@@ -198,7 +215,8 @@ class Ssh2Adapter implements IFileSystem, StreamWritableFileSystem
     public function chmod(string $path, int $mode, bool $recursive = false): bool
     {
         if ($recursive) throw new RuntimeException('Recursive chmod is unavailable on SFTP.');
-        return $this->sftp->chmod($mode, $this->remotePath($path)) !== false;
+        $this->sftp->chmod($this->remotePath($path), $mode);
+        return true;
     }
 
     public function chown(string $path, $user, $group, bool $recursive = false): bool { throw new RuntimeException('SFTP chown is unavailable.'); }

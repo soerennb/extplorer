@@ -13,7 +13,7 @@
         "php": "^8.2",
         "bacon/bacon-qr-code": "^3.0",
         "codeigniter4/framework": "^4.7",
-        "phpseclib/phpseclib": "^3.0.57",
+        "phpseclib/phpseclib": "^4.0.2",
         "sabre/dav": "^4.7",
         "spomky-labs/otphp": "^11.5"
     },
