@@ -4,6 +4,16 @@ All notable changes to eXtplorer 3 are documented here.
 
 ## [Unreleased]
 
+## [3.1.3] - 2026-10-20
+
+### Fixed
+
+- Preserve IPv6 SMTP hosts through the security validation added in 3.1.2: bare and bracketed literals share one canonical identity, and the transport adds the brackets required by PHP sockets. A real IPv6 loopback SMTP fixture verifies message delivery.
+
+### Security and upgrade
+
+- Includes all 3.1.2 security corrections and upgrade requirements below. Install 3.1.3 when upgrading from 3.1.1 or earlier. Custom Sendmail paths require operator configuration, saved mail settings must be retested, delegated administration is bounded, and strict-mode legacy FTPS remains disabled.
+
 ## [3.1.2] - 2026-10-20
 
 ### Security

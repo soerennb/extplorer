@@ -18,6 +18,28 @@ an incomplete check and cannot authorize release publication.
 
 ## Source and CI evidence
 
+### Published artifacts and corrective release
+
+Version 3.1.2 was published at 2026-10-20 08:06:29 UTC from
+`b8ded9362ce20d5f8dadc434fb23dfc25356efc5`.
+Its immutable ZIP SHA-256 is
+`95a7bb6309e907d8f6389f4d4afcb0a3bbf31981317c58467f58db238d153211`;
+the AMD64/ARM64 manifest is
+`sha256:9b8268ecb9035a23621897b436598b769c53581b71f691ce53f9a193385786dd`.
+The [Release run](https://github.com/soerennb/extplorer/actions/runs/39389883842)
+passed all required jobs, including publication, final ZIP translation/routing
+checks, native 3.1.1 upgrade/rollback (257 assertions) and both actual architecture
+image checks. Its overall status is cancelled: a cancellation request raced
+with successful publication after a final local check identified an SMTP IPv6
+compatibility regression. Do not reuse that cancelled run as a CI gate.
+
+Bare IPv6 passed the new host validator but PHP sockets require brackets;
+bracketed literals were rejected by validation. Version 3.1.3 corrects that
+formatting and adds actual IPv6 SMTP delivery coverage. Existing artifacts and
+tags are preserved. Install 3.1.3 for both the security fixes and that correction.
+Previous moving image aliases were
+`sha256:b10c0287ea6d5a85985393b452f2831f5deebf4186bea8f82e1eeadedea38c3d`.
+
 Local application candidate: `731aa2d066963bf1a3be0f8f675df008c2c63729`.
 All application checks passed on that exact commit:
 [Quality](https://github.com/soerennb/extplorer/actions/runs/39389261467),

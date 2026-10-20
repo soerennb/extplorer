@@ -47,6 +47,9 @@ final class MailSecurityTest extends CIUnitTestCase
         yield 'fractional port' => [['smtp_port' => 1.5]];
         yield 'stream wrapper' => [['smtp_host' => 'unix:///tmp/socket']];
         yield 'host includes port' => [['smtp_host' => 'server:25']];
+        yield 'bracketed wrapper' => [['smtp_host' => '[unix:///tmp/socket]']];
+        yield 'bracketed hostname' => [['smtp_host' => '[smtp.example.test]']];
+        yield 'IPv6 with port' => [['smtp_host' => '[::1]:25']];
         yield 'header in sender' => [['email_from' => "test@example.com\r\nBcc:other@example.com"]];
         yield 'header in name' => [['email_from_name' => "Name\r\nBcc: other@example.com"]];
     }
@@ -78,6 +81,40 @@ final class MailSecurityTest extends CIUnitTestCase
         $this->assertSame('mail', $config['protocol']);
         $this->assertArrayNotHasKey('mailPath', $config);
         $this->assertArrayNotHasKey('SMTPHost', $config);
+    }
+
+    public function testIpv6LiteralsHaveOneIdentityAndUseSocketBracketsOnlyInTransport(): void
+    {
+        $bare = array_replace($this->smtp(), ['smtp_host' => '0:0:0:0:0:0:0:1']);
+        $bracketed = array_replace($bare, ['smtp_host' => '[::1]']);
+        $policy = new MailConfigPolicy();
+        $this->assertSame('::1', $policy->normalize($bracketed)['smtp_host']);
+        $this->assertSame('[::1]', $policy->transportConfig($bare)['SMTPHost']);
+        $this->assertSame((new EmailService())->configFingerprint($bare), (new EmailService())->configFingerprint($bracketed));
+    }
+
+    public function testActualIpv6SmtpDelivery(): void
+    {
+        $capture = $this->sandbox->root . '/smtp-message';
+        $process = proc_open([PHP_BINARY, ROOTPATH . 'tests/Support/smtp-fixture.php', $capture],
+            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $this->assertIsResource($process);
+        try {
+            stream_set_timeout($pipes[1], 5);
+            $address = trim((string)fgets($pipes[1]));
+            $this->assertMatchesRegularExpression('/^\[::1\]:[0-9]+$/', $address, 'The real IPv6 loopback fixture must start.');
+            $port = (int)substr($address, strrpos($address, ':') + 1);
+            Services::injectMock('email', new Email());
+            $result = (new EmailService())->sendTestEmailWithConfig('recipient@example.test',
+                array_replace($this->smtp(), ['smtp_host' => '::1', 'smtp_port' => $port,
+                    'smtp_crypto' => '', 'smtp_user' => '', 'smtp_pass' => '']));
+            $this->assertTrue($result['ok']);
+            $this->assertStringContainsString('recipient@example.test', (string)file_get_contents($capture));
+        } finally {
+            proc_terminate($process);
+            foreach ($pipes as $pipe) fclose($pipe);
+            proc_close($process);
+        }
     }
 
     public function testAReadOnlyPathCannotBeWrittenEvenUsingNull(): void
