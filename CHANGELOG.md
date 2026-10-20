@@ -12,7 +12,7 @@ All notable changes to eXtplorer 3 are documented here.
 
 ### Security and upgrade
 
-- Includes all 3.1.2 security corrections and upgrade requirements below. Install 3.1.3 when upgrading from 3.1.1 or earlier. Custom Sendmail paths require operator configuration, saved mail settings must be retested, delegated administration is bounded, and strict-mode legacy FTPS remains disabled.
+- Includes all [3.1.2 security corrections and upgrade requirements](https://github.com/soerennb/extplorer/releases/tag/v3.1.2). Install 3.1.3 when upgrading from 3.1.1 or earlier. Custom Sendmail paths require operator configuration, saved mail settings must be retested, delegated administration is bounded, and strict-mode legacy FTPS remains disabled.
 
 ## [3.1.2] - 2026-10-20
 
