@@ -35,14 +35,19 @@ final class RemoteSecurityPolicy
             if ($type === 'sftp' && trim((string)($config['host_key_fingerprint'] ?? '')) === '') {
                 log_message('warning', 'SFTP host-key verification is disabled in compatibility mode.');
             }
+            if ($type === 'ftps') {
+                log_message('warning', 'FTPS compatibility mode does not authenticate the credential-bearing connection.');
+            }
             return;
         }
 
         if ($type === 'ftp') {
-            throw new RuntimeException('Plain FTP is disabled in strict remote security mode. Use FTPS or SFTP.');
+            throw new RuntimeException(lang('Remote.ftp_strict_denied'));
         }
-        if ($type === 'ftps' && empty($config['tls_verified'])) {
-            throw new RuntimeException('FTPS certificate verification is required in strict remote security mode.');
+        if ($type === 'ftps') {
+            // PHP ftp_ssl_connect does not verify its peer. A different TLS
+            // preflight cannot authenticate the connection carrying credentials.
+            throw new RuntimeException(lang('Remote.ftps_strict_denied'));
         }
         if ($type === 'sftp' && $this->normalizeFingerprint((string)($config['host_key_fingerprint'] ?? '')) === '') {
             throw new RuntimeException('SFTP host-key fingerprint is required in strict remote security mode.');

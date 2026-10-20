@@ -354,6 +354,11 @@ jobs:
           cache-from: type=gha,scope=extplorer-image-amd64
           cache-to: type=gha,mode=max,scope=extplorer-image-amd64
 
+      - name: Verify trusted Sendmail execution boundary
+        env:
+          EXTPLORER_TEST_IMAGE: extplorer3:e2e
+        run: sh tests/integration/mail/run.sh
+
       - name: Scan image for high and critical vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:

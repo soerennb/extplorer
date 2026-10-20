@@ -7,6 +7,8 @@ class FixtureHandler(TLS_FTPHandler):
     certfile = '/certificates/server.pem'
     keyfile = '/certificates/server.key'
     passive_ports = range(30000, 30010)
+    # Hostile PASV address: clients must reuse the authorized control peer.
+    masquerade_address = '127.0.0.2'
 
 
 authorizer = DummyAuthorizer()

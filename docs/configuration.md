@@ -143,7 +143,8 @@ php spark uploads:scan-result QUARANTINE_ID clean --reason 'clamav: OK'
 
 Authenticated uploads support local storage, saved FTP/FTPS/SFTP mounts and direct
 remote sessions, including resumable chunks. FTP remains available only in the
-configured compatibility mode. FTPS uses explicit TLS (`AUTH TLS`), normally on
+configured compatibility mode. FTPS also requires explicit compatibility mode
+and does not authenticate its actual login connection. It uses explicit TLS (`AUTH TLS`), normally on
 port 21; implicit TLS on port 990 is not supported by PHP's FTP extension. The
 container verifies that its FTP extension includes SSL support during the build.
 
@@ -216,6 +217,48 @@ BACKUP.zip` before a restore; the restore creates a pre-restore backup and
 rolls back staged files if activation fails.
 
 ### Security Controls (Current Defaults)
+
+#### Mail configuration and upgrades from 3.1.1
+
+Sendmail's executable is an operator-only setting. Set
+`EXTPLORER_SENDMAIL_PATH` in the PHP worker environment (Compose already
+passes it through), or use the default `/usr/sbin/sendmail`. Its value is
+never imported from web settings. The settings page displays the effective
+operator path but cannot change it; API writes to `sendmail_path` return 422.
+
+The program must be a regular executable outside managed storage. The PHP
+runtime must not own or be able to modify the executable, its directories,
+or any intermediate symlink target. Group/world-writable components are
+rejected. System-managed symlinks are supported. Sendmail requires a
+non-root POSIX runtime with the POSIX extension; run scheduled mail commands
+as the same unprivileged application account. SMTP and PHP `mail()` remain
+available without these Sendmail filesystem requirements.
+
+If a previous installation saved a custom Sendmail path, delivery remains
+disabled until the operator explicitly configures the trusted program in
+`EXTPLORER_SENDMAIL_PATH`, or selects and configures another mail transport.
+An old saved path is never executed or automatically promoted to operator
+configuration. The new mail verification fingerprint invalidates earlier
+delivery confirmations; save the settings and send a successful test again.
+
+Mail settings require `admin_settings` (or `*`); `admin_users` no longer
+implicitly grants that access. Custom roles that intentionally manage both
+areas need both permissions. Mail test and validation calls require the
+existing ten-minute step-up grant and share a limit of five calls per minute
+per account. Both use saved settings only: `POST api/settings/test-email`
+accepts `{ "email": "recipient@example.com" }`, and
+`POST api/settings/validate-email` accepts `{}`. Save before checking a
+configuration. Transport overrides are rejected with 422; credentials and
+remote debugging responses are not returned to the browser or audit log.
+
+Delegated user administrators may only grant permissions they already hold.
+They cannot reset, disable, demote or otherwise modify stronger accounts,
+change stronger roles/groups, or manage accounts outside their own home
+subtree. New and existing target accounts must have extension policies at
+least as restrictive as the delegate's own policy. Checks use current persisted rights under the authorization-state
+lock, including indirect role/group effects. Full `*` administrators retain
+complete administration. CLI/bootstrap operations remain operator actions.
+
 The following controls are enabled in the application and should be considered part of your operational baseline:
 
 - HTTPS redirects and secure cookies are enforced in production mode. When
@@ -267,10 +310,14 @@ The following controls are enabled in the application and should be considered p
   environment-only escape hatch for controlled internal networks and must be
   paired with a narrow exact allowlist.
 - Strict remote security is the default: plain FTP is disabled and SFTP
-  requires a pinned host-key fingerprint. FTPS requires a verified TLS
-certificate and can additionally use `EXTPLORER_FTPS_CA_FILE` or a
-  connection SPKI pin (hex SHA-256 or `sha256/<base64>`). Set
-  `EXTPLORER_REMOTE_SECURITY_MODE=compat` only for a documented migration.
+  requires a pinned host-key fingerprint. FTPS is disabled in strict mode: PHP's FTP extension cannot authenticate
+  the actual login connection, and a separate certificate preflight does not
+  provide that guarantee. Prefer SFTP with a pinned host key. The explicit
+  operator setting `EXTPLORER_REMOTE_SECURITY_MODE=compat` retains legacy
+  FTP/FTPS for a documented migration; FTPS in this mode has no authenticated
+  login-connection guarantee even when its certificate preflight succeeds.
+  The preflight still uses `EXTPLORER_FTPS_CA_FILE` and an optional SPKI pin.
+  Do not treat that compatibility mode as strict TLS verification.
 - Set `EXTPLORER_REMOTE_TIMEOUT_SECONDS` to bound outbound connection setup
   and use network-level egress filtering as a second enforcement layer.
 - Only explicitly configured reverse proxies may supply forwarded headers.

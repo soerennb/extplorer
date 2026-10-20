@@ -17,6 +17,9 @@ How to use the File Manager, Editor, and WebDAV features. Includes User Manageme
 ### [Architecture Overview](architecture.md)
 For developers and system administrators who want to understand how the application works under the hood.
 
+### [Security Boundaries and Verification](security.md)
+Trust boundaries, vulnerability reporting, security review and release checks.
+
 ### [Changelog](../CHANGELOG.md)
 Release history and notable changes for each eXtplorer 3 version.
 

@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\UserModel;
 use App\Services\LogService;
 use App\Services\AuthenticationService;
+use App\Services\AdminDelegationException;
 use App\Services\PasswordPolicy;
 use App\Services\StepUpAuthenticationService;
 use App\Services\WebDavCredentialService;
@@ -31,6 +32,12 @@ class UserAdminController extends BaseController
             return $this->failForbidden('Access denied');
         }
         return true;
+    }
+
+    private function delegationDenied()
+    {
+        LogService::event('Administrative Delegation', 'denied');
+        return $this->fail(lang('Admin.delegation_denied'), 403, 'admin_delegation_denied');
     }
 
     private function requireStepUp(string $action)
@@ -82,7 +89,8 @@ class UserAdminController extends BaseController
             return $this->fail('The admin role must retain wildcard permissions');
         }
 
-        $this->userModel->saveRole($name, $permissions);
+        try { $this->userModel->saveRole($name, $permissions, (string)session('username')); }
+        catch (AdminDelegationException) { return $this->delegationDenied(); }
         LogService::log('Save Role', $name);
         return $this->respond(['status' => 'success']);
     }
@@ -118,7 +126,8 @@ class UserAdminController extends BaseController
             ], 409);
         }
 
-        try { $this->userModel->deleteRole($name); }
+        try { $this->userModel->deleteRole($name, (string)session('username')); }
+        catch (AdminDelegationException) { return $this->delegationDenied(); }
         catch (\RuntimeException $exception) { return $this->fail($exception->getMessage(), 409); }
         LogService::log('Delete Role', $name);
         return $this->respond(['status' => 'success']);
@@ -170,7 +179,8 @@ class UserAdminController extends BaseController
         }
         $roles = array_values(array_unique($roles));
 
-        try { $this->userModel->saveGroup($name, $roles); }
+        try { $this->userModel->saveGroup($name, $roles, (string)session('username')); }
+        catch (AdminDelegationException) { return $this->delegationDenied(); }
         catch (\RuntimeException $exception) { return $this->fail($exception->getMessage(), 409); }
         LogService::log('Save Group', $name);
         return $this->respond(['status' => 'success']);
@@ -196,7 +206,8 @@ class UserAdminController extends BaseController
             ], 409);
         }
 
-        try { $this->userModel->deleteGroup($name); }
+        try { $this->userModel->deleteGroup($name, (string)session('username')); }
+        catch (AdminDelegationException) { return $this->delegationDenied(); }
         catch (\RuntimeException $exception) { return $this->fail($exception->getMessage(), 409); }
         LogService::log('Delete Group', $name);
         return $this->respond(['status' => 'success']);
@@ -265,7 +276,10 @@ class UserAdminController extends BaseController
             return $this->fail('Invalid home directory');
         }
 
-        if ($this->userModel->addUser($username, $password, $role, $homeDir, [], $allowedExt, $blockedExt, true)) {
+        try {
+            $created = $this->userModel->addUser($username, $password, $role, $homeDir, [], $allowedExt, $blockedExt, true, (string)session('username'));
+        } catch (AdminDelegationException) { return $this->delegationDenied(); }
+        if ($created) {
             LogService::log('Create User', $username);
             return $this->respondCreated(['status' => 'success']);
         } else {
@@ -341,7 +355,7 @@ class UserAdminController extends BaseController
         }
 
         try {
-            if ($this->userModel->updateUser($username, $data)) {
+            if ($this->userModel->updateUser($username, $data, (string)session('username'))) {
                 $credentialAffectingFields = [
                     'password', 'disabled', 'locked_until', 'role', 'home_dir',
                     'groups', 'allowed_extensions', 'blocked_extensions',
@@ -355,7 +369,8 @@ class UserAdminController extends BaseController
                 LogService::log('Update User', $username);
                 return $this->respond(['status' => 'success']);
             }
-        } catch (\RuntimeException $exception) {
+        } catch (AdminDelegationException) { return $this->delegationDenied(); }
+        catch (\RuntimeException $exception) {
             return $this->fail($exception->getMessage(), 409);
         }
 
@@ -380,13 +395,14 @@ class UserAdminController extends BaseController
         }
 
         try {
-            if ($this->userModel->deleteUser($username)) {
+            if ($this->userModel->deleteUser($username, (string)session('username'))) {
                 (new AuthenticationService($this->userModel))->revokeUserTokens($username);
                 (new WebDavCredentialService())->revokeUser($username);
                 LogService::log('Delete User', $username);
                 return $this->respond(['status' => 'success']);
             }
-        } catch (\RuntimeException $exception) {
+        } catch (AdminDelegationException) { return $this->delegationDenied(); }
+        catch (\RuntimeException $exception) {
             return $this->fail($exception->getMessage(), 409);
         }
 

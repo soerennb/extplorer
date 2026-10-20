@@ -1,0 +1,16 @@
+rules:
+  - id: extplorer.javascript.no-dynamic-code
+    languages: [javascript]
+    severity: ERROR
+    message: Use compiled templates and parsed data; do not execute strings as JavaScript.
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: new Function(...)
+      - pattern: Function(...)
+  - id: extplorer.javascript.no-document-write
+    languages: [javascript]
+    severity: ERROR
+    message: Render untrusted text through textContent or Vue interpolation.
+    pattern-either:
+      - pattern: document.write(...)
+      - pattern: document.writeln(...)

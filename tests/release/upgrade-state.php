@@ -60,7 +60,10 @@ if ($phase === 'seed') {
     $dav = (new WebDavCredentialService())->create('upgrade-user', 'Upgrade fixture');
     session()->set(['username' => 'upgrade-admin', 'permissions' => ['*']]);
     $settings = new App\Services\SettingsService();
-    $settings->saveSettings(array_merge($settings->getSettings(), ['mount_root_allowlist' => [$external]]));
+    $settings->saveSettings(array_merge($settings->getSettings(), ['mount_root_allowlist' => [$external],
+        'email_protocol' => 'sendmail', 'email_from' => 'fixture@example.test',
+        'sendmail_path' => '/legacy/operator-must-migrate-sendmail',
+        'email_delivery_verified_fingerprint' => 'pre-fix-verification', 'email_delivery_verified_at' => gmdate(DATE_ATOM)]));
     file_put_contents($external . '/mounted.txt', 'external mount content');
     $mounts->addMount('upgrade-admin', 'Upgrade local', 'local', ['path' => $external]);
     file_put_contents($files . '/keep.txt', "original bytes\x00\xff\n");
@@ -69,7 +72,7 @@ if ($phase === 'seed') {
     file_put_contents($files . '/history.txt', 'second revision');
     file_put_contents($files . '/trash.txt', 'restore this');
     $trash->moveToTrash($files . '/trash.txt', 'trash.txt');
-    $share = $shares->createShare('keep.txt', 'upgrade-admin', 'Share-Password!2026', null, 'read', ['source' => 'Home']);
+    $share = $shares->createShare('Home/keep.txt', 'upgrade-admin', 'Share-Password!2026', null, 'read', ['source' => 'Home']);
     $upload = $sessions->create('upgrade-admin', 'Home', '', 'resumed.txt', 6, 65536, 1);
     file_put_contents($sessions->chunkPath($upload['id'], 0), 'abcdef');
     $sessions->storeChunk($upload['id'], 0, 6);
@@ -113,6 +116,12 @@ check(hash_file('sha256', $files . '/keep.txt') === $fixture['file_sha256'], 'bi
 check((new LocalAdapter($files))->readFile('keep.txt') === file_get_contents($files . '/keep.txt'), 'local storage access');
 check($shares->getShare($fixture['share'])['created_by'] === 'upgrade-admin', 'share metadata');
 check($shares->verifyPassword($fixture['share'], 'Share-Password!2026'), 'share password');
+check($shares->resolveSharePaths($shares->getShare($fixture['share']))[1] === realpath($files . '/keep.txt'), 'share resolves to its intended file');
+if (version_compare(config('App')->version, '3.1.2', '>=')) {
+    $mail = new App\Services\EmailService();
+    check($mail->deliveryStatus()['reason'] === 'sendmail_migration_required', 'legacy mail program requires operator migration');
+    check(!$mail->sendTestEmail('recipient@example.test'), 'legacy mail program is never executed');
+}
 $decrypted = $mounts->getUserMounts('upgrade-user', true);
 foreach (['ftp', 'ftps', 'sftp'] as $type) {
     check($decrypted[$type]['config']['pass'] === 'mount-fixture-password', $type . ' encrypted mount password');

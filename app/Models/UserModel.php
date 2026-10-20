@@ -103,7 +103,7 @@ class UserModel
         $this->saveData($this->usersFile, $users);
     }
 
-    public function addUser(string $username, string $password, string $role = 'user', string $homeDir = '/', array $groups = [], string $allowedExt = '', string $blockedExt = '', bool $mustChangePassword = false): bool
+    public function addUser(string $username, string $password, string $role = 'user', string $homeDir = '/', array $groups = [], string $allowedExt = '', string $blockedExt = '', bool $mustChangePassword = false, ?string $actor = null): bool
     {
         $username = trim($username);
         if (!$this->isValidUsername($username)) {
@@ -127,7 +127,8 @@ class UserModel
             $groups,
             $allowedExt,
             $blockedExt,
-            $mustChangePassword
+            $mustChangePassword,
+            $actor
         ): bool {
             foreach ($users as $user) {
                 if (($user['username'] ?? null) === $username) {
@@ -135,7 +136,7 @@ class UserModel
                 }
             }
 
-            $users[] = [
+            $newUser = [
                 'username' => $username,
                 'password_hash' => password_hash($password, PASSWORD_DEFAULT),
                 'role' => $role,
@@ -152,11 +153,13 @@ class UserModel
                 'failed_login_count' => 0,
                 'locked_until' => 0,
             ];
+            if ($actor !== null) (new \App\Services\AdminDelegationPolicy())->assertUserChange($users, null, $newUser, $actor);
+            $users[] = $newUser;
             return true;
         });
     }
 
-    public function updateUser(string $username, array $data): bool
+    public function updateUser(string $username, array $data, ?string $actor = null): bool
     {
         if (array_key_exists('role', $data)) {
             if (!is_string($data['role']) || !array_key_exists($data['role'], $this->getRoles())) {
@@ -174,12 +177,15 @@ class UserModel
             }
         }
 
-        return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username, $data): bool {
+        return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username, $data, $actor): bool {
             foreach ($users as &$user) {
                 if (($user['username'] ?? null) !== $username) {
                     continue;
                 }
 
+                if ($actor !== null) {
+                    (new \App\Services\AdminDelegationPolicy())->assertUserChange($users, $user, array_replace($user, $data), $actor);
+                }
                 $user = $this->withAuthDefaults($user);
                 $currentlyActiveAdmin = ($user['role'] ?? '') === 'admin' && empty($user['disabled']);
                 $nextRole = array_key_exists('role', $data) ? $data['role'] : $user['role'];
@@ -355,9 +361,9 @@ class UserModel
         });
     }
 
-    public function deleteUser(string $username): bool
+    public function deleteUser(string $username, ?string $actor = null): bool
     {
-        return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username): bool {
+        return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username, $actor): bool {
             $target = null;
             $activeAdministrators = 0;
             foreach ($users as $user) {
@@ -369,6 +375,9 @@ class UserModel
                 }
             }
 
+            if ($actor !== null && $target !== null) {
+                (new \App\Services\AdminDelegationPolicy())->assertUserChange($users, $target, null, $actor);
+            }
             if (is_array($target)
                 && ($target['role'] ?? '') === 'admin'
                 && empty($target['disabled'])
@@ -527,14 +536,14 @@ class UserModel
         (new AuthorizationState())->replaceRoles($roles);
     }
 
-    public function saveRole(string $name, array $permissions): void
+    public function saveRole(string $name, array $permissions, ?string $actor = null): void
     {
-        (new AuthorizationState())->saveRole($name, $permissions);
+        (new AuthorizationState())->saveRole($name, $permissions, $actor);
     }
 
-    public function deleteRole(string $name): void
+    public function deleteRole(string $name, ?string $actor = null): void
     {
-        (new AuthorizationState())->deleteRole($name);
+        (new AuthorizationState())->deleteRole($name, $actor);
     }
 
     /**
@@ -596,14 +605,14 @@ class UserModel
         (new AuthorizationState())->replaceGroups($groups);
     }
 
-    public function saveGroup(string $name, array $roles): void
+    public function saveGroup(string $name, array $roles, ?string $actor = null): void
     {
-        (new AuthorizationState())->saveGroup($name, $roles);
+        (new AuthorizationState())->saveGroup($name, $roles, $actor);
     }
 
-    public function deleteGroup(string $name): void
+    public function deleteGroup(string $name, ?string $actor = null): void
     {
-        (new AuthorizationState())->deleteGroup($name);
+        (new AuthorizationState())->deleteGroup($name, $actor);
     }
 
     /**

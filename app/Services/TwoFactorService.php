@@ -10,6 +10,8 @@ use BaconQrCode\Writer;
 
 class TwoFactorService
 {
+    public function __construct(private ?\Closure $clock = null) {}
+
     /**
      * Generates a new random secret.
      */
@@ -44,7 +46,7 @@ class TwoFactorService
     {
         if (!$secret) return false;
         $totp = TOTP::create($secret);
-        return $totp->verify($code);
+        return $totp->verify($code, $this->clock !== null ? ($this->clock)() : null);
     }
 
     /**

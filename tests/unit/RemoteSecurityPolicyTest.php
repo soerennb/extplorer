@@ -49,15 +49,16 @@ class RemoteSecurityPolicyTest extends CIUnitTestCase
         putenv('EXTPLORER_REMOTE_SECURITY_MODE=strict');
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('certificate verification is required');
+        $this->expectExceptionMessage('actual connection can be authenticated');
         (new RemoteSecurityPolicy())->assertProtocolAllowed('ftps');
     }
 
-    public function testStrictModeAcceptsFtpsOnlyAfterVerification(): void
+    public function testStrictModeRejectsUnboundPreflightClaims(): void
     {
         putenv('EXTPLORER_REMOTE_SECURITY_MODE=strict');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('actual connection can be authenticated');
         (new RemoteSecurityPolicy())->assertProtocolAllowed('ftps', ['tls_verified' => true]);
-        $this->assertTrue(true);
     }
 
     public function testSpkiPinAcceptsHexAndBase64Forms(): void

@@ -39,12 +39,12 @@ final class AuthorizationState
         $this->mutate(function (array &$state) use ($groups): void { $state['groups'] = $groups; });
     }
 
-    public function saveRole(string $name, array $permissions): void
+    public function saveRole(string $name, array $permissions, ?string $actor = null): void
     {
-        $this->mutate(function (array &$state) use ($name, $permissions): void { $state['roles'][$name] = $permissions; });
+        $this->mutate(function (array &$state) use ($name, $permissions): void { $state['roles'][$name] = $permissions; }, $actor);
     }
 
-    public function deleteRole(string $name): void
+    public function deleteRole(string $name, ?string $actor = null): void
     {
         $this->mutate(function (array &$state) use ($name): void {
             if (in_array($name, ['admin', 'user'], true)) throw new RuntimeException('This system role cannot be deleted.');
@@ -55,25 +55,25 @@ final class AuthorizationState
                 if (in_array($name, $roles, true)) throw new RuntimeException('Role is still assigned to users or groups.');
             }
             unset($state['roles'][$name]);
-        });
+        }, $actor);
     }
 
-    public function saveGroup(string $name, array $roles): void
+    public function saveGroup(string $name, array $roles, ?string $actor = null): void
     {
         $this->mutate(function (array &$state) use ($name, $roles): void {
             foreach ($roles as $role) if (!isset($state['roles'][$role])) throw new RuntimeException('Group contains an unknown role.');
             $state['groups'][$name] = $roles;
-        });
+        }, $actor);
     }
 
-    public function deleteGroup(string $name): void
+    public function deleteGroup(string $name, ?string $actor = null): void
     {
         $this->mutate(function (array &$state) use ($name): void {
             foreach ($state['users'] as $user) {
                 if (in_array($name, $user['groups'] ?? [], true)) throw new RuntimeException('Group is still assigned to users.');
             }
             unset($state['groups'][$name]);
-        });
+        }, $actor);
     }
 
     public static function permissions(array $user, array $roles, array $groups): array
@@ -85,11 +85,12 @@ final class AuthorizationState
         return in_array('*', $permissions, true) ? ['*'] : array_values(array_unique($permissions));
     }
 
-    private function mutate(callable $callback): void
+    private function mutate(callable $callback, ?string $actor = null): void
     {
-        AtomicFileStore::transactionMany($this->defaults(), function (array &$documents) use ($callback): void {
+        AtomicFileStore::transactionMany($this->defaults(), function (array &$documents) use ($callback, $actor): void {
             $state = $before = $this->decode($documents);
             $callback($state);
+            if ($actor !== null) (new AdminDelegationPolicy())->assertMutation($before, $state, $actor);
             $changedRoles = $this->changedKeys($before['roles'], $state['roles']);
             $changedGroups = $this->changedKeys($before['groups'], $state['groups']);
             foreach ($state['users'] as &$user) {

@@ -30,7 +30,12 @@ const Api = {
 
         const translationKeys = {
             current_password_incorrect: 'current_password_incorrect',
-            invalid_remote_endpoint_allowlist: 'admin_settings_remote_endpoint_allowlist_invalid'
+            admin_delegation_denied: 'admin_delegation_denied',
+            invalid_remote_endpoint_allowlist: 'admin_settings_remote_endpoint_allowlist_invalid',
+            ...Object.fromEntries(['invalid_email_settings', 'email_not_configured', 'sendmail_path_read_only',
+                'sendmail_migration_required', 'sendmail_unavailable', 'email_saved_settings_only',
+                'email_recipient_required', 'email_delivery_failed', 'email_validation_failed',
+                'email_probe_rate_limited'].map((key) => [key, key]))
         };
         const key = translationKeys[payload.error];
         if (!key || !window.i18n || typeof window.i18n.t !== 'function') {

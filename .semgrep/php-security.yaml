@@ -1,0 +1,27 @@
+rules:
+  - id: extplorer.php.no-process-execution
+    languages: [php]
+    severity: ERROR
+    message: Application code must not execute OS commands. Keep operator-only mail execution behind the reviewed mail library boundary.
+    pattern-either:
+      - pattern: exec(...)
+      - pattern: shell_exec(...)
+      - pattern: system(...)
+      - pattern: passthru(...)
+      - pattern: popen(...)
+      - pattern: proc_open(...)
+      - pattern: pcntl_exec(...)
+  - id: extplorer.php.no-dynamic-code
+    languages: [php]
+    severity: ERROR
+    message: Do not evaluate code or deserialize PHP objects from application data.
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: unserialize(...)
+  - id: extplorer.php.no-user-mail-program
+    languages: [php]
+    severity: ERROR
+    message: A persisted setting must never determine the mail executable. Use the operator-only SendmailPolicy.
+    pattern-either:
+      - pattern: $CONFIG['mailPath'] = $SETTINGS['sendmail_path'];
+      - pattern: $CONFIG->mailPath = $SETTINGS['sendmail_path'];

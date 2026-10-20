@@ -64,7 +64,7 @@ final class RemoteFileSystemTest extends CIUnitTestCase
     public static function protocols(): iterable
     {
         yield 'FTP compatibility' => ['ftp'];
-        yield 'FTPS strict' => ['ftps'];
+        yield 'FTPS explicit compatibility' => ['ftps'];
         yield 'SFTP strict' => ['sftp'];
     }
 
@@ -234,7 +234,7 @@ final class RemoteFileSystemTest extends CIUnitTestCase
 
     private function connect(string $protocol): void
     {
-        putenv('EXTPLORER_REMOTE_SECURITY_MODE=' . ($protocol === 'ftp' ? 'compat' : 'strict'));
+        putenv('EXTPLORER_REMOTE_SECURITY_MODE=' . ($protocol === 'sftp' ? 'strict' : 'compat'));
         $this->connection = ['mode' => $protocol, 'host' => 'remote.fixture', 'port' => $protocol === 'sftp' ? 22 : 21,
             'user' => 'fixture', 'pass' => 'fixture-password', 'root' => $protocol === 'sftp' ? '/home/fixture/data' : '/', 'direct_login' => true,
             'host_key_fingerprint' => trim(file_get_contents('/workspace/build/remote-fixture/fingerprint'))];

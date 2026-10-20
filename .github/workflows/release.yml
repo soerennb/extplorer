@@ -173,12 +173,12 @@ jobs:
           npm run e2e:install
           node tests/e2e/native-routing.cjs "eXtplorer-${GITHUB_REF_NAME#v}-release.zip"
 
-      - name: Verify upgrade from the published v3.1.0 ZIP
+      - name: Verify upgrade from the published v3.1.1 ZIP
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release download v3.1.0 --repo "$GITHUB_REPOSITORY" --pattern eXtplorer-3.1.0-release.zip --dir baseline
-          node tests/e2e/release-upgrade.cjs baseline/eXtplorer-3.1.0-release.zip "eXtplorer-${GITHUB_REF_NAME#v}-release.zip"
+          gh release download v3.1.1 --repo "$GITHUB_REPOSITORY" --pattern eXtplorer-3.1.1-release.zip --dir baseline
+          node tests/e2e/release-upgrade.cjs baseline/eXtplorer-3.1.1-release.zip "eXtplorer-${GITHUB_REF_NAME#v}-release.zip"
 
       - name: Retain verified archive and routing evidence
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

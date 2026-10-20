@@ -95,5 +95,16 @@
     "admin_settings_recipient_email": "Empfänger-E-Mail",
     "admin_settings_recipient_email_placeholder": "name@beispiel.de",
     "admin_settings_send": "Senden",
-    "admin_settings_email_required": "E-Mail ist erforderlich"
+    "admin_settings_email_required": "E-Mail ist erforderlich",
+    "invalid_email_settings": "Prüfe Protokoll, Server, Port, Verschlüsselung und Absender der E-Mail-Konfiguration.",
+    "email_not_configured": "Vervollständige und speichere zuerst die E-Mail-Konfiguration.",
+    "sendmail_path_read_only": "Das Sendmail-Programm wird vom Serverbetreiber konfiguriert.",
+    "sendmail_migration_required": "Der Serverbetreiber muss das bisherige eigene Sendmail-Programm konfigurieren, bevor der Versand fortgesetzt werden kann.",
+    "sendmail_unavailable": "Ein vertrauenswürdiges Sendmail-Programm ist nicht verfügbar. Wende dich an den Serverbetreiber.",
+    "email_saved_settings_only": "Speichere zuerst die E-Mail-Einstellungen. Prüfungen verwenden ausschließlich die gespeicherte Konfiguration.",
+    "email_recipient_required": "Gib eine gültige E-Mail-Adresse als Empfänger ein.",
+    "email_delivery_failed": "Der E-Mail-Versand ist fehlgeschlagen. Prüfe die gespeicherte Konfiguration und versuche es erneut.",
+    "email_validation_failed": "Die E-Mail-Prüfung ist fehlgeschlagen. Prüfe die gespeicherte Konfiguration und versuche es erneut.",
+    "email_probe_rate_limited": "Zu viele E-Mail-Prüfungen. Versuche es in einer Minute erneut.",
+    "admin_settings_sendmail_managed": "Dieses Programm wird vom Serverbetreiber konfiguriert und kann hier nicht geändert werden."
 }

@@ -175,7 +175,8 @@ final class StepUpAuthenticationServiceTest extends CIUnitTestCase
         $model = new \App\Models\UserModel();
         $model->updateUser('stepup-test', ['2fa_secret' => $secret, '2fa_enabled' => true]);
         session()->set('auth_version', (int)$model->getUser('stepup-test')['auth_version']);
-        $service = new StepUpAuthenticationService($model);
+        $timestamp = 1700000000;
+        $service = new StepUpAuthenticationService($model, new \App\Services\TwoFactorService(static fn(): int => $timestamp));
 
         try {
             $service->issue('webdav-credential.create', 'correct-password');
@@ -184,7 +185,7 @@ final class StepUpAuthenticationServiceTest extends CIUnitTestCase
             $this->assertNull(session('step_up_grant'));
         }
 
-        $code = \OTPHP\TOTP::create($secret)->now();
+        $code = \OTPHP\TOTP::create($secret)->at($timestamp);
         $this->assertNotSame('', $service->issue('webdav-credential.create', 'correct-password', $code));
     }
 }

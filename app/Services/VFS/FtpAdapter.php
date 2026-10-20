@@ -57,6 +57,11 @@ class FtpAdapter implements IFileSystem, StreamWritableFileSystem
         if (defined('FTP_TIMEOUT_SEC')) {
             ftp_set_option($this->conn, FTP_TIMEOUT_SEC, $timeout);
         }
+        // An allowlisted FTP server must not redirect the data connection to
+        // loopback, metadata services or another unapproved PASV address.
+        if (!ftp_set_option($this->conn, FTP_USEPASVADDRESS, false)) {
+            throw new Exception(lang('Remote.passive_address_denied'));
+        }
 
         if (!@ftp_login($this->conn, $user, $pass)) {
             throw new Exception("FTP Login failed for user: $user");

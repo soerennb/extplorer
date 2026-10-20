@@ -95,5 +95,16 @@
     "admin_settings_recipient_email": "E-mail du destinataire",
     "admin_settings_recipient_email_placeholder": "nom@exemple.fr",
     "admin_settings_send": "Envoyer",
-    "admin_settings_email_required": "L'e-mail est requis"
+    "admin_settings_email_required": "L'e-mail est requis",
+    "invalid_email_settings": "Vérifiez le protocole, le serveur, le port, le chiffrement et les champs de l’expéditeur.",
+    "email_not_configured": "Complétez et enregistrez d’abord la configuration des e-mails.",
+    "sendmail_path_read_only": "Le programme Sendmail est configuré par l’administrateur du serveur.",
+    "sendmail_migration_required": "L’administrateur du serveur doit configurer l’ancien programme Sendmail personnalisé avant la reprise des envois.",
+    "sendmail_unavailable": "Aucun programme Sendmail de confiance n’est disponible. Contactez l’administrateur du serveur.",
+    "email_saved_settings_only": "Enregistrez d’abord les paramètres. Les vérifications utilisent uniquement la configuration enregistrée.",
+    "email_recipient_required": "Saisissez une adresse e-mail de destinataire valide.",
+    "email_delivery_failed": "L’envoi a échoué. Vérifiez la configuration enregistrée et réessayez.",
+    "email_validation_failed": "La vérification a échoué. Vérifiez la configuration enregistrée et réessayez.",
+    "email_probe_rate_limited": "Trop de vérifications. Réessayez dans une minute.",
+    "admin_settings_sendmail_managed": "Ce programme est configuré par l’administrateur du serveur et ne peut pas être modifié ici."
 }

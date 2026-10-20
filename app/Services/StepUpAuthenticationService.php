@@ -25,6 +25,8 @@ final class StepUpAuthenticationService
         'group.save',
         'group.delete',
         'settings.update',
+        'settings.email.test',
+        'settings.email.validate',
         'mount.create',
         'mount.update',
         'mount.delete',
@@ -33,9 +35,10 @@ final class StepUpAuthenticationService
         'webdav-credential.delete',
     ];
 
-    public function __construct(private ?UserModel $userModel = null)
+    public function __construct(private ?UserModel $userModel = null, private ?TwoFactorService $twoFactorService = null)
     {
         $this->userModel ??= new UserModel();
+        $this->twoFactorService ??= new TwoFactorService();
     }
 
     public function issue(string $action, string $password, string $code = ''): string
@@ -55,7 +58,7 @@ final class StepUpAuthenticationService
 
         if (!empty($user['2fa_enabled'])) {
             $secret = $this->userModel->get2faSecret($username);
-            if ($secret === null || !(new TwoFactorService())->verifyCode($secret, trim($code))) {
+            if ($secret === null || !$this->twoFactorService->verifyCode($secret, trim($code))) {
                 throw new RuntimeException('Two-factor authentication failed.');
             }
         }

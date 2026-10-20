@@ -86,3 +86,48 @@ test('a reload during navigation refreshes the requested destination', async () 
     assert.equal(store.files[0].name, 'fresh');
     assert.equal(store.cwd, 'Home/current');
 });
+
+
+test('settings writes omit operator-only paths and computed readiness fields', () => {
+    const component = load('components/AdminSettings.js', 'AdminSettings');
+    const payload = component.methods.editableSettings.call({ settings: {
+        smtp_host: 'saved.example.test', smtp_port: 587, sendmail_path: '/tmp/program',
+        email_delivery_ready: true, email_delivery_verified_fingerprint: 'forged',
+        remote_endpoint_allowlist_text: 'sftp://example.test:22'
+    } });
+    assert.equal(payload.smtp_host, 'saved.example.test');
+    assert.equal(payload.smtp_port, 587);
+    assert.equal(payload.remote_endpoint_allowlist_text, 'sftp://example.test:22');
+    assert.equal(Object.hasOwn(payload, 'sendmail_path'), false);
+    assert.equal(Object.hasOwn(payload, 'email_delivery_ready'), false);
+    assert.equal(Object.hasOwn(payload, 'email_delivery_verified_fingerprint'), false);
+});
+
+test('mail checks send only a recipient or an empty body', async () => {
+    const requests = [];
+    const component = load('components/AdminSettings.js', 'AdminSettings', {
+        Api: { post: async (route, payload) => { requests.push([route, payload]); return {}; } }
+    });
+    const context = { ...component.methods, settings: { smtp_host: 'unsaved.example.test', smtp_pass: '********' },
+        promptForEmail: async () => 'recipient@example.test', toastSuccess() {}, toastError() {}, setEmailValidation() {} };
+    await context.testEmail();
+    await context.validateEmailSettings();
+    assert.equal(JSON.stringify(requests), JSON.stringify([
+        ['settings/test-email', { email: 'recipient@example.test' }], ['settings/validate-email', {}]
+    ]));
+});
+
+for (const [permissions, expected] of [
+    [['admin_settings'], ['settings']],
+    [['admin_users'], ['users', 'groups', 'roles', 'logs', 'system']],
+    [['*'], ['users', 'groups', 'roles', 'logs', 'settings', 'system']]
+]) {
+    test(`administration navigation respects ${permissions}`, () => {
+        const component = load('components/AdminApp.js', 'AdminApp', {
+            window: { userPermissions: permissions }, Api: { route: (value) => value }
+        });
+        const data = component.data();
+        assert.equal(JSON.stringify(data.navItems.map((item) => item.section)), JSON.stringify(expected));
+        assert.equal(data.activeSection, expected[0]);
+    });
+}

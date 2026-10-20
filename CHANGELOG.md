@@ -4,6 +4,23 @@ All notable changes to eXtplorer 3 are documented here.
 
 ## [Unreleased]
 
+## [3.1.2] - 2026-10-20
+
+### Security
+
+- Fix the application-controlled Sendmail executable reported by dutchypoo in GHSA-x294-8g9c-m6fc. Sendmail now uses only an operator-configured executable outside application-managed storage, with trusted filesystem ownership and permissions and shell-safe quoting.
+- Require explicit settings permission and recent reauthentication for mail probes. Probes use saved settings only, reject overrides, share an account rate limit and return safe error codes without SMTP diagnostics.
+- Limit delegated user, role and group administration to the administrator's current permissions, home scope and extension restrictions, including indirect changes and stronger accounts.
+- Refuse legacy FTPS in strict mode because PHP's FTP extension cannot authenticate the actual connection. Confine FTP passive data connections to the authorized control peer.
+- Add security regression tests, isolated transport fixtures and pinned source scanning.
+
+### Upgrade requirements
+
+- Back up configuration, writable data and the encryption key before upgrading. For a custom Sendmail binary, set `EXTPLORER_SENDMAIL_PATH` in the server environment; the old web setting is never executed. The executable and every path component must be protected from modification by the PHP worker. Otherwise select SMTP or PHP mail.
+- Save and retest mail settings after upgrading; old delivery confirmations are invalidated. Mail validation and test delivery require recent reauthentication and saved settings.
+- Delegated administrators need `admin_settings` to access settings. `admin_users` alone no longer grants it; account, role and group changes cannot exceed delegated authority.
+- Use SFTP instead of strict-mode legacy FTPS. Only an operator's explicit compatibility policy enables the legacy FTPS transport, with its documented certificate-verification limitation.
+
 ## [3.1.1] - 2026-10-19
 
 ### Security

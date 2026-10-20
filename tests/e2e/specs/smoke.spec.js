@@ -6,6 +6,7 @@ const username = process.env.E2E_USERNAME || "e2e-admin";
 const initialPassword = process.env.E2E_PASSWORD || "e2e-admin-password";
 let password = initialPassword;
 const updatedPassword = "E2e-New-Password!2026";
+const verifyMailBoundary = require('../mail-security.cjs');
 const fixturePath = path.resolve(__dirname, "../fixtures/smoke-upload.txt");
 
 async function monitorPage(page) {
@@ -284,6 +285,7 @@ test("admin can save settings after current-password confirmation", async ({
   await expect(stepUpInput).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Save Settings" })).toBeDisabled();
 
+  await verifyMailBoundary(page);
   await assertCleanBrowser();
 });
 

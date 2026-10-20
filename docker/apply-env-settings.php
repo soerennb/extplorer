@@ -97,7 +97,6 @@ $stringMap = [
     'EXTPLORER_SMTP_HOST' => 'smtp_host',
     'EXTPLORER_SMTP_USER' => 'smtp_user',
     'EXTPLORER_SMTP_CRYPTO' => 'smtp_crypto',
-    'EXTPLORER_SENDMAIL_PATH' => 'sendmail_path',
     'EXTPLORER_EMAIL_FROM' => 'email_from',
     'EXTPLORER_EMAIL_FROM_NAME' => 'email_from_name',
 ];

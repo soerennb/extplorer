@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'app/**'
+      - '.semgrep/**'
       - 'public/**'
       - 'resources/**'
       - 'tests/**'
@@ -34,6 +35,7 @@ on:
       - main
     paths:
       - 'app/**'
+      - '.semgrep/**'
       - 'public/**'
       - 'resources/**'
       - 'tests/**'
@@ -72,6 +74,16 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
 
 jobs:
+  source-security:
+    name: PHP and JavaScript security rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Test rules and scan application sources
+        run: sh scripts/security-source.sh
+
   security-regression:
     name: Native security regression suite
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'

@@ -20,8 +20,8 @@ final class SettingsInputPolicy
 
     public function normalize(array $input, array $current): array
     {
-        foreach (['email_protocol', 'sendmail_path', 'smtp_host', 'smtp_user', 'smtp_pass', 'smtp_crypto', 'email_from', 'email_from_name'] as $key) {
-            if (isset($input[$key]) && !is_string($input[$key])) throw new SettingsValidationException('Invalid string setting: ' . $key);
+        if (array_key_exists('sendmail_path', $input)) {
+            throw new SettingsValidationException(lang('Mail.sendmail_path_read_only'), 422, 'sendmail_path_read_only');
         }
         foreach (['email_configured', 'email_delivery_ready', 'email_delivery_reason', 'email_delivery_verified_at', 'email_delivery_verified_fingerprint'] as $key) unset($input[$key]);
         foreach (['mount_root_allowlist', 'share_upload_allowed_extensions'] as $key) {
@@ -62,15 +62,16 @@ final class SettingsInputPolicy
             if ($value > (int)($merged[$maxKey] ?? 30)) throw new SettingsValidationException($label . ' expiry cannot exceed the ' . ($key === 'default_transfer_expiry' ? 'transfer' : 'share') . ' max expiry');
             if (isset($input[$key])) $input[$key] = $value;
         }
-        if (isset($input['email_protocol'])) {
-            $input['email_protocol'] = strtolower(trim((string)$input['email_protocol']));
-            if (!in_array($input['email_protocol'], ['smtp', 'sendmail', 'mail'], true)) throw new SettingsValidationException('Invalid email protocol');
-        }
-        if (isset($input['sendmail_path'])) {
-            $input['sendmail_path'] = trim((string)$input['sendmail_path']);
-            if ($input['sendmail_path'] === '' || str_contains($input['sendmail_path'], "\0")) throw new SettingsValidationException('Invalid sendmail path');
-        }
         if (($input['smtp_pass'] ?? '') === '********') unset($input['smtp_pass']);
+        $mailKeys = array_flip(MailConfigPolicy::FIELDS);
+        if (array_intersect_key($input, $mailKeys) !== []) {
+            try {
+                $canonical = (new MailConfigPolicy())->normalize(array_replace($current, $input));
+                $input = array_replace($input, array_intersect_key($canonical, $input));
+            } catch (MailConfigurationException $error) {
+                throw new SettingsValidationException(lang('Mail.' . $error->reason), 422, $error->reason);
+            }
+        }
         return $input;
     }
 

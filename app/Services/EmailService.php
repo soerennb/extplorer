@@ -13,48 +13,28 @@ class EmailService
     {
         $this->email = Services::email();
         $this->settingsService = new SettingsService();
-        $this->initializeConfig();
     }
 
-    private function initializeConfig()
+    private function prepare(array $settings): bool
     {
-        $settings = $this->settingsService->getSettings();
-        $this->email->initialize($this->buildConfig($settings));
-    }
-
-    private function buildConfig(array $settings): array
-    {
-        $protocol = $settings['email_protocol'] ?? 'smtp';
-        $config = [
-            'protocol' => $protocol,
-            'mailType' => 'html',
-            'charset'  => 'utf-8',
-            'newline'  => "\r\n",
-            'fromEmail' => $settings['email_from'] ?? 'noreply@example.com',
-            'fromName'  => $settings['email_from_name'] ?? 'eXtplorer',
-        ];
-
-        if ($protocol === 'smtp') {
-            $config['SMTPHost'] = $settings['smtp_host'] ?? '';
-            $config['SMTPPort'] = (int)($settings['smtp_port'] ?? 587);
-            $config['SMTPUser'] = $settings['smtp_user'] ?? '';
-            $config['SMTPPass'] = $settings['smtp_pass'] ?? '';
-            $config['SMTPCrypto'] = $settings['smtp_crypto'] ?? 'tls';
-        } elseif ($protocol === 'sendmail') {
-            $config['mailPath'] = $settings['sendmail_path'] ?? '/usr/sbin/sendmail';
+        try {
+            $config = (new MailConfigPolicy())->transportConfig($settings);
+        } catch (MailConfigurationException $error) {
+            log_message('warning', 'Mail operation denied: {reason}', ['reason' => $error->reason]);
+            return false;
         }
-
-        return $config;
+        $this->email->initialize($config);
+        $this->email->setFrom($config['fromEmail'], $config['fromName']);
+        return true;
     }
 
     public function sendTestEmail(string $recipient): bool
     {
-        if (!$this->isConfigured($this->settingsService->getSettings())) {
+        if (!$this->prepare($this->settingsService->getSettings())) {
             log_message('warning', 'Email send skipped: email settings are not configured.');
             return false;
         }
 
-        $this->email->setFrom($this->settingsService->get('email_from'), $this->settingsService->get('email_from_name'));
         $this->email->setTo($recipient);
         $this->email->setSubject('eXtplorer Test Email');
         $this->email->setMessage('<h1>Test Email</h1><p>If you are reading this, your email settings are correct.</p>');
@@ -63,14 +43,15 @@ class EmailService
             return true;
         } else {
             // Log error
-            log_message('error', $this->email->printDebugger(['headers']));
+            log_message('error', 'Test email delivery failed.');
             return false;
         }
     }
 
     public function sendTransferNotification(array $transfer, string $link): bool
     {
-        if (!$this->isDeliveryReady()) {
+        $settings = $this->settingsService->getSettings();
+        if (!$this->isDeliveryReady($settings) || !$this->prepare($settings)) {
             log_message('warning', 'Transfer email skipped: email delivery is not ready.');
             return false;
         }
@@ -91,7 +72,6 @@ class EmailService
             <p><small>Link: {$safeLink}</small></p>
         ";
 
-        $this->email->setFrom($this->settingsService->get('email_from'), $this->settingsService->get('email_from_name'));
         if (filter_var($sender, FILTER_VALIDATE_EMAIL)) {
             $this->email->setReplyTo($sender);
         }
@@ -107,7 +87,7 @@ class EmailService
         $recipient = $share['sender_email'] ?? null;
         if (!$recipient) return false;
 
-        if (!$this->isConfigured($this->settingsService->getSettings())) {
+        if (!$this->prepare($this->settingsService->getSettings())) {
             log_message('warning', 'Download notification skipped: email settings are not configured.');
             return false;
         }
@@ -118,7 +98,6 @@ class EmailService
             <p>The files you sent with subject <strong>" . esc($share['subject'] ?? 'No Subject') . "</strong> have been downloaded.</p>
         ";
 
-        $this->email->setFrom($this->settingsService->get('email_from'), $this->settingsService->get('email_from_name'));
         $this->email->setTo($recipient);
         $this->email->setSubject($subject);
         $this->email->setMessage($body);
@@ -129,8 +108,7 @@ class EmailService
     public function sendExpiryReminder(array $share): bool
     {
         $settings = $this->settingsService->getSettings();
-        if (!$this->isConfigured($settings)) return false;
-        $this->email->setFrom($settings['email_from'], $settings['email_from_name']);
+        if (!$this->prepare($settings)) return false;
         $this->email->setTo($share['sender_email']);
         $this->email->setSubject("Your files haven't been downloaded yet");
         $this->email->setMessage('<h2>Reminder</h2><p>The files you sent with subject <strong>'
@@ -140,82 +118,61 @@ class EmailService
 
     public function getDebugger(): string
     {
-        return $this->email->printDebugger(['headers']);
+        return lang('Mail.email_delivery_failed');
     }
 
     public function sendTestEmailWithConfig(string $recipient, array $settings): array
     {
-        if (!$this->isConfigured($settings)) {
-            return [
-                'ok' => false,
-                'debug' => 'Email settings are not configured.',
-            ];
+        if (filter_var($recipient, FILTER_VALIDATE_EMAIL) === false || !$this->prepare($settings)) {
+            return ['ok' => false, 'error' => $this->configurationError($settings) ?? 'invalid_email_settings'];
         }
-
-        $email = Services::email();
-        $email->initialize($this->buildConfig($settings));
-        $email->setFrom($settings['email_from'] ?? 'noreply@example.com', $settings['email_from_name'] ?? 'eXtplorer');
-        $email->setTo($recipient);
-        $email->setSubject('eXtplorer Test Email');
-        $email->setMessage('<h1>Test Email</h1><p>If you are reading this, your email settings are correct.</p>');
-
-        $ok = $email->send();
-        return [
-            'ok' => $ok,
-            'debug' => $email->printDebugger(['headers']),
-        ];
+        $this->email->setTo($recipient);
+        $this->email->setSubject('eXtplorer Test Email');
+        $this->email->setMessage('<h1>Test Email</h1><p>If you are reading this, your email settings are correct.</p>');
+        try {
+            $ok = $this->email->send();
+        } catch (\Throwable) {
+            $ok = false;
+        }
+        return ['ok' => $ok, 'error' => $ok ? null : 'email_delivery_failed'];
     }
 
     public function validateConfig(array $settings): array
     {
-        if (!$this->isConfigured($settings)) {
-            return ['ok' => false, 'message' => 'Email settings are not configured.'];
+        if (($error = $this->configurationError($settings)) !== null) {
+            return ['ok' => false, 'error' => $error];
         }
+        $config = (new MailConfigPolicy())->transportConfig($settings);
+        if ($config['protocol'] !== 'smtp') return ['ok' => true];
 
-        $protocol = $settings['email_protocol'] ?? 'smtp';
-        if ($protocol === 'sendmail') {
-            $path = $settings['sendmail_path'] ?? '/usr/sbin/sendmail';
-            if (!is_file($path) || !is_executable($path)) {
-                return ['ok' => false, 'message' => "Sendmail not available at {$path}"];
-            }
-            return ['ok' => true, 'message' => 'Sendmail path is available'];
-        }
-
-        if ($protocol === 'mail') {
-            return ['ok' => true, 'message' => 'PHP mail() selected'];
-        }
-
+        // Never return SMTP responses or exception messages: they may contain
+        // credentials, remote-controlled text, or internal network details.
         $email = Services::email();
-        $email->initialize($this->buildConfig($settings));
-
+        $email->initialize($config);
+        $end = null;
         try {
             $ref = new \ReflectionClass($email);
             $connect = $ref->getMethod('SMTPConnect');
-            $connect->setAccessible(true);
             $auth = $ref->getMethod('SMTPAuthenticate');
-            $auth->setAccessible(true);
             $end = $ref->getMethod('SMTPEnd');
-            $end->setAccessible(true);
-
-            $connected = (bool) $connect->invoke($email);
-            if (!$connected) {
-                return ['ok' => false, 'message' => $email->printDebugger(['headers'])];
+            $ok = (bool)$connect->invoke($email) && (bool)$auth->invoke($email);
+        } catch (\Throwable) {
+            $ok = false;
+        } finally {
+            if ($end !== null) {
+                try { $end->invoke($email); } catch (\Throwable) {}
             }
+        }
+        return ['ok' => $ok, 'error' => $ok ? null : 'email_validation_failed'];
+    }
 
-            $authed = true;
-            if (!empty($settings['smtp_user']) || !empty($settings['smtp_pass'])) {
-                $authed = (bool) $auth->invoke($email);
-            }
-
-            $end->invoke($email);
-
-            if (!$authed) {
-                return ['ok' => false, 'message' => $email->printDebugger(['headers'])];
-            }
-
-            return ['ok' => true, 'message' => 'SMTP connection and authentication successful'];
-        } catch (\Throwable $e) {
-            return ['ok' => false, 'message' => $e->getMessage()];
+    public function configurationError(array $settings): ?string
+    {
+        try {
+            (new MailConfigPolicy())->transportConfig($settings);
+            return null;
+        } catch (MailConfigurationException $error) {
+            return $error->reason;
         }
     }
 
@@ -236,7 +193,7 @@ class EmailService
             return [
                 'ready' => false,
                 'configured' => false,
-                'reason' => 'not_configured',
+                'reason' => $this->configurationError($settings) ?? 'email_not_configured',
                 'verified_at' => $verifiedAt,
             ];
         }
@@ -267,19 +224,9 @@ class EmailService
      */
     public function configFingerprint(array $settings): string
     {
-        $config = [
-            'email_protocol' => strtolower(trim((string)($settings['email_protocol'] ?? 'smtp'))),
-            'smtp_host' => trim((string)($settings['smtp_host'] ?? '')),
-            'smtp_port' => (int)($settings['smtp_port'] ?? 0),
-            'smtp_user' => (string)($settings['smtp_user'] ?? ''),
-            'smtp_pass' => (string)($settings['smtp_pass'] ?? ''),
-            'smtp_crypto' => strtolower(trim((string)($settings['smtp_crypto'] ?? ''))),
-            'sendmail_path' => trim((string)($settings['sendmail_path'] ?? '')),
-            'email_from' => strtolower(trim((string)($settings['email_from'] ?? ''))),
-            'email_from_name' => trim((string)($settings['email_from_name'] ?? '')),
-        ];
-
-        return hash('sha256', (string)json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        // Version the trust contract so pre-fix tests cannot authorize delivery.
+        $config = (new MailConfigPolicy())->transportConfig($settings);
+        return hash('sha256', 'mail-v2:' . json_encode($config, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
     }
 
     public function markDeliveryVerified(array $settings): string
@@ -303,24 +250,6 @@ class EmailService
 
     public function isConfigured(array $settings): bool
     {
-        $from = trim((string)($settings['email_from'] ?? ''));
-        if ($from === '' || !filter_var($from, FILTER_VALIDATE_EMAIL)) {
-            return false;
-        }
-
-        $protocol = strtolower(trim((string)($settings['email_protocol'] ?? 'smtp')));
-        if ($protocol === 'sendmail') {
-            $path = trim((string)($settings['sendmail_path'] ?? '/usr/sbin/sendmail'));
-            return $path !== '' && is_file($path) && is_executable($path);
-        }
-
-        if ($protocol === 'mail') {
-            return true;
-        }
-
-        // Default to SMTP requirements.
-        $host = trim((string)($settings['smtp_host'] ?? ''));
-        $port = (int)($settings['smtp_port'] ?? 0);
-        return $host !== '' && $port > 0;
+        return $this->configurationError($settings) === null;
     }
 }

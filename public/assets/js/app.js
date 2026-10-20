@@ -47,7 +47,7 @@ const app = createApp({
             const role = String(window.userRole || '').toLowerCase();
             const user = String(window.username || '').toLowerCase();
             const perms = window.userPermissions || [];
-            return role === 'admin' || user === 'admin' || perms.includes('*') || perms.includes('admin_users');
+            return role === 'admin' || user === 'admin' || perms.includes('*') || perms.includes('admin_users') || perms.includes('admin_settings');
         });
 
         const webDavUrl = computed(() => Api.route('dav'));

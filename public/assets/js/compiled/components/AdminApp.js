@@ -114,10 +114,13 @@ return function render(_ctx, _cache) {
 }
 })(Vue),
     data() {
+        const permissions = window.userPermissions || [];
+        const usersAllowed = permissions.includes('*') || permissions.includes('admin_users');
+        const settingsAllowed = permissions.includes('*') || permissions.includes('admin_settings');
         return {
             baseUrl: Api.route(''),
             currentUsername: window.username || '',
-            activeSection: 'users',
+            activeSection: usersAllowed ? 'users' : 'settings',
             activeSettingsTab: 'email',
             navItems: [
                 { section: 'users', labelKey: 'admin_nav_users', labelFallback: 'Users', icon: 'ri-user-line' },
@@ -126,7 +129,7 @@ return function render(_ctx, _cache) {
                 { section: 'logs', labelKey: 'admin_nav_logs', labelFallback: 'Logs', icon: 'ri-file-list-3-line' },
                 { section: 'settings', labelKey: 'admin_nav_settings', labelFallback: 'Settings', icon: 'ri-settings-3-line' },
                 { section: 'system', labelKey: 'admin_nav_system', labelFallback: 'System', icon: 'ri-information-line' }
-            ],
+            ].filter((item) => item.section === 'settings' ? settingsAllowed : usersAllowed),
             sectionMeta: {
                 users: {
                     labelKey: 'admin_nav_users',
@@ -197,7 +200,7 @@ return function render(_ctx, _cache) {
         applyHash() {
             const raw = (window.location.hash || '').replace(/^#/, '');
             if (!raw) {
-                this.navigate('users');
+                this.navigate(this.navItems[0].section);
                 return;
             }
 
@@ -206,7 +209,7 @@ return function render(_ctx, _cache) {
             const tab = parts[1] || null;
 
             const validSections = this.navItems.map((i) => i.section);
-            const nextSection = validSections.includes(section) ? section : 'users';
+            const nextSection = validSections.includes(section) ? section : this.navItems[0].section;
 
             if (nextSection === 'settings' && tab) {
                 this.activeSettingsTab = tab;
@@ -215,6 +218,7 @@ return function render(_ctx, _cache) {
             this.activeSection = nextSection;
         },
         navigate(section, tab = null) {
+            if (!this.navItems.some((item) => item.section === section)) return;
             this.activeSection = section;
             if (section === 'settings' && tab) {
                 this.activeSettingsTab = tab;

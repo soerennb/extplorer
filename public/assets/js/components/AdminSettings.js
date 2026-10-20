@@ -61,7 +61,11 @@ const AdminSettings = {
                         </div>
                         <div class="col-md-8" v-if="settings.email_protocol === 'sendmail'">
                             <label class="form-label small fw-bold">{{ t('admin_settings_email_sendmail_path', 'Sendmail Path') }}</label>
-                            <input type="text" class="form-control form-control-sm" v-model="settings.sendmail_path" :aria-label="t('admin_settings_email_sendmail_path', 'Sendmail Path')" :placeholder="t('admin_settings_email_sendmail_placeholder', '/usr/sbin/sendmail')">
+                            <div class="form-control-plaintext small text-break">{{ settings.sendmail_path }}</div>
+                            <div class="form-text">{{ t('admin_settings_sendmail_managed', 'The server operator configures this program. It cannot be changed here.') }}</div>
+                            <div v-if="settings.email_delivery_reason === 'sendmail_migration_required' || settings.email_delivery_reason === 'sendmail_unavailable'" class="alert alert-warning small mt-2">
+                                {{ t(settings.email_delivery_reason) }}
+                            </div>
                         </div>
                     </div>
 
@@ -272,7 +276,7 @@ const AdminSettings = {
                     <div v-if="settingsDirty" class="text-warning small mb-2 text-start">
                         {{ t('admin_settings_unsaved', 'You have unsaved settings changes.') }}
                     </div>
-                    <button v-if="settingsTab === 'email'" type="button" class="btn btn-outline-secondary btn-sm me-2" @click="validateEmailSettings" :disabled="!settings || isValidatingEmail">
+                    <button v-if="settingsTab === 'email'" type="button" class="btn btn-outline-secondary btn-sm me-2" @click="validateEmailSettings" :disabled="!settings || settingsDirty || isValidatingEmail">
                         {{ isValidatingEmail ? t('admin_settings_validating', 'Validating…') : t('admin_settings_validate', 'Validate') }}
                     </button>
                     <button v-if="settingsTab === 'email'" type="button" class="btn btn-outline-secondary btn-sm me-2" @click="testEmail" :disabled="!settings || settingsDirty || isTestingEmail">
@@ -350,20 +354,28 @@ const AdminSettings = {
                 if (!this.settings.email_protocol) {
                     this.settings.email_protocol = 'smtp';
                 }
-                if (!this.settings.sendmail_path) {
-                    this.settings.sendmail_path = '/usr/sbin/sendmail';
-                }
                 this.settingsOriginal = JSON.parse(JSON.stringify(this.settings));
                 this.clearEmailValidation();
             } catch (e) {
                 this.error = e.message;
             }
         },
+        editableSettings() {
+            const fields = ['email_protocol', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_crypto',
+                'email_from', 'email_from_name', 'default_transfer_expiry', 'transfer_max_expiry_days',
+                'transfer_default_notify_download', 'log_retention_count', 'session_idle_timeout_minutes',
+                'share_default_expiry_days', 'share_require_expiry', 'share_max_expiry_days', 'share_require_password',
+                'upload_max_file_mb', 'share_upload_allowed_extensions_text', 'share_upload_quota_mb',
+                'share_upload_max_files', 'quota_per_user_mb', 'allow_public_uploads', 'webdav_enabled',
+                'mount_root_allowlist_text', 'remote_login_enabled', 'remote_endpoint_allowlist_text'];
+            return Object.fromEntries(fields.filter((key) => Object.hasOwn(this.settings, key))
+                .map((key) => [key, this.settings[key]]));
+        },
         async saveSettings() {
             if (!this.settingsDirty) return;
             this.isSavingSettings = true;
             try {
-                const response = await Api.post('settings', this.settings);
+                const response = await Api.post('settings', this.editableSettings());
                 if (typeof response.email_delivery_ready === 'boolean') {
                     this.settings.email_delivery_ready = response.email_delivery_ready;
                 }
@@ -385,7 +397,7 @@ const AdminSettings = {
             if (!email) return;
             this.isTestingEmail = true;
             try {
-                const response = await Api.post('settings/test-email', { ...this.settings, email });
+                const response = await Api.post('settings/test-email', { email });
                 this.settings.email_delivery_ready = response.email_delivery_ready === true;
                 this.settings.email_delivery_verified_at = response.email_delivery_verified_at || null;
                 this.settingsOriginal = JSON.parse(JSON.stringify(this.settings));
@@ -402,7 +414,7 @@ const AdminSettings = {
             if (!this.settings) return;
             this.isValidatingEmail = true;
             try {
-                const res = await Api.post('settings/validate-email', this.settings);
+                const res = await Api.post('settings/validate-email', {});
                 this.setEmailValidation(true, res.message || this.t('admin_settings_validation_success', 'Validation successful'));
             } catch (e) {
                 this.setEmailValidation(false, this.t('admin_settings_validation_failed_prefix', 'Validation failed: ') + e.message);

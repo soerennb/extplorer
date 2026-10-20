@@ -19,6 +19,7 @@ services:
       remote-fixture:
         condition: service_healthy
     environment:
+      EXTPLORER_WRITE_PATH: /tmp/extplorer-remote-tests
       EXTPLORER_RUN_REMOTE_TEST: '1'
       EXTPLORER_REMOTE_ALLOW_PRIVATE_TARGETS: '1'
       EXTPLORER_REMOTE_ENDPOINT_ALLOWLIST: |-

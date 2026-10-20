@@ -6,7 +6,7 @@ const net = require('node:net');
 const crypto = require('node:crypto');
 const { execFileSync, spawn } = require('node:child_process');
 const { chromium, expect } = require('@playwright/test');
-const baseline = require('../release/baseline-3.1.0.json');
+const baseline = require('../release/baseline-3.1.1.json');
 const fixture = path.resolve('tests/release/upgrade-state.php');
 const router = path.resolve('tests/e2e/native-router.php');
 const results = [];
@@ -153,7 +153,7 @@ async function dockerUpgrade(root, candidate, browser) {
 }
 async function main() {
     const [oldArgument, newArgument, candidate] = process.argv.slice(2);
-    if (!oldArgument || !newArgument) throw new Error('Usage: node tests/e2e/release-upgrade.cjs <published-3.1.0.zip> <candidate.zip> [candidate-image]');
+    if (!oldArgument || !newArgument) throw new Error('Usage: node tests/e2e/release-upgrade.cjs <published-3.1.1.zip> <candidate.zip> [candidate-image]');
     const oldZip = path.resolve(oldArgument);
     const newZip = path.resolve(newArgument);
     if (crypto.createHash('sha256').update(fs.readFileSync(oldZip)).digest('hex') !== baseline.zip_sha256) throw new Error('Published baseline ZIP checksum mismatch');

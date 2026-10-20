@@ -111,6 +111,23 @@ final class FileNamePolicy
         return !in_array($extension, $blockedExtensions, true);
     }
 
+    /** A delegate may only grant a policy at least as restrictive as its own. */
+    public function containsPolicy(array $actor, array $target): bool
+    {
+        $actorAllowed = $this->normalizeExtensions($actor['allowed_extensions'] ?? null);
+        $actorBlocked = $this->normalizeExtensions($actor['blocked_extensions'] ?? null);
+        $targetAllowed = $this->normalizeExtensions($target['allowed_extensions'] ?? null);
+        $targetBlocked = $this->normalizeExtensions($target['blocked_extensions'] ?? null);
+        if ($targetAllowed !== []) {
+            $effective = array_diff($targetAllowed, $targetBlocked);
+            return ($actorAllowed === [] || array_diff($effective, $actorAllowed) === [])
+                && array_intersect($effective, $actorBlocked) === [];
+        }
+        // An unrestricted allowlist includes extensionless files and infinitely
+        // many extensions; a finite allowlist can never contain that policy.
+        return $actorAllowed === [] && array_diff($actorBlocked, $targetBlocked) === [];
+    }
+
     /** @param mixed $raw @return list<string> */
     private function normalizeExtensions($raw): array
     {

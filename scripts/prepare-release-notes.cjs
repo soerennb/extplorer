@@ -22,5 +22,5 @@ For rollback, stop writes, restore the previous image/application and matching d
 - Release source: \`${process.env.GITHUB_SHA}\`
 - AMD64/ARM64 image manifest: \`${process.env.MANIFEST_DIGEST}\`
 - [Release checks and downloadable verification evidence](https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})
-- [Upgrade and release validation](https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${tag}/docs/validation/release-3.1.1.md)
+- [Upgrade and release validation](https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${tag}/docs/validation/release-${version}.md)
 `);

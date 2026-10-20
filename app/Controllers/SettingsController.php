@@ -21,8 +21,8 @@ class SettingsController extends BaseController
 
     private function checkAdmin()
     {
-        // Allow either the dedicated settings permission or the legacy admin_users permission.
-        if (!can('admin_settings') && !can('admin_users')) {
+        if (!can('admin_settings')) {
+            LogService::event('Settings Access', 'denied');
             return $this->failForbidden('Access denied');
         }
         return true;
@@ -52,6 +52,7 @@ class SettingsController extends BaseController
         $settings['email_delivery_reason'] = $deliveryStatus['reason'];
         $settings['email_delivery_verified_at'] = $deliveryStatus['verified_at'];
         unset($settings['email_delivery_verified_fingerprint']);
+        $settings['sendmail_path'] = (new \App\Services\SendmailPolicy())->configuredPath();
         
         // Mask password
         if (!empty($settings['smtp_pass'])) {
@@ -102,54 +103,51 @@ class SettingsController extends BaseController
     public function testEmail()
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
+        if (($check = $this->requireStepUp('settings.email.test')) !== true) return $check;
+        if (($check = $this->checkMailProbeLimit()) !== true) return $check;
 
         $payload = $this->request->getJSON(true) ?? [];
+        if (!is_array($payload) || array_diff(array_keys($payload), ['email']) !== []) {
+            return $this->fail(lang('Mail.email_saved_settings_only'), 422, 'email_saved_settings_only');
+        }
         $email = $payload['email'] ?? null;
         if (!is_string($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return $this->fail('A valid recipient email is required.');
+            return $this->fail(lang('Mail.email_recipient_required'), 422, 'email_recipient_required');
         }
 
-        $current = $this->settingsService->getSettings();
-        if (($payload['smtp_pass'] ?? null) === '********') {
-            $payload['smtp_pass'] = $current['smtp_pass'] ?? '';
-        }
-        $settings = array_merge($current, $payload);
-
+        $settings = $this->settingsService->getSettings();
         $svc = new EmailService();
-        if (!hash_equals($svc->configFingerprint($current), $svc->configFingerprint($settings))) {
-            return $this->fail('Save the email settings before sending a test email.');
-        }
         $result = $svc->sendTestEmailWithConfig($email, $settings);
+        LogService::event('Mail Test', $result['ok'] ? 'success' : 'failed', ['reason' => $result['error']]);
         if ($result['ok']) {
             $verifiedAt = $svc->markDeliveryVerified($settings);
-            return $this->respond([
-                'status' => 'success',
-                'email_delivery_ready' => true,
-                'email_delivery_verified_at' => $verifiedAt,
-            ]);
+            return $this->respond(['status' => 'success', 'email_delivery_ready' => true,
+                'email_delivery_verified_at' => $verifiedAt]);
         }
-
-        return $this->fail('Failed to send email. ' . strip_tags($result['debug'] ?? ''));
+        return $this->fail(lang('Mail.' . $result['error']), 422, $result['error']);
     }
 
     public function validateEmail()
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
-
+        if (($check = $this->requireStepUp('settings.email.validate')) !== true) return $check;
+        if (($check = $this->checkMailProbeLimit()) !== true) return $check;
         $payload = $this->request->getJSON(true) ?? [];
-        $current = $this->settingsService->getSettings();
-        if (($payload['smtp_pass'] ?? null) === '********') {
-            $payload['smtp_pass'] = $current['smtp_pass'] ?? '';
+        if ($payload !== []) {
+            return $this->fail(lang('Mail.email_saved_settings_only'), 422, 'email_saved_settings_only');
         }
-        $settings = array_merge($current, $payload);
-
-        $svc = new EmailService();
-        $result = $svc->validateConfig($settings);
-        if ($result['ok']) {
-            return $this->respond(['status' => 'success', 'message' => $result['message'] ?? 'OK']);
-        }
-
-        return $this->fail($result['message'] ?? 'Validation failed');
+        $result = (new EmailService())->validateConfig($this->settingsService->getSettings());
+        LogService::event('Mail Validation', $result['ok'] ? 'success' : 'failed', ['reason' => $result['error'] ?? null]);
+        if ($result['ok']) return $this->respond(['status' => 'success']);
+        return $this->fail(lang('Mail.' . $result['error']), 422, $result['error']);
     }
 
+    private function checkMailProbeLimit()
+    {
+        // One account budget for both probes, independent of client IP changes.
+        $key = 'mail-probe-' . hash('sha256', (string)session('username'));
+        if (\Config\Services::throttler()->check($key, 5, MINUTE)) return true;
+        LogService::event('Mail Probe', 'throttled');
+        return $this->fail(lang('Mail.email_probe_rate_limited'), 429, 'email_probe_rate_limited');
+    }
 }

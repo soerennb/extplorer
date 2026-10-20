@@ -30,7 +30,7 @@ $errorId = uniqid('error', true);
             Environment: <?= ENVIRONMENT ?>
         </div>
         <div class="container">
-            <h1><?= esc($title), esc($exception->getCode() ? ' #' . $exception->getCode() : '') ?></h1>
+            <h1><?= esc($title) . esc($exception->getCode() ? ' #' . $exception->getCode() : '') ?></h1>
             <p>
                 <?= nl2br(esc($exception->getMessage())) ?>
                 <a href="https://www.duckduckgo.com/?q=<?= urlencode($title . ' ' . preg_replace('#\'.*\'|".*"#Us', '', $exception->getMessage())) ?>"
@@ -60,7 +60,7 @@ $errorId = uniqid('error', true);
 
     <pre>
     Caused by:
-    <?= esc($prevException::class), esc($prevException->getCode() ? ' #' . $prevException->getCode() : '') ?>
+    <?= esc($prevException::class) . esc($prevException->getCode() ? ' #' . $prevException->getCode() : '') ?>
 
     <?= nl2br(esc($prevException->getMessage())) ?>
     <a href="https://www.duckduckgo.com/?q=<?= urlencode($prevException::class . ' ' . preg_replace('#\'.*\'|".*"#Us', '', $prevException->getMessage())) ?>"
