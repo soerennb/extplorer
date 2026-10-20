@@ -16,6 +16,18 @@ The PHP compatibility matrix and both published image architectures must pass
 their exact-SHA CI gates. An unavailable runner, timeout or network failure is
 an incomplete check and cannot authorize release publication.
 
+## Source and CI evidence
+
+Local application candidate: `731aa2d066963bf1a3be0f8f675df008c2c63729`.
+All application checks passed on that exact commit:
+[Quality](https://github.com/soerennb/extplorer/actions/runs/39389261467),
+[Security audit](https://github.com/soerennb/extplorer/actions/runs/39389261403),
+[Secret scanning](https://github.com/soerennb/extplorer/actions/runs/39389261677).
+Quality includes PHP 8.2–8.5, MySQL/PostgreSQL/Redis, Apache/Nginx, frontend/CSP,
+real Sendmail and remote-protocol fixtures and all six Chromium smoke tests.
+The final tag's Release run separately checks the packaged ZIP and builds/scans
+both actual published architecture images; these local results do not replace it.
+
 ## Application checks
 
 The complete local suite passed 379 tests and 1,618 assertions, with
@@ -28,7 +40,7 @@ assertions, including the hostile FTP PASV address fixture.
 Composer/NPM locked dependency audits and the copied browser asset audit
 reported no vulnerabilities. Runtime translations built and validated all four
 locales with 814 keys. CSP view scanning, workflow lint and shell lint passed.
-Pinned Semgrep passed five rule fixtures and scanned 211 application files
+Pinned Semgrep passed five rule fixtures and scanned 212 application files
 without findings or parsing failures.
 
 The isolated real Sendmail fixture successfully delivered through an
@@ -40,23 +52,35 @@ probe overrides after extensionless upload/chmod without executing that data.
 ## Packaging and upgrade checks
 
 Both ZIP and TAR.GZ passed packaged-login translation checks with source
-translations absent. The initial ZIP passed all four real HTTP layouts:
+translations absent. The final local ZIP passed all four real HTTP layouts:
 root and `/extplorer/public/`, each rewritten and with explicit `index.php`.
-Final artifact hashes and reports are recorded after rebuilding the final code.
+
+| Local candidate artifact | SHA-256 |
+| --- | --- |
+| ZIP | `906ed99dcd9949b3e62197736098af7cb016b929dec6b974ac3e2dbcb66b33b1` |
+| TAR.GZ | `19b310c526349845f83418ff05d5204acfbc27f28c3ccd21eb27f5eefce4cc28` |
+| AMD64 image | `24aebc24bf43b573979f7e73548a419d6f64b9c445f9807abc58c546e74d4466` |
 
 The published 3.1.1 ZIP baseline is pinned to SHA-256
 `fcf63128e3c39c2b9e3450566a0d2db871a20347a7549ed40cfd721be1c751ae`.
 The published baseline image is pinned to
 `sha256:b10c0287ea6d5a85985393b452f2831f5deebf4186bea8f82e1eeadedea38c3d`.
-The native upgrade, candidate restart, code rollback and backup restoration
-passed all seven fixture phases, including legacy Sendmail migration refusal.
-The first Docker upgrade attempt timed out downloading the baseline image;
-that phase remains incomplete until rerun successfully.
+Native and Docker upgrades, candidate restarts, code rollbacks and backup
+restorations passed all 14 fixture phases (514 state assertions), including
+legacy Sendmail migration refusal and fresh browser/CSP checks. Covered state
+includes passwords, encrypted 2FA/recovery codes, WebDAV credentials, the
+encryption key, binary checksums, external/remote mounts, encrypted SSH keys,
+passworded shares, trash/versions, resumable uploads and quarantine activation.
+The first Docker attempt timed out downloading the baseline image; after a
+successful digest-pinned download, the complete harness was rerun successfully.
 
-An initial full local AMD64 image scan found zero vulnerabilities (all severities,
-including unfixed findings) and zero secrets. Final image scans and successful
-browser/remote/upgrade results are required before publication. No production
-installation, production credentials or production state was used.
+The final full local AMD64 image scan found zero vulnerabilities (all severities,
+including unfixed findings) and zero secrets. Trivy's database was updated on
+2026-10-20 at 01:16:59 UTC and downloaded at 07:54:06 UTC. An overloaded local
+browser run hit three timing failures; the complete six-test suite then passed
+on the exact application SHA in CI without weakening timeouts or assertions.
+All temporary application test containers and volumes were removed. No
+production installation, production credentials or production state was used.
 
 ## Upgrade requirements
 
