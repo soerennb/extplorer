@@ -4,6 +4,17 @@ All notable changes to eXtplorer 3 are documented here.
 
 ## [Unreleased]
 
+## [3.1.4] - 2026-10-22
+
+### Security
+
+- Build the container image on PHP 8.5.12, which fixes GHSA-w8hw-w9fx-j79w and GHSA-6wmf-4rv5-p3rp (state corruption via bailout) and further memory-safety defects in PHP 8.5.11. Application code is unchanged.
+
+### Upgrade
+
+- Container deployments: pull 3.1.4. Native installations do not need the archive for this fix; update the host PHP to 8.2.35, 8.3.36, 8.4.27 or 8.5.12 instead.
+- Upgrading from 3.1.1 or earlier: the [3.1.2 upgrade requirements](https://github.com/soerennb/extplorer/releases/tag/v3.1.2) apply.
+
 ## [3.1.3] - 2026-10-20
 
 ### Fixed
