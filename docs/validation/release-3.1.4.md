@@ -12,11 +12,27 @@ corresponding fixes for the supported native lines are 8.2.35, 8.3.36 and
 
 ## Verification
 
-No local test run. The Quality, Security audit and Secret scanning workflows on
-the release commit and the Release workflow gates (final ZIP routing layouts,
-upgrade/rollback from 3.1.1 and both architecture image scans) provide the
-evidence. Record the published ZIP checksum, multiarch digest and scan results
-here after publication.
+No local test run. On release commit `41c35be`, the
+[Quality](https://github.com/soerennb/extplorer/actions/runs/39689445739),
+[Security audit](https://github.com/soerennb/extplorer/actions/runs/39689445680)
+and [Secret scanning](https://github.com/soerennb/extplorer/actions/runs/39689445821)
+workflows passed, so the
+[Release run](https://github.com/soerennb/extplorer/actions/runs/39690124643)
+reused them. Its archive job (final ZIP routing layouts, upgrade/rollback from
+3.1.1), both architecture image builds and publication succeeded.
+
+## Published artifacts
+
+[Version 3.1.4](https://github.com/soerennb/extplorer/releases/tag/v3.1.4) was
+published as the latest stable release at 2026-10-21 23:02:31 UTC.
+
+| Published artifact | Verified digest |
+| --- | --- |
+| `eXtplorer-3.1.4-release.zip` | SHA-256 `556ddb8505cfa99421d56b0047f6010e146f632ae84109fd31ad92566fcd4e90` |
+| AMD64/ARM64 manifest | `sha256:774a6800625c740b90864fa4a63ea6fbf6f9301bced33f3562e9f972c0772634` |
+
+Registry inspection confirmed `3.1.4` and `latest` resolve to that manifest and
+the image reports `PHP_VERSION=8.5.12` and `EXTPLORER_IMAGE_VERSION=3.1.4`.
 
 ## Upgrade
 
