@@ -13,7 +13,7 @@ final class AdminDelegationPolicy
         foreach ($before['users'] as $user) {
             if (($user['username'] ?? '') === $actorName) $actor = $user;
         }
-        if ($actor === null || !empty($actor['disabled']) || (int)($actor['locked_until'] ?? 0) > time()) {
+        if ($actor === null || !empty($actor['disabled'])) {
             throw new AdminDelegationException();
         }
         $permissions = AuthorizationState::permissions($actor, $before['roles'], $before['groups']);
@@ -75,7 +75,7 @@ final class AdminDelegationPolicy
         $state = (new AuthorizationState())->snapshot();
         $users = array_column($state['users'], null, 'username');
         $actor = $users[$actorName] ?? null;
-        if ($actor === null || !empty($actor['disabled']) || (int)($actor['locked_until'] ?? 0) > time()) return false;
+        if ($actor === null || !empty($actor['disabled'])) return false;
         $permissions = AuthorizationState::permissions($actor, $state['roles'], $state['groups']);
         if (in_array('*', $permissions, true)) return true;
         if (!in_array('admin_users', $permissions, true) || !isset($users[$ownerName])) return false;

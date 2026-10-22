@@ -33,6 +33,7 @@ final class StepUpAuthenticationService
         'mount.test',
         'webdav-credential.create',
         'webdav-credential.delete',
+        'two-factor.enable',
     ];
 
     public function __construct(private ?UserModel $userModel = null, private ?TwoFactorService $twoFactorService = null)
@@ -52,7 +53,8 @@ final class StepUpAuthenticationService
             throw new RuntimeException('Re-authentication is required.');
         }
 
-        $user = $password === '' ? null : $this->userModel->verifyUser($username, $password);
+        $user = $password === '' ? null
+            : (new AuthenticationService($this->userModel))->verifyPassword(\Config\Services::request(), $username, $password);
         if (!is_array($user)) {
             throw new RuntimeException('Re-authentication failed.');
         }

@@ -242,7 +242,7 @@ class ShareService
     {
         $model = new UserModel();
         $user = $owner !== '' ? $model->getUser($owner) : null;
-        if (!is_array($user) || !empty($user['disabled']) || (int)($user['locked_until'] ?? 0) > time()) {
+        if (!is_array($user) || !empty($user['disabled'])) {
             throw new \RuntimeException('Share owner is not active.');
         }
 

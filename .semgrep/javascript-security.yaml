@@ -14,3 +14,28 @@ rules:
     pattern-either:
       - pattern: document.write(...)
       - pattern: document.writeln(...)
+  - id: extplorer.javascript.no-interpolated-alert-html
+    languages: [javascript]
+    severity: ERROR
+    message: SweetAlert html is markup. Interpolate only application translations; assign data in didOpen through DOM properties.
+    patterns:
+      - pattern: '$SWAL.fire({..., html: $HTML, ...})'
+      - metavariable-pattern:
+          metavariable: $HTML
+          patterns:
+            - pattern: '`...${$VALUE}...`'
+            - metavariable-pattern:
+                metavariable: $VALUE
+                patterns:
+                  - pattern-not: i18n.t(...)
+                  - pattern-not: this.t(...)
+                  - pattern-not: t(...)
+                  - pattern-not-regex: '\A\(?\s*window\.i18n\s*&&\s*i18n\.t\([^()]*\)\s*\)?\s*\|\|\s*''[^'']*''\s*\Z'
+  - id: extplorer.javascript.no-inner-html
+    languages: [javascript]
+    severity: ERROR
+    message: Render untrusted text through textContent or Vue interpolation.
+    pattern-either:
+      - pattern: $ELEMENT.innerHTML = $VALUE
+      - pattern: $ELEMENT.outerHTML = $VALUE
+      - pattern: $ELEMENT.insertAdjacentHTML(...)

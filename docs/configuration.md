@@ -276,6 +276,16 @@ The following controls are enabled in the application and should be considered p
   10 minutes without another prompt. The grant is not persisted in cookies or
   browser storage and is invalidated by logout, a new login, password/2FA
   changes or an `auth_version` change.
+- Password guessing is limited per IP (`5/minute`), per username (`5/5 minutes`)
+  and per account: five failed passwords lock password sign-in for 15 minutes,
+  after which a new failure window starts. The lock only protects the
+  password. Existing sessions, remembered logins, WebDAV app passwords and
+  public shares keep working, and a browser that has completed a sign-in for
+  the account (device cookie `extplorer_device`, 180 days) is exempt from the
+  account-wide lock and username throttle. Such a device has its own limit of
+  five failures per 15 minutes. Use `disabled` to suspend an account.
+- Per-account allowed/blocked extensions apply to uploads, WebDAV, editor
+  saves, renames, copies, archives, extraction and version restore.
 - Public share endpoints have throttling:
   - Share password auth: `10 requests/minute` per `share + IP`
   - Share upload: `30 requests/minute` per `share + IP`

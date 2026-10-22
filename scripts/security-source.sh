@@ -9,5 +9,5 @@ for fixture in .semgrep/php-security.php .semgrep/javascript-security.js; do
 done
 docker run --rm --network none --cpus 2 --memory 2g -v "$(pwd):/src:ro" -w /src "$image" semgrep scan --jobs 2 \
     --config .semgrep --error --strict --metrics off --disable-version-check \
-    --exclude '*.min.js' --exclude 'public/assets/js/compiled/**' \
+    --exclude '*.min.js' --exclude '*.prod.js' --exclude 'public/assets/js/compiled/**' \
     app public/assets/js

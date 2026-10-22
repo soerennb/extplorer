@@ -20,7 +20,7 @@ final class DavAuthenticationService
     public function authenticate(string $username, string $password): ?array
     {
         $user = $this->users->getUser($username);
-        if (!is_array($user) || !empty($user['disabled']) || (int)($user['locked_until'] ?? 0) > time()) {
+        if (!is_array($user) || !empty($user['disabled'])) {
             return null;
         }
 

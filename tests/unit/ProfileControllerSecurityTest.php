@@ -43,8 +43,25 @@ class ProfileControllerSecurityTest extends CIUnitTestCase
         parent::tearDown();
     }
 
+    public function testTwoFactorEnableRequiresStepUp(): void
+    {
+        $controller = new ProfileController();
+        $controller->initController(Services::request(), Services::response(), Services::logger());
+        $controller->setup2fa();
+        $pending = session('pending_2fa');
+        Services::request()->setBody(json_encode(['code' => TOTP::create($pending['secret'])->now()]));
+
+        $response = $controller->enable2fa();
+
+        $this->assertSame(428, $response->getStatusCode());
+        $this->assertSame('two-factor.enable', json_decode($response->getBody(), true)['action'] ?? null);
+        $this->assertEmpty((new UserModel())->getUser('alice')['2fa_enabled']);
+        $this->assertNotNull(session('pending_2fa'));
+    }
+
     public function testTwoFactorEnableUsesServerPendingSecret(): void
     {
+        $this->grantStepUp();
         $controller = new ProfileController();
         $controller->initController(Services::request(), Services::response(), Services::logger());
 
@@ -67,6 +84,7 @@ class ProfileControllerSecurityTest extends CIUnitTestCase
 
     public function testTwoFactorEnableFailsWithoutUnexpiredPendingSecret(): void
     {
+        $this->grantStepUp();
         $controller = new ProfileController();
         $controller->initController(Services::request(), Services::response(), Services::logger());
         Services::request()->setBody(json_encode(['code' => '123456']));
@@ -124,5 +142,18 @@ class ProfileControllerSecurityTest extends CIUnitTestCase
         $this->assertNull(session('force_password_change'));
         $this->assertSame(2, session('auth_version'));
         $this->assertNull(session('step_up_grant'));
+    }
+
+    private function grantStepUp(): void
+    {
+        session()->set(['isLoggedIn' => true, 'auth_version' => 1]);
+        session()->set('step_up_grant', [
+            'token_hash' => hash('sha256', str_repeat('b', 64)),
+            'username' => 'alice',
+            'auth_version' => 1,
+            'issued_at' => time(),
+            'expires_at' => time() + 600,
+        ]);
+        Services::request()->setHeader('X-Extplorer-Step-Up', str_repeat('b', 64));
     }
 }

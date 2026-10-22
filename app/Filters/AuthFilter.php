@@ -130,7 +130,7 @@ class AuthFilter implements FilterInterface
         }
 
         $user = (new UserModel())->getUser($username);
-        if (!$user || !empty($user['disabled']) || (int)($user['locked_until'] ?? 0) > time()) {
+        if (!$user || !empty($user['disabled'])) {
             return false;
         }
 

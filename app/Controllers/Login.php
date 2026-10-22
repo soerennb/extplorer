@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\UserModel;
 use App\Services\RememberMeService;
 use App\Services\AuthenticationService;
+use App\Services\DeviceTrustService;
 use App\Services\LogService;
 use App\Services\RemoteEndpointPolicy;
 
@@ -52,7 +53,10 @@ class Login extends BaseController
         $returnTo = $this->safeReturnPath((string)($this->request->getPost('return') ?? '/'));
 
         $usernameKey = trim((string)$username);
-        if ($usernameKey !== '') {
+        // A trusted device has its own failure limit; anonymous guessing
+        // against the account must not throttle its owner's browser.
+        $trustedDevice = $usernameKey !== '' && (new DeviceTrustService())->isTrusted($this->request, $username);
+        if ($usernameKey !== '' && !$trustedDevice) {
             $userKey = 'login_user_' . hash('sha256', strtolower($usernameKey));
             if ($throttler->check($userKey, 5, 300) === false) {
                 return redirect()->back()->with('error', $loginMessages['login_too_many_attempts']);
@@ -115,7 +119,7 @@ class Login extends BaseController
         }
 
         $userModel = new UserModel();
-        $user = $userModel->verifyUser($username, $password);
+        $user = (new AuthenticationService($userModel))->verifyPassword($this->request, $username, $password);
 
         if ($user) {
             // 2FA Check
@@ -147,6 +151,7 @@ class Login extends BaseController
 
             $remember = new RememberMeService();
             $response = redirect()->to($returnTo);
+            (new DeviceTrustService())->trust((string)$user['username'], $response, $this->request);
             if ($rememberRequested) {
                 $remember->remember($user['username'], $response);
             } else {

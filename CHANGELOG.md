@@ -11,11 +11,15 @@ All notable changes to eXtplorer 3 are documented here.
 - Limit delegated administrators to mounts, shares and transfers of accounts within their own authority, using the same rules as delegated user administration.
 - Apply per-account allowed/blocked extensions to saving, renaming, copying, archiving, extracting and version restore, not only to uploads and WebDAV.
 - Never let approved public share uploads replace existing files when upload scanning is enabled, and discard scanned uploads whose share was revoked, expired or narrowed in the meantime.
+- Stop anonymous login failures from locking accounts indefinitely or cutting off their owners. An expired lock starts a new failure window. The password lock no longer ends existing sessions, remembered logins, WebDAV app passwords or public shares, and browsers that completed a sign-in for the account are exempt from the account-wide lock with their own failure limit (device cookie `extplorer_device`).
+- Require re-authentication before enrolling two-factor authentication, so a hijacked session cannot lock the owner out.
+- Render alert titles and messages as text. Server errors, filenames and remote responses were previously interpreted as HTML by the dialog library. Add `base-uri 'none'` and `frame-ancestors 'self'` to the content security policy and source rules against interpolated dialog markup and `innerHTML`.
 
 ### Upgrade
 
 - Accounts with an extension allowlist can no longer create, rename or extract files of other types through the web interface. Archives must use an allowed extension.
 - Direct remote logins no longer show local shares, trash or mounts; those features report that they are unavailable for remote connections.
+- `locked_until` is now only a password-guessing lock. Use `disabled` to suspend an account; it still ends sessions and public shares.
 
 ## [3.1.4] - 2026-10-22
 

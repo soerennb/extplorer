@@ -146,7 +146,12 @@ class ShareServiceTest extends CIUnitTestCase
     public function testInactiveShareOwnerCannotResolvePublishedPath(): void
     {
         $service = new ShareService($this->testFile);
-        (new UserModel())->updateUser('share-owner', ['locked_until' => time() + 3600]);
+        $users = (new UserModel())->getUsers();
+        foreach ($users as &$user) {
+            if ($user['username'] === 'share-owner') $user['disabled'] = true;
+        }
+        unset($user);
+        (new UserModel())->saveUsers($users);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('not active');

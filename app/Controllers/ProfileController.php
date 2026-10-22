@@ -115,6 +115,9 @@ class ProfileController extends BaseController
     {
         $username = SessionAccount::localUsername();
         if (!$username) return $this->failForbidden('Not logged in');
+        // Enrollment replaces the second factor and revokes other credentials;
+        // a hijacked session must not be able to lock the owner out.
+        if (($stepUp = $this->requireStepUp('two-factor.enable')) !== true) return $stepUp;
 
         $json = $this->request->getJSON();
         $code = trim((string)($json->code ?? ''));
@@ -174,7 +177,7 @@ class ProfileController extends BaseController
         $reauthenticated = false;
 
         if ($password !== '') {
-            $reauthenticated = (bool)$userModel->verifyUser($username, $password);
+            $reauthenticated = (bool)(new AuthenticationService($userModel))->verifyPassword($this->request, $username, $password);
         }
 
         if (!$reauthenticated && $code !== '') {
@@ -228,7 +231,7 @@ class ProfileController extends BaseController
         if (!$username) return $this->failForbidden('Not logged in');
 
         $userModel = new UserModel();
-        if (!$userModel->verifyUser($username, $oldPassword)) {
+        if (!(new AuthenticationService($userModel))->verifyPassword($this->request, $username, $oldPassword)) {
             return $this->fail('Current password is incorrect', 400, 'current_password_incorrect');
         }
         if ($userModel->updateUser($username, [

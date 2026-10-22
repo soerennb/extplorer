@@ -59,7 +59,12 @@ class UserModel
         return null;
     }
 
-    public function verifyUser(string $username, string $password): ?array
+    /**
+     * The account-wide lock against password guessing does not apply to a
+     * trusted device, whose failures are limited separately and not counted
+     * against the account (see DeviceTrustService).
+     */
+    public function verifyUser(string $username, string $password, bool $trustedDevice = false): ?array
     {
         $user = $this->getUser($username);
         if (!$user || !is_string($user['password_hash'] ?? null)) {
@@ -67,19 +72,19 @@ class UserModel
         }
 
         $now = time();
-        if (!empty($user['disabled']) || (int)($user['locked_until'] ?? 0) > $now) {
+        if (!empty($user['disabled']) || (!$trustedDevice && (int)($user['locked_until'] ?? 0) > $now)) {
             return null;
         }
 
         if (password_verify($password, $user['password_hash'])) {
-            return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username, $password, $user): ?array {
+            return AtomicFileStore::transaction($this->usersFile, function (array &$users) use ($username, $password, $user, $trustedDevice): ?array {
                 foreach ($users as &$candidate) {
                     if (($candidate['username'] ?? null) !== $username) {
                         continue;
                     }
 
                     $candidate = $this->withAuthDefaults($candidate);
-                    if ($candidate['disabled'] || $candidate['locked_until'] > time()
+                    if ($candidate['disabled'] || (!$trustedDevice && $candidate['locked_until'] > time())
                         || $candidate['password_hash'] !== $user['password_hash']
                         || $candidate['auth_version'] !== $user['auth_version']) return null;
                     $candidate['failed_login_count'] = 0;
@@ -94,7 +99,9 @@ class UserModel
             }, []);
         }
 
-        $this->recordFailedLogin($username);
+        if (!$trustedDevice) {
+            $this->recordFailedLogin($username);
+        }
         return null;
     }
 
@@ -483,6 +490,12 @@ class UserModel
                 }
 
                 $user = $this->withAuthDefaults($user);
+                if ($user['locked_until'] > 0 && $user['locked_until'] <= time()) {
+                    // An expired lock starts a new failure window; otherwise
+                    // a single failure per lock period would re-lock forever.
+                    $user['failed_login_count'] = 0;
+                    $user['locked_until'] = 0;
+                }
                 $user['failed_login_count']++;
                 if ($user['failed_login_count'] >= 5) {
                     $user['locked_until'] = time() + 900;

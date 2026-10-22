@@ -28,7 +28,7 @@ class RememberMeService
     public function remember(string $username, ?ResponseInterface $response = null): void
     {
         $user = $this->userModel->getUser($username);
-        if (!$user || !empty($user['disabled']) || (int)($user['locked_until'] ?? 0) > time()) {
+        if (!$user || !empty($user['disabled'])) {
             return;
         }
 
@@ -107,7 +107,7 @@ class RememberMeService
         }
 
         $user = $this->userModel->getUser((string)($entry['username'] ?? ''));
-        if (!$user || !empty($user['disabled']) || (int)($user['locked_until'] ?? 0) > time()) {
+        if (!$user || !empty($user['disabled'])) {
             $this->clearCookie($response);
             return false;
         }

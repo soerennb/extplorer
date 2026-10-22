@@ -16,11 +16,28 @@ final class AuthenticationService
         $this->userModel ??= new UserModel();
     }
 
+    /**
+     * Verify a local password. A device that previously completed a login
+     * for this account is limited by its own failure counter instead of the
+     * account-wide lock that anonymous guessing can trigger.
+     */
+    public function verifyPassword(?RequestInterface $request, string $username, string $password, ?DeviceTrustService $devices = null): ?array
+    {
+        $devices ??= new DeviceTrustService();
+        $trusted = $devices->isTrusted($request, $username);
+        $user = $this->userModel->verifyUser($username, $password, $trusted);
+        if ($trusted) {
+            $user === null ? $devices->recordFailure($request, $username) : $devices->recordSuccess($request, $username);
+        }
+
+        return $user;
+    }
+
     public function startLocalSession(array $user, bool $remembered = false): bool
     {
         $snapshot = $this->userModel->authorizationSnapshot((string)$user['username']);
         $current = $snapshot['user'] ?? null;
-        if ($current === null || !empty($current['disabled']) || (int)($current['locked_until'] ?? 0) > time()
+        if ($current === null || !empty($current['disabled'])
             || (int)($current['auth_version'] ?? 1) !== (int)($user['auth_version'] ?? 1)
             || ($current['password_hash'] ?? null) !== ($user['password_hash'] ?? null)) return false;
         $user = $current;

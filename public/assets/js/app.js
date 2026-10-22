@@ -547,8 +547,10 @@ const app = createApp({
             if (!store.selectedItems.length) return;
             const { value: form } = await Swal.fire({
                 title: i18n.t('perms'),
-                html: `<input id="swal-i1" class="swal2-input" placeholder="${i18n.t('octal_mode')}" value="${store.selectedItems[0].perms || '755'}">` +
+                html: `<input id="swal-i1" class="swal2-input" placeholder="${i18n.t('octal_mode')}">` +
                       `<div class="form-check mt-3 text-start ms-5"><input class="form-check-input" type="checkbox" id="swal-i2"><label class="form-check-label" for="swal-i2">${i18n.t('apply_recursively')}</label></div>`,
+                // Remote listings supply perms; assign it as a value, never as markup.
+                didOpen: () => { document.getElementById('swal-i1').value = String(store.selectedItems[0].perms || '755'); },
                 focusConfirm: false, preConfirm: () => [document.getElementById('swal-i1').value, document.getElementById('swal-i2').checked], showCancelButton: true
             });
             if (form) {

@@ -96,6 +96,7 @@
     <script src="<?= base_url('assets/js/vue.runtime.global.prod.js') ?>"></script>
     <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/sweetalert2.min.js') ?>"></script>
+    <script src="<?= base_url('assets/js/safe-alerts.js') ?>"></script>
     <script <?= csp_script_nonce() ?>>
         (function() {
             if (!window.cspStyleNonce) return;
