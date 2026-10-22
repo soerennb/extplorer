@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Services\AccountFilePolicy;
 use App\Services\LogService;
 use App\Services\ResourcePolicy;
 use App\Services\FileNamePolicy;
@@ -53,9 +54,9 @@ trait ApiFileOperationsTrait
 
             // Inject Share Status
             try {
-                $username = session('username');
+                $username = \App\Services\SessionAccount::localUsername();
                 $shareService = new \App\Services\ShareService();
-                $shares = $shareService->listUserShares($username);
+                $shares = $username === null ? [] : $shareService->listUserShares($username);
                 $shareMap = [];
                 foreach ($shares as $s) $shareMap[$s['path']] = true;
 
@@ -113,6 +114,7 @@ trait ApiFileOperationsTrait
         try {
             $content = (string)($content ?? '');
             $this->assertWritableTargetName((string)$path);
+            AccountFilePolicy::forCurrentSession()->assertFile((string)$path);
             if (strlen($content) > (new ResourcePolicy())->maxContentBytes()) {
                 return $this->fail('File exceeds the configured content limit.', 413);
             }
@@ -159,6 +161,7 @@ trait ApiFileOperationsTrait
         if (!$path || !$versionId) return $this->fail('Path and Version ID required');
 
         try {
+            AccountFilePolicy::forCurrentSession()->assertFile((string)$path);
             $username = session('username');
             $versionService = new \App\Services\VersionService($username);
             if (\App\Services\VFS\FileCapabilities::localPath($this->fs, $path) === null) return $this->fail('Version history is unavailable for this storage.', 422, 'unsupported_operation');
@@ -298,6 +301,7 @@ trait ApiFileOperationsTrait
 
         try {
             $this->assertWritableTargetName((string)$to);
+            $this->assertAccountFileTarget((string)$from, (string)$to);
             if (!$this->fs->move($from, $to)) {
                 throw new Exception('Unable to move item.');
             }
@@ -319,6 +323,7 @@ trait ApiFileOperationsTrait
 
         try {
             $this->assertWritableTargetName((string)$to);
+            $this->assertAccountFileTarget((string)$from, (string)$to);
             if (!$this->fs->copy($from, $to)) {
                 throw new Exception('Unable to copy item.');
             }
@@ -326,6 +331,15 @@ trait ApiFileOperationsTrait
             return $this->respond(['status' => 'success']);
         } catch (\Throwable $e) {
             return $this->fail($e->getMessage());
+        }
+    }
+
+    /** A file must not be renamed or copied into a type the account may not create. */
+    private function assertAccountFileTarget(string $from, string $to): void
+    {
+        $source = $this->fs->getMetadata($from);
+        if (($source['type'] ?? 'file') !== 'dir') {
+            AccountFilePolicy::forCurrentSession()->assertFile($to);
         }
     }
 

@@ -5,6 +5,7 @@ namespace App\Filters;
 use App\Services\SettingsService;
 use App\Services\RememberMeService;
 use App\Services\RemoteEndpointPolicy;
+use App\Services\SessionAccount;
 use App\Services\StepUpAuthenticationService;
 use App\Models\UserModel;
 use CodeIgniter\Filters\FilterInterface;
@@ -49,8 +50,44 @@ class AuthFilter implements FilterInterface
             return $this->handlePasswordChangeRequired($request);
         }
 
+        if (!SessionAccount::isLocal() && !$this->isRemoteSessionRoute($request)) {
+            return $this->handleRemoteSessionUnsupported();
+        }
+
         $this->touchLastActivity();
         return null;
+    }
+
+    /**
+     * Direct remote logins only operate on the remote filesystem. Every other
+     * route addresses local account state and is denied by default.
+     */
+    private function isRemoteSessionRoute(RequestInterface $request): bool
+    {
+        $path = $this->routePath($request);
+        if (in_array($path, ['', 'logout', 'api/profile/details'], true)) {
+            return true;
+        }
+
+        $fileRoutes = ['ls', 'content', 'save', 'rm', 'mkdir', 'mv', 'cp', 'upload', 'upload_chunk',
+            'download', 'search', 'dirsize', 'archive', 'extract', 'chmod'];
+        if (preg_match('#\Aapi/(?:' . implode('|', array_map('preg_quote', $fileRoutes)) . ')\z#', $path) === 1) {
+            return true;
+        }
+
+        return preg_match('#\Aapi/upload/session(?:/[^/]+(?:/complete|/chunk/\d+)?)?\z#', $path) === 1;
+    }
+
+    private function handleRemoteSessionUnsupported()
+    {
+        return Services::response()
+            ->setStatusCode(403)
+            ->setHeader('X-CSRF-HASH', csrf_hash())
+            ->setJSON([
+                'status' => 'error',
+                'code' => 'remote_session_unsupported',
+                'message' => lang('Remote.session_unsupported'),
+            ]);
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)

@@ -23,7 +23,7 @@ class LogService
         }
         $entry = [
             'timestamp' => time(),
-            'user' => $username ?? session('username') ?? 'System',
+            'user' => $username ?? SessionAccount::auditName() ?? 'System',
             'action' => $action,
             'path' => self::redact($path),
             'details' => self::redact($details),

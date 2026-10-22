@@ -2,6 +2,7 @@
 
 namespace App\Services\VFS;
 
+use App\Services\AccountFilePolicy;
 use App\Services\FileNamePolicy;
 use App\Services\ResourcePolicy;
 use Exception;
@@ -297,9 +298,9 @@ class LocalAdapter implements IFileSystem, StreamWritableFileSystem, LocalPathFi
         return (new LocalArchiveService($this, $this->resourcePolicy))->archive($sources, $destination);
     }
 
-    public function extract(string $archive, string $destination): bool
+    public function extract(string $archive, string $destination, ?AccountFilePolicy $policy = null): bool
     {
-        return (new LocalArchiveService($this, $this->resourcePolicy))->extract($archive, $destination);
+        return (new LocalArchiveService($this, $this->resourcePolicy))->extract($archive, $destination, $policy);
     }
 
     public function getMetadata(string $path): ?array

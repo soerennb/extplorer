@@ -2,6 +2,7 @@
 
 namespace App\Services\VFS;
 
+use App\Services\AccountFilePolicy;
 use App\Services\FileNamePolicy;
 use App\Services\RemoteEndpointPolicy;
 use App\Services\ResourcePolicy;
@@ -341,7 +342,7 @@ class FtpAdapter implements IFileSystem, StreamWritableFileSystem
     }
 
     public function archive(array $sources, string $destination): bool { throw new Exception("Archive not supported on FTP"); }
-    public function extract(string $archive, string $destination): bool { throw new Exception("Extract not supported on FTP"); }
+    public function extract(string $archive, string $destination, ?AccountFilePolicy $policy = null): bool { throw new Exception("Extract not supported on FTP"); }
     public function search(string $query): array { throw new Exception("Search not supported on FTP"); }
     public function getDirectorySize(string $path): int { return 0; }
 }

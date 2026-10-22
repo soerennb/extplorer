@@ -2,7 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Services\AdminDelegationPolicy;
 use App\Services\EmailService;
+use App\Services\SessionAccount;
 use App\Services\ShareService;
 use App\Services\TransferPolicy;
 use App\Services\TransferService;
@@ -127,7 +129,7 @@ class TransferController extends BaseController
         $hash = is_scalar($hash) ? (string)$hash : '';
         $share = $this->shareService->getShareRaw($hash);
         if (!$share) return $this->failNotFound();
-        if ($share['created_by'] !== session('username') && !can('admin_users')) return $this->failForbidden();
+        if (!(new AdminDelegationPolicy())->mayActFor((string)SessionAccount::localUsername(), (string)($share['created_by'] ?? ''))) return $this->failForbidden();
         try {
             (new TransferService($this->shareService, $this->emailService, $this->staging, $this->policy))->delete($share);
             return $this->respond(['status' => 'success']);

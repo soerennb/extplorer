@@ -4,6 +4,19 @@ All notable changes to eXtplorer 3 are documented here.
 
 ## [Unreleased]
 
+### Security
+
+- Isolate direct FTP/SFTP logins from local accounts with the same name. Remote sessions can only use remote file operations; profiles, two-factor enrollment, re-authentication, shares, transfers, trash, versions and mounts of the local account are no longer reachable. Audit entries record remote identities as `remote:<protocol>://<user>@<host>`.
+- Bind saved mount credentials to their endpoint. Changing the protocol, host, port, remote user, SFTP host key or FTPS pin requires entering the credentials again, for updates and connection tests alike.
+- Limit delegated administrators to mounts, shares and transfers of accounts within their own authority, using the same rules as delegated user administration.
+- Apply per-account allowed/blocked extensions to saving, renaming, copying, archiving, extracting and version restore, not only to uploads and WebDAV.
+- Never let approved public share uploads replace existing files when upload scanning is enabled, and discard scanned uploads whose share was revoked, expired or narrowed in the meantime.
+
+### Upgrade
+
+- Accounts with an extension allowlist can no longer create, rename or extract files of other types through the web interface. Archives must use an allowed extension.
+- Direct remote logins no longer show local shares, trash or mounts; those features report that they are unavailable for remote connections.
+
 ## [3.1.4] - 2026-10-22
 
 ### Security

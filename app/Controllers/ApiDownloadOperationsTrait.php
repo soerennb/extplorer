@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Services\AccountFilePolicy;
 use App\Services\DownloadHeaders;
 use App\Services\LogService;
 use App\Services\ResourcePolicy;
@@ -211,6 +212,7 @@ trait ApiDownloadOperationsTrait
             // Let's assume `paths` are full relative paths (e.g. "folder/file.txt")
 
             $destination = ($cwd ? $cwd . '/' : '') . $name;
+            AccountFilePolicy::forCurrentSession()->assertFile($destination);
             if (!$this->fs->archive($paths, $destination)) {
                 throw new Exception('Unable to create archive.');
             }
@@ -232,7 +234,7 @@ trait ApiDownloadOperationsTrait
 
         try {
             // Extract to current folder
-            if (!$this->fs->extract($path, $cwd ?: '/')) {
+            if (!$this->fs->extract($path, $cwd ?: '/', AccountFilePolicy::forCurrentSession())) {
                 throw new Exception('Unable to extract archive.');
             }
             LogService::log('Extract', $path, 'To: ' . ($cwd ?: '/'));

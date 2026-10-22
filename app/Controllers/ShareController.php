@@ -449,7 +449,7 @@ class ShareController extends BaseController
                             'filename' => $name,
                             'relative_path' => $subPath,
                             'share_hash' => $hash,
-                            'conflict' => 'replace',
+                            'conflict' => 'keep_both',
                             'source' => 'public-share-upload',
                         ]);
                     } finally {

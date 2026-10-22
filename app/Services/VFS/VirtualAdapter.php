@@ -2,6 +2,7 @@
 
 namespace App\Services\VFS;
 
+use App\Services\AccountFilePolicy;
 use App\Services\ResourcePolicy;
 use Exception;
 
@@ -339,7 +340,7 @@ class VirtualAdapter implements IFileSystem, StreamWritableFileSystem, LocalPath
         return $destAdapter->archive($relSources, $destPath);
     }
 
-    public function extract(string $archive, string $destination): bool
+    public function extract(string $archive, string $destination, ?AccountFilePolicy $policy = null): bool
     {
         [$archAdapter, $archPath] = $this->resolveMount($archive);
         [$destAdapter, $destPath] = $this->resolveMount($destination);
@@ -348,7 +349,7 @@ class VirtualAdapter implements IFileSystem, StreamWritableFileSystem, LocalPath
             throw new Exception("Cross-mount extraction not supported");
         }
 
-        return $archAdapter->extract($archPath, $destPath);
+        return $archAdapter->extract($archPath, $destPath, $policy);
     }
 
     public function search(string $query): array

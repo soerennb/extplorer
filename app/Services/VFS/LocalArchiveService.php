@@ -2,6 +2,7 @@
 
 namespace App\Services\VFS;
 
+use App\Services\AccountFilePolicy;
 use App\Services\FileNamePolicy;
 use App\Services\ResourcePolicy;
 use Exception;
@@ -12,6 +13,7 @@ use PharData;
 final class LocalArchiveService
 {
     private ?\App\Services\OperationBudget $operationBudget = null;
+    private ?AccountFilePolicy $filePolicy = null;
     private int $archiveEntries = 0;
     private int $archiveBytes = 0;
 
@@ -125,8 +127,9 @@ final class LocalArchiveService
         }
     }
 
-    public function extract(string $archive, string $destination): bool
+    public function extract(string $archive, string $destination, ?AccountFilePolicy $policy = null): bool
     {
+        $this->filePolicy = $policy;
         $this->operationBudget = $this->resourcePolicy->startOperation();
         $fullArchive = $this->fs->resolvePath($archive);
         if (trim(str_replace('\\', '/', $destination), '/') !== '') {
@@ -212,6 +215,7 @@ final class LocalArchiveService
             if ($entry->isLink()) {
                 throw new Exception('Archive contains symbolic link entries.');
             }
+            $this->assertEntryAllowed($entryPath);
 
         }
 
@@ -280,6 +284,9 @@ final class LocalArchiveService
             if ($this->isZipEntrySymlink($zip, $i)) {
                 throw new Exception('Archive contains symbolic link entries.');
             }
+            if (!$isDirectory) {
+                $this->assertEntryAllowed($entryPath);
+            }
             $stat = $zip->statIndex($i);
             if (!is_array($stat)) {
                 throw new Exception('Archive contains an invalid entry.');
@@ -342,6 +349,13 @@ final class LocalArchiveService
         } finally {
             fclose($handle);
             fclose($stream);
+        }
+    }
+
+    private function assertEntryAllowed(string $entryPath): void
+    {
+        if ($this->filePolicy !== null && !$this->filePolicy->allows(basename($entryPath))) {
+            throw new Exception(lang('Files.archive_type_not_allowed'));
         }
     }
 

@@ -47,6 +47,7 @@ final class StepUpAuthenticationService
         if (!in_array($action, self::ACTIONS, true)
             || $username === ''
             || !session('isLoggedIn')
+            || !SessionAccount::isLocal()
         ) {
             throw new RuntimeException('Re-authentication is required.');
         }
@@ -79,7 +80,7 @@ final class StepUpAuthenticationService
 
     public function consume(RequestInterface $request, string $action): bool
     {
-        if (!in_array($action, self::ACTIONS, true) || !session('isLoggedIn')) {
+        if (!in_array($action, self::ACTIONS, true) || !session('isLoggedIn') || !SessionAccount::isLocal()) {
             return false;
         }
 

@@ -3,6 +3,7 @@
 namespace Tests\Support;
 
 use App\Services\AtomicFileStore;
+use App\Services\LogService;
 
 /** Isolates both filesystem payloads and backend metadata for behavior tests. */
 final class StorageSandbox
@@ -25,6 +26,7 @@ final class StorageSandbox
         }
         putenv('EXTPLORER_STATE_DRIVER=' . $driver);
         AtomicFileStore::reset();
+        self::resetLogPath();
     }
 
     public function close(): void
@@ -32,7 +34,14 @@ final class StorageSandbox
         AtomicFileStore::reset();
         putenv($this->driver === false ? 'EXTPLORER_STATE_DRIVER' : 'EXTPLORER_STATE_DRIVER=' . $this->driver);
         foreach ($this->original as $property => $value) config('Storage')->$property = $value;
+        self::resetLogPath();
         $this->remove($this->root);
+    }
+
+    /** LogService caches its document path; it must follow the active storage root. */
+    private static function resetLogPath(): void
+    {
+        (new \ReflectionProperty(LogService::class, 'filePath'))->setValue(null, null);
     }
 
     private function remove(string $path): void

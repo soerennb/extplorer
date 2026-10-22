@@ -2,6 +2,8 @@
 
 namespace App\Services\VFS;
 
+use App\Services\AccountFilePolicy;
+
 use App\Services\FileNamePolicy;
 use App\Services\ResourcePolicy;
 use App\Services\RemoteEndpointPolicy;
@@ -221,7 +223,7 @@ class Ssh2Adapter implements IFileSystem, StreamWritableFileSystem
 
     public function chown(string $path, $user, $group, bool $recursive = false): bool { throw new RuntimeException('SFTP chown is unavailable.'); }
     public function archive(array $sources, string $destination): bool { throw new RuntimeException('Archives are unavailable on SFTP.'); }
-    public function extract(string $archive, string $destination): bool { throw new RuntimeException('Archives are unavailable on SFTP.'); }
+    public function extract(string $archive, string $destination, ?AccountFilePolicy $policy = null): bool { throw new RuntimeException('Archives are unavailable on SFTP.'); }
     public function search(string $query): array { throw new RuntimeException('Search is unavailable on SFTP.'); }
     public function getDirectorySize(string $path): int { return 0; }
 }

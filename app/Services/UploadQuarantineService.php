@@ -196,9 +196,21 @@ final class UploadQuarantineService
                 } else {
                     $path = (string)($manifest['target_path'] ?? '');
                     $this->assertTarget($path);
-                    $this->promote($payload, $path, $id);
+                    $shareHash = (string)($manifest['metadata']['share_hash'] ?? '');
+                    if ($shareHash !== '' && !$this->publicShareAccepts($shareHash, $path)) {
+                        // The share was revoked, expired or narrowed while the
+                        // scanner ran. Its capability no longer covers this file.
+                        unlink($payload);
+                        $status = 'error';
+                        $reason = 'Public share no longer accepts this upload.';
+                    } else {
+                        // Public uploads add files; they never replace content,
+                        // including manifests staged by older releases.
+                        $conflict = $shareHash !== '' ? 'keep_both' : (string)$manifest['conflict'];
+                        $manifest['activated_path'] = $this->promote($payload, $path, $id, $conflict);
+                    }
                 }
-                $manifest['promoted_at'] = time();
+                if ($status === 'clean') $manifest['promoted_at'] = time();
             } else {
                 unlink($payload);
             }
@@ -244,13 +256,35 @@ final class UploadQuarantineService
         return $removed;
     }
 
-    private function promote(string $payload, string $target, string $id): void
+    private function publicShareAccepts(string $hash, string $target): bool
     {
+        try {
+            $shares = new ShareService();
+            $share = $shares->getShare($hash);
+            if ($share === null || ($share['mode'] ?? 'read') !== 'upload') return false;
+            [, $base] = $shares->resolveSharePaths($share);
+            $base = realpath($base);
+            $parent = realpath(dirname($target));
+            return $base !== false && $parent !== false && is_dir($base)
+                && ($parent === $base || str_starts_with($parent, rtrim($base, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR));
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function promote(string $payload, string $target, string $id, string $conflict = 'replace'): string
+    {
+        if ($conflict !== 'replace') {
+            $target = $this->unusedTarget($target);
+        }
         if (is_link($target) || (file_exists($target) && !is_file($target))) {
             throw new RuntimeException('Upload target is not a regular file.');
         }
 
         $old = null;
+        if ($conflict !== 'replace' && file_exists($target)) {
+            throw new RuntimeException('Upload target appeared during activation.');
+        }
         if (is_file($target)) {
             $old = $target . '.pre-scan-' . $id;
             if (!rename($target, $old)) {
@@ -266,6 +300,20 @@ final class UploadQuarantineService
         if ($old !== null) {
             @unlink($old);
         }
+
+        return $target;
+    }
+
+    private function unusedTarget(string $target): string
+    {
+        if (!file_exists($target) && !is_link($target)) return $target;
+        $info = pathinfo($target);
+        $extension = isset($info['extension']) && $info['extension'] !== '' ? '.' . $info['extension'] : '';
+        for ($number = 1; $number < 1000; $number++) {
+            $candidate = $info['dirname'] . DIRECTORY_SEPARATOR . $info['filename'] . ' (' . $number . ')' . $extension;
+            if (!file_exists($candidate) && !is_link($candidate)) return $candidate;
+        }
+        throw new RuntimeException('Unable to create a non-conflicting filename.');
     }
 
     private function assertSource(string $source): void

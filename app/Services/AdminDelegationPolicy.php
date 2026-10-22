@@ -62,6 +62,36 @@ final class AdminDelegationPolicy
         $this->assertMutation($before, $after, $actor);
     }
 
+    /**
+     * Whether the actor may manage resources owned by another account, such
+     * as its mounts, shares or transfers. Delegates are limited to accounts
+     * they could also administer; resources without an account need `*`.
+     */
+    public function mayActFor(string $actorName, string $ownerName): bool
+    {
+        if ($actorName === '') return false;
+        if ($actorName === $ownerName) return true;
+
+        $state = (new AuthorizationState())->snapshot();
+        $users = array_column($state['users'], null, 'username');
+        $actor = $users[$actorName] ?? null;
+        if ($actor === null || !empty($actor['disabled']) || (int)($actor['locked_until'] ?? 0) > time()) return false;
+        $permissions = AuthorizationState::permissions($actor, $state['roles'], $state['groups']);
+        if (in_array('*', $permissions, true)) return true;
+        if (!in_array('admin_users', $permissions, true) || !isset($users[$ownerName])) return false;
+
+        $owner = $users[$ownerName];
+        try {
+            $this->assertSubset($this->userPermissions($owner, $state), $permissions);
+        } catch (AdminDelegationException) {
+            return false;
+        }
+        if (!(new FileNamePolicy())->containsPolicy($actor, $owner)) return false;
+        $root = '/' . PathPolicy::normalizeRelative((string)($actor['home_dir'] ?? '/'));
+        $home = '/' . PathPolicy::normalizeRelative((string)($owner['home_dir'] ?? '/'));
+        return PathPolicy::isWithinRoot($root, $home);
+    }
+
     private function assertSubset(array $granted, array $actor): void
     {
         if (array_diff($granted, $actor) !== []) throw new AdminDelegationException();

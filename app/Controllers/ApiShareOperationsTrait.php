@@ -96,8 +96,11 @@ trait ApiShareOperationsTrait
             }
             $share = $service->getShareRaw($hash);
 
-            // Allow admin to delete any share, user only their own
-            if ($share && ($share['created_by'] === session('username') || can('admin_users'))) {
+            // Owners delete their shares; administrators only within their delegated authority.
+            if ($share && (new \App\Services\AdminDelegationPolicy())->mayActFor(
+                (string)\App\Services\SessionAccount::localUsername(),
+                (string)($share['created_by'] ?? '')
+            )) {
                 // If it is a transfer, delete the physical directory as well.
                 if (isset($share['source']) && $share['source'] === 'transfer') {
                     $dir = $service->resolveTransferDirectory((string)($share['path'] ?? ''), true);

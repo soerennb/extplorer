@@ -2,6 +2,8 @@
 
 namespace App\Services\VFS;
 
+use App\Services\AccountFilePolicy;
+
 interface IFileSystem
 {
     /**
@@ -131,9 +133,10 @@ interface IFileSystem
      *
      * @param string $archive Relative path to archive
      * @param string $destination Relative path to destination directory
+     * @param AccountFilePolicy|null $policy Account policy every extracted file must satisfy
      * @return bool True on success
      */
-    public function extract(string $archive, string $destination): bool;
+    public function extract(string $archive, string $destination, ?AccountFilePolicy $policy = null): bool;
 
     /**
      * Search for files matching the query.

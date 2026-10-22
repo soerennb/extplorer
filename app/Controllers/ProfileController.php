@@ -6,6 +6,7 @@ use App\Models\UserModel;
 use App\Services\AuthenticationService;
 use App\Services\LogService;
 use App\Services\PasswordPolicy;
+use App\Services\SessionAccount;
 use App\Services\StepUpAuthenticationService;
 use App\Services\WebDavCredentialService;
 
@@ -23,7 +24,7 @@ class ProfileController extends BaseController
 
     public function webDavCredentials()
     {
-        $username = (string)\Config\Services::session()->get('username');
+        $username = (string)SessionAccount::localUsername();
         if ($username === '') return $this->failForbidden('Not logged in');
         $this->response->setHeader('Cache-Control', 'no-store');
         return $this->respond(['items' => (new WebDavCredentialService())->listForUser($username)]);
@@ -32,7 +33,7 @@ class ProfileController extends BaseController
     public function createWebDavCredential()
     {
         if (($stepUp = $this->requireStepUp('webdav-credential.create')) !== true) return $stepUp;
-        $username = (string)\Config\Services::session()->get('username');
+        $username = (string)SessionAccount::localUsername();
         $json = $this->request->getJSON(true);
         try {
             $created = (new WebDavCredentialService())->create($username, (string)($json['label'] ?? ''));
@@ -50,7 +51,7 @@ class ProfileController extends BaseController
     {
         if (($stepUp = $this->requireStepUp('webdav-credential.delete')) !== true) return $stepUp;
         if (!is_string($id) || preg_match('/\A[a-f0-9]{32}\z/', $id) !== 1) return $this->failNotFound();
-        $username = (string)\Config\Services::session()->get('username');
+        $username = (string)SessionAccount::localUsername();
         if (!(new WebDavCredentialService())->delete($username, $id)) return $this->failNotFound();
         LogService::log('Delete WebDAV credential', $id);
         return $this->respondDeleted(['status' => 'success']);
@@ -58,7 +59,20 @@ class ProfileController extends BaseController
 
     public function getDetails()
     {
-        $username = session('username');
+        if (!SessionAccount::isLocal()) {
+            // A direct remote login has no local profile. The upload dialog
+            // still needs the application-wide filename policy.
+            return $this->respond([
+                'username' => (string)session('username'),
+                'connection_mode' => SessionAccount::connectionMode(),
+                '2fa_enabled' => false,
+                'allowed_extensions' => '',
+                'blocked_extensions' => '',
+                'system_blocklist' => ['php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'pl', 'py', 'rb', 'cgi', 'exe', 'sh', 'bat', 'cmd', 'htaccess', 'htpasswd'],
+            ]);
+        }
+
+        $username = SessionAccount::localUsername();
         if (!$username) return $this->failForbidden('Not logged in');
 
         $userModel = new UserModel();
@@ -80,7 +94,7 @@ class ProfileController extends BaseController
 
     public function setup2fa()
     {
-        $username = session('username');
+        $username = SessionAccount::localUsername();
         if (!$username) return $this->failForbidden('Not logged in');
 
         $service = new \App\Services\TwoFactorService();
@@ -99,7 +113,7 @@ class ProfileController extends BaseController
 
     public function enable2fa()
     {
-        $username = session('username');
+        $username = SessionAccount::localUsername();
         if (!$username) return $this->failForbidden('Not logged in');
 
         $json = $this->request->getJSON();
@@ -145,7 +159,7 @@ class ProfileController extends BaseController
 
     public function disable2fa()
     {
-        $username = session('username');
+        $username = SessionAccount::localUsername();
         if (!$username) return $this->failForbidden('Not logged in');
 
         $json = $this->request->getJSON();
@@ -210,7 +224,7 @@ class ProfileController extends BaseController
             return $this->fail($passwordError);
         }
 
-        $username = session('username');
+        $username = SessionAccount::localUsername();
         if (!$username) return $this->failForbidden('Not logged in');
 
         $userModel = new UserModel();

@@ -80,7 +80,7 @@ class MountService
         }
 
         $mount = $mounts[$id];
-        if ($mount['user'] !== $username && !can('admin_users')) {
+        if (!$this->mayManage($mount, $username)) {
             throw new \Exception("Permission denied.");
         }
 
@@ -111,7 +111,7 @@ class MountService
     public function recordMountHealth(string $id, string $username, bool $healthy, string $error = ''): void
     {
         AtomicFileStore::transaction($this->mountsFile, function (array &$mounts) use ($id, $username, $healthy, $error): void {
-            if (!isset($mounts[$id]) || (($mounts[$id]['user'] ?? '') !== $username && !can('admin_users'))) {
+            if (!isset($mounts[$id]) || !$this->mayManage($mounts[$id], $username)) {
                 return;
             }
             $mounts[$id]['health'] = [
@@ -161,23 +161,27 @@ class MountService
         }
 
         $existing = $mounts[$id];
-        if ($existing['user'] !== $username && !can('admin_users')) {
+        if (!$this->mayManage($existing, $username)) {
             throw new \Exception("Permission denied.");
         }
 
         $name = $this->sanitizeMountName($name);
         $this->assertMountNameAvailable($mounts, $existing['user'], $name, $id);
         $existingConfig = is_array($existing['config'] ?? null) ? $existing['config'] : [];
-        [$type, $config] = $this->validateAndNormalizeMount($type, $config, $existingConfig, true);
+        [$type, $config] = $this->validateAndNormalizeMount($type, $config, $existingConfig, true, (string)($existing['type'] ?? ''));
         $this->validateConnectivity($type, $config);
 
-        $updated = AtomicFileStore::transaction($this->mountsFile, function (array &$mounts) use ($id, $username, $name, $type, $config): array {
+        $updated = AtomicFileStore::transaction($this->mountsFile, function (array &$mounts) use ($id, $username, $name, $type, $config, $existing): array {
             if (!isset($mounts[$id])) {
                 throw new \Exception("Mount not found.");
             }
             $current = $mounts[$id];
-            if (($current['user'] ?? '') !== $username && !can('admin_users')) {
+            if (!$this->mayManage($current, $username)) {
                 throw new \Exception("Permission denied.");
+            }
+            // Stored secrets were validated against the endpoint read above.
+            if (($current['config'] ?? null) !== ($existing['config'] ?? null) || ($current['type'] ?? null) !== ($existing['type'] ?? null)) {
+                throw new \Exception(lang('Remote.mount_changed'));
             }
             $this->assertMountNameAvailable($mounts, (string)$current['user'], $name, $id);
             $mounts[$id] = [
@@ -203,15 +207,17 @@ class MountService
         }
 
         $existingConfig = [];
+        $existingType = '';
         if ($id) {
             $existing = $this->getStoredMountForUser($id, $username);
             $existingConfig = is_array($existing['config'] ?? null) ? $existing['config'] : [];
+            $existingType = (string)($existing['type'] ?? '');
         }
 
         $name = $this->sanitizeMountName($name);
         $mounts = $this->getMounts();
         $this->assertMountNameAvailable($mounts, $username, $name, $id);
-        [$type, $config] = $this->validateAndNormalizeMount($type, $config, $existingConfig, true);
+        [$type, $config] = $this->validateAndNormalizeMount($type, $config, $existingConfig, true, $existingType);
         $this->validateConnectivity($type, $config);
 
         $configForResponse = $config;
@@ -240,13 +246,42 @@ class MountService
             if (!isset($mounts[$id])) return false;
 
             $mount = $mounts[$id];
-            if (($mount['user'] ?? '') !== $username && !can('admin_users')) {
+            if (!$this->mayManage($mount, $username)) {
                 throw new \Exception("Permission denied.");
             }
 
             unset($mounts[$id]);
             return true;
         });
+    }
+
+    /** Stored credentials may only be reused for the endpoint they were entered for. */
+    private function sameRemoteEndpoint(string $type, string $host, int $port, string $user, array $config, string $existingType, array $existingConfig): bool
+    {
+        $existingType = strtolower($existingType) === 'ssh2' ? 'sftp' : strtolower($existingType);
+        if ($existingType !== $type
+            || $host !== strtolower(trim((string)($existingConfig['host'] ?? '')))
+            || $port !== (int)($existingConfig['port'] ?? ($type === 'sftp' ? 22 : 21))
+            || $user !== trim((string)($existingConfig['user'] ?? ''))) {
+            return false;
+        }
+
+        $security = new RemoteSecurityPolicy();
+        if ($type === 'sftp') {
+            return $security->normalizeFingerprint((string)($config['host_key_fingerprint'] ?? ''))
+                === $security->normalizeFingerprint((string)($existingConfig['host_key_fingerprint'] ?? ''));
+        }
+        if ($type === 'ftps') {
+            return $security->normalizeTlsSpkiPin(trim((string)($config['tls_spki_pin'] ?? '')))
+                === $security->normalizeTlsSpkiPin(trim((string)($existingConfig['tls_spki_pin'] ?? '')));
+        }
+        return true;
+    }
+
+    /** Owners manage their mounts; administrators only within their delegated authority. */
+    private function mayManage(array $mount, string $username): bool
+    {
+        return (new AdminDelegationPolicy())->mayActFor($username, (string)($mount['user'] ?? ''));
     }
 
     private function canEncrypt(): bool
@@ -268,7 +303,7 @@ class MountService
         }
 
         $mount = $mounts[$id];
-        if (($mount['user'] ?? '') !== $username && !can('admin_users')) {
+        if (!$this->mayManage($mount, $username)) {
             throw new \Exception('Permission denied.');
         }
 
@@ -409,7 +444,8 @@ class MountService
         string $type,
         array $config,
         array $existingConfig = [],
-        bool $allowExistingPass = false
+        bool $allowExistingPass = false,
+        string $existingType = ''
     ): array {
         $type = strtolower($type);
 
@@ -462,6 +498,12 @@ class MountService
                 throw new \Exception("Encryption key not configured. Set Config\\Encryption::\$key before adding remote mounts.");
             }
 
+            if ($allowExistingPass && !$this->sameRemoteEndpoint($type, $host, $port, $user, $config, $existingType, $existingConfig)) {
+                // Saved secrets were entered for one endpoint. Never send them
+                // to another host, port, account, protocol or host identity.
+                $existingConfig = [];
+            }
+
             $storedPass = (string)($existingConfig['pass'] ?? '');
             $storedPrivateKey = (string)($existingConfig['private_key'] ?? '');
             $storedPublicKey = (string)($existingConfig['public_key'] ?? '');
@@ -504,10 +546,10 @@ class MountService
             }
 
             if ($authMethod === 'password' && $plainPass === '') {
-                throw new \Exception("Remote password is required.");
+                throw new \Exception($allowExistingPass && $existingType !== '' ? lang('Remote.credentials_required') : "Remote password is required.");
             }
             if ($authMethod === 'private_key' && ($plainPrivateKey === '' || $plainPublicKey === '')) {
-                throw new \Exception('SFTP private and public keys are required.');
+                throw new \Exception($allowExistingPass && $existingType !== '' ? lang('Remote.credentials_required') : 'SFTP private and public keys are required.');
             }
             if (strlen($plainPrivateKey) > 1024 * 1024 || strlen($plainPublicKey) > 1024 * 1024) {
                 throw new \Exception('SFTP key material is too large.');

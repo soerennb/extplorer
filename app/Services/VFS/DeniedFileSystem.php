@@ -2,6 +2,8 @@
 
 namespace App\Services\VFS;
 
+use App\Services\AccountFilePolicy;
+
 use RuntimeException;
 
 /**
@@ -88,7 +90,7 @@ final class DeniedFileSystem implements IFileSystem
         return $this->deny();
     }
 
-    public function extract(string $archive, string $destination): bool
+    public function extract(string $archive, string $destination, ?AccountFilePolicy $policy = null): bool
     {
         return $this->deny();
     }
