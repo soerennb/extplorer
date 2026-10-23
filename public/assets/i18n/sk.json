@@ -295,7 +295,7 @@
     "shared_unlock": "Odomknúť",
     "shared_invalid_password": "Neplatné heslo",
     "shared_upload_panel_title": "Zdieľanie len na nahrávanie",
-    "shared_upload_panel_desc": "Na toto zdieľanie môžete nahrávať súbory. Súbory, ktoré tu už sú, nemusia byť stiahnuteľné.",
+    "shared_upload_panel_desc": "Na toto zdieľanie môžete nahrávať súbory. Súbory, ktoré tu už sú uložené, sa nezobrazujú; zobrazujú sa len vaše nahrávky z tejto stránky.",
     "shared_upload_panel_note": "Súbory sem môžete presunúť myšou.",
     "shared_dropzone_title": "Presuňte súbory na nahranie",
     "shared_dropzone_subtitle": "alebo vyberte súbory zo zariadenia",

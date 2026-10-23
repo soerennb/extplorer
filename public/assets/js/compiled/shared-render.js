@@ -144,7 +144,7 @@ const _hoisted_78 = { class: "file-actions" }
 const _hoisted_79 = ["onClick", "title", "aria-label"]
 const _hoisted_80 = ["onClick", "title", "aria-label"]
 const _hoisted_81 = {
-  key: 1,
+  key: 0,
   class: "shared-empty"
 }
 const _hoisted_82 = { class: "mb-1" }
@@ -272,7 +272,7 @@ return function render(_ctx, _cache) {
                           ], -1 /* CACHED */)),
                           _createElementVNode("div", null, [
                             _createElementVNode("div", _hoisted_25, _toDisplayString(t('shared_upload_panel_title', 'Upload-Only Share')), 1 /* TEXT */),
-                            _createElementVNode("div", _hoisted_26, _toDisplayString(t('shared_upload_panel_desc', 'You can upload files to this share. Files already here may not be downloadable.')), 1 /* TEXT */),
+                            _createElementVNode("div", _hoisted_26, _toDisplayString(t('shared_upload_panel_desc', 'You can upload files to this share. Files already stored here are not shown; only your uploads from this page are listed.')), 1 /* TEXT */),
                             _createElementVNode("div", _hoisted_27, _toDisplayString(t('shared_upload_panel_note', 'You can drag and drop files here.')), 1 /* TEXT */),
                             _createElementVNode("div", {
                               class: _normalizeClass(["shared-dropzone", { active: dropzoneActive }]),
@@ -382,120 +382,125 @@ return function render(_ctx, _cache) {
                           ])
                         ]))
                       : _createCommentVNode("v-if", true),
-                    _createElementVNode("div", _hoisted_54, [
-                      (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(breadcrumbs, (crumb, idx) => {
-                        return (_openBlock(), _createElementBlock(_Fragment, { key: crumb.path || 'root' }, [
-                          _createElementVNode("button", {
-                            type: "button",
-                            class: "btn btn-link btn-sm text-decoration-none",
-                            onClick: $event => (navigateTo(crumb.path))
-                          }, [
-                            (idx === 0)
-                              ? (_openBlock(), _createElementBlock("i", _hoisted_56))
-                              : _createCommentVNode("v-if", true),
-                            _createTextVNode(_toDisplayString(crumb.label), 1 /* TEXT */)
-                          ], 8 /* PROPS */, _hoisted_55),
-                          (idx < breadcrumbs.length - 1)
-                            ? (_openBlock(), _createElementBlock("span", _hoisted_57, "/"))
+                    _createCommentVNode(" Upload-mode shares are blind drop boxes: no existing content is listed. "),
+                    (!uploadMode)
+                      ? (_openBlock(), _createElementBlock(_Fragment, { key: 1 }, [
+                          _createElementVNode("div", _hoisted_54, [
+                            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(breadcrumbs, (crumb, idx) => {
+                              return (_openBlock(), _createElementBlock(_Fragment, { key: crumb.path || 'root' }, [
+                                _createElementVNode("button", {
+                                  type: "button",
+                                  class: "btn btn-link btn-sm text-decoration-none",
+                                  onClick: $event => (navigateTo(crumb.path))
+                                }, [
+                                  (idx === 0)
+                                    ? (_openBlock(), _createElementBlock("i", _hoisted_56))
+                                    : _createCommentVNode("v-if", true),
+                                  _createTextVNode(_toDisplayString(crumb.label), 1 /* TEXT */)
+                                ], 8 /* PROPS */, _hoisted_55),
+                                (idx < breadcrumbs.length - 1)
+                                  ? (_openBlock(), _createElementBlock("span", _hoisted_57, "/"))
+                                  : _createCommentVNode("v-if", true)
+                              ], 64 /* STABLE_FRAGMENT */))
+                            }), 128 /* KEYED_FRAGMENT */))
+                          ]),
+                          _createElementVNode("div", _hoisted_58, [
+                            _createElementVNode("div", _hoisted_59, [
+                              _createElementVNode("div", _hoisted_60, [
+                                _cache[12] || (_cache[12] = _createElementVNode("span", { class: "input-group-text bg-white" }, [
+                                  _createElementVNode("i", { class: "ri-search-line" })
+                                ], -1 /* CACHED */)),
+                                _withDirectives(_createElementVNode("input", {
+                                  "onUpdate:modelValue": $event => ((searchQuery) = $event),
+                                  type: "search",
+                                  class: "form-control",
+                                  placeholder: t('shared_search_placeholder', 'Search files'),
+                                  "aria-label": t('shared_search_placeholder', 'Search files')
+                                }, null, 8 /* PROPS */, _hoisted_61), [
+                                  [
+                                    _vModelText,
+                                    searchQuery,
+                                    void 0,
+                                    { trim: true }
+                                  ]
+                                ])
+                              ])
+                            ]),
+                            _createElementVNode("div", _hoisted_62, [
+                              _createElementVNode("label", _hoisted_63, _toDisplayString(t('shared_sort_label', 'Sort')), 1 /* TEXT */),
+                              _withDirectives(_createElementVNode("select", {
+                                "onUpdate:modelValue": $event => ((sortKey) = $event),
+                                class: "form-select form-select-sm select-auto-width",
+                                "aria-label": t('shared_sort_aria', 'Sort files')
+                              }, [
+                                _createElementVNode("option", _hoisted_65, _toDisplayString(t('shared_sort_type_name', 'Type + Name')), 1 /* TEXT */),
+                                _createElementVNode("option", _hoisted_66, _toDisplayString(t('shared_sort_name', 'Name')), 1 /* TEXT */),
+                                _createElementVNode("option", _hoisted_67, _toDisplayString(t('shared_sort_newest', 'Newest')), 1 /* TEXT */),
+                                _createElementVNode("option", _hoisted_68, _toDisplayString(t('shared_sort_oldest', 'Oldest')), 1 /* TEXT */),
+                                _createElementVNode("option", _hoisted_69, _toDisplayString(t('shared_sort_largest', 'Largest')), 1 /* TEXT */),
+                                _createElementVNode("option", _hoisted_70, _toDisplayString(t('shared_sort_smallest', 'Smallest')), 1 /* TEXT */)
+                              ], 8 /* PROPS */, _hoisted_64), [
+                                [_vModelSelect, sortKey]
+                              ]),
+                              _createElementVNode("span", _hoisted_71, _toDisplayString(t('shared_items_count', '{count} items', { count: filteredFiles.length })), 1 /* TEXT */)
+                            ])
+                          ]),
+                          (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(filteredFiles, (file) => {
+                            return (_openBlock(), _createElementBlock("div", {
+                              key: file.name,
+                              class: "file-item",
+                              onClick: $event => (open(file))
+                            }, [
+                              _createElementVNode("i", {
+                                class: _normalizeClass([getIcon(file), "file-icon"])
+                              }, null, 2 /* CLASS */),
+                              _createElementVNode("div", _hoisted_73, [
+                                _createElementVNode("div", _hoisted_74, _toDisplayString(file.name), 1 /* TEXT */),
+                                _createElementVNode("div", _hoisted_75, _toDisplayString(file.type === 'dir' ? t('shared_folder', 'Folder') : fileExtLabel(file.name)), 1 /* TEXT */)
+                              ]),
+                              _createElementVNode("div", _hoisted_76, _toDisplayString(formatSize(file.size)), 1 /* TEXT */),
+                              _createElementVNode("div", {
+                                class: "file-meta",
+                                title: formatDate(file.mtime)
+                              }, _toDisplayString(formatRelativeDate(file.mtime)), 9 /* TEXT, PROPS */, _hoisted_77),
+                              _createElementVNode("div", _hoisted_78, [
+                                (!uploadMode && file.type !== 'dir' && isPreviewable(file))
+                                  ? (_openBlock(), _createElementBlock("button", {
+                                      key: 0,
+                                      type: "button",
+                                      class: "btn btn-link btn-sm p-0",
+                                      onClick: _withModifiers($event => (previewItem(file)), ["stop"]),
+                                      title: t('shared_preview', 'Preview'),
+                                      "aria-label": t('shared_preview_file', 'Preview file')
+                                    }, [...(_cache[13] || (_cache[13] = [
+                                      _createElementVNode("i", { class: "ri-eye-line" }, null, -1 /* CACHED */)
+                                    ]))], 8 /* PROPS */, _hoisted_79))
+                                  : _createCommentVNode("v-if", true),
+                                (!uploadMode && file.type !== 'dir')
+                                  ? (_openBlock(), _createElementBlock("button", {
+                                      key: 1,
+                                      type: "button",
+                                      class: "btn btn-link btn-sm p-0",
+                                      onClick: _withModifiers($event => (downloadItem(file)), ["stop"]),
+                                      title: t('shared_download', 'Download'),
+                                      "aria-label": t('shared_download_file', 'Download file')
+                                    }, [...(_cache[14] || (_cache[14] = [
+                                      _createElementVNode("i", { class: "ri-download-line" }, null, -1 /* CACHED */)
+                                    ]))], 8 /* PROPS */, _hoisted_80))
+                                  : _createCommentVNode("v-if", true)
+                              ])
+                            ], 8 /* PROPS */, _hoisted_72))
+                          }), 128 /* KEYED_FRAGMENT */)),
+                          (filteredFiles.length === 0)
+                            ? (_openBlock(), _createElementBlock("div", _hoisted_81, [
+                                _cache[15] || (_cache[15] = _createElementVNode("i", { class: "ri-folder-open-line" }, null, -1 /* CACHED */)),
+                                _createElementVNode("p", _hoisted_82, _toDisplayString(t('shared_empty_no_match', 'No files match your view.')), 1 /* TEXT */),
+                                (files.length > 0)
+                                  ? (_openBlock(), _createElementBlock("p", _hoisted_83, _toDisplayString(t('shared_empty_try_clear', 'Try clearing the search or changing the sort.')), 1 /* TEXT */))
+                                  : (_openBlock(), _createElementBlock("p", _hoisted_84, _toDisplayString(t('shared_empty_folder_empty', 'This folder is empty.')), 1 /* TEXT */))
+                              ]))
                             : _createCommentVNode("v-if", true)
                         ], 64 /* STABLE_FRAGMENT */))
-                      }), 128 /* KEYED_FRAGMENT */))
-                    ]),
-                    _createElementVNode("div", _hoisted_58, [
-                      _createElementVNode("div", _hoisted_59, [
-                        _createElementVNode("div", _hoisted_60, [
-                          _cache[12] || (_cache[12] = _createElementVNode("span", { class: "input-group-text bg-white" }, [
-                            _createElementVNode("i", { class: "ri-search-line" })
-                          ], -1 /* CACHED */)),
-                          _withDirectives(_createElementVNode("input", {
-                            "onUpdate:modelValue": $event => ((searchQuery) = $event),
-                            type: "search",
-                            class: "form-control",
-                            placeholder: t('shared_search_placeholder', 'Search files'),
-                            "aria-label": t('shared_search_placeholder', 'Search files')
-                          }, null, 8 /* PROPS */, _hoisted_61), [
-                            [
-                              _vModelText,
-                              searchQuery,
-                              void 0,
-                              { trim: true }
-                            ]
-                          ])
-                        ])
-                      ]),
-                      _createElementVNode("div", _hoisted_62, [
-                        _createElementVNode("label", _hoisted_63, _toDisplayString(t('shared_sort_label', 'Sort')), 1 /* TEXT */),
-                        _withDirectives(_createElementVNode("select", {
-                          "onUpdate:modelValue": $event => ((sortKey) = $event),
-                          class: "form-select form-select-sm select-auto-width",
-                          "aria-label": t('shared_sort_aria', 'Sort files')
-                        }, [
-                          _createElementVNode("option", _hoisted_65, _toDisplayString(t('shared_sort_type_name', 'Type + Name')), 1 /* TEXT */),
-                          _createElementVNode("option", _hoisted_66, _toDisplayString(t('shared_sort_name', 'Name')), 1 /* TEXT */),
-                          _createElementVNode("option", _hoisted_67, _toDisplayString(t('shared_sort_newest', 'Newest')), 1 /* TEXT */),
-                          _createElementVNode("option", _hoisted_68, _toDisplayString(t('shared_sort_oldest', 'Oldest')), 1 /* TEXT */),
-                          _createElementVNode("option", _hoisted_69, _toDisplayString(t('shared_sort_largest', 'Largest')), 1 /* TEXT */),
-                          _createElementVNode("option", _hoisted_70, _toDisplayString(t('shared_sort_smallest', 'Smallest')), 1 /* TEXT */)
-                        ], 8 /* PROPS */, _hoisted_64), [
-                          [_vModelSelect, sortKey]
-                        ]),
-                        _createElementVNode("span", _hoisted_71, _toDisplayString(t('shared_items_count', '{count} items', { count: filteredFiles.length })), 1 /* TEXT */)
-                      ])
-                    ]),
-                    (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(filteredFiles, (file) => {
-                      return (_openBlock(), _createElementBlock("div", {
-                        key: file.name,
-                        class: "file-item",
-                        onClick: $event => (open(file))
-                      }, [
-                        _createElementVNode("i", {
-                          class: _normalizeClass([getIcon(file), "file-icon"])
-                        }, null, 2 /* CLASS */),
-                        _createElementVNode("div", _hoisted_73, [
-                          _createElementVNode("div", _hoisted_74, _toDisplayString(file.name), 1 /* TEXT */),
-                          _createElementVNode("div", _hoisted_75, _toDisplayString(file.type === 'dir' ? t('shared_folder', 'Folder') : fileExtLabel(file.name)), 1 /* TEXT */)
-                        ]),
-                        _createElementVNode("div", _hoisted_76, _toDisplayString(formatSize(file.size)), 1 /* TEXT */),
-                        _createElementVNode("div", {
-                          class: "file-meta",
-                          title: formatDate(file.mtime)
-                        }, _toDisplayString(formatRelativeDate(file.mtime)), 9 /* TEXT, PROPS */, _hoisted_77),
-                        _createElementVNode("div", _hoisted_78, [
-                          (!uploadMode && file.type !== 'dir' && isPreviewable(file))
-                            ? (_openBlock(), _createElementBlock("button", {
-                                key: 0,
-                                type: "button",
-                                class: "btn btn-link btn-sm p-0",
-                                onClick: _withModifiers($event => (previewItem(file)), ["stop"]),
-                                title: t('shared_preview', 'Preview'),
-                                "aria-label": t('shared_preview_file', 'Preview file')
-                              }, [...(_cache[13] || (_cache[13] = [
-                                _createElementVNode("i", { class: "ri-eye-line" }, null, -1 /* CACHED */)
-                              ]))], 8 /* PROPS */, _hoisted_79))
-                            : _createCommentVNode("v-if", true),
-                          (!uploadMode && file.type !== 'dir')
-                            ? (_openBlock(), _createElementBlock("button", {
-                                key: 1,
-                                type: "button",
-                                class: "btn btn-link btn-sm p-0",
-                                onClick: _withModifiers($event => (downloadItem(file)), ["stop"]),
-                                title: t('shared_download', 'Download'),
-                                "aria-label": t('shared_download_file', 'Download file')
-                              }, [...(_cache[14] || (_cache[14] = [
-                                _createElementVNode("i", { class: "ri-download-line" }, null, -1 /* CACHED */)
-                              ]))], 8 /* PROPS */, _hoisted_80))
-                            : _createCommentVNode("v-if", true)
-                        ])
-                      ], 8 /* PROPS */, _hoisted_72))
-                    }), 128 /* KEYED_FRAGMENT */)),
-                    (filteredFiles.length === 0)
-                      ? (_openBlock(), _createElementBlock("div", _hoisted_81, [
-                          _cache[15] || (_cache[15] = _createElementVNode("i", { class: "ri-folder-open-line" }, null, -1 /* CACHED */)),
-                          _createElementVNode("p", _hoisted_82, _toDisplayString(t('shared_empty_no_match', 'No files match your view.')), 1 /* TEXT */),
-                          (files.length > 0)
-                            ? (_openBlock(), _createElementBlock("p", _hoisted_83, _toDisplayString(t('shared_empty_try_clear', 'Try clearing the search or changing the sort.')), 1 /* TEXT */))
-                            : (_openBlock(), _createElementBlock("p", _hoisted_84, _toDisplayString(t('shared_empty_folder_empty', 'This folder is empty.')), 1 /* TEXT */))
-                        ]))
                       : _createCommentVNode("v-if", true)
                   ]))
             ], 64 /* STABLE_FRAGMENT */))

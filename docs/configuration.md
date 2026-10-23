@@ -289,6 +289,10 @@ The following controls are enabled in the application and should be considered p
   five failures per 15 minutes. Use `disabled` to suspend an account.
 - Per-account allowed/blocked extensions apply to uploads, WebDAV, editor
   saves, renames, copies, archives, extraction and version restore.
+- Upload-mode shares are blind drop boxes: visitors see only their own uploads
+  from the current page, never the existing content. Read shares hide dotfiles
+  and dot-directories in listings, direct downloads and folder archives; share
+  a single file explicitly to publish a hidden file.
 - Public share endpoints have throttling:
   - Share password auth: `10 requests/minute` per `share + IP`
   - Share upload: `30 requests/minute` per `share + IP`

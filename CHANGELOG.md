@@ -20,6 +20,7 @@ All notable changes to eXtplorer 3 are documented here.
 - Notify share owners at most once per share and hour about anonymous downloads, and limit transfer mail to 100 recipients per account and hour.
 - Compare a dummy password hash for unknown, disabled and locked accounts so response times do not reveal them.
 - Validate login return paths correctly: paths containing the letter `r` were discarded, and carriage returns, tabs and other control characters are now rejected.
+- Turn upload-mode shares into blind drop boxes that never list existing content, and stop serving hidden files and folders of shared folders through direct links or folder archives.
 
 ### Upgrade
 

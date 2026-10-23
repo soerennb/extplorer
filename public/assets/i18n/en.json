@@ -295,7 +295,7 @@
     "shared_unlock": "Unlock",
     "shared_invalid_password": "Invalid Password",
     "shared_upload_panel_title": "Upload-Only Share",
-    "shared_upload_panel_desc": "You can upload files to this share. Files already here may not be downloadable.",
+    "shared_upload_panel_desc": "You can upload files to this share. Files already stored here are not shown; only your uploads from this page are listed.",
     "shared_upload_panel_note": "You can drag and drop files here.",
     "shared_dropzone_title": "Drop files to upload",
     "shared_dropzone_subtitle": "or choose files from your device",

@@ -17,7 +17,7 @@
     "shared_unlock": "Entsperren",
     "shared_invalid_password": "Ungültiges Passwort",
     "shared_upload_panel_title": "Upload-Freigabe",
-    "shared_upload_panel_desc": "Du kannst Dateien in diese Freigabe hochladen. Bereits vorhandene Dateien sind ggf. nicht herunterladbar.",
+    "shared_upload_panel_desc": "Du kannst Dateien in diese Freigabe hochladen. Bereits gespeicherte Dateien werden nicht angezeigt; nur deine Uploads von dieser Seite sind aufgeführt.",
     "shared_upload_panel_note": "Du kannst Dateien hier per Drag & Drop ablegen.",
     "shared_dropzone_title": "Dateien zum Hochladen ablegen",
     "shared_dropzone_subtitle": "oder Dateien vom Gerät auswählen",

@@ -212,6 +212,9 @@ class ShareController extends BaseController
             $fs = new LocalAdapter($basePath);
             $subPath = $subPath ?? '';
             $subPath = ltrim($subPath, '/');
+            if ($this->isHiddenSharePath($subPath)) {
+                return $this->failNotFound();
+            }
             $relPath = $subPath === '' ? '.' : $subPath;
         }
 
@@ -297,10 +300,16 @@ class ShareController extends BaseController
 
         $subPath = $this->request->getGet('path') ?? '';
         $subPath = ltrim($subPath, '/');
+        if ($this->isHiddenSharePath($subPath)) {
+            return $this->failNotFound();
+        }
+        $isUploadMode = ($share['mode'] ?? 'read') === 'upload';
 
         try {
             $fs = new LocalAdapter($basePath);
-            $items = $fs->listDirectory($subPath, false);
+            // Upload-mode shares are blind drop boxes: anonymous uploaders
+            // never see what the owner or other uploaders stored there.
+            $items = $isUploadMode ? [] : $fs->listDirectory($subPath, false);
             // Do not expose local account/group names or permission bits on a
             // public share. They are useful to administrators but disclose
             // host details to unauthenticated visitors.
@@ -309,7 +318,7 @@ class ShareController extends BaseController
                 return $item;
             }, $items);
             $policy = null;
-            if (($share['mode'] ?? 'read') === 'upload') {
+            if ($isUploadMode) {
                 $settingsService = new \App\Services\SettingsService();
                 $settings = $settingsService->getSettings();
                 $policy = $this->buildUploadPolicy($settings, $basePath, $share);
@@ -643,8 +652,12 @@ class ShareController extends BaseController
         $sourceDir = rtrim($sourceDir, DIRECTORY_SEPARATOR);
         $baseLen = strlen($sourceDir) + 1;
 
+        // Hidden entries are not listed, so they are not published either.
         $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($sourceDir, \FilesystemIterator::SKIP_DOTS),
+            new \RecursiveCallbackFilterIterator(
+                new \RecursiveDirectoryIterator($sourceDir, \FilesystemIterator::SKIP_DOTS),
+                static fn(\SplFileInfo $item): bool => !str_starts_with($item->getFilename(), '.')
+            ),
             \RecursiveIteratorIterator::SELF_FIRST
         );
 
@@ -701,6 +714,18 @@ class ShareController extends BaseController
         }
 
         return true;
+    }
+
+    /** Hidden entries (dotfiles and dot-directories) are never served from a shared folder. */
+    private function isHiddenSharePath(string $relative): bool
+    {
+        foreach (explode('/', str_replace('\\', '/', $relative)) as $component) {
+            if ($component !== '' && $component !== '.' && str_starts_with($component, '.')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function sanitizePublicUploadFilename(string $filename): string

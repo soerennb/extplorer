@@ -56,7 +56,7 @@
                             </div>
                             <div>
                             <div class="shared-upload-panel-title">{{ t('shared_upload_panel_title', 'Upload-Only Share') }}</div>
-                            <div class="small">{{ t('shared_upload_panel_desc', 'You can upload files to this share. Files already here may not be downloadable.') }}</div>
+                            <div class="small">{{ t('shared_upload_panel_desc', 'You can upload files to this share. Files already stored here are not shown; only your uploads from this page are listed.') }}</div>
                             <div class="shared-upload-panel-note">{{ t('shared_upload_panel_note', 'You can drag and drop files here.') }}</div>
                                 <div
                                     class="shared-dropzone"
@@ -135,6 +135,8 @@
                                 </div>
                             </div>
                         </div>
+                    <!-- Upload-mode shares are blind drop boxes: no existing content is listed. -->
+                    <template v-if="!uploadMode">
                     <div class="shared-breadcrumbs">
                         <template v-for="(crumb, idx) in breadcrumbs" :key="crumb.path || 'root'">
                             <button type="button" class="btn btn-link btn-sm text-decoration-none" @click="navigateTo(crumb.path)">
@@ -209,6 +211,7 @@
                         <p class="small text-muted mb-0" v-if="files.length > 0">{{ t('shared_empty_try_clear', 'Try clearing the search or changing the sort.') }}</p>
                         <p class="small text-muted mb-0" v-else>{{ t('shared_empty_folder_empty', 'This folder is empty.') }}</p>
                     </div>
+                    </template>
                 </div>
             </template>
         </div>
