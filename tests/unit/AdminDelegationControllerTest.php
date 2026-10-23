@@ -28,7 +28,7 @@ final class AdminDelegationControllerTest extends CIUnitTestCase
                 ['username' => 'settings', 'role' => 'settings', 'groups' => [], 'home_dir' => '/team/settings', 'auth_version' => 1],
             ]);
             session()->set(['username' => 'manager', 'permissions' => ['read', 'admin_users'], 'isLoggedIn' => true, 'auth_version' => 1]);
-            (new StepUpAuthenticationService())->issue('user.create', 'correct-password');
+            Services::request()->setHeader('X-Extplorer-Step-Up', (new StepUpAuthenticationService())->issue('user.create', 'correct-password'));
             $before = (new AuthorizationState())->snapshot();
             foreach ([
                 ['create', [], ['username' => 'new-admin', 'password' => 'Replacement!2026', 'role' => 'admin', 'home_dir' => '/team/new']],

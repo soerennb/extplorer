@@ -68,11 +68,13 @@ class UserModel
     {
         $user = $this->getUser($username);
         if (!$user || !is_string($user['password_hash'] ?? null)) {
+            self::equalizeTiming($password);
             return null;
         }
 
         $now = time();
         if (!empty($user['disabled']) || (!$trustedDevice && (int)($user['locked_until'] ?? 0) > $now)) {
+            self::equalizeTiming($password);
             return null;
         }
 
@@ -103,6 +105,18 @@ class UserModel
             $this->recordFailedLogin($username);
         }
         return null;
+    }
+
+    /**
+     * Rejections without a hash comparison would reveal unknown, disabled
+     * or locked accounts by their response time. The dummy hash uses this
+     * platform's default cost, like stored hashes.
+     */
+    private static function equalizeTiming(string $password): void
+    {
+        static $dummyHash = null;
+        $dummyHash ??= password_hash('extplorer-timing-equalizer', PASSWORD_DEFAULT);
+        password_verify($password, $dummyHash);
     }
 
     public function saveUsers(array $users): void

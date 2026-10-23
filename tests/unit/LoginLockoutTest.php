@@ -138,6 +138,27 @@ final class LoginLockoutTest extends CIUnitTestCase
         $this->assertFalse((new DeviceTrustService())->isTrusted(Services::request(), 'bob'));
     }
 
+    public function testUnknownAccountsCostAsMuchAsAWrongPassword(): void
+    {
+        $model = new UserModel();
+        $measure = static function (callable $attempt): float {
+            $samples = [];
+            for ($i = 0; $i < 3; $i++) {
+                $start = hrtime(true);
+                $attempt();
+                $samples[] = hrtime(true) - $start;
+            }
+            sort($samples);
+            return (float)$samples[1];
+        };
+
+        $known = $measure(static fn() => $model->verifyUser('alice', 'wrong-password', true));
+        $unknown = $measure(static fn() => $model->verifyUser('nobody-' . bin2hex(random_bytes(4)), 'wrong-password'));
+
+        // Without a hash comparison the unknown path is orders of magnitude faster.
+        $this->assertGreaterThan($known * 0.3, $unknown);
+    }
+
     private function lockByAnonymousFailures(): void
     {
         $model = new UserModel();

@@ -27,6 +27,7 @@ require `EXTPLORER_BASE_URL` explicitly.
 | `EXTPLORER_WRITE_PATH` | Persistent writable root. | `/var/lib/extplorer/writable` |
 | `EXTPLORER_FILE_MANAGER_ROOT` | Optional local file root; must stay outside the public webroot and application source tree. | `/var/lib/extplorer/writable/file_manager_root` |
 | `EXTPLORER_ENCRYPTION_KEY_FILE` | File containing the encryption key. | `/run/secrets/extplorer-encryption-key` |
+| `EXTPLORER_PUBLIC_MOUNT` | Show `<write path>/public` as a common read-write `Public` mount to every account. Off unless set; prefer `Shared`. | unset |
 | `app.forceGlobalSecureRequests` | Force HTTPS redirection. | `true` |
 
 ### Canonical URLs for native web servers
@@ -273,9 +274,11 @@ The following controls are enabled in the application and should be considered p
 - Sensitive administration mutations use step-up authentication. After the
   current password is confirmed, the same authenticated session may perform
   the existing protected user, role, group, settings and mount changes for
-  10 minutes without another prompt. The grant is not persisted in cookies or
-  browser storage and is invalidated by logout, a new login, password/2FA
-  changes or an `auth_version` change.
+  10 minutes without another prompt. The grant requires both the session and
+  the token returned by re-authentication, which the page keeps only in memory
+  (never in cookies or browser storage); reloading the page asks again. It is
+  invalidated by logout, a new login, password/2FA changes or an
+  `auth_version` change. Enrolling two-factor authentication also requires it.
 - Password guessing is limited per IP (`5/minute`), per username (`5/5 minutes`)
   and per account: five failed passwords lock password sign-in for 15 minutes,
   after which a new failure window starts. The lock only protects the

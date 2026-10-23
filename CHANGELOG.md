@@ -14,12 +14,21 @@ All notable changes to eXtplorer 3 are documented here.
 - Stop anonymous login failures from locking accounts indefinitely or cutting off their owners. An expired lock starts a new failure window. The password lock no longer ends existing sessions, remembered logins, WebDAV app passwords or public shares, and browsers that completed a sign-in for the account are exempt from the account-wide lock with their own failure limit (device cookie `extplorer_device`).
 - Require re-authentication before enrolling two-factor authentication, so a hijacked session cannot lock the owner out.
 - Render alert titles and messages as text. Server errors, filenames and remote responses were previously interpreted as HTML by the dialog library. Add `base-uri 'none'` and `frame-ancestors 'self'` to the content security policy and source rules against interpolated dialog markup and `innerHTML`.
+- Bind re-authentication grants to the token returned by step-up, which the page keeps only in memory. A copied session cookie alone can no longer perform protected administration.
+- Enforce the `rename` permission for renaming and moving files, as WebDAV already did.
+- Exempt only the installer routes from authentication. Wildcard exceptions let any route with an `install` segment skip the authentication filter, and installations below a directory named `install` redirected every page.
+- Notify share owners at most once per share and hour about anonymous downloads, and limit transfer mail to 100 recipients per account and hour.
+- Compare a dummy password hash for unknown, disabled and locked accounts so response times do not reveal them.
+- Validate login return paths correctly: paths containing the letter `r` were discarded, and carriage returns, tabs and other control characters are now rejected.
 
 ### Upgrade
 
 - Accounts with an extension allowlist can no longer create, rename or extract files of other types through the web interface. Archives must use an allowed extension.
 - Direct remote logins no longer show local shares, trash or mounts; those features report that they are unavailable for remote connections.
 - `locked_until` is now only a password-guessing lock. Use `disabled` to suspend an account; it still ends sessions and public shares.
+- The implicit `Public` mount for `<write path>/public` now requires `EXTPLORER_PUBLIC_MOUNT=1`. Set it to keep that common read-write mount, or move its content to `Shared`.
+- Roles need `rename` to rename or move files. The built-in `user` role already includes it; review custom roles.
+- Pages ask for re-authentication again after a reload before protected changes.
 
 ## [3.1.4] - 2026-10-22
 

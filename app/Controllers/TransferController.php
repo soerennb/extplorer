@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\AdminDelegationPolicy;
 use App\Services\EmailService;
+use App\Services\MailRatePolicy;
 use App\Services\SessionAccount;
 use App\Services\ShareService;
 use App\Services\TransferPolicy;
@@ -87,6 +88,9 @@ class TransferController extends BaseController
         if (\Config\Services::throttler()->check($key, 15, MINUTE) === false) return $this->fail('Too many requests. Please slow down.', 429);
         try {
             $request = $this->policy->request($this->request->getJSON(true) ?? [], session('email'));
+            if (!(new MailRatePolicy())->allowTransferRecipients((string)session('username'), count($request['recipients']))) {
+                return $this->fail(lang('Mail.transfer_recipient_limit'), 429);
+            }
             $service = new TransferService($this->shareService, $this->emailService, $this->staging, $this->policy);
             return $this->respond($service->send((string)session('username'), $request));
         } catch (\Throwable $exception) { return $this->failure($exception); }

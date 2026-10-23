@@ -292,7 +292,7 @@ trait ApiFileOperationsTrait
 
     public function mv()
     {
-        if (!can('write')) return $this->failForbidden();
+        if (!can('write') || !can('rename')) return $this->failForbidden();
         $json = $this->request->getJSON();
         $from = $json->from ?? null;
         $to = $json->to ?? null;

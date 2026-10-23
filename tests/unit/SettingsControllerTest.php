@@ -132,12 +132,14 @@ final class SettingsControllerTest extends CIUnitTestCase
         $this->initController($controller);
         $this->assertSame(200, $controller->update()->getStatusCode());
 
-        Services::request()->setHeader('X-Extplorer-Step-Up', '');
+        // The in-memory token authorizes further changes within the grant.
         Services::request()->setBody(json_encode([
             'default_transfer_expiry' => 8,
         ], JSON_THROW_ON_ERROR));
-
         $this->assertSame(200, $controller->update()->getStatusCode());
+
+        Services::request()->setHeader('X-Extplorer-Step-Up', '');
+        $this->assertSame(428, $controller->update()->getStatusCode());
         $this->assertSame(8, (new SettingsService())->get('default_transfer_expiry'));
     }
 

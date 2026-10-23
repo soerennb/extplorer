@@ -5,6 +5,7 @@ namespace App\Filters;
 use App\Services\InstallStateService;
 use Config\Services;
 use CodeIgniter\Filters\FilterInterface;
+use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -12,11 +13,12 @@ class InstallFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        // Determine if we are currently accessing the install page
-        $currentPath = trim($request->getUri()->getPath(), '/');
-        // Match install/health as a path segment (works for subfolder deployments)
-        $isInstallPage = preg_match('#(^|/)install(/|$)#', $currentPath) === 1;
-        $isHealthCheck = preg_match('#(^|/)health(/|$)#', $currentPath) === 1;
+        // The route path excludes the installation directory and index page,
+        // so only the installer routes themselves match, at the root and in
+        // subdirectories alike.
+        $currentPath = $request instanceof IncomingRequest ? trim($request->getPath(), '/') : '';
+        $isInstallPage = $currentPath === 'install' || str_starts_with($currentPath, 'install/');
+        $isHealthCheck = $currentPath === 'health';
 
         if ($isHealthCheck) {
             return;

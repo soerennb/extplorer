@@ -11,6 +11,7 @@ const Api = {
     },
     sessionExpiredDialogOpen: false,
     stepUpDialogOpen: false,
+    stepUpGrant: null,
     genericServerError() {
         if (window.i18n && typeof window.i18n.t === 'function') {
             return window.i18n.t('unexpected_error_generic', 'An unexpected server error occurred. Please try again.');
@@ -238,7 +239,9 @@ const Api = {
         const { res, payload } = await this.serializeMutation(async () => {
             const headers = { 'Content-Type': options.contentType || 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
             if (window.csrfHash) headers['X-CSRF-TOKEN'] = window.csrfHash;
-            if (stepUpToken) headers['X-Extplorer-Step-Up'] = stepUpToken;
+            // The step-up token lives only in memory; the session alone cannot use the grant.
+            const grant = stepUpToken || this.stepUpGrant;
+            if (grant) headers['X-Extplorer-Step-Up'] = grant;
             this.csrfRevision++;
             let res;
             try {
@@ -255,8 +258,12 @@ const Api = {
         if (!res.ok) {
             // The network queue is released before prompting: step-up itself is a mutation.
             if (!stepUpRetried && this.isStepUpRequiredPayload(payload, res.status)) {
+                this.stepUpGrant = null;
                 const token = await this.requestStepUp(payload.action);
-                if (token) return this.request(endpoint, method, data, token, true, options);
+                if (token) {
+                    this.stepUpGrant = token;
+                    return this.request(endpoint, method, data, token, true, options);
+                }
             }
             return this.handleNonOk(res, payload);
         }

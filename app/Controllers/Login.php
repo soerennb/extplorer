@@ -242,16 +242,19 @@ class Login extends BaseController
             return '/';
         }
 
+        // Backslashes and control characters (browsers drop tabs and newlines
+        // from URLs) could turn the path into a network-path reference.
         if (
             str_starts_with($returnTo, '//')
-            || preg_match('/[\\\r\n]/', $returnTo)
+            || preg_match('/[\\\\\x00-\x1F\x7F]/', $returnTo)
             || preg_match('/%(?:25)*2f|%(?:25)*5c/i', (string)strtok($returnTo, '?#'))
         ) {
             return '/';
         }
 
         $parsed = parse_url($returnTo);
-        if ($parsed === false || isset($parsed['scheme'], $parsed['host'], $parsed['user'], $parsed['pass'])) {
+        if ($parsed === false || isset($parsed['scheme']) || isset($parsed['host'])
+            || isset($parsed['user']) || isset($parsed['pass'])) {
             return '/';
         }
 

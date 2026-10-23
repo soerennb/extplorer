@@ -73,7 +73,7 @@ final class AuthenticationService
             'blocked_extensions' => '',
             'auth_version' => 0,
             'force_password_change' => false,
-            'permissions' => ['read', 'write', 'upload', 'delete', 'chmod'],
+            'permissions' => ['read', 'write', 'upload', 'delete', 'rename', 'chmod'],
             'connection' => $connection,
             'remembered_login' => false,
             'last_activity_ts' => time(),

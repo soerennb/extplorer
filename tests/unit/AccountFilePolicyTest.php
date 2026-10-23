@@ -32,7 +32,7 @@ final class AccountFilePolicyTest extends CIUnitTestCase
         file_put_contents($this->home . '/photo.jpg', 'jpeg');
         session()->set(['isLoggedIn' => true, 'username' => 'carol', 'auth_version' => 1,
             'connection' => ['mode' => 'local'], 'allowed_extensions' => 'jpg', 'blocked_extensions' => '',
-            'permissions' => ['read', 'write', 'archive', 'extract']]);
+            'permissions' => ['read', 'write', 'rename', 'archive', 'extract']]);
     }
 
     protected function tearDown(): void

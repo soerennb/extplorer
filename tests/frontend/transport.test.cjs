@@ -46,6 +46,31 @@ test('step-up releases the mutation queue and retries with the refreshed token',
     assert.equal(sent[2].options.headers['X-Extplorer-Step-Up'], 'grant');
 });
 
+test('the step-up grant is kept in memory for later sensitive mutations and renewed when rejected', async () => {
+    const sent = [];
+    let prompts = 0;
+    const { api } = transport(async (url, options) => {
+        sent.push({ url, options });
+        const grant = options.headers['X-Extplorer-Step-Up'];
+        if (url.endsWith('/security/step-up')) return response('t', { token: prompts === 1 ? 'first' : 'second' });
+        if (grant === 'first' && sent.filter((entry) => entry.options.headers['X-Extplorer-Step-Up'] === 'first').length > 2) {
+            return response('t', { error: 'step_up_required', action: 'settings.update' }, 428);
+        }
+        if (!grant) return response('t', { error: 'step_up_required', action: 'settings.update' }, 428);
+        return response('t', { status: 'success' });
+    });
+    api.requestStepUp = async (action) => { prompts++; return (await api.post('security/step-up', { action })).token; };
+
+    assert.equal((await api.post('settings', {})).status, 'success');
+    assert.equal((await api.post('settings', {})).status, 'success');
+    assert.equal(prompts, 1, 'a valid in-memory grant is reused without prompting');
+    assert.equal(sent.at(-1).options.headers['X-Extplorer-Step-Up'], 'first');
+
+    assert.equal((await api.post('settings', {})).status, 'success');
+    assert.equal(prompts, 2, 'a rejected grant is discarded and renewed');
+    assert.equal(sent.at(-1).options.headers['X-Extplorer-Step-Up'], 'second');
+});
+
 test('a late GET response cannot overwrite a regenerated token', async () => {
     let finishRead;
     const { api, window } = transport(async (url, options) => options.method

@@ -65,22 +65,25 @@ final class StepUpAuthenticationServiceTest extends CIUnitTestCase
 
         $this->assertTrue($service->consume($request, 'settings.update'));
         $this->assertTrue($service->consume($request, 'user.delete'));
-
-        $request->setHeader('X-Extplorer-Step-Up', '');
         $this->assertTrue($service->consume($request, 'mount.test'));
+
+        // The session alone, e.g. a copied cookie, cannot use the grant.
+        $request->setHeader('X-Extplorer-Step-Up', '');
+        $this->assertFalse($service->consume($request, 'mount.test'));
+        $this->assertNotNull(session('step_up_grant'));
     }
 
     public function testExpiredGrantIsRemovedAndCannotAuthorizeAnAction(): void
     {
         $service = new StepUpAuthenticationService();
-        $service->issue('settings.update', 'correct-password');
+        $token = $service->issue('settings.update', 'correct-password');
         $grant = session('step_up_grant');
         $this->assertIsArray($grant);
         $grant['expires_at'] = time() - 1;
         session()->set('step_up_grant', $grant);
 
         $request = Services::request();
-        $request->setHeader('X-Extplorer-Step-Up', '');
+        $request->setHeader('X-Extplorer-Step-Up', $token);
 
         $this->assertFalse($service->consume($request, 'settings.update'));
         $this->assertNull(session('step_up_grant'));
@@ -89,23 +92,23 @@ final class StepUpAuthenticationServiceTest extends CIUnitTestCase
     public function testInvalidHeaderDoesNotAuthorizeButLeavesTheActiveGrantUsable(): void
     {
         $service = new StepUpAuthenticationService();
-        $service->issue('settings.update', 'correct-password');
+        $token = $service->issue('settings.update', 'correct-password');
         $request = Services::request();
         $request->setHeader('X-Extplorer-Step-Up', str_repeat('a', 64));
 
         $this->assertFalse($service->consume($request, 'settings.update'));
-        $request->setHeader('X-Extplorer-Step-Up', '');
+        $request->setHeader('X-Extplorer-Step-Up', $token);
         $this->assertTrue($service->consume($request, 'settings.update'));
     }
 
     public function testGrantIsInvalidatedByAuthVersionAndDisabledStateChanges(): void
     {
         $service = new StepUpAuthenticationService();
-        $service->issue('settings.update', 'correct-password');
+        $token = $service->issue('settings.update', 'correct-password');
         (new \App\Models\UserModel())->bumpAuthVersion('stepup-test');
 
         $request = Services::request();
-        $request->setHeader('X-Extplorer-Step-Up', '');
+        $request->setHeader('X-Extplorer-Step-Up', $token);
         $this->assertFalse($service->consume($request, 'settings.update'));
 
         $model = new \App\Models\UserModel();
@@ -124,22 +127,22 @@ final class StepUpAuthenticationServiceTest extends CIUnitTestCase
             'disabled' => false,
         ]]);
         session()->set('auth_version', 1);
-        $service->issue('settings.update', 'correct-password');
+        $request->setHeader('X-Extplorer-Step-Up', $service->issue('settings.update', 'correct-password'));
         $model->updateUser('stepup-test', ['disabled' => true]);
 
         $this->assertFalse($service->consume($request, 'settings.update'));
     }
 
-    public function testNewGrantInvalidatesThePreviousCompatibilityToken(): void
+    public function testNewGrantInvalidatesThePreviousToken(): void
     {
         $service = new StepUpAuthenticationService();
         $oldToken = $service->issue('settings.update', 'correct-password');
-        $service->issue('user.update', 'correct-password');
+        $newToken = $service->issue('user.update', 'correct-password');
 
         $request = Services::request();
         $request->setHeader('X-Extplorer-Step-Up', $oldToken);
         $this->assertFalse($service->consume($request, 'settings.update'));
-        $request->setHeader('X-Extplorer-Step-Up', '');
+        $request->setHeader('X-Extplorer-Step-Up', $newToken);
         $this->assertTrue($service->consume($request, 'settings.update'));
     }
 

@@ -8,8 +8,8 @@ use RuntimeException;
 
 /**
  * Provides a short-lived re-authentication grant for sensitive API mutations.
- * The grant is bound to the current user and session and is reusable for all
- * supported sensitive actions until it expires.
+ * The grant is bound to the current user, session and returned token and is
+ * reusable for all supported sensitive actions until it expires.
  */
 final class StepUpAuthenticationService
 {
@@ -91,13 +91,14 @@ final class StepUpAuthenticationService
             return false;
         }
 
+        // The grant is bound to the session and to the token returned by
+        // re-authentication, which the browser keeps only in memory. A copied
+        // session cookie alone cannot perform sensitive actions.
         $token = trim($request->getHeaderLine('X-Extplorer-Step-Up'));
-        if ($token !== '') {
-            if (!preg_match('/\A[a-f0-9]{64}\z/i', $token)
-                || !hash_equals($grant['token_hash'], hash('sha256', $token))
-            ) {
-                return false;
-            }
+        if (!preg_match('/\A[a-f0-9]{64}\z/i', $token)
+            || !hash_equals($grant['token_hash'], hash('sha256', $token))
+        ) {
+            return false;
         }
 
         $username = (string) session('username');

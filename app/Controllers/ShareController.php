@@ -229,10 +229,8 @@ class ShareController extends BaseController
         if (!$inline) {
              $service->incrementDownloads($hash);
              
-             // Send notification if requested
-             if (isset($share['notify_download']) && $share['notify_download']) {
-                 // Check if already notified for this session to avoid spam? 
-                 // For now, simple implementation:
+             // Send notification if requested, at most once per share and hour.
+             if (!empty($share['notify_download']) && (new \App\Services\MailRatePolicy())->allowDownloadNotification($hash)) {
                  $emailService = new \App\Services\EmailService();
                  $emailService->sendDownloadNotification($share);
              }

@@ -130,9 +130,11 @@ final class SettingsMailSecurityTest extends CIUnitTestCase
         $this->assertStringNotContainsString('saved-secret', $response->getBody() . json_encode(LogService::getLogs()));
     }
 
+    private ?string $stepUpToken = null;
+
     private function grant(): void
     {
-        (new StepUpAuthenticationService())->issue('settings.email.test', 'correct-password');
+        $this->stepUpToken = (new StepUpAuthenticationService())->issue('settings.email.test', 'correct-password');
     }
 
     private function call(string $method, array $body, string $base = 'http://example.com/', string $index = '')
@@ -147,6 +149,7 @@ final class SettingsMailSecurityTest extends CIUnitTestCase
         $request->setMethod('POST');
         $request->setGlobal('cookie', []);
         $request->setHeader('Content-Type', 'application/json');
+        if ($this->stepUpToken !== null) $request->setHeader('X-Extplorer-Step-Up', $this->stepUpToken);
         $request->setBody(json_encode($body, JSON_FORCE_OBJECT | JSON_THROW_ON_ERROR));
         Services::injectMock('request', $request);
         $request->setHeader('X-CSRF-TOKEN', csrf_hash());

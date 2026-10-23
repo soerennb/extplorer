@@ -67,20 +67,26 @@ class VfsFactory
             log_message('error', 'Failed to load user mounts: ' . $e->getMessage());
         }
 
-        // Optional: Mount Public if it exists
+        // Common writable storage for every account; operators opt in explicitly.
         $publicPath = config('Storage')->root . '/public';
-        if (is_dir($publicPath)) {
+        if (self::publicMountEnabled() && is_dir($publicPath)) {
             $vfs->mount('Public', new LocalAdapter($publicPath));
         }
 
         return $vfs;
     }
+    public static function publicMountEnabled(): bool
+    {
+        return filter_var(getenv('EXTPLORER_PUBLIC_MOUNT') ?: '0', FILTER_VALIDATE_BOOLEAN);
+    }
+
     public static function localRoot(string $alias, array $user): string
     {
         return match ($alias) {
             'Home' => (new LocalAdapter(config('Storage')->fileManagerRoot))->resolvePath((string)($user['home_dir'] ?? '/')),
             'Shared' => config('Storage')->shared,
-            'Public' => config('Storage')->root . '/public',
+            'Public' => self::publicMountEnabled() ? config('Storage')->root . '/public'
+                : throw new \RuntimeException('The Public mount is not enabled.'),
             default => throw new \RuntimeException('Unknown local storage namespace.'),
         };
     }

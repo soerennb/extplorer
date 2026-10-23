@@ -21,6 +21,9 @@ class LoginSecurityTest extends CIUnitTestCase
         $controller = new Login();
 
         $this->assertSame('/api/ls?path=%2Fdocs', $this->callPrivate($controller, 'safeReturnPath', ['/api/ls?path=%2Fdocs']));
+        // Paths containing the letter "r" were previously discarded.
+        $this->assertSame('/admin?tab=users', $this->callPrivate($controller, 'safeReturnPath', ['/admin?tab=users']));
+        $this->assertSame('/?password_change_required=1', $this->callPrivate($controller, 'safeReturnPath', ['/?password_change_required=1']));
     }
 
     public function testSafeReturnPathBlocksExternalAndHeaderInjectionTargets(): void
@@ -34,6 +37,9 @@ class LoginSecurityTest extends CIUnitTestCase
         $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ['/%2f%2fevil.example']));
         $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ['/%252f%252fevil.example']));
         $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ["/app\nLocation: https://evil.example"]));
+        $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ["/app\rLocation: https://evil.example"]));
+        $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ["/\t/evil.example"]));
+        $this->assertSame('/', $this->callPrivate($controller, 'safeReturnPath', ["/\x00/evil.example"]));
     }
 
     public function testPreferredLoginLocaleUsesBrowserLanguageBaseMatch(): void
