@@ -285,7 +285,7 @@ test("admin can save settings after current-password confirmation", async ({
   await expect(stepUpInput).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Save Settings" })).toBeDisabled();
 
-  await verifyMailBoundary(page);
+  await verifyMailBoundary(page, password);
   await assertCleanBrowser();
 });
 

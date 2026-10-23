@@ -1,12 +1,15 @@
 const { expect } = require('@playwright/test');
 
-module.exports = async function verifyMailBoundary(page) {
+module.exports = async function verifyMailBoundary(page, password) {
     const request = page.context().request;
     const settings = await request.get('/api/settings');
     let token = settings.headers()['x-csrf-hash'];
+    let stepUpToken = '';
     expect(token).toBeTruthy();
     const post = async (path, options) => {
-        const response = await request.post('/api/' + path, { ...options, headers: { 'X-CSRF-TOKEN': token } });
+        const headers = { 'X-CSRF-TOKEN': token };
+        if (stepUpToken) headers['X-Extplorer-Step-Up'] = stepUpToken;
+        const response = await request.post('/api/' + path, { ...options, headers });
         token = response.headers()['x-csrf-hash'];
         expect(token).toBeTruthy();
         return response;
@@ -21,6 +24,15 @@ module.exports = async function verifyMailBoundary(page) {
     } } })).status()).toBe(200);
     expect((await post('chmod', { data: { path: 'Home/' + name, mode: '700' } })).status()).toBe(200);
 
+    // The browser's session cookie alone cannot use its re-authentication grant.
+    const withoutStepUp = await post('settings', { data: { email_protocol: 'sendmail', sendmail_path: program } });
+    expect(withoutStepUp.status()).toBe(428);
+    const stepUp = await post('security/step-up', { data: { action: 'settings.update', password } });
+    expect(stepUp.status()).toBe(200);
+    stepUpToken = (await stepUp.json()).token;
+    expect(stepUpToken).toMatch(/^[a-f0-9]{64}$/);
+
+    // Even a re-authenticated administrator cannot select a mail program.
     const rejected = await post('settings', { data: { email_protocol: 'sendmail', sendmail_path: program } });
     expect(rejected.status()).toBe(422);
     expect((await rejected.json()).error).toBe('sendmail_path_read_only');
