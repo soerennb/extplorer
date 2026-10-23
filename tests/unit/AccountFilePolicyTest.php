@@ -63,6 +63,25 @@ final class AccountFilePolicyTest extends CIUnitTestCase
         $this->assertSame(200, $this->files(['from' => 'Home/folder', 'to' => 'Home/renamed.dir'])->mv()->getStatusCode());
     }
 
+    public function testFolderCopiesAndCrossMountMovesCannotBringDisallowedFiles(): void
+    {
+        $shared = config('Storage')->shared . '/import';
+        mkdir($shared . '/nested', 0700, true);
+        file_put_contents($shared . '/ok.jpg', 'jpeg');
+        file_put_contents($shared . '/nested/page.html', '<h1>x</h1>');
+
+        $this->assertGreaterThanOrEqual(400, $this->files(['from' => 'Shared/import', 'to' => 'Home/import'])->cp()->getStatusCode());
+        $this->assertGreaterThanOrEqual(400, $this->files(['from' => 'Shared/import', 'to' => 'Home/import'])->mv()->getStatusCode());
+        $this->assertDirectoryDoesNotExist($this->home . '/import');
+        $this->assertFileExists($shared . '/nested/page.html');
+
+        // Reorganizing existing content inside one storage remains possible.
+        mkdir($this->home . '/legacy', 0700);
+        file_put_contents($this->home . '/legacy/old.html', 'existing');
+        $this->assertSame(200, $this->files(['from' => 'Home/legacy', 'to' => 'Home/archive'])->mv()->getStatusCode());
+        $this->assertFileExists($this->home . '/archive/old.html');
+    }
+
     public function testArchiveCannotCreateDisallowedFileType(): void
     {
         $response = $this->downloads(['paths' => ['Home/photo.jpg'], 'name' => 'bundle.zip', 'cwd' => 'Home'])->archive();

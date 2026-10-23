@@ -105,9 +105,22 @@ final class MailSecurityTest extends CIUnitTestCase
             $this->assertMatchesRegularExpression('/^\[::1\]:[0-9]+$/', $address, 'The real IPv6 loopback fixture must start.');
             $port = (int)substr($address, strrpos($address, ':') + 1);
             Services::injectMock('email', new Email());
-            $result = (new EmailService())->sendTestEmailWithConfig('recipient@example.test',
-                array_replace($this->smtp(), ['smtp_host' => '::1', 'smtp_port' => $port,
-                    'smtp_crypto' => '', 'smtp_user' => '', 'smtp_pass' => '']));
+            $settings = array_replace($this->smtp(), ['smtp_host' => '::1', 'smtp_port' => $port,
+                'smtp_crypto' => '', 'smtp_user' => '', 'smtp_pass' => '']);
+            $previous = getenv('EXTPLORER_SMTP_ALLOW_PRIVATE_TARGETS');
+            putenv('EXTPLORER_SMTP_ALLOW_PRIVATE_TARGETS');
+            try {
+                // A loopback relay needs explicit operator approval.
+                $denied = (new EmailService())->sendTestEmailWithConfig('recipient@example.test', $settings);
+                $this->assertSame(['ok' => false, 'error' => 'smtp_target_denied'], $denied);
+                $this->assertFileDoesNotExist($capture);
+
+                putenv('EXTPLORER_SMTP_ALLOW_PRIVATE_TARGETS=1');
+                Services::injectMock('email', new Email());
+                $result = (new EmailService())->sendTestEmailWithConfig('recipient@example.test', $settings);
+            } finally {
+                putenv($previous === false ? 'EXTPLORER_SMTP_ALLOW_PRIVATE_TARGETS' : 'EXTPLORER_SMTP_ALLOW_PRIVATE_TARGETS=' . $previous);
+            }
             $this->assertTrue($result['ok']);
             $this->assertStringContainsString('recipient@example.test', (string)file_get_contents($capture));
         } finally {
@@ -193,7 +206,9 @@ final class MailSecurityTest extends CIUnitTestCase
         $email->expects($this->once())->method('SMTPEnd');
         $email->expects($this->never())->method('printDebugger');
         Services::injectMock('email', $email);
-        $this->assertSame(['ok' => false, 'error' => 'email_validation_failed'], (new EmailService())->validateConfig($this->smtp()));
+        // A public address literal keeps the test independent of DNS.
+        $this->assertSame(['ok' => false, 'error' => 'email_validation_failed'],
+            (new EmailService())->validateConfig(array_replace($this->smtp(), ['smtp_host' => '192.0.2.25'])));
     }
 
     private function smtp(): array

@@ -52,4 +52,18 @@ final class FileNamePolicyTest extends CIUnitTestCase
         $this->expectException(RuntimeException::class);
         $policy->assertSafePath('nested/.htaccess/file.txt');
     }
+
+    public function testInvisibleAndBidiControlCharactersAreRejected(): void
+    {
+        $policy = new FileNamePolicy();
+        foreach (["rechnung\u{202E}fdp.html", "a\u{2066}b.txt", "a\u{200F}.txt", "zero\u{200B}width.txt",
+            "bom\u{FEFF}.txt", "line\u{2028}break.txt", "nel\u{0085}.txt", "soft\u{00AD}hyphen.txt", "a\u{061C}.txt"] as $name) {
+            $this->assertFalse($policy->isAllowed($name), json_encode($name));
+        }
+
+        // Ordinary international names, including joiners in emoji and Persian, remain valid.
+        foreach (['Müller Ä.txt', '日本語.pdf', "نامه\u{200C}ها.txt", "family \u{1F468}\u{200D}\u{1F469}.jpg"] as $name) {
+            $this->assertSame($name, $policy->assertSafe($name));
+        }
+    }
 }

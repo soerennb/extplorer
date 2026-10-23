@@ -230,7 +230,7 @@ class UserAdminController extends BaseController
     {
         if (($check = $this->checkAdmin()) !== true) return $check;
 
-        $users = $this->userModel->getUsers();
+        $users = $this->userModel->getNormalizedUsers();
         // Remove sensitive data
         foreach ($users as &$user) {
             unset($user['password_hash']);
@@ -329,6 +329,17 @@ class UserAdminController extends BaseController
             } catch (\Throwable $exception) {
                 return $this->fail('Invalid home directory');
             }
+        }
+        // Same field types as account creation; loose casts would turn the
+        // string "false" into a disabled account or break later sign-ins.
+        foreach (['allowed_extensions', 'blocked_extensions'] as $field) {
+            if (array_key_exists($field, $data) && !is_string($data[$field])) return $this->fail('Invalid user settings');
+        }
+        if (array_key_exists('disabled', $data)) {
+            if (!is_bool($data['disabled'])) return $this->fail('Invalid user settings');
+        }
+        foreach (['locked_until', 'failed_login_count'] as $field) {
+            if (array_key_exists($field, $data) && (!is_int($data[$field]) || $data[$field] < 0)) return $this->fail('Invalid user settings');
         }
         if (isset($data['groups'])) {
             if (!is_array($data['groups']) || array_filter($data['groups'], 'is_string') !== $data['groups']) {

@@ -21,6 +21,14 @@ final class FileNamePolicy
         'exe', 'com', 'dll', 'so', 'sh', 'bash', 'zsh', 'ksh', 'bat', 'cmd', 'shtml',
     ];
 
+    /**
+     * C1 controls, bidirectional controls and invisible separators let a name
+     * display differently from what it is ("invoice<RLO>fdp.html" looks like
+     * a PDF). Joiners (U+200C/U+200D) stay valid for scripts and emoji.
+     */
+    private const INVISIBLE_CHARACTERS = '/[\x{0080}-\x{009F}\x{00AD}\x{061C}\x{180E}\x{200B}\x{200E}\x{200F}'
+        . '\x{2028}-\x{202E}\x{2060}-\x{2064}\x{2066}-\x{206F}\x{FEFF}\x{FFF9}-\x{FFFB}]/u';
+
     /** @var list<string> */
     private const BLOCKED_NAMES = [
         '.htaccess',
@@ -34,7 +42,7 @@ final class FileNamePolicy
         if ($filename === '' || $filename === '.' || $filename === '..') {
             throw new RuntimeException('Invalid filename.');
         }
-        if (preg_match('/[\x00-\x1F\x7F]/', $filename) === 1) {
+        if (preg_match('/[\x00-\x1F\x7F]/', $filename) === 1 || preg_match(self::INVISIBLE_CHARACTERS, $filename) === 1) {
             throw new RuntimeException('Filename contains invalid characters.');
         }
         if (str_contains($filename, '/') || str_contains($filename, '\\')) {

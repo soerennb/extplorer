@@ -67,6 +67,7 @@ final class SettingsInputPolicy
         if (array_intersect_key($input, $mailKeys) !== []) {
             try {
                 $canonical = (new MailConfigPolicy())->normalize(array_replace($current, $input));
+                if (array_key_exists('smtp_host', $input)) (new MailEndpointPolicy())->assertLiteralAllowed($canonical['smtp_host']);
                 $input = array_replace($input, array_intersect_key($canonical, $input));
             } catch (MailConfigurationException $error) {
                 throw new SettingsValidationException(lang('Mail.' . $error->reason), 422, $error->reason);

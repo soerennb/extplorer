@@ -27,6 +27,7 @@ require `EXTPLORER_BASE_URL` explicitly.
 | `EXTPLORER_WRITE_PATH` | Persistent writable root. | `/var/lib/extplorer/writable` |
 | `EXTPLORER_FILE_MANAGER_ROOT` | Optional local file root; must stay outside the public webroot and application source tree. | `/var/lib/extplorer/writable/file_manager_root` |
 | `EXTPLORER_ENCRYPTION_KEY_FILE` | File containing the encryption key. | `/run/secrets/extplorer-encryption-key` |
+| `EXTPLORER_SMTP_ALLOW_PRIVATE_TARGETS` | Allow the configured SMTP host to resolve to loopback or private addresses (for example a relay on `localhost:25`). Link-local and cloud metadata addresses are always refused; every resolved address is checked before each connection. | unset |
 | `EXTPLORER_PUBLIC_MOUNT` | Show `<write path>/public` as a common read-write `Public` mount to every account. Off unless set; prefer `Shared`. | unset |
 | `app.forceGlobalSecureRequests` | Force HTTPS redirection. | `true` |
 

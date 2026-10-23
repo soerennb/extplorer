@@ -21,6 +21,13 @@ All notable changes to eXtplorer 3 are documented here.
 - Compare a dummy password hash for unknown, disabled and locked accounts so response times do not reveal them.
 - Validate login return paths correctly: paths containing the letter `r` were discarded, and carriage returns, tabs and other control characters are now rejected.
 - Turn upload-mode shares into blind drop boxes that never list existing content, and stop serving hidden files and folders of shared folders through direct links or folder archives.
+- Refuse SMTP hosts that resolve to link-local or cloud metadata addresses, and loopback or private addresses unless the operator sets `EXTPLORER_SMTP_ALLOW_PRIVATE_TARGETS=1`. Every resolved address is checked before each connection.
+- Check every file of a copied folder, and of a folder moved into another storage, against the account's allowed/blocked extensions.
+- Never allow local mounts of `/proc`, `/sys`, `/dev`, `/run/secrets` or the configured secret files, even when the mount root allowlist contains them.
+- Require share passwords of at least 8 characters and treat malformed share password submissions as ordinary failures.
+- Reject bidirectional, invisible and C1 control characters in new filenames, which could make a name display differently from its real type.
+- Validate field types when administrators update accounts. Stored extension lists no longer break sign-in, and the string `false` no longer disables an account.
+- Reject account passwords longer than 72 bytes, which bcrypt would silently truncate.
 
 ### Upgrade
 
@@ -30,6 +37,7 @@ All notable changes to eXtplorer 3 are documented here.
 - The implicit `Public` mount for `<write path>/public` now requires `EXTPLORER_PUBLIC_MOUNT=1`. Set it to keep that common read-write mount, or move its content to `Shared`.
 - Roles need `rename` to rename or move files. The built-in `user` role already includes it; review custom roles.
 - Pages ask for re-authentication again after a reload before protected changes.
+- A local or internal SMTP relay (for example `localhost:25`) requires `EXTPLORER_SMTP_ALLOW_PRIVATE_TARGETS=1`; otherwise mail delivery reports that the server address is not allowed.
 
 ## [3.1.4] - 2026-10-22
 

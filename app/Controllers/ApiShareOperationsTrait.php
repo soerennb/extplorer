@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\LogService;
+use App\Services\ShareService;
 use Exception;
 
 trait ApiShareOperationsTrait
@@ -67,6 +68,13 @@ trait ApiShareOperationsTrait
                 return $this->fail('Upload-mode shares must target a folder.');
             }
 
+            if ($password !== null && $password !== '') {
+                // Public links are guessed online from many addresses; the
+                // per-address throttle alone does not protect trivial values.
+                if (!is_string($password) || trim($password) === '' || mb_strlen($password) < ShareService::MIN_PASSWORD_LENGTH) {
+                    return $this->fail(lang('Files.share_password_too_short', [ShareService::MIN_PASSWORD_LENGTH]), 422);
+                }
+            }
             if (!empty($settings['share_require_password']) && empty($password)) {
                 return $this->fail('A password is required by policy for shared links.');
             }

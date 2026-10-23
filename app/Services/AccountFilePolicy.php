@@ -30,6 +30,12 @@ final class AccountFilePolicy
         return new self((string)($user['allowed_extensions'] ?? ''), (string)($user['blocked_extensions'] ?? ''));
     }
 
+    /** Whether the account restricts file types beyond the hard deny-list. */
+    public function isRestrictive(): bool
+    {
+        return trim($this->allowed) !== '' || trim($this->blocked) !== '';
+    }
+
     public function allows(string $filename): bool
     {
         return (new FileNamePolicy())->isAllowed($filename, $this->allowed, $this->blocked);

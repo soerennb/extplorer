@@ -47,6 +47,16 @@ final class MailConfigPolicy
     }
 
     /** The fingerprint hashes these exact transport preferences. */
+    /** Transport configuration for an actual connection, including the SMTP destination policy. */
+    public function deliveryConfig(array $settings, ?MailEndpointPolicy $endpoints = null): array
+    {
+        $config = $this->transportConfig($settings);
+        if ($config['protocol'] === 'smtp') {
+            ($endpoints ?? new MailEndpointPolicy())->assertAllowed((string)$config['SMTPHost']);
+        }
+        return $config;
+    }
+
     public function transportConfig(array $settings): array
     {
         $mail = $this->normalize($settings);

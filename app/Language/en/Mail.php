@@ -12,4 +12,6 @@ return [
     'email_validation_failed' => 'Email validation failed. Check the saved configuration and try again.',
     'email_probe_rate_limited' => 'Too many email checks. Try again in a minute.',
     'transfer_recipient_limit' => 'Too many transfer recipients this hour. Please try again later.',
+    'smtp_target_denied' => 'This SMTP server address is not allowed. Internal addresses require operator approval.',
+    'smtp_target_unresolved' => 'The SMTP server name could not be resolved.',
 ];

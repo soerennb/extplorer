@@ -9,6 +9,8 @@ use Exception;
 
 class ShareService
 {
+    public const MIN_PASSWORD_LENGTH = 8;
+
     private string $sharesFile;
     private object $storage;
 

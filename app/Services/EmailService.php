@@ -8,6 +8,7 @@ class EmailService
 {
     private $email;
     private SettingsService $settingsService;
+    private ?string $lastError = null;
 
     public function __construct()
     {
@@ -17,10 +18,12 @@ class EmailService
 
     private function prepare(array $settings): bool
     {
+        $this->lastError = null;
         try {
-            $config = (new MailConfigPolicy())->transportConfig($settings);
+            $config = (new MailConfigPolicy())->deliveryConfig($settings);
         } catch (MailConfigurationException $error) {
             log_message('warning', 'Mail operation denied: {reason}', ['reason' => $error->reason]);
+            $this->lastError = $error->reason;
             return false;
         }
         $this->email->initialize($config);
@@ -124,7 +127,7 @@ class EmailService
     public function sendTestEmailWithConfig(string $recipient, array $settings): array
     {
         if (filter_var($recipient, FILTER_VALIDATE_EMAIL) === false || !$this->prepare($settings)) {
-            return ['ok' => false, 'error' => $this->configurationError($settings) ?? 'invalid_email_settings'];
+            return ['ok' => false, 'error' => $this->lastError ?? $this->configurationError($settings) ?? 'invalid_email_settings'];
         }
         $this->email->setTo($recipient);
         $this->email->setSubject('eXtplorer Test Email');
@@ -142,7 +145,11 @@ class EmailService
         if (($error = $this->configurationError($settings)) !== null) {
             return ['ok' => false, 'error' => $error];
         }
-        $config = (new MailConfigPolicy())->transportConfig($settings);
+        try {
+            $config = (new MailConfigPolicy())->deliveryConfig($settings);
+        } catch (MailConfigurationException $error) {
+            return ['ok' => false, 'error' => $error->reason];
+        }
         if ($config['protocol'] !== 'smtp') return ['ok' => true];
 
         // Never return SMTP responses or exception messages: they may contain

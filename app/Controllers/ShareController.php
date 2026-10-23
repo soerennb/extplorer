@@ -158,6 +158,7 @@ class ShareController extends BaseController
         }
 
         $password = $this->request->getPost('password');
+        $password = is_string($password) ? $password : '';
         $supportedLocales = config('I18n')->supportedLocales();
         $locale = $this->detectLocale($supportedLocales);
         $translations = $this->loadTranslations($locale);

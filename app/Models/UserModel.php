@@ -47,6 +47,12 @@ class UserModel
         return $this->loadData($this->usersFile);
     }
 
+    /** Users with normalized authorization fields, as administration displays them. */
+    public function getNormalizedUsers(): array
+    {
+        return array_map(fn(array $user): array => $this->withAuthDefaults($user), $this->getUsers());
+    }
+
 
     public function getUser(string $username): ?array
     {
@@ -492,6 +498,14 @@ class UserModel
         $user['disabled'] = (bool)($user['disabled'] ?? false);
         $user['failed_login_count'] = max(0, (int)($user['failed_login_count'] ?? 0));
         $user['locked_until'] = max(0, (int)($user['locked_until'] ?? 0));
+        // Extension policies are comma-separated strings; older or API-written
+        // lists are normalized instead of breaking string consumers.
+        foreach (['allowed_extensions', 'blocked_extensions'] as $field) {
+            $value = $user[$field] ?? '';
+            $user[$field] = is_array($value)
+                ? implode(',', array_filter($value, static fn($item): bool => is_string($item) && $item !== ''))
+                : (is_string($value) ? $value : '');
+        }
         return $user;
     }
 

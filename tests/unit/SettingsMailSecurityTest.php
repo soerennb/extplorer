@@ -36,7 +36,7 @@ final class SettingsMailSecurityTest extends CIUnitTestCase
         (new UserModel())->saveUsers([['username' => $username, 'password_hash' => password_hash('correct-password', PASSWORD_DEFAULT),
             'role' => 'user', 'auth_version' => 1, 'groups' => [], 'disabled' => false]]);
         session()->set(['username' => $username, 'permissions' => ['admin_settings'], 'isLoggedIn' => true, 'auth_version' => 1]);
-        (new SettingsService())->saveSettings(['smtp_host' => 'saved.example.test', 'smtp_user' => 'saved-user', 'smtp_pass' => 'saved-secret']);
+        (new SettingsService())->saveSettings(['smtp_host' => '192.0.2.25', 'smtp_user' => 'saved-user', 'smtp_pass' => 'saved-secret']);
     }
 
     protected function tearDown(): void
@@ -80,7 +80,7 @@ final class SettingsMailSecurityTest extends CIUnitTestCase
             $response = $this->call($method, $body, $base, $index);
             $this->assertSame(422, $response->getStatusCode());
         }
-        $this->assertSame('saved.example.test', (new SettingsService())->get('smtp_host'));
+        $this->assertSame('192.0.2.25', (new SettingsService())->get('smtp_host'));
     }
 
     public function testUserAdministrationDoesNotImplicitlyGrantSettingsAccess(): void
@@ -107,7 +107,7 @@ final class SettingsMailSecurityTest extends CIUnitTestCase
         $this->grant();
         $email = $this->createMock(Email::class);
         $email->expects($this->once())->method('initialize')->with($this->callback(static fn(array $config): bool =>
-            $config['SMTPHost'] === 'saved.example.test' && $config['SMTPPass'] === 'saved-secret' && $config['SMTPCrypto'] === 'tls'));
+            $config['SMTPHost'] === '192.0.2.25' && $config['SMTPPass'] === 'saved-secret' && $config['SMTPCrypto'] === 'tls'));
         $email->expects($this->once())->method('setTo')->with('recipient@example.test');
         $email->expects($this->once())->method('send')->willReturn(true);
         $email->expects($this->never())->method('printDebugger');

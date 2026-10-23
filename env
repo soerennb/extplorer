@@ -101,6 +101,10 @@ CI_ENVIRONMENT = production
 # Common read-write 'Public' mount for every account from <write path>/public.
 # EXTPLORER_PUBLIC_MOUNT = 0
 
+# Allow SMTP hosts on loopback or private networks, e.g. a local relay on
+# localhost:25. Cloud metadata and link-local addresses are always refused.
+# EXTPLORER_SMTP_ALLOW_PRIVATE_TARGETS = 0
+
 # Remote connections are disabled unless explicitly enabled and allowlisted.
 # Use one exact endpoint per line, including protocol and port.
 # EXTPLORER_REMOTE_LOGIN_ENABLED = 0

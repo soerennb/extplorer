@@ -647,6 +647,14 @@ class MountService
                 throw new \Exception('Local mount path overlaps managed application storage or code.');
             }
         }
+        // The allowlist is editable in the web settings. Kernel interfaces and
+        // operator secrets stay out of reach regardless of what it contains.
+        foreach ($this->protectedSystemPaths() as $protectedPath) {
+            $protectedReal = realpath($protectedPath);
+            if ($protectedReal && $this->pathsOverlap($realPath, $protectedReal)) {
+                throw new \Exception('Local mount path overlaps a protected system or secret path.');
+            }
+        }
 
         foreach ($allowedRoots as $root) {
             $rootReal = realpath($root);
@@ -670,6 +678,18 @@ class MountService
             $root = strtolower($root);
         }
         return str_starts_with($path, $root) || rtrim($path, '/') === rtrim($root, '/');
+    }
+
+    /** @return list<string> */
+    private function protectedSystemPaths(): array
+    {
+        $paths = ['/proc', '/sys', '/dev', '/run/secrets'];
+        foreach (['EXTPLORER_ENCRYPTION_KEY_FILE', 'EXTPLORER_ADMIN_PASSWORD_FILE', 'EXTPLORER_DB_PASSWORD_FILE',
+            'EXTPLORER_REDIS_PASSWORD_FILE', 'EXTPLORER_SMTP_PASSWORD_FILE'] as $key) {
+            $file = getenv($key);
+            if (is_string($file) && trim($file) !== '') $paths[] = trim($file);
+        }
+        return $paths;
     }
 
     private function pathsOverlap(string $left, string $right): bool

@@ -301,7 +301,7 @@ trait ApiFileOperationsTrait
 
         try {
             $this->assertWritableTargetName((string)$to);
-            $this->assertAccountFileTarget((string)$from, (string)$to);
+            $this->assertAccountFileTarget((string)$from, (string)$to, false);
             if (!$this->fs->move($from, $to)) {
                 throw new Exception('Unable to move item.');
             }
@@ -323,7 +323,7 @@ trait ApiFileOperationsTrait
 
         try {
             $this->assertWritableTargetName((string)$to);
-            $this->assertAccountFileTarget((string)$from, (string)$to);
+            $this->assertAccountFileTarget((string)$from, (string)$to, true);
             if (!$this->fs->copy($from, $to)) {
                 throw new Exception('Unable to copy item.');
             }
@@ -334,13 +334,45 @@ trait ApiFileOperationsTrait
         }
     }
 
-    /** A file must not be renamed or copied into a type the account may not create. */
-    private function assertAccountFileTarget(string $from, string $to): void
+    /**
+     * A file must not be renamed or copied into a type the account may not
+     * create. Folder copies and moves into another storage bring every file
+     * of the tree, so each of them must be allowed as well.
+     */
+    private function assertAccountFileTarget(string $from, string $to, bool $copy): void
     {
+        $policy = AccountFilePolicy::forCurrentSession();
         $source = $this->fs->getMetadata($from);
         if (($source['type'] ?? 'file') !== 'dir') {
-            AccountFilePolicy::forCurrentSession()->assertFile($to);
+            $policy->assertFile($to);
+            return;
         }
+        if (!$policy->isRestrictive() || (!$copy && $this->storageAlias($from) === $this->storageAlias($to))) {
+            return;
+        }
+
+        $resources = new ResourcePolicy();
+        $budget = $resources->startOperation();
+        $pending = [$from];
+        $visited = 0;
+        while ($pending !== []) {
+            foreach ($this->fs->listDirectory((string)array_pop($pending), true) as $item) {
+                $budget->tick();
+                if (++$visited > $resources->maxDirectoryEntries()) {
+                    throw new Exception('Folder exceeds the configured entry limit.');
+                }
+                if (($item['type'] ?? '') === 'dir') {
+                    $pending[] = (string)$item['path'];
+                } else {
+                    $policy->assertFile((string)$item['name']);
+                }
+            }
+        }
+    }
+
+    private function storageAlias(string $path): string
+    {
+        return explode('/', trim(str_replace('\\', '/', $path), '/'), 2)[0];
     }
 
     private function assertWritableTargetName(string $path): void
