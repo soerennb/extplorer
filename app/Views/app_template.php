@@ -20,10 +20,10 @@
                     <nav aria-label="breadcrumb" class="path-breadcrumb">
                         <ol class="breadcrumb mb-0">
                             <li class="breadcrumb-item">
-                                <a href="#" class="link-light text-decoration-none" @click.prevent="goToPath('')">/</a>
+                                <a href="#" class="link-light text-decoration-none" @click.prevent="goToPath('')" :aria-label="t('root_folder')" :title="t('root_folder')"><i class="ri-home-4-line" aria-hidden="true"></i></a>
                             </li>
-                            <li v-for="(crumb, idx) in breadcrumbs" :key="crumb.path" class="breadcrumb-item">
-                                <a href="#" class="link-light text-decoration-none" @click.prevent="goToPath(crumb.path)">{{ crumb.name }}</a>
+                            <li v-for="(crumb, idx) in breadcrumbs" :key="crumb.path" class="breadcrumb-item" :class="{active: idx === breadcrumbs.length - 1}">
+                                <a href="#" class="link-light text-decoration-none" :aria-current="idx === breadcrumbs.length - 1 ? 'location' : null" @click.prevent="goToPath(crumb.path)">{{ crumb.name }}</a>
                             </li>
                         </ol>
                     </nav>
@@ -43,8 +43,8 @@
                 </div>
 
                 <div class="d-flex gap-2 navbar-nav-tools">
-                    <button class="btn btn-outline-light btn-sm d-none d-sm-inline-flex align-items-center" @click="goUp" :disabled="store.isLoading || !store.cwd" data-testid="go-up">
-                        <i class="ri-arrow-up-line"></i> {{ t('up') }}
+                    <button class="btn btn-outline-light btn-sm btn-icon-label d-none d-sm-inline-flex" @click="goUp" :disabled="store.isLoading || !store.cwd" data-testid="go-up">
+                        <i class="ri-arrow-up-line" aria-hidden="true"></i><span>{{ t('up') }}</span>
                     </button>
                     <button class="btn btn-outline-light btn-sm d-none d-sm-inline-flex align-items-center" @click="reload" aria-label="Refresh" title="Refresh">
                         <i class="ri-refresh-line" aria-hidden="true"></i>
@@ -148,39 +148,39 @@
         <!-- Toolbar -->
         <div class="bg-body-tertiary border-bottom p-2 d-flex gap-1 gap-md-2 align-items-center flex-wrap app-toolbar">
             <template v-if="!store.isTrashMode">
-                <button class="btn btn-primary btn-sm d-none d-sm-inline-flex align-items-center" @click="createFolder" :disabled="store.isLoading" :title="t('new_folder')" data-testid="create-folder">
-                    <i class="ri-folder-add-line"></i> <span class="d-none d-md-inline">{{ t('new_folder') }}</span>
+                <button class="btn btn-primary btn-sm btn-icon-label d-none d-sm-inline-flex" @click="createFolder" :disabled="store.isLoading" :title="t('new_folder')" data-testid="create-folder">
+                    <i class="ri-folder-add-line" aria-hidden="true"></i><span class="d-none d-md-inline">{{ t('new_folder') }}</span>
                 </button>
-                <button class="btn btn-primary btn-sm app-toolbar-primary d-inline-flex align-items-center" @click="uploadFile" :disabled="store.isLoading" :title="t('upload')" data-testid="upload">
-                    <i class="ri-upload-cloud-2-line"></i> <span>{{ t('upload') }}</span>
+                <button class="btn btn-primary btn-sm btn-icon-label app-toolbar-primary" @click="uploadFile" :disabled="store.isLoading" :title="t('upload')" data-testid="upload">
+                    <i class="ri-upload-cloud-2-line" aria-hidden="true"></i><span>{{ t('upload') }}</span>
                 </button>
 
                 <div class="vr mx-1 d-none d-sm-block"></div>
 
-                <button class="btn btn-outline-secondary btn-sm d-none d-sm-inline-flex align-items-center" @click="copySelected" :disabled="store.selectedItems.length === 0" :title="t('copy')">
-                    <i class="ri-file-copy-line"></i> <span class="d-none d-xl-inline">{{ t('copy') }}</span>
+                <button class="btn btn-outline-secondary btn-sm btn-icon-label d-none d-sm-inline-flex" @click="copySelected" :disabled="store.selectedItems.length === 0" :title="t('copy')">
+                    <i class="ri-file-copy-line" aria-hidden="true"></i><span class="d-none d-xl-inline">{{ t('copy') }}</span>
                 </button>
-                <button class="btn btn-outline-secondary btn-sm d-none d-sm-inline-flex align-items-center" @click="cutSelected" :disabled="store.selectedItems.length === 0" :title="t('cut')">
-                    <i class="ri-scissors-cut-line"></i> <span class="d-none d-xl-inline">{{ t('cut') }}</span>
+                <button class="btn btn-outline-secondary btn-sm btn-icon-label d-none d-sm-inline-flex" @click="cutSelected" :disabled="store.selectedItems.length === 0" :title="t('cut')">
+                    <i class="ri-scissors-cut-line" aria-hidden="true"></i><span class="d-none d-xl-inline">{{ t('cut') }}</span>
                 </button>
-                <button class="btn btn-outline-success btn-sm d-none d-sm-inline-flex align-items-center" @click="paste" :disabled="store.isLoading || store.clipboard.items.length === 0" :title="t('paste')">
-                    <i class="ri-clipboard-line"></i>
+                <button class="btn btn-outline-success btn-sm btn-icon-label d-none d-sm-inline-flex" @click="paste" :disabled="store.isLoading || store.clipboard.items.length === 0" :title="t('paste')">
+                    <i class="ri-clipboard-line" aria-hidden="true"></i>
                     <span class="d-none d-md-inline">{{ t('paste') }}</span>
-                    <span v-if="store.clipboard.items.length > 0" class="badge bg-success ms-1">{{ store.clipboard.items.length }}</span>
+                    <span v-if="store.clipboard.items.length > 0" class="badge bg-success">{{ store.clipboard.items.length }}</span>
                 </button>
 
                 <div class="vr mx-1 d-none d-sm-block"></div>
 
-                <button class="btn btn-outline-danger btn-sm d-none d-sm-inline-flex align-items-center" @click="deleteSelected" :disabled="store.selectedItems.length === 0" :title="t('delete')">
-                    <i class="ri-delete-bin-line"></i> <span class="d-none d-md-inline">{{ t('delete') }}</span>
+                <button class="btn btn-outline-danger btn-sm btn-icon-label d-none d-sm-inline-flex" @click="deleteSelected" :disabled="store.selectedItems.length === 0" :title="t('delete')">
+                    <i class="ri-delete-bin-line" aria-hidden="true"></i><span class="d-none d-md-inline">{{ t('delete') }}</span>
                 </button>
-                <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" @click="toggleDetailsPane" :class="{active: detailsPaneOpen}" :aria-pressed="detailsPaneOpen" :title="t('details_pane')">
-                    <i class="ri-sidebar-right-line" aria-hidden="true"></i> <span class="d-none d-xl-inline">{{ t('details') }}</span>
+                <button class="btn btn-outline-secondary btn-sm btn-icon-label" @click="toggleDetailsPane" :class="{active: detailsPaneOpen}" :aria-pressed="detailsPaneOpen" :title="t('details_pane')">
+                    <i class="ri-layout-right-line" aria-hidden="true"></i> <span class="d-none d-xl-inline">{{ t('details') }}</span>
                 </button>
 
                 <!-- Overflow Menu -->
                 <div class="dropdown app-toolbar-overflow">
-                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-label="More actions">
+                    <button class="btn btn-outline-secondary btn-sm btn-icon-label dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-label="More actions">
                         <i class="ri-more-2-fill" aria-hidden="true"></i>
                         <span class="d-sm-none">{{ t('more_actions') }}</span>
                     </button>
@@ -235,120 +235,13 @@
                 <div class="d-flex align-items-center text-danger fw-bold me-auto">
                     <i class="ri-delete-bin-line me-2"></i> {{ t('trash') || 'Recycle Bin' }}
                 </div>
-                <button class="btn btn-success btn-sm me-2" @click="restoreSelected" :disabled="store.selectedItems.length === 0" data-testid="trash-restore">
-                    <i class="ri-restart-line"></i> {{ t('restore') || 'Restore' }}
+                <button class="btn btn-success btn-sm btn-icon-label" @click="restoreSelected" :disabled="store.selectedItems.length === 0" data-testid="trash-restore">
+                    <i class="ri-restart-line" aria-hidden="true"></i><span>{{ t('restore') || 'Restore' }}</span>
                 </button>
-                <button class="btn btn-outline-danger btn-sm" @click="emptyTrash" data-testid="empty-trash">
-                    <i class="ri-delete-bin-2-line"></i> {{ t('empty_trash') || 'Empty Trash' }}
+                <button class="btn btn-outline-danger btn-sm btn-icon-label" @click="emptyTrash" data-testid="empty-trash">
+                    <i class="ri-delete-bin-2-line" aria-hidden="true"></i><span>{{ t('empty_trash') || 'Empty Trash' }}</span>
                 </button>
             </template>
-        </div>
-
-        <div v-if="store.selectedItems.length > 0"
-             class="selection-action-bar"
-             role="region"
-             :aria-label="t('selection_bar_label')">
-            <div class="selection-action-bar-count" aria-live="polite">
-                <i class="ri-checkbox-multiple-line" aria-hidden="true"></i>
-                <span>{{ t('selected_count', {count: store.selectedItems.length}) }}</span>
-            </div>
-
-            <div class="selection-action-bar-actions">
-                <button type="button"
-                        class="btn btn-outline-secondary btn-sm"
-                        @click="store.clearSelection()"
-                        :aria-label="t('clear_selection')">
-                    <i class="ri-close-line" aria-hidden="true"></i>
-                    <span>{{ t('clear_selection') }}</span>
-                </button>
-
-                <template v-if="store.isTrashMode">
-                    <button type="button" class="btn btn-success btn-sm" @click="restoreSelected" data-testid="selection-restore">
-                        <i class="ri-restart-line" aria-hidden="true"></i>
-                        <span>{{ t('restore') }}</span>
-                    </button>
-                    <button type="button" class="btn btn-outline-danger btn-sm" @click="deletePermanent">
-                        <i class="ri-delete-bin-2-line" aria-hidden="true"></i>
-                        <span>{{ t('delete_perm') }}</span>
-                    </button>
-                </template>
-
-                <template v-else>
-                    <button v-if="store.selectedItems.length === 1"
-                            type="button"
-                            class="btn btn-primary btn-sm"
-                            @click="downloadSelected"
-                            data-testid="selection-download">
-                        <i class="ri-download-line" aria-hidden="true"></i>
-                        <span>{{ t('download') }}</span>
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" @click="copySelected">
-                        <i class="ri-file-copy-line" aria-hidden="true"></i>
-                        <span>{{ t('copy') }}</span>
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" @click="cutSelected">
-                        <i class="ri-scissors-cut-line" aria-hidden="true"></i>
-                        <span>{{ t('cut') }}</span>
-                    </button>
-                    <button type="button" class="btn btn-outline-danger btn-sm" @click="deleteSelected" :disabled="!store.selectedItems.every(f => supports(f, 'trash'))" data-testid="selection-delete">
-                        <i class="ri-delete-bin-line" aria-hidden="true"></i>
-                        <span>{{ t('delete') }}</span>
-                    </button>
-
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
-                                type="button"
-                                data-bs-toggle="dropdown"
-                                data-testid="selection-more"
-                                :aria-label="t('selection_more_actions')">
-                            <i class="ri-more-2-fill" aria-hidden="true"></i>
-                            <span>{{ t('selection_more_actions') }}</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow">
-                            <li v-if="store.selectedItems.length === 1">
-                                <a class="dropdown-item" href="#" @click.prevent="renameSelected" data-testid="selection-rename">
-                                    <i class="ri-edit-line me-2" aria-hidden="true"></i>{{ t('rename') }}
-                                </a>
-                            </li>
-                            <li v-if="store.selectedItems.length === 1 && supports(store.selectedItems[0], 'share')">
-                                <a class="dropdown-item" href="#" @click.prevent="openShare">
-                                    <i class="ri-share-line me-2" aria-hidden="true"></i>{{ t('share_title') || 'Share' }}
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#" @click.prevent="chmodSelected">
-                                    <i class="ri-lock-2-line me-2" aria-hidden="true"></i>{{ t('perms') }}
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#" @click.prevent="showProperties">
-                                    <i class="ri-information-line me-2" aria-hidden="true"></i>{{ t('properties') }}
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#" @click.prevent="createArchive">
-                                    <i class="ri-file-zip-line me-2" aria-hidden="true"></i>{{ t('archive') }}
-                                </a>
-                            </li>
-                            <li v-if="store.selectedItems.length === 1 && isArchive(store.selectedItems[0])">
-                                <a class="dropdown-item" href="#" @click.prevent="extractArchive">
-                                    <i class="ri-folder-zip-line me-2" aria-hidden="true"></i>{{ t('extract') }}
-                                </a>
-                            </li>
-                            <li v-if="store.selectedItems.length === 1 && store.selectedItems[0].type !== 'dir' && supports(store.selectedItems[0], 'versions')">
-                                <a class="dropdown-item" href="#" @click.prevent="openHistory">
-                                    <i class="ri-history-line me-2" aria-hidden="true"></i>{{ t('version_history') }}
-                                </a>
-                            </li>
-                            <li v-if="store.selectedItems.length === 2">
-                                <a class="dropdown-item" href="#" @click.prevent="diffSelected">
-                                    <i class="ri-git-merge-line me-2" aria-hidden="true"></i>Diff
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </template>
-            </div>
         </div>
 
         <!-- Main -->
@@ -447,7 +340,7 @@
             </div>
 
             <!-- Content -->
-            <div id="contentArea" class="content-area position-relative" @click.stop="store.clearSelection(); hideContextMenu()">
+            <div id="contentArea" class="content-area position-relative" :class="{'has-selection-dock': store.selectedItems.length > 0}" @click.stop="store.clearSelection(); hideContextMenu()">
                 <div v-if="store.uploadProgress > 0" class="mb-3">
                     <div class="d-flex justify-content-between small text-muted mb-1">
                         <span>Uploading: <strong>{{ store.uploadFileName }}</strong></span>
@@ -462,8 +355,12 @@
                     <div class="spinner-border text-primary" role="status"></div>
                 </div>
 
-                <div v-else-if="store.error" class="alert alert-danger m-3">
-                    <i class="ri-error-warning-line me-2"></i> {{ store.error }}
+                <div v-else-if="store.error" class="alert alert-danger m-3 d-flex flex-wrap align-items-center gap-2" role="alert">
+                    <i class="ri-error-warning-line" aria-hidden="true"></i>
+                    <span class="me-auto">{{ store.error }}</span>
+                    <button v-if="store.cwd" type="button" class="btn btn-outline-danger btn-sm btn-icon-label" @click="goToPath('')">
+                        <i class="ri-home-4-line" aria-hidden="true"></i><span>{{ t('open_root_folder') }}</span>
+                    </button>
                 </div>
 
                 <div v-else>
@@ -498,29 +395,39 @@
                     </div>
 
                     <div v-else :class="containerClass" class="position-relative">
-                        <button v-if="store.cwd" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 shadow-sm" @click="goUp" :title="t('up_one_level') || 'Up one level'" :aria-label="t('up_one_level') || 'Up one level'">
+                        <button v-if="store.cwd" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 shadow-sm d-sm-none" @click="goUp" :title="t('up_one_level') || 'Up one level'" :aria-label="t('up_one_level') || 'Up one level'">
                             <i class="ri-arrow-up-line" aria-hidden="true"></i>
                         </button>
                         <!-- Header for List View -->
                         <div v-if="store.viewMode === 'list'" class="list-view-header text-muted border-bottom px-3 py-2 small fw-bold user-select-none w-100">
                             <div class="list-view-header-spacer"></div>
-                            <div class="list-view-name-col cursor-pointer" @click="setSort('name')">
-                                {{ t('name') }}
-                                <i v-if="store.sortBy === 'name'" :class="store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill'"></i>
+                            <div class="list-view-name-col" :aria-sort="store.sortBy === 'name' ? (store.sortDesc ? 'descending' : 'ascending') : null">
+                                <button type="button" class="list-sort-btn" @click="setSort('name')">
+                                    {{ t('name') }}
+                                    <i v-if="store.sortBy === 'name'" :class="store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill'" aria-hidden="true"></i>
+                                </button>
                             </div>
-                            <div class="file-meta-col size-col cursor-pointer" @click="setSort('size')">
-                                {{ t('size') }}
-                                <i v-if="store.sortBy === 'size'" :class="store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill'"></i>
+                            <div class="file-meta-col size-col" :aria-sort="store.sortBy === 'size' ? (store.sortDesc ? 'descending' : 'ascending') : null">
+                                <button type="button" class="list-sort-btn" @click="setSort('size')">
+                                    {{ t('size') }}
+                                    <i v-if="store.sortBy === 'size'" :class="store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill'" aria-hidden="true"></i>
+                                </button>
                             </div>
-                            <div class="file-meta-col date-col cursor-pointer" @click="setSort('mtime')">
-                                {{ t('date') }}
-                                <i v-if="store.sortBy === 'mtime'" :class="store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill'"></i>
+                            <div class="file-meta-col date-col" :aria-sort="store.sortBy === 'mtime' ? (store.sortDesc ? 'descending' : 'ascending') : null">
+                                <button type="button" class="list-sort-btn" @click="setSort('mtime')">
+                                    {{ t('date') }}
+                                    <i v-if="store.sortBy === 'mtime'" :class="store.sortDesc ? 'ri-arrow-down-s-fill' : 'ri-arrow-up-s-fill'" aria-hidden="true"></i>
+                                </button>
                             </div>
                         </div>
 
                         <!-- File Loop -->
-                        <div v-for="file in filteredFiles" :key="file.name" class="file-item"
+                        <div class="file-items" role="listbox" aria-multiselectable="true" :aria-label="t('files_list_label')">
+                        <div v-for="(file, index) in filteredFiles" :key="file.name" class="file-item"
+                             role="option"
                              data-testid="file-item"
+                             :tabindex="isTabStop(file, index) ? 0 : -1"
+                             :aria-selected="store.isSelected(file) ? 'true' : 'false'"
                              :data-file-name="file.name"
                              :data-file-path="file.path || file.originalPath"
                              :class="{'selected': store.isSelected(file), 'drag-over': file.isDragOver}"
@@ -534,16 +441,23 @@
                              @touchstart="handleTouchStart($event, file)"
                              @touchend="handleTouchEnd"
                              @dblclick.stop="open(file)"
-                             @contextmenu.prevent.stop="showContextMenu($event, file)">
+                             @contextmenu.prevent.stop="showContextMenu($event, file)"
+                             @keydown.enter.stop.prevent="open(file)"
+                             @keydown.space.stop.prevent="handleItemClick($event, file)"
+                             @keydown.down.prevent="moveItemFocus($event, 'down')"
+                             @keydown.up.prevent="moveItemFocus($event, 'up')"
+                             @keydown.right.prevent="moveItemFocus($event, 'next')"
+                             @keydown.left.prevent="moveItemFocus($event, 'prev')">
 
                             <div class="file-icon position-relative">
                                 <img v-if="store.viewMode === 'grid' && isImage(file)"
                                      :src="getThumbUrl(file)"
+                                     alt=""
                                      class="rounded shadow-sm thumb-grid"
                                      loading="lazy"
                                      decoding="async"
                                      draggable="false">
-                                <i v-else :class="getIcon(file)"></i>
+                                <i v-else :class="getIcon(file)" aria-hidden="true"></i>
 
                                 <div v-if="file.is_shared" class="position-absolute bottom-0 end-0 bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center shared-badge">
                                     <i class="ri-share-forward-line text-primary shared-badge-icon"></i>
@@ -558,19 +472,18 @@
 
                             <!-- List View Meta -->
                             <template v-if="store.viewMode === 'list'">
-                                <div class="file-meta-col size-col">{{ formatSize(file.size) }}</div>
-                                <div class="file-meta-col date-col">{{ formatDate(file.mtime) }}</div>
+                                <div class="file-meta-col size-col tabular-nums">{{ formatSize(file.size) }}</div>
+                                <div class="file-meta-col date-col tabular-nums">{{ formatDate(file.mtime) }}</div>
                             </template>
+                        </div>
                         </div>
                     </div>
                 </div>
             </div>
             <aside v-if="detailsPaneOpen" class="details-pane p-3" aria-labelledby="detailsPaneTitle" @click.stop>
                 <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
-                    <h6 id="detailsPaneTitle" class="mb-0">{{ t('details_pane') }}</h6>
-                    <button class="btn btn-link btn-sm text-muted p-0" @click="closeDetailsPane" :aria-label="t('close') || 'Close'">
-                        <i class="ri-close-line" aria-hidden="true"></i>
-                    </button>
+                    <h6 id="detailsPaneTitle" class="mb-0">{{ t('details') }}</h6>
+                    <button type="button" class="btn-close" @click="closeDetailsPane" :aria-label="t('close') || 'Close'"></button>
                 </div>
                 <div v-if="!detailsItem" class="text-center text-muted small py-4">
                     <i class="ri-information-line d-block fs-2 mb-2" aria-hidden="true"></i>
@@ -618,6 +531,118 @@
             </aside>
         </div>
 
+        <!-- Footer: selection dock floats above the status bar, so selecting never shifts the file list -->
+        <div class="app-footer">
+        <div v-if="store.selectedItems.length > 0"
+             class="selection-dock"
+             role="region"
+             :aria-label="t('selection_bar_label')"
+             data-testid="selection-dock">
+            <div class="selection-dock-count" aria-live="polite">
+                <i class="ri-checkbox-multiple-line" aria-hidden="true"></i>
+                <span>{{ t('selected_count', {count: store.selectedItems.length}) }}</span>
+            </div>
+            <button type="button"
+                    class="btn btn-link btn-sm selection-dock-clear"
+                    @click="store.clearSelection()"
+                    :aria-label="t('clear_selection')"
+                    :title="t('clear_selection')">
+                <i class="ri-close-line" aria-hidden="true"></i>
+            </button>
+
+            <div class="selection-dock-divider" aria-hidden="true"></div>
+
+            <div class="selection-dock-actions">
+                <template v-if="store.isTrashMode">
+                    <button type="button" class="btn btn-success btn-sm btn-icon-label" @click="restoreSelected" data-testid="selection-restore" :aria-label="t('restore')">
+                        <i class="ri-restart-line" aria-hidden="true"></i>
+                        <span class="selection-dock-label">{{ t('restore') }}</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm btn-icon-label" @click="deletePermanent" :aria-label="t('delete_perm')">
+                        <i class="ri-delete-bin-2-line" aria-hidden="true"></i>
+                        <span class="selection-dock-label">{{ t('delete_perm') }}</span>
+                    </button>
+                </template>
+
+                <template v-else>
+                    <button v-if="store.selectedItems.length === 1"
+                            type="button"
+                            class="btn btn-primary btn-sm btn-icon-label"
+                            @click="downloadSelected"
+                            :aria-label="t('download')"
+                            data-testid="selection-download">
+                        <i class="ri-download-line" aria-hidden="true"></i>
+                        <span class="selection-dock-label">{{ t('download') }}</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-icon-label" @click="copySelected" :aria-label="t('copy')">
+                        <i class="ri-file-copy-line" aria-hidden="true"></i>
+                        <span class="selection-dock-label">{{ t('copy') }}</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-icon-label" @click="cutSelected" :aria-label="t('cut')">
+                        <i class="ri-scissors-cut-line" aria-hidden="true"></i>
+                        <span class="selection-dock-label">{{ t('cut') }}</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm btn-icon-label" @click="deleteSelected" :disabled="!store.selectedItems.every(f => supports(f, 'trash'))" :aria-label="t('delete')" data-testid="selection-delete">
+                        <i class="ri-delete-bin-line" aria-hidden="true"></i>
+                        <span class="selection-dock-label">{{ t('delete') }}</span>
+                    </button>
+
+                    <div class="dropup">
+                        <button class="btn btn-outline-secondary btn-sm btn-icon-label dropdown-toggle"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                data-testid="selection-more"
+                                :aria-label="t('selection_more_actions')"
+                                :title="t('selection_more_actions')">
+                            <i class="ri-more-2-fill" aria-hidden="true"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <li v-if="store.selectedItems.length === 1">
+                                <a class="dropdown-item" href="#" @click.prevent="renameSelected" data-testid="selection-rename">
+                                    <i class="ri-edit-line me-2" aria-hidden="true"></i>{{ t('rename') }}
+                                </a>
+                            </li>
+                            <li v-if="store.selectedItems.length === 1 && supports(store.selectedItems[0], 'share')">
+                                <a class="dropdown-item" href="#" @click.prevent="openShare">
+                                    <i class="ri-share-line me-2" aria-hidden="true"></i>{{ t('share_title') || 'Share' }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" @click.prevent="chmodSelected">
+                                    <i class="ri-lock-2-line me-2" aria-hidden="true"></i>{{ t('perms') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" @click.prevent="showProperties">
+                                    <i class="ri-information-line me-2" aria-hidden="true"></i>{{ t('properties') }}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" @click.prevent="createArchive">
+                                    <i class="ri-file-zip-line me-2" aria-hidden="true"></i>{{ t('archive') }}
+                                </a>
+                            </li>
+                            <li v-if="store.selectedItems.length === 1 && isArchive(store.selectedItems[0])">
+                                <a class="dropdown-item" href="#" @click.prevent="extractArchive">
+                                    <i class="ri-folder-zip-line me-2" aria-hidden="true"></i>{{ t('extract') }}
+                                </a>
+                            </li>
+                            <li v-if="store.selectedItems.length === 1 && store.selectedItems[0].type !== 'dir' && supports(store.selectedItems[0], 'versions')">
+                                <a class="dropdown-item" href="#" @click.prevent="openHistory">
+                                    <i class="ri-history-line me-2" aria-hidden="true"></i>{{ t('version_history') }}
+                                </a>
+                            </li>
+                            <li v-if="store.selectedItems.length === 2">
+                                <a class="dropdown-item" href="#" @click.prevent="diffSelected">
+                                    <i class="ri-git-merge-line me-2" aria-hidden="true"></i>Diff
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </template>
+            </div>
+        </div>
+
         <!-- Status Bar -->
         <div class="bg-body-tertiary border-top px-3 py-2 small text-muted d-flex flex-wrap align-items-center gap-2 app-statusbar">
             <div class="d-flex align-items-center me-auto app-statusbar-summary">
@@ -659,6 +684,8 @@
                     <option value="200">200</option>
                 </select>
             </div>
+        </div>
+
         </div>
 
         <!-- Modals -->

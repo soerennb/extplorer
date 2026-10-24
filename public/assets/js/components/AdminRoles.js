@@ -3,8 +3,8 @@ const AdminRoles = {
     <div>
         <div class="d-flex align-items-end justify-content-between gap-2 mb-3">
             <div class="small text-muted">{{ t('admin_roles_desc', 'Roles define permission sets that can be assigned directly or via groups.') }}</div>
-            <button class="btn btn-success btn-sm" @click="showAddRoleForm">
-                <i class="ri-add-line me-1"></i> {{ t('admin_roles_add', 'Add Role') }}
+            <button class="btn btn-primary btn-sm btn-icon-label" @click="showAddRoleForm">
+                <i class="ri-add-line" aria-hidden="true"></i><span>{{ t('admin_roles_add', 'Add Role') }}</span>
             </button>
         </div>
 

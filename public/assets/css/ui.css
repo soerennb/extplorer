@@ -1,0 +1,54 @@
+/* Shared UI refinements for the file manager and the admin console. */
+
+/* SweetAlert2 follows the active Bootstrap theme instead of its own palette. */
+:root {
+    --swal2-background: var(--bs-body-bg);
+    --swal2-color: var(--bs-body-color);
+    --swal2-border-radius: var(--bs-border-radius-lg);
+    --swal2-backdrop: rgba(15, 23, 42, 0.45);
+    --swal2-input-background: var(--bs-body-bg);
+    --swal2-input-border: var(--bs-border-width) solid var(--bs-border-color);
+    --swal2-input-border-radius: var(--bs-border-radius);
+    --swal2-input-focus-border: var(--bs-border-width) solid rgba(var(--bs-primary-rgb), 0.6);
+    --swal2-input-focus-box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    --swal2-outline: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.35);
+    --swal2-confirm-button-background-color: var(--bs-primary);
+    --swal2-deny-button-background-color: var(--bs-danger);
+    --swal2-cancel-button-background-color: var(--bs-secondary);
+    --swal2-validation-message-background: var(--bs-tertiary-bg);
+    --swal2-validation-message-color: var(--bs-body-color);
+    --swal2-footer-border-color: var(--bs-border-color);
+    --swal2-close-button-color: var(--bs-secondary-color);
+    --swal2-timer-progress-bar-background: rgba(var(--bs-primary-rgb), 0.45);
+}
+.swal2-popup .swal2-input,
+.swal2-popup .swal2-textarea,
+.swal2-popup .swal2-select {
+    color: var(--bs-body-color);
+}
+.swal2-popup .swal2-styled {
+    border-radius: var(--bs-border-radius);
+    font-weight: 500;
+}
+
+/* The app shell is a fixed 100% height layout; SweetAlert2's height:auto
+   would collapse it behind every dialog. */
+html body.swal2-height-auto {
+    height: 100% !important;
+}
+
+/* Icon + label buttons: keep a consistent gap even where flexbox collapses the
+   whitespace between the icon and the label. */
+.btn-icon-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+}
+.btn-icon-label.dropdown-toggle::after {
+    margin-left: 0;
+}
+
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+}

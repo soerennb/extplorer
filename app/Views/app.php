@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/remixicon.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/sweetalert2.min.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('assets/css/diff2html.min.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/ui.css?v=' . config('App')->version) ?>">
+    <script src="<?= base_url('assets/js/theme-init.js?v=' . config('App')->version) ?>"></script>
     <style <?= csp_style_nonce() ?>>
         body, html { height: 100%; overflow: hidden; }
         #app { display: flex; flex-direction: column; height: 100%; }
@@ -101,34 +102,59 @@
             background: rgba(33, 37, 41, 0.92);
         }
 
-        .selection-action-bar {
-            border-bottom: 1px solid var(--bs-border-color);
-            background: var(--bs-body-bg);
-            padding: 0.55rem 0.75rem;
+        .app-footer { position: relative; }
+        .selection-dock {
+            position: absolute;
+            bottom: calc(100% + 0.75rem);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1035;
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            flex-wrap: wrap;
+            max-width: calc(100vw - 2rem);
+            padding: 0.4rem 0.5rem 0.4rem 0.85rem;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0.75rem;
+            background: var(--bs-body-bg);
+            box-shadow: 0 0.75rem 2rem rgba(15, 23, 42, 0.18), 0 0.125rem 0.375rem rgba(15, 23, 42, 0.08);
+            animation: selection-dock-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        .selection-action-bar-count {
+        @keyframes selection-dock-in {
+            from { opacity: 0; transform: translate(-50%, 0.5rem); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .selection-dock { animation: none; }
+        }
+        .selection-dock-count {
             display: inline-flex;
             align-items: center;
             gap: 0.45rem;
-            min-height: 31px;
-            margin-right: auto;
             font-weight: 600;
-            color: var(--bs-body-color);
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
         }
-        .selection-action-bar-count i {
-            color: var(--bs-primary);
+        .selection-dock-count i { color: var(--bs-primary); }
+        .selection-dock-clear {
+            color: var(--bs-secondary-color);
+            padding: 0.2rem 0.35rem;
+            line-height: 1;
         }
-        .selection-action-bar-actions {
+        .selection-dock-clear:hover { color: var(--bs-body-color); }
+        .selection-dock-divider {
+            align-self: stretch;
+            width: 1px;
+            margin: 0.15rem 0.1rem;
+            background: var(--bs-border-color);
+        }
+        .selection-dock-actions {
             display: flex;
             align-items: center;
             gap: 0.4rem;
-            flex-wrap: wrap;
-            justify-content: flex-end;
         }
+        .selection-dock .dropdown-toggle::after { display: none; }
+        .content-area.has-selection-dock { padding-bottom: 4.5rem; }
         .command-palette-backdrop {
             position: fixed;
             inset: 0;
@@ -184,20 +210,24 @@
             color: var(--bs-primary);
             flex: 0 0 auto;
         }
-        @media (max-width: 575.98px) {
-            .selection-action-bar {
-                align-items: stretch;
+        @media (max-width: 767.98px) {
+            .selection-dock {
+                left: 0.5rem;
+                right: 0.5rem;
+                transform: none;
+                max-width: none;
+                gap: 0.35rem;
+                padding: 0.35rem 0.4rem 0.35rem 0.75rem;
             }
-            .selection-action-bar-count {
-                width: 100%;
+            .selection-dock-count i,
+            .selection-dock-divider { display: none; }
+            @keyframes selection-dock-in {
+                from { opacity: 0; transform: translateY(0.5rem); }
+                to { opacity: 1; transform: none; }
             }
-            .selection-action-bar-actions {
-                width: 100%;
-                justify-content: flex-start;
-            }
-            .selection-action-bar-actions .btn {
-                flex: 1 1 auto;
-            }
+            .selection-dock-actions { margin-left: auto; gap: 0.3rem; }
+            .selection-dock-label { display: none; }
+            .selection-dock-actions .btn { min-width: 2.25rem; min-height: 2.25rem; }
         }
 
         .navbar-logo { height: 48px; width: auto; margin-right: 10px; }
@@ -216,6 +246,7 @@
                 min-height: 48px;
             }
             .app-navbar .container-fluid {
+                flex-wrap: nowrap;
                 gap: 0.35rem;
                 padding-left: 0.5rem;
                 padding-right: 0.5rem;
@@ -224,6 +255,9 @@
                 height: 30px;
                 margin-right: 0;
             }
+            .app-navbar .navbar-brand { margin-right: 0; }
+            .navbar-nav-tools { flex-shrink: 0; }
+            .navbar-nav-tools .dropdown .btn { margin-left: 0 !important; }
             .app-navbar .btn-sm {
                 --bs-btn-padding-y: 0.25rem;
                 --bs-btn-padding-x: 0.45rem;
@@ -284,6 +318,22 @@
         .file-item.selected { background-color: var(--bs-primary) !important; color: white !important; }
         .file-item.selected .file-meta { color: rgba(255,255,255,0.8) !important; }
         .file-item.drag-over { background-color: var(--bs-info-bg-subtle) !important; border: 1px dashed var(--bs-info) !important; }
+        .file-items { display: contents; }
+        .file-item:focus { outline: none; }
+        .file-item:focus-visible { outline: 2px solid var(--bs-primary); outline-offset: -2px; }
+        .file-item.selected:focus-visible { outline-color: var(--bs-body-bg); }
+        .list-sort-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.15rem;
+            padding: 0;
+            border: 0;
+            background: none;
+            color: inherit;
+            font: inherit;
+        }
+        .list-sort-btn:hover { color: var(--bs-body-color); }
+        .list-sort-btn:focus-visible { outline: 2px solid var(--bs-primary); outline-offset: 2px; border-radius: 2px; }
         .mount-badge { font-size: 0.65rem; }
         
         /* Grid View */
@@ -308,8 +358,17 @@
             .grid-view .file-item { padding: 15px; }
         }
 
-        .grid-view .file-icon { font-size: 2.5rem; line-height: 1; margin-bottom: 5px; }
-        @media (min-width: 768px) { .grid-view .file-icon { font-size: 3rem; } }
+        .grid-view .file-icon {
+            width: 100%;
+            height: 4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            line-height: 1;
+            margin-bottom: 0.4rem;
+        }
+        @media (min-width: 768px) { .grid-view .file-icon { height: 4.5rem; font-size: 3rem; } }
 
         .grid-view .file-name { 
             width: 100%; 
@@ -584,54 +643,7 @@
     <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/sweetalert2.min.js') ?>"></script>
     <script src="<?= base_url('assets/js/safe-alerts.js') ?>"></script>
-    <script <?= csp_script_nonce() ?>>
-        (function() {
-            if (!window.cspStyleNonce) return;
-            const doc = document;
-            const origCreateElement = doc.createElement.bind(doc);
-            const origCreateElementNS = doc.createElementNS.bind(doc);
-
-            doc.createElement = function(tagName, options) {
-                const el = origCreateElement(tagName, options);
-                if (String(tagName).toLowerCase() === 'style') {
-                    el.setAttribute('nonce', window.cspStyleNonce);
-                }
-                return el;
-            };
-            doc.createElementNS = function(ns, tagName, options) {
-                const el = origCreateElementNS(ns, tagName, options);
-                if (String(tagName).toLowerCase() === 'style') {
-                    el.setAttribute('nonce', window.cspStyleNonce);
-                }
-                return el;
-            };
-
-            window.__restoreCreateElement = function() {
-                doc.createElement = origCreateElement;
-                doc.createElementNS = origCreateElementNS;
-                delete window.__restoreCreateElement;
-            };
-        })();
-    </script>
-    <script src="<?= base_url('assets/vendor/ace/ace.min.js') ?>"></script>
-    <script <?= csp_script_nonce() ?>>
-        (function() {
-            if (window.ace && window.ace.require && window.cspStyleNonce) {
-                const aceDom = window.ace.require("ace/lib/dom");
-                const origCreate = aceDom.createElement.bind(aceDom);
-                aceDom.createElement = function(tagName, ns) {
-                    const el = origCreate(tagName, ns);
-                    if (String(tagName).toLowerCase() === 'style') {
-                        el.setAttribute('nonce', window.cspStyleNonce);
-                    }
-                    return el;
-                };
-            }
-            if (window.__restoreCreateElement) window.__restoreCreateElement();
-        })();
-    </script>
-    <script src="<?= base_url('assets/js/diff.min.js') ?>"></script>
-    <script src="<?= base_url('assets/js/diff2html-ui.min.js') ?>"></script>
+    <script src="<?= base_url('assets/js/lazy-assets.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/api.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/file-upload-client.js?v=' . config('App')->version) ?>"></script>
     <script src="<?= base_url('assets/js/store.js?v=' . config('App')->version) ?>"></script>

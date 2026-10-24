@@ -5,8 +5,8 @@ const AdminGroups = {
             <div>
                 <div class="small text-muted">{{ t('admin_groups_desc', 'Groups bundle roles for easier assignment.') }}</div>
             </div>
-            <button class="btn btn-success btn-sm" @click="showAddGroupForm">
-                <i class="ri-add-line me-1"></i> {{ t('admin_groups_add', 'Add Group') }}
+            <button class="btn btn-primary btn-sm btn-icon-label" @click="showAddGroupForm">
+                <i class="ri-add-line" aria-hidden="true"></i><span>{{ t('admin_groups_add', 'Add Group') }}</span>
             </button>
         </div>
 

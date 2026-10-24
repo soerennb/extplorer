@@ -1,7 +1,7 @@
 const AdminRoles = {
     render: ((Vue) => {
 const _Vue = Vue
-const { createElementVNode: _createElementVNode, createCommentVNode: _createCommentVNode, createTextVNode: _createTextVNode } = _Vue
+const { createElementVNode: _createElementVNode, createCommentVNode: _createCommentVNode } = _Vue
 
 const _hoisted_1 = { class: "d-flex align-items-end justify-content-between gap-2 mb-3" }
 const _hoisted_2 = { class: "small text-muted" }
@@ -55,17 +55,20 @@ const _hoisted_31 = ["onClick", "disabled"]
 
 return function render(_ctx, _cache) {
   with (_ctx) {
-    const { toDisplayString: _toDisplayString, createElementVNode: _createElementVNode, createTextVNode: _createTextVNode, openBlock: _openBlock, createElementBlock: _createElementBlock, createCommentVNode: _createCommentVNode, renderList: _renderList, Fragment: _Fragment, vModelText: _vModelText, withDirectives: _withDirectives } = _Vue
+    const { toDisplayString: _toDisplayString, createElementVNode: _createElementVNode, openBlock: _openBlock, createElementBlock: _createElementBlock, createCommentVNode: _createCommentVNode, renderList: _renderList, Fragment: _Fragment, vModelText: _vModelText, withDirectives: _withDirectives } = _Vue
 
     return (_openBlock(), _createElementBlock("div", null, [
       _createElementVNode("div", _hoisted_1, [
         _createElementVNode("div", _hoisted_2, _toDisplayString(t('admin_roles_desc', 'Roles define permission sets that can be assigned directly or via groups.')), 1 /* TEXT */),
         _createElementVNode("button", {
-          class: "btn btn-success btn-sm",
+          class: "btn btn-primary btn-sm btn-icon-label",
           onClick: showAddRoleForm
         }, [
-          _cache[0] || (_cache[0] = _createElementVNode("i", { class: "ri-add-line me-1" }, null, -1 /* CACHED */)),
-          _createTextVNode(" " + _toDisplayString(t('admin_roles_add', 'Add Role')), 1 /* TEXT */)
+          _cache[0] || (_cache[0] = _createElementVNode("i", {
+            class: "ri-add-line",
+            "aria-hidden": "true"
+          }, null, -1 /* CACHED */)),
+          _createElementVNode("span", null, _toDisplayString(t('admin_roles_add', 'Add Role')), 1 /* TEXT */)
         ], 8 /* PROPS */, _hoisted_3)
       ]),
       error

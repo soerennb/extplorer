@@ -1,7 +1,7 @@
 const AdminUsers = {
     render: ((Vue) => {
 const _Vue = Vue
-const { createElementVNode: _createElementVNode, createCommentVNode: _createCommentVNode, createTextVNode: _createTextVNode } = _Vue
+const { createElementVNode: _createElementVNode, createCommentVNode: _createCommentVNode } = _Vue
 
 const _hoisted_1 = { class: "d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3" }
 const _hoisted_2 = { class: "flex-grow-1" }
@@ -106,7 +106,7 @@ const _hoisted_55 = ["onClick", "disabled"]
 
 return function render(_ctx, _cache) {
   with (_ctx) {
-    const { toDisplayString: _toDisplayString, createElementVNode: _createElementVNode, vModelText: _vModelText, withDirectives: _withDirectives, createTextVNode: _createTextVNode, openBlock: _openBlock, createElementBlock: _createElementBlock, createCommentVNode: _createCommentVNode, renderList: _renderList, Fragment: _Fragment, vModelCheckbox: _vModelCheckbox } = _Vue
+    const { toDisplayString: _toDisplayString, createElementVNode: _createElementVNode, vModelText: _vModelText, withDirectives: _withDirectives, openBlock: _openBlock, createElementBlock: _createElementBlock, createCommentVNode: _createCommentVNode, renderList: _renderList, Fragment: _Fragment, vModelCheckbox: _vModelCheckbox } = _Vue
 
     return (_openBlock(), _createElementBlock("div", null, [
       _createElementVNode("div", _hoisted_1, [
@@ -129,11 +129,14 @@ return function render(_ctx, _cache) {
         ]),
         _createElementVNode("div", null, [
           _createElementVNode("button", {
-            class: "btn btn-success btn-sm",
+            class: "btn btn-primary btn-sm btn-icon-label",
             onClick: showAddForm
           }, [
-            _cache[0] || (_cache[0] = _createElementVNode("i", { class: "ri-user-add-line me-1" }, null, -1 /* CACHED */)),
-            _createTextVNode(" " + _toDisplayString(t('admin_users_add', 'Add User')), 1 /* TEXT */)
+            _cache[0] || (_cache[0] = _createElementVNode("i", {
+              class: "ri-user-add-line",
+              "aria-hidden": "true"
+            }, null, -1 /* CACHED */)),
+            _createElementVNode("span", null, _toDisplayString(t('admin_users_add', 'Add User')), 1 /* TEXT */)
           ], 8 /* PROPS */, _hoisted_5)
         ])
       ]),

@@ -122,14 +122,18 @@ async function uploadTextFile(page, name, content) {
 }
 
 async function verifyVendorBundles(page) {
-  const loadedBundles = await page.evaluate(() => ({
-    vue: typeof window.Vue?.createApp === "function",
-    bootstrap: typeof window.bootstrap?.Modal === "function",
-    sweetalert: typeof window.Swal?.fire === "function",
-    ace: typeof window.ace?.edit === "function",
-    diff: typeof window.Diff?.createPatch === "function",
-    diff2html: typeof window.Diff2HtmlUI === "function",
-  }));
+  // Ace and the diff viewer load on first use; the loaders must resolve them.
+  const loadedBundles = await page.evaluate(async () => {
+    await Promise.all([window.LazyAssets.ace(), window.LazyAssets.diff()]);
+    return {
+      vue: typeof window.Vue?.createApp === "function",
+      bootstrap: typeof window.bootstrap?.Modal === "function",
+      sweetalert: typeof window.Swal?.fire === "function",
+      ace: typeof window.ace?.edit === "function",
+      diff: typeof window.Diff?.createPatch === "function",
+      diff2html: typeof window.Diff2HtmlUI === "function",
+    };
+  });
   expect(loadedBundles).toEqual({
     vue: true,
     bootstrap: true,

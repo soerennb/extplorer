@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/remixicon.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/sweetalert2.min.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/ui.css?v=' . config('App')->version) ?>">
+    <script src="<?= base_url('assets/js/theme-init.js?v=' . config('App')->version) ?>"></script>
     <style <?= csp_style_nonce() ?>>
         body, html { height: 100%; }
         body { margin: 0; background: var(--bs-body-bg); color: var(--bs-body-color); }
@@ -51,11 +53,6 @@
             top: 0;
             z-index: 2;
             background: var(--bs-body-bg);
-        }
-        .admin-back-button {
-            font-size: 1rem;
-            padding: 0.6rem 1rem;
-            font-weight: 600;
         }
         .admin-main-body { padding: 1.25rem; }
 

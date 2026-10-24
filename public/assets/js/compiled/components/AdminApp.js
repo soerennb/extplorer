@@ -1,7 +1,7 @@
 const AdminApp = {
     render: ((Vue) => {
 const _Vue = Vue
-const { createElementVNode: _createElementVNode, createCommentVNode: _createCommentVNode, createTextVNode: _createTextVNode } = _Vue
+const { createElementVNode: _createElementVNode, createCommentVNode: _createCommentVNode } = _Vue
 
 const _hoisted_1 = { class: "admin-page" }
 const _hoisted_2 = { class: "admin-sidebar border-end" }
@@ -22,7 +22,7 @@ const _hoisted_16 = { class: "admin-main-body" }
 
 return function render(_ctx, _cache) {
   with (_ctx) {
-    const { toDisplayString: _toDisplayString, createElementVNode: _createElementVNode, renderList: _renderList, Fragment: _Fragment, openBlock: _openBlock, createElementBlock: _createElementBlock, normalizeClass: _normalizeClass, withModifiers: _withModifiers, createTextVNode: _createTextVNode, resolveComponent: _resolveComponent, createBlock: _createBlock, createCommentVNode: _createCommentVNode } = _Vue
+    const { toDisplayString: _toDisplayString, createElementVNode: _createElementVNode, renderList: _renderList, Fragment: _Fragment, openBlock: _openBlock, createElementBlock: _createElementBlock, normalizeClass: _normalizeClass, withModifiers: _withModifiers, resolveComponent: _resolveComponent, createBlock: _createBlock, createCommentVNode: _createCommentVNode } = _Vue
 
     const _component_admin_users = _resolveComponent("admin-users")
     const _component_admin_groups = _resolveComponent("admin-groups")
@@ -46,7 +46,8 @@ return function render(_ctx, _cache) {
               onClick: _withModifiers($event => (navigate(item.section, item.section === 'settings' ? activeSettingsTab : null)), ["prevent"])
             }, [
               _createElementVNode("i", {
-                class: _normalizeClass(item.icon)
+                class: _normalizeClass(item.icon),
+                "aria-hidden": "true"
               }, null, 2 /* CLASS */),
               _createElementVNode("span", null, _toDisplayString(t(item.labelKey, item.labelFallback)), 1 /* TEXT */)
             ], 10 /* CLASS, PROPS */, _hoisted_7))
@@ -65,11 +66,14 @@ return function render(_ctx, _cache) {
           ]),
           _createElementVNode("div", _hoisted_14, [
             _createElementVNode("a", {
-              class: "btn btn-primary admin-back-button",
+              class: "btn btn-outline-secondary btn-sm btn-icon-label",
               href: baseUrl
             }, [
-              _cache[0] || (_cache[0] = _createElementVNode("i", { class: "ri-arrow-left-line me-2" }, null, -1 /* CACHED */)),
-              _createTextVNode(" " + _toDisplayString(t('admin_back_to_file_manager', 'Back to File Manager')), 1 /* TEXT */)
+              _cache[0] || (_cache[0] = _createElementVNode("i", {
+                class: "ri-arrow-left-line",
+                "aria-hidden": "true"
+              }, null, -1 /* CACHED */)),
+              _createElementVNode("span", null, _toDisplayString(t('admin_back_to_file_manager', 'Back to File Manager')), 1 /* TEXT */)
             ], 8 /* PROPS */, _hoisted_15)
           ])
         ]),

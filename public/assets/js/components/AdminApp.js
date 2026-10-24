@@ -13,7 +13,7 @@ const AdminApp = {
                    class="nav-link d-flex align-items-center gap-2"
                    :class="{ active: activeSection === item.section }"
                    @click.prevent="navigate(item.section, item.section === 'settings' ? activeSettingsTab : null)">
-                    <i :class="item.icon"></i>
+                    <i :class="item.icon" aria-hidden="true"></i>
                     <span>{{ t(item.labelKey, item.labelFallback) }}</span>
                 </a>
             </nav>
@@ -30,8 +30,8 @@ const AdminApp = {
                     <div class="small text-muted">{{ activeDescription }}</div>
                 </div>
                 <div class="d-flex gap-2">
-                    <a class="btn btn-primary admin-back-button" :href="baseUrl">
-                        <i class="ri-arrow-left-line me-2"></i> {{ t('admin_back_to_file_manager', 'Back to File Manager') }}
+                    <a class="btn btn-outline-secondary btn-sm btn-icon-label" :href="baseUrl">
+                        <i class="ri-arrow-left-line" aria-hidden="true"></i><span>{{ t('admin_back_to_file_manager', 'Back to File Manager') }}</span>
                     </a>
                 </div>
             </div>

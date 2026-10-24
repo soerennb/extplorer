@@ -107,7 +107,7 @@ const app = createApp({
                 { id: 'paste', label: i18n.t('paste'), icon: 'ri-clipboard-line', enabled: hasClipboard && !store.isLoading && !store.isTrashMode, reason: unavailable, action: paste },
                 { id: 'go-up', label: i18n.t('up_one_level'), icon: 'ri-arrow-up-line', enabled: Boolean(store.cwd), reason: unavailable, action: goUp },
                 { id: 'refresh', label: i18n.t('refresh'), icon: 'ri-refresh-line', enabled: true, action: reload },
-                { id: 'details', label: i18n.t('command_toggle_details'), icon: 'ri-sidebar-right-line', enabled: true, action: toggleDetailsPane },
+                { id: 'details', label: i18n.t('command_toggle_details'), icon: 'ri-layout-right-line', enabled: true, action: toggleDetailsPane },
                 { id: 'trash', label: i18n.t('command_toggle_trash'), icon: 'ri-delete-bin-7-line', enabled: true, action: toggleTrash },
                 { id: 'grid', label: i18n.t('command_grid_view'), icon: 'ri-grid-fill', enabled: store.viewMode !== 'grid', reason: unavailable, action: () => store.toggleViewMode('grid') },
                 { id: 'list', label: i18n.t('command_list_view'), icon: 'ri-list-check', enabled: store.viewMode !== 'list', reason: unavailable, action: () => store.toggleViewMode('list') },
@@ -371,6 +371,26 @@ const app = createApp({
             hideContextMenu();
         };
 
+        // Roving tab stop: only one file item is in the tab order, arrow keys move between items.
+        const isTabStop = (file, index) => {
+            const selected = store.selectedItems[0];
+            if (selected && filteredFiles.value.includes(selected)) return selected === file;
+            return index === 0;
+        };
+        const moveItemFocus = (event, direction) => {
+            const container = event.currentTarget.closest('.grid-view, .list-view');
+            const items = [...container.querySelectorAll('[data-testid="file-item"]')];
+            let step = direction === 'next' || direction === 'down' ? 1 : -1;
+            if (store.viewMode === 'grid' && (direction === 'down' || direction === 'up')) {
+                step *= getComputedStyle(container).gridTemplateColumns.split(' ').filter(Boolean).length || 1;
+            }
+            const target = items[items.indexOf(event.currentTarget) + step];
+            if (!target) return;
+            const file = filteredFiles.value.find((item) => item.name === target.dataset.fileName);
+            if (file) store.selectedItems = [file];
+            target.focus();
+        };
+
         const changePage = (d) => { const n = store.pagination.page + d; if (n > 0 && n <= totalPages.value) store.loadPath(store.cwd, n); };
         const goToPage = (n) => { if (n > 0 && n <= totalPages.value) store.loadPath(store.cwd, n); };
         const setPageSize = (event) => {
@@ -389,7 +409,7 @@ const app = createApp({
 
                 if (textExts.includes(ext)) {
                     try {
-                        const res = await Api.get('content', { path: file.path });
+                        const [res] = await Promise.all([Api.get('content', { path: file.path }), LazyAssets.ace()]);
                         store.addToRecent(file);
                         editorFile.value = file;
                         editorModal.show();
@@ -638,7 +658,7 @@ const app = createApp({
             if (store.selectedItems.length !== 2) return;
             try {
                 store.isLoading = true;
-                const [r1, r2] = await Promise.all([Api.get('content', { path: store.selectedItems[0].path }), Api.get('content', { path: store.selectedItems[1].path })]);
+                const [r1, r2] = await Promise.all([Api.get('content', { path: store.selectedItems[0].path }), Api.get('content', { path: store.selectedItems[1].path }), LazyAssets.diff()]);
                 const udiff = Diff.createPatch(store.selectedItems[0].name, r1.content, r2.content);
                 new Diff2HtmlUI(document.getElementById('diffViewer'), udiff, { drawFileList: true, matching: 'lines', outputFormat: 'side-by-side' }).draw();
                 diffModal.show();
@@ -807,8 +827,7 @@ const app = createApp({
             const lastPath = localStorage.getItem('extplorer_last_path') || '';
             store.loadPath(lastPath);
             loadTransferCapability();
-            
-            ace.config.set('basePath', window.baseUrl + 'assets/vendor/ace');
+
             editorModal = new bootstrap.Modal(document.getElementById('editorModal'));
             diffModal = new bootstrap.Modal(document.getElementById('diffModal'));
             propModal = new bootstrap.Modal(document.getElementById('propModal'));
@@ -860,7 +879,7 @@ const app = createApp({
             store, i18n, t: (k, p) => i18n.t(k, p),
             commandPaletteOpen, commandPaletteQuery, commandPaletteInput, commandPaletteSelectedIndex, filteredCommandActions,
             detailsPaneOpen, detailsItem, detailsShareLabel, currentFolderBookmark,
-            goUp, goToPath, reload, closeOffcanvas, handleItemClick, handleTouchStart, handleTouchEnd, changePage, goToPage, setPageSize, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles, breadcrumbs,
+            goUp, goToPath, reload, closeOffcanvas, handleItemClick, isTabStop, moveItemFocus, handleTouchStart, handleTouchEnd, changePage, goToPage, setPageSize, open, saveFile, getIcon, formatSize, formatDate, containerClass, filteredFiles, breadcrumbs,
             openCommandPalette, closeCommandPalette, moveCommandSelection, runCommand, runSelectedCommand,
             toggleDetailsPane, closeDetailsPane, toggleBookmark,
             emptyStateIcon, emptyStateTitle, emptyStateDescription,

@@ -13,8 +13,8 @@ const AdminUsers = {
                 >
             </div>
             <div>
-                <button class="btn btn-success btn-sm" @click="showAddForm">
-                    <i class="ri-user-add-line me-1"></i> {{ t('admin_users_add', 'Add User') }}
+                <button class="btn btn-primary btn-sm btn-icon-label" @click="showAddForm">
+                    <i class="ri-user-add-line" aria-hidden="true"></i><span>{{ t('admin_users_add', 'Add User') }}</span>
                 </button>
             </div>
         </div>
