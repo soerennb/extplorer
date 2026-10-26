@@ -182,7 +182,7 @@ If you are contributing to eXtplorer or building from source:
 
 1.  Clone the repository.
 2.  Use a supported PHP version (8.2 through 8.5) and Composer `2.10.3`.
-3.  Optional for frontend asset maintenance: use Node.js `24.21.0` LTS (`.nvmrc` / `.node-version`).
+3.  Optional for frontend asset maintenance: use Node.js `24.22.1` LTS (`.nvmrc` / `.node-version`).
 4.  Install development dependencies: `./composer install`.
 5.  After changing translations, run `composer i18n:build` and `composer i18n:check`.
 6.  To create deployable archives, run `./build.sh`. It verifies the packaged login translations in every archive before reporting success.
