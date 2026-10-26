@@ -2,9 +2,12 @@ FROM php:8.5.12-fpm-alpine3.24 AS builder
 
 ARG APP_VERSION=dev
 
-# CVE-2026-58055: require the fixed nghttp2 library in both PHP stages.
+# Keep fixed Brotli, curl and nghttp2 versions in both PHP stages.
+# CVE-2026-111497, CVE-2026-92392 and CVE-2026-58055.
 RUN apk add --no-cache \
         ca-certificates \
+        'brotli-libs>=1.2.1-r0' \
+        'curl>=8.23.0-r0' \
         icu-libs \
         libpng \
         libzip \
@@ -49,9 +52,11 @@ FROM php:8.5.12-fpm-alpine3.24
 ARG APP_VERSION=dev
 ENV EXTPLORER_IMAGE_VERSION=${APP_VERSION}
 
-# CVE-2026-58055: keep this minimum aligned with the builder stage.
+# Keep these security minimums aligned with the builder stage.
 RUN apk add --no-cache \
         ca-certificates \
+        'brotli-libs>=1.2.1-r0' \
+        'curl>=8.23.0-r0' \
         icu-libs \
         libpng \
         libzip \
