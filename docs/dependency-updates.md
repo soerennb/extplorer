@@ -16,6 +16,7 @@ than ignoring the advisory or weakening the audit.
 | Node build toolchain | `.nvmrc`, `.node-version`, README | Keep both pins identical within the selected Node 24 LTS line. |
 | PHP container and Composer builder | Dockerfile | Update both PHP stages together within PHP 8.5 and Alpine 3.24; align Composer with CI. |
 | Alpine nghttp2 library | Dockerfile, both PHP stages | Require `nghttp2-libs>=1.70.0-r0` for CVE-2026-58055; verify installed versions and scan the rebuilt runtime image. |
+| Alpine Brotli and curl libraries | Dockerfile, both PHP stages | Require `brotli-libs>=1.2.1-r0` for CVE-2026-111497 and `curl>=8.23.0-r0` for CVE-2026-92392; scan the rebuilt runtime image. |
 | Nginx | Compose and the Quality syntax-check image | Keep both images aligned within the existing 1.31/Alpine 3.24 line. |
 | PECL extensions | Dockerfile | Review Redis and SSH2 advisories and compatible updates separately. |
 | GitHub Actions | Workflow and composite-action SHA pins | Keep immutable SHA pins and update their version comments together. |
