@@ -56,5 +56,12 @@
     "webdav_load_failed": "Nepodarilo sa načítať prihlasovacie údaje WebDAV.",
     "webdav_create_failed": "Nepodarilo sa vytvoriť prihlasovací údaj WebDAV.",
     "webdav_delete_failed": "Nepodarilo sa odvolať prihlasovací údaj WebDAV.",
-    "revoke": "Odvolať"
+    "revoke": "Odvolať",
+    "external_auth_sign_in": "Prihlásiť sa cez",
+    "external_auth_managed": "Prihlásenie, heslo a dvojfaktorové overenie spravuje váš poskytovateľ identity.",
+    "external_auth_confirm": "Potvrďte svoju identitu u poskytovateľa prihlásenia v samostatnom okne. Vaše zmeny tu zostanú otvorené.",
+    "external_auth_popup_blocked": "Povoľte kontextové okná pre túto stránku a skúste to znova.",
+    "external_auth_failed": "Identitu sa nepodarilo potvrdiť. Skúste to znova.",
+    "external_auth_block_account": "Zablokovať prístup k účtu",
+    "external_auth_waiting": "Potvrďte svoju identitu v otvorenom okne. Tu môžete overenie zrušiť."
 }

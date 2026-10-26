@@ -73,7 +73,7 @@ class UserModel
     public function verifyUser(string $username, string $password, bool $trustedDevice = false): ?array
     {
         $user = $this->getUser($username);
-        if (!$user || !is_string($user['password_hash'] ?? null)) {
+        if (!$user || ($user['auth_source'] ?? 'local') !== 'local' || !is_string($user['password_hash'] ?? null)) {
             self::equalizeTiming($password);
             return null;
         }
@@ -214,6 +214,10 @@ class UserModel
                     (new \App\Services\AdminDelegationPolicy())->assertUserChange($users, $user, array_replace($user, $data), $actor);
                 }
                 $user = $this->withAuthDefaults($user);
+                if (($user['auth_source'] ?? 'local') === 'external'
+                    && array_intersect(['password', 'role', 'groups', '2fa_secret', '2fa_enabled', 'recovery_codes', 'must_change_password'], array_keys($data)) !== []) {
+                    throw new \RuntimeException(lang('ExternalAuth.managed'));
+                }
                 $currentlyActiveAdmin = ($user['role'] ?? '') === 'admin' && empty($user['disabled']);
                 $nextRole = array_key_exists('role', $data) ? $data['role'] : $user['role'];
                 $nextDisabled = array_key_exists('disabled', $data) ? (bool)$data['disabled'] : $user['disabled'];
@@ -493,6 +497,7 @@ class UserModel
 
     private function withAuthDefaults(array $user): array
     {
+        $user['auth_source'] = $user['auth_source'] ?? 'local';
         $user['must_change_password'] = (bool)($user['must_change_password'] ?? false);
         $user['auth_version'] = max(1, (int)($user['auth_version'] ?? 1));
         $user['disabled'] = (bool)($user['disabled'] ?? false);

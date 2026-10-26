@@ -1,0 +1,12 @@
+# Operator-owned, read-only files. The PHP runtime user (www-data, uid 82 in
+# the Alpine image) must be able to read config and secrets. Never mount these
+# files below writable/ or inside a file-manager mount.
+services:
+  extplorer-app:
+    environment:
+      EXTPLORER_AUTH_CONFIG_FILE: /etc/extplorer-auth/auth.json
+    volumes:
+      - ./operator-auth:/etc/extplorer-auth:ro
+
+# Example auth.json client_secret_file: /etc/extplorer-auth/client-secret
+# Custom provider extension_path: /etc/extplorer-auth/providers

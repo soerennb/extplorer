@@ -44,6 +44,9 @@ cp -r app ${BUILD_DIR}/
 cp -r public ${BUILD_DIR}/
 cp -r resources ${BUILD_DIR}/
 cp -r vendor ${BUILD_DIR}/
+cp -r examples ${BUILD_DIR}/
+mkdir -p ${BUILD_DIR}/docs
+cp docs/authentication.md ${BUILD_DIR}/docs/
 cp LICENSE.md ${BUILD_DIR}/
 cp README.md ${BUILD_DIR}/
 cp spark ${BUILD_DIR}/

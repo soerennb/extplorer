@@ -815,5 +815,12 @@
     "webdav_load_failed": "WebDAV-Zugangsdaten konnten nicht geladen werden.",
     "webdav_create_failed": "WebDAV-Zugangsdaten konnten nicht erstellt werden.",
     "webdav_delete_failed": "WebDAV-Zugangsdaten konnten nicht widerrufen werden.",
-    "revoke": "Widerrufen"
+    "revoke": "Widerrufen",
+    "external_auth_sign_in": "Anmelden mit",
+    "external_auth_managed": "Anmeldung, Passwort und Zwei-Faktor-Authentifizierung werden von deinem Identitätsanbieter verwaltet.",
+    "external_auth_confirm": "Bestätige deine Identität beim Anmeldeanbieter in einem separaten Fenster. Deine Änderungen bleiben hier geöffnet.",
+    "external_auth_popup_blocked": "Erlaube Pop-up-Fenster für diese Website und versuche es erneut.",
+    "external_auth_failed": "Die Identität konnte nicht bestätigt werden. Bitte versuche es erneut.",
+    "external_auth_block_account": "Kontozugriff sperren",
+    "external_auth_waiting": "Bestätige deine Identität im geöffneten Fenster. Hier kannst du abbrechen."
 }

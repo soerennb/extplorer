@@ -11,6 +11,9 @@ How to download, install, and initialize the application.
 ### [Configuration Guide](configuration.md)
 Details on `env` variables, web server setup (Nginx/Apache), and security tuning.
 
+### [External Authentication](authentication.md)
+OpenID Connect, custom website adapters, account provisioning and provider reauthentication.
+
 ### [User Guide](user-guide.md)
 How to use the File Manager, Editor, and WebDAV features. Includes User Management instructions for Admins.
 

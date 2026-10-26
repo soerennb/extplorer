@@ -19,18 +19,37 @@ class Login extends BaseController
     public function index()
     {
         if (session()->get('isLoggedIn')) {
-            return redirect()->to('/');
+            return redirect()->to(site_url('/'));
         }
         $locale = $this->preferredLoginLocale();
         $translations = $this->loginTranslations($locale);
         $remoteLoginEnabled = (new RemoteEndpointPolicy())->directLoginEnabled();
+        $externalProviders = [];
+        try {
+            $configuration = new \App\Services\ExternalAuth\ExternalAuthConfiguration();
+            foreach ($configuration->providers() as $id => $_provider) {
+                $externalProviders[$id] = $configuration->provider($id)['label'];
+            }
+            $default = $configuration->defaultProvider();
+            if ($default !== null && $this->request->getGet('local') !== '1'
+                && $this->request->getGet('logged_out') !== '1' && $this->request->getGet('expired') !== '1') {
+                $return = $this->request->getGet('return');
+                return redirect()->to(site_url('login/external/' . $default) . '?' . http_build_query([
+                    'return' => self::safeReturnPath(is_string($return) ? $return : self::defaultReturnPath()),
+                ]));
+            }
+        } catch (\Throwable) {
+            // Invalid operator SSO configuration must not lock out local recovery access.
+            log_message('error', 'External authentication configuration is unavailable.');
+        }
 
         return view('login', [
             'expired' => $this->request->getGet('expired') === '1',
-            'return_to' => $this->safeReturnPath((string)($this->request->getGet('return') ?? '/')),
+            'return_to' => $this->safeReturnPath((string)($this->request->getGet('return') ?? self::defaultReturnPath())),
             'login_locale' => $locale,
             'login_t' => $translations,
             'remote_login_enabled' => $remoteLoginEnabled,
+            'external_providers' => $externalProviders,
         ]);
     }
 
@@ -50,7 +69,7 @@ class Login extends BaseController
         $username = is_string($usernameValue) ? $usernameValue : '';
         $password = is_string($passwordValue) ? $passwordValue : '';
         $rememberRequested = $this->request->getPost('remember_me') === '1';
-        $returnTo = $this->safeReturnPath((string)($this->request->getPost('return') ?? '/'));
+        $returnTo = self::returnUrl((string)($this->request->getPost('return') ?? self::defaultReturnPath()));
 
         $usernameKey = trim((string)$username);
         // A trusted device has its own failure limit; anonymous guessing
@@ -230,12 +249,33 @@ class Login extends BaseController
 
     public function logout()
     {
-        $response = redirect()->to('/login');
+        $target = site_url('login');
+        try {
+            if ((new \App\Services\ExternalAuth\ExternalAuthConfiguration())->defaultProvider() !== null) {
+                $target .= '?logged_out=1';
+            }
+        } catch (\Throwable) {
+            // Local recovery remains available when operator configuration is broken.
+        }
+        $response = redirect()->to($target);
         (new AuthenticationService())->logout($this->request, $response);
         return $response;
     }
 
-    private function safeReturnPath(string $returnTo): string
+    public static function defaultReturnPath(): string
+    {
+        return parse_url(site_url('/'), PHP_URL_PATH) ?: '/';
+    }
+
+    /** RedirectResponse::to treats paths as application-relative; use a fixed origin for full return paths. */
+    public static function returnUrl(string $returnTo): string
+    {
+        $parts = parse_url(base_url());
+        $origin = $parts['scheme'] . '://' . $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : '');
+        return $origin . self::safeReturnPath($returnTo);
+    }
+
+    public static function safeReturnPath(string $returnTo): string
     {
         $returnTo = trim($returnTo);
         if ($returnTo === '' || $returnTo[0] !== '/') {
@@ -320,6 +360,7 @@ class Login extends BaseController
             : array_merge($fallbackMessages, $this->loadLocaleMessages($locale));
 
         $keys = [
+            'external_auth_sign_in',
             'app_name',
             'authenticator_code',
             'authenticator_code_hint',

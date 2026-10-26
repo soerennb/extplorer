@@ -33,7 +33,7 @@ const AdminUsers = {
                 </thead>
                 <tbody>
                     <tr v-for="user in filteredUsers" :key="user.username">
-                        <td class="fw-semibold">{{ user.username }}</td>
+                        <td class="fw-semibold">{{ user.display_name || user.username }}<span v-if="user.auth_source === 'external'" class="d-block small text-muted">{{ t('external_auth_managed') }}</span></td>
                         <td>
                             <span v-for="g in (user.groups || [])" :key="g" class="badge bg-secondary me-1">{{ g }}</span>
                         </td>
@@ -70,7 +70,7 @@ const AdminUsers = {
                             {{ t('admin_users_field_password', 'Password') }}
                             {{ !isNew ? t('admin_users_leave_blank', '(Leave blank to keep)') : '' }}
                         </label>
-                        <input id="adminUserPassword" type="password" class="form-control form-control-sm" v-model="editingUser.password" autocomplete="new-password">
+                        <input id="adminUserPassword" type="password" class="form-control form-control-sm" v-model="editingUser.password" :disabled="editingUser.auth_source === 'external'" autocomplete="new-password">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small" for="adminUserHome">{{ t('admin_users_field_home', 'Home Dir') }}</label>
@@ -104,7 +104,7 @@ const AdminUsers = {
                         <label class="form-label small d-block">{{ t('admin_users_field_groups', 'Groups') }}</label>
                         <div class="d-flex flex-wrap gap-2">
                             <div v-for="(roles, gname) in groupsList" :key="gname" class="form-check small">
-                                <input class="form-check-input" type="checkbox" :id="'admin_chk_g_'+gname" :value="gname" v-model="editingUser.groups">
+                                <input class="form-check-input" type="checkbox" :id="'admin_chk_g_'+gname" :value="gname" v-model="editingUser.groups" :disabled="editingUser.auth_source === 'external'">
                                 <label class="form-check-label" :for="'admin_chk_g_'+gname">{{ gname }}</label>
                             </div>
                         </div>
@@ -122,6 +122,10 @@ const AdminUsers = {
                             <span v-for="perm in effectivePermissions.perms" :key="perm" class="badge bg-primary-subtle text-primary border border-primary-subtle admin-badge">{{ perm }}</span>
                         </div>
                     </div>
+                </div>
+                <div v-if="!isNew" class="form-check mt-3">
+                    <input id="adminUserDisabled" type="checkbox" class="form-check-input" v-model="editingUser.disabled" :disabled="editingUser.username === currentUsername">
+                    <label class="form-check-label small" for="adminUserDisabled">{{ t('external_auth_block_account') }}</label>
                 </div>
                 <div class="mt-3 text-end">
                     <button class="btn btn-secondary btn-sm me-2" @click="cancelEdit" :disabled="isSavingUser">{{ t('cancel', 'Cancel') }}</button>
@@ -243,6 +247,11 @@ const AdminUsers = {
                 } else {
                     const payload = { ...this.editingUser };
                     if (payload.password === '') delete payload.password;
+                    if (payload.auth_source === 'external') {
+                        delete payload.password;
+                        delete payload.role;
+                        delete payload.groups;
+                    }
                     await Api.put('users/' + this.editingUser.username, payload);
                 }
                 await this.loadUsers();

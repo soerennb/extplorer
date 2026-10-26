@@ -4,6 +4,10 @@ All notable changes to eXtplorer 3 are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Optional OIDC and custom website authentication with automatic local account provisioning, explicit group mappings, private Home directories, bounded browser sessions and provider reauthentication for sensitive changes. Local credentials and direct remote logins retain their separate authentication paths. See `docs/authentication.md` for configuration and lifecycle limits.
+
 ### Security
 
 - Isolate direct FTP/SFTP logins from local accounts with the same name. Remote sessions can only use remote file operations; profiles, two-factor enrollment, re-authentication, shares, transfers, trash, versions and mounts of the local account are no longer reachable. Audit entries record remote identities as `remote:<protocol>://<user>@<host>`.

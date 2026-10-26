@@ -136,3 +136,6 @@ CI_ENVIRONMENT = production
 #--------------------------------------------------------------------
 
 # logger.threshold = 4
+
+# Optional operator-owned external authentication configuration (outside writable/public).
+# EXTPLORER_AUTH_CONFIG_FILE = /etc/extplorer-auth/auth.json

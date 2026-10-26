@@ -136,3 +136,15 @@ It has no network, runs PHP without root, and installs the trusted test mailer
 outside writable storage as root. It verifies real delivery through a filename
 containing shell metacharacters, then refuses a read-only script owned by PHP
 and refuses an unmigrated legacy path. No real email is sent.
+
+## External authentication
+
+`node tests/e2e/external-auth.cjs [extracted-archive-directory]` starts its own
+TLS-enabled Keycloak 26.8.1 container (pinned digest), a separate website
+fixture and native PHP installations. It checks OIDC and the shipped custom
+adapter, provisioning, real provider reauthentication, CSRF/CSP behavior and
+logout at root/subdirectory URLs with and without `index.php`. Configuration
+and writable state are isolated. Only its own browser contexts, servers and
+container are closed on completion or handled failure. Docker, OpenSSL, PHP
+and the installed Playwright Chromium are required. The Quality workflow
+runs this independently of the existing local-login Docker smoke.

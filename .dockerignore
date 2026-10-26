@@ -30,3 +30,6 @@ phpunit.xml.dist
 README.md
 LICENSE.md
 build.sh
+
+# Operator-owned external authentication configuration and secrets
+operator-auth/

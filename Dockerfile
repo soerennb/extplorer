@@ -97,6 +97,7 @@ COPY --from=builder /image-version /image-version
 COPY --from=builder /image-content-sha256 /image-content-sha256
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY examples/auth /usr/local/share/extplorer-auth-examples
 COPY docker/init-code.sh /usr/local/bin/init-code
 COPY docker/apply-env-settings.php /usr/local/bin/apply-env-settings.php
 RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/init-code

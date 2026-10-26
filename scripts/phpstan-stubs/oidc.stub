@@ -1,0 +1,31 @@
+<?php
+
+// Upstream uses Psalm-only imported array aliases. PHPStan otherwise reads
+// these real, open OIDC parameter/claim maps as the empty shape array{}.
+namespace Facile\OpenIDClient\Service;
+
+final class AuthorizationService
+{
+    /** @param array<string, mixed> $params */
+    public function callback(
+        \Facile\OpenIDClient\Client\ClientInterface $client,
+        array $params,
+        ?string $redirectUri = null,
+        ?\Facile\OpenIDClient\Session\AuthSessionInterface $authSession = null,
+        ?int $maxAge = null
+    ): \Facile\OpenIDClient\Token\TokenSetInterface {}
+}
+
+namespace Facile\OpenIDClient\Token;
+
+interface TokenSetInterface
+{
+    /** @return array<string, mixed> */
+    public function claims(): array;
+}
+
+namespace Facile\OpenIDClient\Client;
+interface ClientInterface {}
+
+namespace Facile\OpenIDClient\Session;
+interface AuthSessionInterface {}

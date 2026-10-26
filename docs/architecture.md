@@ -73,10 +73,10 @@ transactions and use per-session or per-share operation locks.
 
 ## 4. Security Model
 
-* **Authentication:** Session-based, with optional remember-me tokens.
+* **Authentication:** Session-based, with optional remember-me tokens for local accounts. Operator-configured custom and OIDC providers share external identity provisioning and bounded sessions; see [external authentication](authentication.md).
 * **Authorization:** Role-Based Access Control with granular permissions and groups. Delegated administration is bounded by the actor’s current permissions and home subtree, including indirect group/role effects; validation and mutation share the authorization-state lock.
 * **Step-up authentication:** Sensitive administration mutations require the
-  current password once per authenticated session. The successful check is
+  current password or fresh external-provider authentication once per authenticated session. The successful check is
   reusable for 10 minutes across the existing user, role, group, settings and
   mount actions; it is stored only in the session and is invalidated by logout,
   session replacement, password/2FA changes or an `auth_version` change.

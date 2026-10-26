@@ -35,6 +35,23 @@ final class AuthenticationService
 
     public function startLocalSession(array $user, bool $remembered = false): bool
     {
+        if (($user['auth_source'] ?? 'local') !== 'local') return false;
+        return $this->startAccountSession($user, $remembered);
+    }
+
+    public function startExternalSession(array $user, string $provider, string $fingerprint, int $ttl): bool
+    {
+        if (($user['auth_source'] ?? '') !== 'external' || ($user['external_identity']['provider'] ?? null) !== $provider
+            || !$this->startAccountSession($user, false)) return false;
+        session()->set('external_auth', [
+            'provider' => $provider, 'fingerprint' => $fingerprint,
+            'identity' => $user['external_identity'], 'expires_at' => time() + $ttl,
+        ]);
+        return true;
+    }
+
+    private function startAccountSession(array $user, bool $remembered): bool
+    {
         $snapshot = $this->userModel->authorizationSnapshot((string)$user['username']);
         $current = $snapshot['user'] ?? null;
         if ($current === null || !empty($current['disabled'])
@@ -42,6 +59,7 @@ final class AuthenticationService
             || ($current['password_hash'] ?? null) !== ($user['password_hash'] ?? null)) return false;
         $user = $current;
         StepUpAuthenticationService::clearGrant();
+        session()->remove(['external_auth', 'external_auth_transactions']);
         session()->regenerate();
         session()->set([
             'isLoggedIn' => true,
@@ -63,6 +81,7 @@ final class AuthenticationService
     public function startRemoteSession(string $username, array $connection): void
     {
         StepUpAuthenticationService::clearGrant();
+        session()->remove(['external_auth', 'external_auth_transactions']);
         session()->regenerate();
         session()->set([
             'isLoggedIn' => true,

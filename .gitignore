@@ -193,3 +193,6 @@ temp_ci4/
 .beads-credential-key
 .beads/proxieddb/
 *.gate.lock*
+
+# Operator-owned external authentication configuration and secrets
+operator-auth/

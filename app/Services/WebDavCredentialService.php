@@ -33,6 +33,9 @@ final class WebDavCredentialService
     /** @return array{credential:array{id:string,label:string,created_at:int,last_used_at:int|null},secret:string} */
     public function create(string $username, string $label): array
     {
+        if (((new \App\Models\UserModel())->getUser($username)['auth_source'] ?? 'local') !== 'local') {
+            throw new RuntimeException(lang('ExternalAuth.managed'));
+        }
         $label = trim($label);
         if ($label === '' || mb_strlen($label) > 64) {
             throw new InvalidArgumentException('Credential label must contain 1 to 64 characters.');

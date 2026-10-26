@@ -815,5 +815,12 @@
     "webdav_load_failed": "Impossible de charger les identifiants WebDAV.",
     "webdav_create_failed": "Impossible de créer l’identifiant WebDAV.",
     "webdav_delete_failed": "Impossible de révoquer l’identifiant WebDAV.",
-    "revoke": "Révoquer"
+    "revoke": "Révoquer",
+    "external_auth_sign_in": "Se connecter avec",
+    "external_auth_managed": "La connexion, le mot de passe et l’authentification à deux facteurs sont gérés par votre fournisseur d’identité.",
+    "external_auth_confirm": "Confirmez votre identité dans une fenêtre séparée auprès de votre fournisseur. Vos modifications restent ouvertes ici.",
+    "external_auth_popup_blocked": "Autorisez les fenêtres contextuelles pour ce site et réessayez.",
+    "external_auth_failed": "La confirmation de l’identité a échoué. Veuillez réessayer.",
+    "external_auth_block_account": "Bloquer l’accès au compte",
+    "external_auth_waiting": "Confirmez votre identité dans la fenêtre ouverte. Vous pouvez annuler ici."
 }

@@ -66,6 +66,24 @@ final class StepUpAuthenticationService
             }
         }
 
+        return $this->grant($user);
+    }
+
+    /** Called only after the one-time provider transaction has been exchanged. */
+    public function issueExternalGrant(): string
+    {
+        $user = $this->userModel->getUser((string)session('username'));
+        if (!session('isLoggedIn') || !SessionAccount::isExternal() || !$user || !empty($user['disabled'])
+            || !\App\Services\ExternalAuth\ExternalSessionPolicy::isValid($user)
+            || (int)$user['auth_version'] !== (int)session('auth_version')) {
+            throw new RuntimeException('Re-authentication is required.');
+        }
+        return $this->grant($user);
+    }
+
+    private function grant(array $user): string
+    {
+        $username = (string)$user['username'];
         $token = bin2hex(random_bytes(32));
         $now = time();
         self::clearGrant();
@@ -84,6 +102,10 @@ final class StepUpAuthenticationService
     {
         if (!in_array($action, self::ACTIONS, true) || !session('isLoggedIn') || !SessionAccount::isLocal()) {
             return false;
+        }
+        if (SessionAccount::isExternal()) {
+            $user = $this->userModel->getUser((string)session('username'));
+            if (!$user || !\App\Services\ExternalAuth\ExternalSessionPolicy::isValid($user)) return false;
         }
 
         $grant = $this->activeGrant();

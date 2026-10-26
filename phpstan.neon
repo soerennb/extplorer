@@ -3,6 +3,8 @@ includes:
 
 parameters:
     level: 5
+    stubFiles:
+        - scripts/phpstan-stubs/oidc.stub
     dynamicConstantNames:
         - ENVIRONMENT
         - CI_DEBUG

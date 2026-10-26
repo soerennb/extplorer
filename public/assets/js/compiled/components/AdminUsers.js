@@ -1,7 +1,7 @@
 const AdminUsers = {
     render: ((Vue) => {
 const _Vue = Vue
-const { createElementVNode: _createElementVNode, createCommentVNode: _createCommentVNode } = _Vue
+const { createElementVNode: _createElementVNode, createCommentVNode: _createCommentVNode, createTextVNode: _createTextVNode } = _Vue
 
 const _hoisted_1 = { class: "d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3" }
 const _hoisted_2 = { class: "flex-grow-1" }
@@ -20,93 +20,106 @@ const _hoisted_8 = { class: "table table-striped table-hover small align-middle"
 const _hoisted_9 = { class: "sticky-top bg-body" }
 const _hoisted_10 = { class: "text-end" }
 const _hoisted_11 = { class: "fw-semibold" }
-const _hoisted_12 = { class: "text-muted small" }
-const _hoisted_13 = { class: "text-end" }
-const _hoisted_14 = ["onClick", "title", "aria-label"]
-const _hoisted_15 = ["onClick", "disabled", "title", "aria-label"]
-const _hoisted_16 = { key: 0 }
-const _hoisted_17 = {
+const _hoisted_12 = {
+  key: 0,
+  class: "d-block small text-muted"
+}
+const _hoisted_13 = { class: "text-muted small" }
+const _hoisted_14 = { class: "text-end" }
+const _hoisted_15 = ["onClick", "title", "aria-label"]
+const _hoisted_16 = ["onClick", "disabled", "title", "aria-label"]
+const _hoisted_17 = { key: 0 }
+const _hoisted_18 = {
   colspan: "4",
   class: "text-center text-muted py-4"
 }
-const _hoisted_18 = {
+const _hoisted_19 = {
   key: 1,
   class: "card mt-3 bg-body-tertiary border"
 }
-const _hoisted_19 = { class: "card-body" }
-const _hoisted_20 = { class: "d-flex align-items-center justify-content-between mb-2" }
-const _hoisted_21 = { class: "mb-0" }
-const _hoisted_22 = { class: "small text-muted" }
-const _hoisted_23 = { class: "row g-2" }
-const _hoisted_24 = {
+const _hoisted_20 = { class: "card-body" }
+const _hoisted_21 = { class: "d-flex align-items-center justify-content-between mb-2" }
+const _hoisted_22 = { class: "mb-0" }
+const _hoisted_23 = { class: "small text-muted" }
+const _hoisted_24 = { class: "row g-2" }
+const _hoisted_25 = {
   key: 0,
   class: "col-md-6"
 }
-const _hoisted_25 = {
+const _hoisted_26 = {
   class: "form-label small",
   for: "adminUserUsername"
 }
-const _hoisted_26 = ["onUpdate:modelValue"]
-const _hoisted_27 = { class: "col-md-6" }
-const _hoisted_28 = {
+const _hoisted_27 = ["onUpdate:modelValue"]
+const _hoisted_28 = { class: "col-md-6" }
+const _hoisted_29 = {
   class: "form-label small",
   for: "adminUserPassword"
 }
-const _hoisted_29 = ["onUpdate:modelValue"]
-const _hoisted_30 = { class: "col-md-6" }
-const _hoisted_31 = {
+const _hoisted_30 = ["onUpdate:modelValue", "disabled"]
+const _hoisted_31 = { class: "col-md-6" }
+const _hoisted_32 = {
   class: "form-label small",
   for: "adminUserHome"
 }
-const _hoisted_32 = ["onUpdate:modelValue"]
-const _hoisted_33 = { class: "col-md-6" }
-const _hoisted_34 = {
+const _hoisted_33 = ["onUpdate:modelValue"]
+const _hoisted_34 = { class: "col-md-6" }
+const _hoisted_35 = {
   class: "form-label small",
   for: "adminUserAllowedExt"
 }
-const _hoisted_35 = ["onUpdate:modelValue", "placeholder"]
-const _hoisted_36 = { class: "col-md-6" }
-const _hoisted_37 = {
+const _hoisted_36 = ["onUpdate:modelValue", "placeholder"]
+const _hoisted_37 = { class: "col-md-6" }
+const _hoisted_38 = {
   class: "form-label small",
   for: "adminUserBlockedExt"
 }
-const _hoisted_38 = ["onUpdate:modelValue", "placeholder"]
-const _hoisted_39 = {
+const _hoisted_39 = ["onUpdate:modelValue", "placeholder"]
+const _hoisted_40 = {
   key: 0,
   class: "mt-1"
 }
-const _hoisted_40 = { class: "small text-muted d-block admin-note" }
-const _hoisted_41 = { class: "col-md-12" }
-const _hoisted_42 = { class: "form-label small d-block" }
-const _hoisted_43 = { class: "d-flex flex-wrap gap-2" }
-const _hoisted_44 = ["id", "value", "onUpdate:modelValue"]
-const _hoisted_45 = ["for"]
-const _hoisted_46 = {
+const _hoisted_41 = { class: "small text-muted d-block admin-note" }
+const _hoisted_42 = { class: "col-md-12" }
+const _hoisted_43 = { class: "form-label small d-block" }
+const _hoisted_44 = { class: "d-flex flex-wrap gap-2" }
+const _hoisted_45 = ["id", "value", "onUpdate:modelValue", "disabled"]
+const _hoisted_46 = ["for"]
+const _hoisted_47 = {
   key: 1,
   class: "col-md-12"
 }
-const _hoisted_47 = { class: "d-flex align-items-center justify-content-between" }
-const _hoisted_48 = { class: "form-label small fw-bold mb-1" }
-const _hoisted_49 = ["onClick", "disabled"]
-const _hoisted_50 = {
+const _hoisted_48 = { class: "d-flex align-items-center justify-content-between" }
+const _hoisted_49 = { class: "form-label small fw-bold mb-1" }
+const _hoisted_50 = ["onClick", "disabled"]
+const _hoisted_51 = {
   key: 0,
   class: "text-muted small"
 }
-const _hoisted_51 = {
+const _hoisted_52 = {
   key: 1,
   class: "text-muted small"
 }
-const _hoisted_52 = {
+const _hoisted_53 = {
   key: 2,
   class: "d-flex flex-wrap gap-1"
 }
-const _hoisted_53 = { class: "mt-3 text-end" }
-const _hoisted_54 = ["onClick", "disabled"]
-const _hoisted_55 = ["onClick", "disabled"]
+const _hoisted_54 = {
+  key: 0,
+  class: "form-check mt-3"
+}
+const _hoisted_55 = ["onUpdate:modelValue", "disabled"]
+const _hoisted_56 = {
+  class: "form-check-label small",
+  for: "adminUserDisabled"
+}
+const _hoisted_57 = { class: "mt-3 text-end" }
+const _hoisted_58 = ["onClick", "disabled"]
+const _hoisted_59 = ["onClick", "disabled"]
 
 return function render(_ctx, _cache) {
   with (_ctx) {
-    const { toDisplayString: _toDisplayString, createElementVNode: _createElementVNode, vModelText: _vModelText, withDirectives: _withDirectives, openBlock: _openBlock, createElementBlock: _createElementBlock, createCommentVNode: _createCommentVNode, renderList: _renderList, Fragment: _Fragment, vModelCheckbox: _vModelCheckbox } = _Vue
+    const { toDisplayString: _toDisplayString, createElementVNode: _createElementVNode, vModelText: _vModelText, withDirectives: _withDirectives, openBlock: _openBlock, createElementBlock: _createElementBlock, createCommentVNode: _createCommentVNode, renderList: _renderList, Fragment: _Fragment, createTextVNode: _createTextVNode, vModelCheckbox: _vModelCheckbox } = _Vue
 
     return (_openBlock(), _createElementBlock("div", null, [
       _createElementVNode("div", _hoisted_1, [
@@ -156,7 +169,12 @@ return function render(_ctx, _cache) {
           _createElementVNode("tbody", null, [
             (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(filteredUsers, (user) => {
               return (_openBlock(), _createElementBlock("tr", { key: user.username }, [
-                _createElementVNode("td", _hoisted_11, _toDisplayString(user.username), 1 /* TEXT */),
+                _createElementVNode("td", _hoisted_11, [
+                  _createTextVNode(_toDisplayString(user.display_name || user.username), 1 /* TEXT */),
+                  (user.auth_source === 'external')
+                    ? (_openBlock(), _createElementBlock("span", _hoisted_12, _toDisplayString(t('external_auth_managed')), 1 /* TEXT */))
+                    : _createCommentVNode("v-if", true)
+                ]),
                 _createElementVNode("td", null, [
                   (_openBlock(true), _createElementBlock(_Fragment, null, _renderList((user.groups || []), (g) => {
                     return (_openBlock(), _createElementBlock("span", {
@@ -165,8 +183,8 @@ return function render(_ctx, _cache) {
                     }, _toDisplayString(g), 1 /* TEXT */))
                   }), 128 /* KEYED_FRAGMENT */))
                 ]),
-                _createElementVNode("td", _hoisted_12, _toDisplayString(user.home_dir), 1 /* TEXT */),
-                _createElementVNode("td", _hoisted_13, [
+                _createElementVNode("td", _hoisted_13, _toDisplayString(user.home_dir), 1 /* TEXT */),
+                _createElementVNode("td", _hoisted_14, [
                   _createElementVNode("button", {
                     class: "btn btn-sm btn-outline-primary me-1",
                     onClick: $event => (editUser(user)),
@@ -177,7 +195,7 @@ return function render(_ctx, _cache) {
                       class: "ri-edit-line",
                       "aria-hidden": "true"
                     }, null, -1 /* CACHED */)
-                  ]))], 8 /* PROPS */, _hoisted_14),
+                  ]))], 8 /* PROPS */, _hoisted_15),
                   _createElementVNode("button", {
                     class: "btn btn-sm btn-outline-danger",
                     onClick: $event => (deleteUser(user)),
@@ -189,89 +207,90 @@ return function render(_ctx, _cache) {
                       class: "ri-delete-bin-line",
                       "aria-hidden": "true"
                     }, null, -1 /* CACHED */)
-                  ]))], 8 /* PROPS */, _hoisted_15)
+                  ]))], 8 /* PROPS */, _hoisted_16)
                 ])
               ]))
             }), 128 /* KEYED_FRAGMENT */)),
             (filteredUsers.length === 0)
-              ? (_openBlock(), _createElementBlock("tr", _hoisted_16, [
-                  _createElementVNode("td", _hoisted_17, _toDisplayString(t('admin_users_empty', 'No users match your filter.')), 1 /* TEXT */)
+              ? (_openBlock(), _createElementBlock("tr", _hoisted_17, [
+                  _createElementVNode("td", _hoisted_18, _toDisplayString(t('admin_users_empty', 'No users match your filter.')), 1 /* TEXT */)
                 ]))
               : _createCommentVNode("v-if", true)
           ])
         ])
       ]),
       editingUser
-        ? (_openBlock(), _createElementBlock("div", _hoisted_18, [
-            _createElementVNode("div", _hoisted_19, [
-              _createElementVNode("div", _hoisted_20, [
-                _createElementVNode("h6", _hoisted_21, _toDisplayString(isNew ? t('admin_users_add', 'Add User') : t('admin_users_edit_prefix', 'Edit User: ') + editingUser.username), 1 /* TEXT */),
-                _createElementVNode("div", _hoisted_22, _toDisplayString(t('admin_users_changes_apply', 'Changes apply immediately on save.')), 1 /* TEXT */)
+        ? (_openBlock(), _createElementBlock("div", _hoisted_19, [
+            _createElementVNode("div", _hoisted_20, [
+              _createElementVNode("div", _hoisted_21, [
+                _createElementVNode("h6", _hoisted_22, _toDisplayString(isNew ? t('admin_users_add', 'Add User') : t('admin_users_edit_prefix', 'Edit User: ') + editingUser.username), 1 /* TEXT */),
+                _createElementVNode("div", _hoisted_23, _toDisplayString(t('admin_users_changes_apply', 'Changes apply immediately on save.')), 1 /* TEXT */)
               ]),
-              _createElementVNode("div", _hoisted_23, [
+              _createElementVNode("div", _hoisted_24, [
                 isNew
-                  ? (_openBlock(), _createElementBlock("div", _hoisted_24, [
-                      _createElementVNode("label", _hoisted_25, _toDisplayString(t('admin_users_field_username', 'Username')), 1 /* TEXT */),
+                  ? (_openBlock(), _createElementBlock("div", _hoisted_25, [
+                      _createElementVNode("label", _hoisted_26, _toDisplayString(t('admin_users_field_username', 'Username')), 1 /* TEXT */),
                       _withDirectives(_createElementVNode("input", {
                         id: "adminUserUsername",
                         type: "text",
                         class: "form-control form-control-sm",
                         "onUpdate:modelValue": $event => ((editingUser.username) = $event),
                         autocomplete: "username"
-                      }, null, 8 /* PROPS */, _hoisted_26), [
+                      }, null, 8 /* PROPS */, _hoisted_27), [
                         [_vModelText, editingUser.username]
                       ])
                     ]))
                   : _createCommentVNode("v-if", true),
-                _createElementVNode("div", _hoisted_27, [
-                  _createElementVNode("label", _hoisted_28, _toDisplayString(t('admin_users_field_password', 'Password')) + " " + _toDisplayString(!isNew ? t('admin_users_leave_blank', '(Leave blank to keep)') : ''), 1 /* TEXT */),
+                _createElementVNode("div", _hoisted_28, [
+                  _createElementVNode("label", _hoisted_29, _toDisplayString(t('admin_users_field_password', 'Password')) + " " + _toDisplayString(!isNew ? t('admin_users_leave_blank', '(Leave blank to keep)') : ''), 1 /* TEXT */),
                   _withDirectives(_createElementVNode("input", {
                     id: "adminUserPassword",
                     type: "password",
                     class: "form-control form-control-sm",
                     "onUpdate:modelValue": $event => ((editingUser.password) = $event),
+                    disabled: editingUser.auth_source === 'external',
                     autocomplete: "new-password"
-                  }, null, 8 /* PROPS */, _hoisted_29), [
+                  }, null, 8 /* PROPS */, _hoisted_30), [
                     [_vModelText, editingUser.password]
                   ])
                 ]),
-                _createElementVNode("div", _hoisted_30, [
-                  _createElementVNode("label", _hoisted_31, _toDisplayString(t('admin_users_field_home', 'Home Dir')), 1 /* TEXT */),
+                _createElementVNode("div", _hoisted_31, [
+                  _createElementVNode("label", _hoisted_32, _toDisplayString(t('admin_users_field_home', 'Home Dir')), 1 /* TEXT */),
                   _withDirectives(_createElementVNode("input", {
                     id: "adminUserHome",
                     type: "text",
                     class: "form-control form-control-sm",
                     "onUpdate:modelValue": $event => ((editingUser.home_dir) = $event)
-                  }, null, 8 /* PROPS */, _hoisted_32), [
+                  }, null, 8 /* PROPS */, _hoisted_33), [
                     [_vModelText, editingUser.home_dir]
                   ])
                 ]),
-                _createElementVNode("div", _hoisted_33, [
-                  _createElementVNode("label", _hoisted_34, _toDisplayString(t('admin_users_field_allowed_ext', 'Allowed Extensions (csv)')), 1 /* TEXT */),
+                _createElementVNode("div", _hoisted_34, [
+                  _createElementVNode("label", _hoisted_35, _toDisplayString(t('admin_users_field_allowed_ext', 'Allowed Extensions (csv)')), 1 /* TEXT */),
                   _withDirectives(_createElementVNode("input", {
                     type: "text",
                     id: "adminUserAllowedExt",
                     class: "form-control form-control-sm",
                     "onUpdate:modelValue": $event => ((editingUser.allowed_extensions) = $event),
                     placeholder: t('admin_users_allowed_ext_placeholder', 'e.g. jpg,png,pdf')
-                  }, null, 8 /* PROPS */, _hoisted_35), [
+                  }, null, 8 /* PROPS */, _hoisted_36), [
                     [_vModelText, editingUser.allowed_extensions]
                   ])
                 ]),
-                _createElementVNode("div", _hoisted_36, [
-                  _createElementVNode("label", _hoisted_37, _toDisplayString(t('admin_users_field_blocked_ext', 'Blocked Extensions (csv)')), 1 /* TEXT */),
+                _createElementVNode("div", _hoisted_37, [
+                  _createElementVNode("label", _hoisted_38, _toDisplayString(t('admin_users_field_blocked_ext', 'Blocked Extensions (csv)')), 1 /* TEXT */),
                   _withDirectives(_createElementVNode("input", {
                     type: "text",
                     id: "adminUserBlockedExt",
                     class: "form-control form-control-sm",
                     "onUpdate:modelValue": $event => ((editingUser.blocked_extensions) = $event),
                     placeholder: t('admin_users_blocked_ext_placeholder', 'e.g. php,exe')
-                  }, null, 8 /* PROPS */, _hoisted_38), [
+                  }, null, 8 /* PROPS */, _hoisted_39), [
                     [_vModelText, editingUser.blocked_extensions]
                   ]),
                   (systemBlocklist.length)
-                    ? (_openBlock(), _createElementBlock("div", _hoisted_39, [
-                        _createElementVNode("span", _hoisted_40, _toDisplayString(t('admin_users_system_blocklist', 'System Blocklist (Always Applied):')), 1 /* TEXT */),
+                    ? (_openBlock(), _createElementBlock("div", _hoisted_40, [
+                        _createElementVNode("span", _hoisted_41, _toDisplayString(t('admin_users_system_blocklist', 'System Blocklist (Always Applied):')), 1 /* TEXT */),
                         (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(systemBlocklist, (ext) => {
                           return (_openBlock(), _createElementBlock("span", {
                             key: ext,
@@ -281,9 +300,9 @@ return function render(_ctx, _cache) {
                       ]))
                     : _createCommentVNode("v-if", true)
                 ]),
-                _createElementVNode("div", _hoisted_41, [
-                  _createElementVNode("label", _hoisted_42, _toDisplayString(t('admin_users_field_groups', 'Groups')), 1 /* TEXT */),
-                  _createElementVNode("div", _hoisted_43, [
+                _createElementVNode("div", _hoisted_42, [
+                  _createElementVNode("label", _hoisted_43, _toDisplayString(t('admin_users_field_groups', 'Groups')), 1 /* TEXT */),
+                  _createElementVNode("div", _hoisted_44, [
                     (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(groupsList, (roles, gname) => {
                       return (_openBlock(), _createElementBlock("div", {
                         key: gname,
@@ -294,33 +313,34 @@ return function render(_ctx, _cache) {
                           type: "checkbox",
                           id: 'admin_chk_g_'+gname,
                           value: gname,
-                          "onUpdate:modelValue": $event => ((editingUser.groups) = $event)
-                        }, null, 8 /* PROPS */, _hoisted_44), [
+                          "onUpdate:modelValue": $event => ((editingUser.groups) = $event),
+                          disabled: editingUser.auth_source === 'external'
+                        }, null, 8 /* PROPS */, _hoisted_45), [
                           [_vModelCheckbox, editingUser.groups]
                         ]),
                         _createElementVNode("label", {
                           class: "form-check-label",
                           for: 'admin_chk_g_'+gname
-                        }, _toDisplayString(gname), 9 /* TEXT, PROPS */, _hoisted_45)
+                        }, _toDisplayString(gname), 9 /* TEXT, PROPS */, _hoisted_46)
                       ]))
                     }), 128 /* KEYED_FRAGMENT */))
                   ])
                 ]),
                 (!isNew)
-                  ? (_openBlock(), _createElementBlock("div", _hoisted_46, [
-                      _createElementVNode("div", _hoisted_47, [
-                        _createElementVNode("label", _hoisted_48, _toDisplayString(t('admin_users_effective_perms', 'Effective Permissions')), 1 /* TEXT */),
+                  ? (_openBlock(), _createElementBlock("div", _hoisted_47, [
+                      _createElementVNode("div", _hoisted_48, [
+                        _createElementVNode("label", _hoisted_49, _toDisplayString(t('admin_users_effective_perms', 'Effective Permissions')), 1 /* TEXT */),
                         _createElementVNode("button", {
                           class: "btn btn-outline-secondary btn-sm py-0 px-2",
                           onClick: $event => (loadEffectivePermissions(editingUser.username)),
                           disabled: effectivePermissions.loading
-                        }, _toDisplayString(effectivePermissions.loading ? '…' : t('admin_users_refresh', 'Refresh')), 9 /* TEXT, PROPS */, _hoisted_49)
+                        }, _toDisplayString(effectivePermissions.loading ? '…' : t('admin_users_refresh', 'Refresh')), 9 /* TEXT, PROPS */, _hoisted_50)
                       ]),
                       (effectivePermissions.loading)
-                        ? (_openBlock(), _createElementBlock("div", _hoisted_50, _toDisplayString(t('admin_users_loading_perms', 'Loading permissions…')), 1 /* TEXT */))
+                        ? (_openBlock(), _createElementBlock("div", _hoisted_51, _toDisplayString(t('admin_users_loading_perms', 'Loading permissions…')), 1 /* TEXT */))
                         : (effectivePermissions.perms.length === 0)
-                          ? (_openBlock(), _createElementBlock("div", _hoisted_51, _toDisplayString(t('admin_users_no_perms', 'No permissions resolved.')), 1 /* TEXT */))
-                          : (_openBlock(), _createElementBlock("div", _hoisted_52, [
+                          ? (_openBlock(), _createElementBlock("div", _hoisted_52, _toDisplayString(t('admin_users_no_perms', 'No permissions resolved.')), 1 /* TEXT */))
+                          : (_openBlock(), _createElementBlock("div", _hoisted_53, [
                               (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(effectivePermissions.perms, (perm) => {
                                 return (_openBlock(), _createElementBlock("span", {
                                   key: perm,
@@ -331,17 +351,31 @@ return function render(_ctx, _cache) {
                     ]))
                   : _createCommentVNode("v-if", true)
               ]),
-              _createElementVNode("div", _hoisted_53, [
+              (!isNew)
+                ? (_openBlock(), _createElementBlock("div", _hoisted_54, [
+                    _withDirectives(_createElementVNode("input", {
+                      id: "adminUserDisabled",
+                      type: "checkbox",
+                      class: "form-check-input",
+                      "onUpdate:modelValue": $event => ((editingUser.disabled) = $event),
+                      disabled: editingUser.username === currentUsername
+                    }, null, 8 /* PROPS */, _hoisted_55), [
+                      [_vModelCheckbox, editingUser.disabled]
+                    ]),
+                    _createElementVNode("label", _hoisted_56, _toDisplayString(t('external_auth_block_account')), 1 /* TEXT */)
+                  ]))
+                : _createCommentVNode("v-if", true),
+              _createElementVNode("div", _hoisted_57, [
                 _createElementVNode("button", {
                   class: "btn btn-secondary btn-sm me-2",
                   onClick: cancelEdit,
                   disabled: isSavingUser
-                }, _toDisplayString(t('cancel', 'Cancel')), 9 /* TEXT, PROPS */, _hoisted_54),
+                }, _toDisplayString(t('cancel', 'Cancel')), 9 /* TEXT, PROPS */, _hoisted_58),
                 _createElementVNode("button", {
                   class: "btn btn-primary btn-sm",
                   onClick: saveUser,
                   disabled: isSavingUser
-                }, _toDisplayString(isSavingUser ? t('admin_saving', 'Saving…') : t('save', 'Save')), 9 /* TEXT, PROPS */, _hoisted_55)
+                }, _toDisplayString(isSavingUser ? t('admin_saving', 'Saving…') : t('save', 'Save')), 9 /* TEXT, PROPS */, _hoisted_59)
               ])
             ])
           ]))
@@ -460,6 +494,11 @@ return function render(_ctx, _cache) {
                 } else {
                     const payload = { ...this.editingUser };
                     if (payload.password === '') delete payload.password;
+                    if (payload.auth_source === 'external') {
+                        delete payload.password;
+                        delete payload.role;
+                        delete payload.groups;
+                    }
                     await Api.put('users/' + this.editingUser.username, payload);
                 }
                 await this.loadUsers();

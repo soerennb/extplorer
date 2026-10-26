@@ -152,6 +152,9 @@ jobs:
           cp -r app release/
           cp -r public release/
           cp -r vendor release/
+          cp -r examples release/
+          mkdir -p release/docs
+          cp docs/authentication.md release/docs/
           cp LICENSE.md README.md spark .htaccess nginx.conf.example release/
           cd release && zip -r "../eXtplorer-${VERSION}-release.zip" .
 

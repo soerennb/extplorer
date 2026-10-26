@@ -505,3 +505,9 @@ After changing these, restart PHP-FPM:
 ```bash
 sudo systemctl restart php8.1-fpm
 ```
+
+## External authentication
+
+Set `EXTPLORER_AUTH_CONFIG_FILE` to an operator-controlled JSON file to enable
+OpenID Connect or custom website authentication. See [external authentication](authentication.md)
+for provider configuration, rights mapping, bounded sessions and Docker examples.

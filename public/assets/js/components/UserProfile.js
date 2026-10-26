@@ -83,7 +83,7 @@ const UserProfile = {
                         <div v-if="loading" class="text-center py-4"><div class="spinner-border" role="status" :aria-label="t('loading') || 'Loading'"></div></div>
                         <div v-else class="row">
                             <label class="col-sm-3 col-form-label fw-bold" for="profile-username">{{ t('username') || 'Username' }}</label>
-                            <div class="col-sm-9"><input id="profile-username" type="text" readonly class="form-control-plaintext" :value="details.username"></div>
+                            <div class="col-sm-9"><input id="profile-username" type="text" readonly class="form-control-plaintext" :value="details.display_name || details.username"></div>
 
                             <label class="col-sm-3 col-form-label fw-bold" for="profile-role">{{ t('role') || 'Role' }}</label>
                             <div class="col-sm-9"><input id="profile-role" type="text" readonly class="form-control-plaintext" :value="details.role"></div>
@@ -139,6 +139,8 @@ const UserProfile = {
                         aria-labelledby="profile-tab-security"
                         tabindex="0"
                     >
+                        <p v-if="details.auth_source === 'external'" class="text-muted" role="status">{{ t('external_auth_managed') }}</p>
+                        <template v-else>
                         <h6 class="border-bottom pb-2 mb-3">{{ t('change_password') || 'Change Password' }}</h6>
 
                         <div v-if="passwordMessage.text" class="alert" :class="passwordMessage.type === 'success' ? 'alert-success' : 'alert-danger'" role="alert">
@@ -374,6 +376,7 @@ const UserProfile = {
                             </div>
                         </div>
                         <div v-else-if="!webDavLoading" class="small text-muted">{{ t('webdav_empty') || 'No WebDAV app passwords.' }}</div>
+                        </template>
                     </div>
 
                     <div
@@ -648,7 +651,7 @@ const UserProfile = {
             if (nextTab === 'mounts') {
                 resetMountMessages();
                 await loadMounts();
-            } else if (nextTab === 'security') {
+            } else if (nextTab === 'security' && !window.externalAuthentication) {
                 await loadWebDavCredentials();
             }
         };

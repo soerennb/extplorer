@@ -27,6 +27,7 @@ final class SystemReadiness extends BaseCommand
             (new \App\Services\StorageBoundaryPolicy())->assertSafe();
             (new StorageSchemaService())->ensure();
             AtomicFileStore::verifyBackend();
+            (new \App\Services\ExternalAuth\ExternalAuthConfiguration())->assertReady();
             CLI::write('ready');
             return EXIT_SUCCESS;
         } catch (Throwable $exception) {

@@ -9,6 +9,8 @@ $routes->get('/', 'Home::index');
 $routes->get('admin', 'Home::admin');
 $routes->get('health', 'Health::index');
 $routes->get('login', 'Login::index');
+$routes->get('login/external/(:segment)', 'ExternalLogin::begin/$1');
+$routes->get('login/external/(:segment)/callback', 'ExternalLogin::callback/$1');
 $routes->post('login/auth', 'Login::auth');
 $routes->post('login/test-remote', 'Login::testRemote');
 $routes->post('logout', 'Login::logout');
@@ -98,6 +100,8 @@ $routes->group('api', function($routes) {
     $routes->post('settings/validate-email', 'SettingsController::validateEmail');
 
     $routes->post('security/step-up', 'StepUpController::create');
+    $routes->post('security/step-up/exchange', 'StepUpController::exchange');
+    $routes->post('security/step-up/cancel', 'StepUpController::cancel');
 
     $routes->get('system', 'UserAdminController::systemInfo');
     $routes->get('logs', 'UserAdminController::getLogs');

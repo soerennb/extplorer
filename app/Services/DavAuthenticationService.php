@@ -20,7 +20,7 @@ final class DavAuthenticationService
     public function authenticate(string $username, string $password): ?array
     {
         $user = $this->users->getUser($username);
-        if (!is_array($user) || !empty($user['disabled'])) {
+        if (!is_array($user) || !empty($user['disabled']) || ($user['auth_source'] ?? 'local') !== 'local') {
             return null;
         }
 

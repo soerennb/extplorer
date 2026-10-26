@@ -134,6 +134,10 @@ class AuthFilter implements FilterInterface
             return false;
         }
 
+        if (($user['auth_source'] ?? 'local') === 'external' || session('external_auth') !== null) {
+            if (($user['auth_source'] ?? '') !== 'external' || !\App\Services\ExternalAuth\ExternalSessionPolicy::isValid($user)) return false;
+        }
+
         $sessionVersion = (int)session('auth_version');
         $currentVersion = (int)($user['auth_version'] ?? 1);
         if ($sessionVersion <= 0) {
@@ -160,6 +164,8 @@ class AuthFilter implements FilterInterface
             'force_password_change',
             'remembered_login',
             'last_activity_ts',
+            'external_auth',
+            'external_auth_transactions',
         ]);
         session()->destroy();
     }

@@ -28,6 +28,7 @@ class RememberMeService
     public function remember(string $username, ?ResponseInterface $response = null): void
     {
         $user = $this->userModel->getUser($username);
+        if (($user['auth_source'] ?? 'local') !== 'local') return;
         if (!$user || !empty($user['disabled'])) {
             return;
         }

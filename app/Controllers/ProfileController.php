@@ -14,6 +14,13 @@ class ProfileController extends BaseController
 {
     use ApiResponseTrait;
 
+    private function externalSecurityDenied()
+    {
+        $user = (new UserModel())->getUser((string)SessionAccount::localUsername());
+        return ($user['auth_source'] ?? 'local') === 'external'
+            ? $this->fail(lang('ExternalAuth.managed'), 403, 'external_account_managed') : null;
+    }
+
     private function requireStepUp(string $action)
     {
         if ((new StepUpAuthenticationService())->consume($this->request, $action)) {
@@ -24,6 +31,7 @@ class ProfileController extends BaseController
 
     public function webDavCredentials()
     {
+        if (($managed = $this->externalSecurityDenied()) !== null) return $managed;
         $username = (string)SessionAccount::localUsername();
         if ($username === '') return $this->failForbidden('Not logged in');
         $this->response->setHeader('Cache-Control', 'no-store');
@@ -32,6 +40,7 @@ class ProfileController extends BaseController
 
     public function createWebDavCredential()
     {
+        if (($managed = $this->externalSecurityDenied()) !== null) return $managed;
         if (($stepUp = $this->requireStepUp('webdav-credential.create')) !== true) return $stepUp;
         $username = (string)SessionAccount::localUsername();
         $json = $this->request->getJSON(true);
@@ -49,6 +58,7 @@ class ProfileController extends BaseController
 
     public function deleteWebDavCredential(?string $id = null)
     {
+        if (($managed = $this->externalSecurityDenied()) !== null) return $managed;
         if (($stepUp = $this->requireStepUp('webdav-credential.delete')) !== true) return $stepUp;
         if (!is_string($id) || preg_match('/\A[a-f0-9]{32}\z/', $id) !== 1) return $this->failNotFound();
         $username = (string)SessionAccount::localUsername();
@@ -84,6 +94,8 @@ class ProfileController extends BaseController
         return $this->respond([
             'username' => $user['username'],
             'role' => $user['role'],
+            'auth_source' => $user['auth_source'] ?? 'local',
+            'display_name' => $user['display_name'] ?? $user['username'],
             'home_dir' => $user['home_dir'],
             '2fa_enabled' => $user['2fa_enabled'] ?? false,
             'allowed_extensions' => $user['allowed_extensions'] ?? '',
@@ -94,6 +106,7 @@ class ProfileController extends BaseController
 
     public function setup2fa()
     {
+        if (($managed = $this->externalSecurityDenied()) !== null) return $managed;
         $username = SessionAccount::localUsername();
         if (!$username) return $this->failForbidden('Not logged in');
 
@@ -113,6 +126,7 @@ class ProfileController extends BaseController
 
     public function enable2fa()
     {
+        if (($managed = $this->externalSecurityDenied()) !== null) return $managed;
         $username = SessionAccount::localUsername();
         if (!$username) return $this->failForbidden('Not logged in');
         // Enrollment replaces the second factor and revokes other credentials;
@@ -162,6 +176,7 @@ class ProfileController extends BaseController
 
     public function disable2fa()
     {
+        if (($managed = $this->externalSecurityDenied()) !== null) return $managed;
         $username = SessionAccount::localUsername();
         if (!$username) return $this->failForbidden('Not logged in');
 
@@ -215,6 +230,7 @@ class ProfileController extends BaseController
 
     public function updatePassword()
     {
+        if (($managed = $this->externalSecurityDenied()) !== null) return $managed;
         $json = $this->request->getJSON();
         $password = $json->password ?? '';
         $oldPassword = $json->old_password ?? '';

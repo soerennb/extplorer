@@ -11,6 +11,11 @@ namespace App\Services;
  */
 final class SessionAccount
 {
+    public static function isExternal(): bool
+    {
+        return self::isLocal() && is_array(session('external_auth'));
+    }
+
     public static function connectionMode(): string
     {
         $connection = session('connection');

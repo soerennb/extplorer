@@ -13,9 +13,12 @@
         "php": "^8.2",
         "bacon/bacon-qr-code": "^3.0",
         "codeigniter4/framework": "^4.7",
+        "facile-it/php-openid-client": "^1.0",
+        "nyholm/psr7": "^1.8",
         "phpseclib/phpseclib": "^4.0.2",
         "sabre/dav": "^4.7",
-        "spomky-labs/otphp": "^11.5"
+        "spomky-labs/otphp": "^11.5",
+        "symfony/http-client": "^7.4"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9",
@@ -43,7 +46,10 @@
             "php": "8.2.0"
         },
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": false
+        }
     },
     "scripts": {
         "i18n:build": "node scripts/build-i18n.js",

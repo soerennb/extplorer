@@ -101,6 +101,9 @@ const Api = {
 
         this.stepUpDialogOpen = true;
         try {
+            if (window.externalAuthentication) {
+                return await this.requestExternalStepUp(action);
+            }
             if (!window.Swal || typeof Swal.fire !== 'function') {
                 return null;
             }
@@ -140,6 +143,62 @@ const Api = {
             return typeof response.token === 'string' ? response.token : null;
         } finally {
             this.stepUpDialogOpen = false;
+        }
+    },
+    async requestExternalStepUp(action) {
+        const t = (key) => window.i18n ? i18n.t(key) : key;
+        let popup = null;
+        let transaction = null;
+        let waiting = false;
+        let finished = false;
+        let cancelled = false;
+        try {
+            const confirmation = await Swal.fire({
+                icon: 'info', title: t('step_up_title'), text: t('external_auth_confirm'),
+                showCancelButton: true, confirmButtonText: t('step_up_confirm'), cancelButtonText: t('cancel'),
+                preConfirm: () => {
+                    // Open on the click, before any network await, to avoid popup blocking.
+                    popup = window.open('about:blank', '_blank', 'popup,width=540,height=720');
+                    if (!popup) {
+                        Swal.showValidationMessage(t('external_auth_popup_blocked'));
+                        return false;
+                    }
+                    popup.opener = null;
+                    return true;
+                }
+            });
+            if (!confirmation.isConfirmed || !popup) return null;
+            transaction = await this.request('security/step-up', 'POST', { action }, null, true);
+            const start = new URL(transaction.start_url, window.location.href);
+            if (transaction.method !== 'external' || start.origin !== window.location.origin) throw new Error(t('external_auth_failed'));
+            popup.location.replace(start.href);
+            waiting = true;
+            Swal.fire({
+                title: t('step_up_title'), text: t('external_auth_waiting'),
+                showConfirmButton: false, showCancelButton: true, cancelButtonText: t('cancel'),
+                allowOutsideClick: false
+            }).then((result) => { if (!finished && result.isDismissed) cancelled = true; });
+            const deadline = Date.now() + 300000;
+            while (Date.now() < deadline) {
+                if (cancelled) return null;
+                // Poll with a memory-only proof; no grant or proof goes into a URL or storage.
+                const result = await this.request('security/step-up/exchange', 'POST', {
+                    challenge: transaction.challenge, exchange_secret: transaction.exchange_secret
+                }, null, true);
+                if (cancelled) return null;
+                if (typeof result.token === 'string') return result.token;
+                // A provider's COOP header can sever the window proxy; completion
+                // and cancellation are determined by our exchange and original page.
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+            throw new Error(t('external_auth_failed'));
+        } finally {
+            finished = true;
+            if (waiting) Swal.close();
+            if (popup && !popup.closed) popup.close();
+            if (transaction) {
+                await this.request('security/step-up/cancel', 'POST', { challenge: transaction.challenge }, null, true).catch(() => {});
+            }
         }
     },
     sessionExpiredMessage(payload) {

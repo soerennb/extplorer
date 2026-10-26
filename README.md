@@ -13,6 +13,7 @@ eXtplorer 3 is a modern, web-based file manager built for speed, security, and e
 *   **Visual Assets:** Instant image thumbnails in grid view and a built-in lightbox with navigation.
 *   **Diff Viewer:** Compare two files side-by-side to see changes.
 *   **Archives:** Create and extract ZIP, TAR, and TAR.GZ archives directly in the browser.
+*   **External Authentication:** Optional OpenID Connect and custom website login adapters with controlled account provisioning and rights mapping. See [external authentication](docs/authentication.md).
 *   **User Management:** Robust Role-Based Access Control (RBAC) with support for Groups and granular permissions.
 *   **Keyboard Friendly:** Desktop-like experience with keyboard shortcuts and right-click context menus.
 *   **Multilingual:** Full support for English, German, French, and Slovak (i18n ready).

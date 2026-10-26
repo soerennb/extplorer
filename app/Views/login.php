@@ -52,7 +52,8 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
             color: #fff;
         }
         @media (max-width: 991.98px) {
-            .login-side { display: none; }
+            body { min-height: 100%; height: auto; padding: 1rem 0; }
+            .login-side { display: none !important; }
             .login-shell { border-radius: 14px; }
         }
     </style>
@@ -91,6 +92,15 @@ $lt = static fn(string $key, string $fallback = ''): string => $login_t[$key] ??
                     <div class="alert alert-warning"><?= esc($lt('login_session_expired_hint', 'Your session has expired. Sign in again to continue where you left off.')) ?></div>
                 <?php endif; ?>
 
+                <?php if (!empty($external_providers)): ?>
+                <div class="d-grid gap-2 mb-4">
+                    <?php foreach ($external_providers as $provider_id => $provider_label): ?>
+                    <a class="btn btn-outline-primary" href="<?= esc(site_url('login/external/' . $provider_id) . '?' . http_build_query(['return' => $return_to ?? site_url('/')])) ?>">
+                        <?= esc($lt('external_auth_sign_in', 'Sign in with')) ?> <?= esc($provider_label) ?>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
                 <form action="<?= site_url('login/auth') ?>" method="post">
                     <?= csrf_field() ?>
                     <input type="hidden" name="return" value="<?= esc($return_to ?? '/') ?>">

@@ -815,5 +815,12 @@
     "webdav_load_failed": "Failed to load WebDAV credentials.",
     "webdav_create_failed": "Failed to create WebDAV credential.",
     "webdav_delete_failed": "Failed to revoke WebDAV credential.",
-    "revoke": "Revoke"
+    "revoke": "Revoke",
+    "external_auth_sign_in": "Sign in with",
+    "external_auth_managed": "Sign-in, password and two-factor authentication are managed by your identity provider.",
+    "external_auth_confirm": "Confirm your identity with your sign-in provider in a separate window. Your changes will stay open here.",
+    "external_auth_popup_blocked": "Allow pop-up windows for this site and try again.",
+    "external_auth_failed": "Identity confirmation could not be completed. Please try again.",
+    "external_auth_block_account": "Block account access",
+    "external_auth_waiting": "Complete identity confirmation in the opened window. You can cancel here."
 }

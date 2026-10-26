@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'app/**'
+      - 'examples/**'
       - 'public/**'
       - 'resources/**'
       - 'tests/**'
@@ -35,6 +36,7 @@ on:
       - main
     paths:
       - 'app/**'
+      - 'examples/**'
       - 'public/**'
       - 'resources/**'
       - 'tests/**'
@@ -199,6 +201,33 @@ jobs:
         uses: ./.github/actions/storage-check
         with:
           backend: redis
+
+  external-auth:
+    name: External authentication browser matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.2'
+          extensions: curl, dom, gd, intl, mbstring, sqlite3, xml, zip
+          tools: composer:2.10.3
+          coverage: none
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --prefer-dist
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Verify OIDC and custom website login, provisioning and step-up
+        run: node tests/e2e/external-auth.cjs
 
   frontend:
     name: Frontend build and CSP source checks
