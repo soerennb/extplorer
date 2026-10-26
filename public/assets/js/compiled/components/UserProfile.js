@@ -252,227 +252,239 @@ const _hoisted_121 = ["onClick"]
 const _hoisted_122 = ["onClick"]
 const _hoisted_123 = ["onClick"]
 const _hoisted_124 = { class: "border-bottom pb-2 mb-3 mt-4" }
-const _hoisted_125 = { class: "small text-muted" }
-const _hoisted_126 = {
-  key: 7,
+const _hoisted_125 = {
+  key: 0,
+  class: "small text-muted"
+}
+const _hoisted_126 = { class: "small text-muted" }
+const _hoisted_127 = {
+  key: 1,
+  class: "small"
+}
+const _hoisted_128 = {
+  key: 3,
   class: "alert alert-warning",
   role: "alert"
 }
-const _hoisted_127 = { class: "d-block mb-2" }
-const _hoisted_128 = { class: "user-select-all text-break" }
-const _hoisted_129 = ["onClick"]
-const _hoisted_130 = { class: "input-group input-group-sm mb-3" }
-const _hoisted_131 = ["onUpdate:modelValue", "placeholder"]
-const _hoisted_132 = ["onClick", "disabled"]
-const _hoisted_133 = {
+const _hoisted_129 = { class: "d-block mb-2" }
+const _hoisted_130 = { class: "user-select-all text-break" }
+const _hoisted_131 = ["onClick"]
+const _hoisted_132 = { class: "input-group input-group-sm mb-3" }
+const _hoisted_133 = ["onUpdate:modelValue", "placeholder"]
+const _hoisted_134 = ["onClick", "disabled"]
+const _hoisted_135 = {
   key: 0,
   class: "spinner-border spinner-border-sm me-1",
   "aria-hidden": "true"
 }
-const _hoisted_134 = {
-  key: 8,
+const _hoisted_136 = {
+  key: 4,
   class: "list-group list-group-flush border rounded"
 }
-const _hoisted_135 = { class: "small text-muted" }
-const _hoisted_136 = ["onClick", "disabled"]
-const _hoisted_137 = {
-  key: 9,
+const _hoisted_137 = { class: "small text-muted" }
+const _hoisted_138 = {
+  key: 0,
   class: "small text-muted"
 }
-const _hoisted_138 = {
+const _hoisted_139 = ["onClick", "disabled"]
+const _hoisted_140 = {
+  key: 5,
+  class: "small text-muted"
+}
+const _hoisted_141 = {
   role: "tabpanel",
   id: "profile-panel-mounts",
   "aria-labelledby": "profile-tab-mounts",
   tabindex: "0"
 }
-const _hoisted_139 = { class: "border-bottom pb-2 mb-3" }
-const _hoisted_140 = { class: "small text-muted" }
-const _hoisted_141 = {
+const _hoisted_142 = { class: "border-bottom pb-2 mb-3" }
+const _hoisted_143 = { class: "small text-muted" }
+const _hoisted_144 = {
   key: 1,
   class: "text-center py-3"
 }
-const _hoisted_142 = ["aria-label"]
-const _hoisted_143 = { key: 2 }
-const _hoisted_144 = {
+const _hoisted_145 = ["aria-label"]
+const _hoisted_146 = { key: 2 }
+const _hoisted_147 = {
   key: 0,
   class: "text-center py-4 text-muted small"
 }
-const _hoisted_145 = {
+const _hoisted_148 = {
   key: 1,
   class: "list-group list-group-flush mb-4 border rounded"
 }
-const _hoisted_146 = { class: "me-3" }
-const _hoisted_147 = { class: "fw-bold d-flex align-items-center gap-2" }
-const _hoisted_148 = { class: "badge text-bg-light border" }
-const _hoisted_149 = { class: "small text-muted font-monospace" }
-const _hoisted_150 = { class: "d-flex gap-2" }
-const _hoisted_151 = ["onClick", "disabled"]
-const _hoisted_152 = ["onClick", "disabled"]
-const _hoisted_153 = {
+const _hoisted_149 = { class: "me-3" }
+const _hoisted_150 = { class: "fw-bold d-flex align-items-center gap-2" }
+const _hoisted_151 = { class: "badge text-bg-light border" }
+const _hoisted_152 = { class: "small text-muted font-monospace" }
+const _hoisted_153 = { class: "d-flex gap-2" }
+const _hoisted_154 = ["onClick", "disabled"]
+const _hoisted_155 = ["onClick", "disabled"]
+const _hoisted_156 = {
   key: 0,
   class: "spinner-border spinner-border-sm",
   "aria-hidden": "true"
 }
-const _hoisted_154 = {
+const _hoisted_157 = {
   key: 1,
   class: "ri-delete-bin-line"
 }
-const _hoisted_155 = { class: "card bg-body-tertiary" }
-const _hoisted_156 = { class: "card-body" }
-const _hoisted_157 = { class: "d-flex justify-content-between align-items-center mb-2" }
-const _hoisted_158 = { class: "mb-0" }
-const _hoisted_159 = ["onClick", "disabled"]
-const _hoisted_160 = { class: "row g-2" }
-const _hoisted_161 = { class: "col-md-4" }
-const _hoisted_162 = {
+const _hoisted_158 = { class: "card bg-body-tertiary" }
+const _hoisted_159 = { class: "card-body" }
+const _hoisted_160 = { class: "d-flex justify-content-between align-items-center mb-2" }
+const _hoisted_161 = { class: "mb-0" }
+const _hoisted_162 = ["onClick", "disabled"]
+const _hoisted_163 = { class: "row g-2" }
+const _hoisted_164 = { class: "col-md-4" }
+const _hoisted_165 = {
   class: "form-label small",
   for: "mount-name"
 }
-const _hoisted_163 = ["onUpdate:modelValue", "placeholder"]
-const _hoisted_164 = {
+const _hoisted_166 = ["onUpdate:modelValue", "placeholder"]
+const _hoisted_167 = {
   key: 0,
   class: "invalid-feedback d-block"
 }
-const _hoisted_165 = { class: "col-md-4" }
-const _hoisted_166 = {
+const _hoisted_168 = { class: "col-md-4" }
+const _hoisted_169 = {
   class: "form-label small",
   for: "mount-type"
 }
-const _hoisted_167 = ["onUpdate:modelValue", "disabled"]
-const _hoisted_168 = { value: "local" }
-const _hoisted_169 = { value: "ftp" }
-const _hoisted_170 = { value: "ftps" }
-const _hoisted_171 = { value: "sftp" }
-const _hoisted_172 = {
+const _hoisted_170 = ["onUpdate:modelValue", "disabled"]
+const _hoisted_171 = { value: "local" }
+const _hoisted_172 = { value: "ftp" }
+const _hoisted_173 = { value: "ftps" }
+const _hoisted_174 = { value: "sftp" }
+const _hoisted_175 = {
   key: 0,
   class: "col-md-4"
 }
-const _hoisted_173 = {
+const _hoisted_176 = {
   class: "form-label small",
   for: "mount-path"
 }
-const _hoisted_174 = ["onUpdate:modelValue", "placeholder"]
-const _hoisted_175 = {
+const _hoisted_177 = ["onUpdate:modelValue", "placeholder"]
+const _hoisted_178 = {
   key: 0,
   class: "invalid-feedback d-block"
 }
-const _hoisted_176 = {
+const _hoisted_179 = {
   key: 1,
   class: "mt-2"
 }
-const _hoisted_177 = { class: "row g-2" }
-const _hoisted_178 = { class: "col-md-6" }
-const _hoisted_179 = {
+const _hoisted_180 = { class: "row g-2" }
+const _hoisted_181 = { class: "col-md-6" }
+const _hoisted_182 = {
   class: "form-label small",
   for: "mount-host"
 }
-const _hoisted_180 = ["onUpdate:modelValue", "placeholder"]
-const _hoisted_181 = {
+const _hoisted_183 = ["onUpdate:modelValue", "placeholder"]
+const _hoisted_184 = {
   key: 0,
   class: "invalid-feedback d-block"
 }
-const _hoisted_182 = { class: "col-md-2" }
-const _hoisted_183 = {
+const _hoisted_185 = { class: "col-md-2" }
+const _hoisted_186 = {
   class: "form-label small",
   for: "mount-port"
 }
-const _hoisted_184 = ["onUpdate:modelValue"]
-const _hoisted_185 = { class: "col-md-4" }
-const _hoisted_186 = {
+const _hoisted_187 = ["onUpdate:modelValue"]
+const _hoisted_188 = { class: "col-md-4" }
+const _hoisted_189 = {
   class: "form-label small",
   for: "mount-root"
 }
-const _hoisted_187 = ["onUpdate:modelValue", "placeholder"]
-const _hoisted_188 = {
+const _hoisted_190 = ["onUpdate:modelValue", "placeholder"]
+const _hoisted_191 = {
   key: 0,
   class: "row g-2 mt-1"
 }
-const _hoisted_189 = { class: "col-12" }
-const _hoisted_190 = {
+const _hoisted_192 = { class: "col-12" }
+const _hoisted_193 = {
   class: "form-label small",
   for: "mount-host-key-fingerprint"
 }
-const _hoisted_191 = ["onUpdate:modelValue"]
-const _hoisted_192 = { class: "form-text" }
-const _hoisted_193 = {
+const _hoisted_194 = ["onUpdate:modelValue"]
+const _hoisted_195 = { class: "form-text" }
+const _hoisted_196 = {
   key: 1,
   class: "row g-2 mt-1"
 }
-const _hoisted_194 = { class: "col-12" }
-const _hoisted_195 = {
+const _hoisted_197 = { class: "col-12" }
+const _hoisted_198 = {
   class: "form-label small",
   for: "mount-tls-spki-pin"
 }
-const _hoisted_196 = ["onUpdate:modelValue"]
-const _hoisted_197 = { class: "form-text" }
-const _hoisted_198 = {
+const _hoisted_199 = ["onUpdate:modelValue"]
+const _hoisted_200 = { class: "form-text" }
+const _hoisted_201 = {
   key: 2,
   class: "row g-2 mt-1"
 }
-const _hoisted_199 = { class: "col-md-4" }
-const _hoisted_200 = {
+const _hoisted_202 = { class: "col-md-4" }
+const _hoisted_203 = {
   class: "form-label small",
   for: "mount-auth-method"
 }
-const _hoisted_201 = ["onUpdate:modelValue"]
-const _hoisted_202 = { value: "password" }
-const _hoisted_203 = { value: "private_key" }
-const _hoisted_204 = {
+const _hoisted_204 = ["onUpdate:modelValue"]
+const _hoisted_205 = { value: "password" }
+const _hoisted_206 = { value: "private_key" }
+const _hoisted_207 = {
   key: 3,
   class: "row g-2 mt-1"
 }
-const _hoisted_205 = { class: "col-md-6" }
-const _hoisted_206 = {
-  class: "form-label small",
-  for: "mount-private-key"
-}
-const _hoisted_207 = ["onUpdate:modelValue", "placeholder"]
 const _hoisted_208 = { class: "col-md-6" }
 const _hoisted_209 = {
   class: "form-label small",
-  for: "mount-public-key"
+  for: "mount-private-key"
 }
 const _hoisted_210 = ["onUpdate:modelValue", "placeholder"]
-const _hoisted_211 = { class: "col-12" }
+const _hoisted_211 = { class: "col-md-6" }
 const _hoisted_212 = {
+  class: "form-label small",
+  for: "mount-public-key"
+}
+const _hoisted_213 = ["onUpdate:modelValue", "placeholder"]
+const _hoisted_214 = { class: "col-12" }
+const _hoisted_215 = {
   class: "form-label small",
   for: "mount-private-key-passphrase"
 }
-const _hoisted_213 = ["onUpdate:modelValue"]
-const _hoisted_214 = { class: "row g-2 mt-1" }
-const _hoisted_215 = { class: "col-md-6" }
-const _hoisted_216 = {
+const _hoisted_216 = ["onUpdate:modelValue"]
+const _hoisted_217 = { class: "row g-2 mt-1" }
+const _hoisted_218 = { class: "col-md-6" }
+const _hoisted_219 = {
   class: "form-label small",
   for: "mount-user"
 }
-const _hoisted_217 = ["onUpdate:modelValue", "placeholder"]
-const _hoisted_218 = {
+const _hoisted_220 = ["onUpdate:modelValue", "placeholder"]
+const _hoisted_221 = {
   key: 0,
   class: "invalid-feedback d-block"
 }
-const _hoisted_219 = { class: "col-md-6" }
-const _hoisted_220 = {
+const _hoisted_222 = { class: "col-md-6" }
+const _hoisted_223 = {
   class: "form-label small",
   for: "mount-pass"
 }
-const _hoisted_221 = ["onUpdate:modelValue", "placeholder", "disabled"]
-const _hoisted_222 = {
+const _hoisted_224 = ["onUpdate:modelValue", "placeholder", "disabled"]
+const _hoisted_225 = {
   key: 0,
   class: "invalid-feedback d-block"
 }
-const _hoisted_223 = {
+const _hoisted_226 = {
   key: 1,
   class: "form-text small"
 }
-const _hoisted_224 = { class: "mt-3 d-flex flex-wrap justify-content-end gap-2" }
-const _hoisted_225 = ["onClick", "disabled"]
-const _hoisted_226 = {
+const _hoisted_227 = { class: "mt-3 d-flex flex-wrap justify-content-end gap-2" }
+const _hoisted_228 = ["onClick", "disabled"]
+const _hoisted_229 = {
   key: 0,
   class: "spinner-border spinner-border-sm me-1",
   "aria-hidden": "true"
 }
-const _hoisted_227 = ["onClick", "disabled"]
-const _hoisted_228 = {
+const _hoisted_230 = ["onClick", "disabled"]
+const _hoisted_231 = {
   key: 0,
   class: "spinner-border spinner-border-sm me-1",
   "aria-hidden": "true"
@@ -976,35 +988,47 @@ return function render(_ctx, _cache) {
                             ])
                           ])
                         ]))
-                      : _createCommentVNode("v-if", true),
+                      : _createCommentVNode("v-if", true)
+                  ], 64 /* STABLE_FRAGMENT */)),
+              (details.webdav_enabled !== false)
+                ? (_openBlock(), _createElementBlock(_Fragment, { key: 2 }, [
                     _createElementVNode("h6", _hoisted_124, _toDisplayString(t('webdav_credentials') || 'WebDAV App Passwords'), 1 /* TEXT */),
-                    _createElementVNode("p", _hoisted_125, _toDisplayString(t('webdav_credentials_desc') || 'Use a separate, revocable password for WebDAV clients. The secret is shown only once.'), 1 /* TEXT */),
+                    (details.auth_source === 'external')
+                      ? (_openBlock(), _createElementBlock("p", _hoisted_125, _toDisplayString(t('external_webdav_lifetime')), 1 /* TEXT */))
+                      : _createCommentVNode("v-if", true),
+                    _createElementVNode("p", _hoisted_126, _toDisplayString(t('webdav_credentials_desc') || 'Use a separate, revocable password for WebDAV clients. The secret is shown only once.'), 1 /* TEXT */),
+                    (details.webdav_username)
+                      ? (_openBlock(), _createElementBlock("p", _hoisted_127, [
+                          _createTextVNode(_toDisplayString(t('username')) + ": ", 1 /* TEXT */),
+                          _createElementVNode("code", null, _toDisplayString(details.webdav_username), 1 /* TEXT */)
+                        ]))
+                      : _createCommentVNode("v-if", true),
                     (webDavMessage.text)
                       ? (_openBlock(), _createElementBlock("div", {
-                          key: 6,
+                          key: 2,
                           class: _normalizeClass(["alert", webDavMessage.type === 'success' ? 'alert-success' : 'alert-danger']),
                           role: "alert"
                         }, _toDisplayString(webDavMessage.text), 3 /* TEXT, CLASS */))
                       : _createCommentVNode("v-if", true),
                     webDavSecret
-                      ? (_openBlock(), _createElementBlock("div", _hoisted_126, [
-                          _createElementVNode("strong", _hoisted_127, _toDisplayString(t('webdav_secret_once') || 'Copy this password now. It will not be shown again.'), 1 /* TEXT */),
-                          _createElementVNode("code", _hoisted_128, _toDisplayString(webDavSecret), 1 /* TEXT */),
+                      ? (_openBlock(), _createElementBlock("div", _hoisted_128, [
+                          _createElementVNode("strong", _hoisted_129, _toDisplayString(t('webdav_secret_once') || 'Copy this password now. It will not be shown again.'), 1 /* TEXT */),
+                          _createElementVNode("code", _hoisted_130, _toDisplayString(webDavSecret), 1 /* TEXT */),
                           _createElementVNode("button", {
                             type: "button",
                             class: "btn btn-outline-secondary btn-sm d-block mt-2",
                             onClick: copyWebDavSecret
-                          }, _toDisplayString(t('copy_code') || 'Copy'), 9 /* TEXT, PROPS */, _hoisted_129)
+                          }, _toDisplayString(t('copy_code') || 'Copy'), 9 /* TEXT, PROPS */, _hoisted_131)
                         ]))
                       : _createCommentVNode("v-if", true),
-                    _createElementVNode("div", _hoisted_130, [
+                    _createElementVNode("div", _hoisted_132, [
                       _withDirectives(_createElementVNode("input", {
                         type: "text",
                         class: "form-control",
                         maxlength: "64",
                         "onUpdate:modelValue": $event => ((webDavLabel) = $event),
                         placeholder: t('webdav_label_placeholder') || 'Device name'
-                      }, null, 8 /* PROPS */, _hoisted_131), [
+                      }, null, 8 /* PROPS */, _hoisted_133), [
                         [_vModelText, webDavLabel]
                       ]),
                       _createElementVNode("button", {
@@ -1014,13 +1038,13 @@ return function render(_ctx, _cache) {
                         disabled: webDavLoading || !webDavLabel.trim()
                       }, [
                         webDavLoading
-                          ? (_openBlock(), _createElementBlock("span", _hoisted_133))
+                          ? (_openBlock(), _createElementBlock("span", _hoisted_135))
                           : _createCommentVNode("v-if", true),
                         _createTextVNode(" " + _toDisplayString(t('webdav_create') || 'Create app password'), 1 /* TEXT */)
-                      ], 8 /* PROPS */, _hoisted_132)
+                      ], 8 /* PROPS */, _hoisted_134)
                     ]),
                     (webDavCredentials.length)
-                      ? (_openBlock(), _createElementBlock("div", _hoisted_134, [
+                      ? (_openBlock(), _createElementBlock("div", _hoisted_136, [
                           (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(webDavCredentials, (credential) => {
                             return (_openBlock(), _createElementBlock("div", {
                               key: credential.id,
@@ -1028,27 +1052,31 @@ return function render(_ctx, _cache) {
                             }, [
                               _createElementVNode("div", null, [
                                 _createElementVNode("strong", null, _toDisplayString(credential.label), 1 /* TEXT */),
-                                _createElementVNode("div", _hoisted_135, _toDisplayString(formatCredentialDate(credential.created_at)), 1 /* TEXT */)
+                                _createElementVNode("div", _hoisted_137, _toDisplayString(formatCredentialDate(credential.created_at)), 1 /* TEXT */),
+                                (credential.expires_at)
+                                  ? (_openBlock(), _createElementBlock("div", _hoisted_138, _toDisplayString(t('external_webdav_expires')) + ": " + _toDisplayString(formatCredentialDate(credential.expires_at)), 1 /* TEXT */))
+                                  : _createCommentVNode("v-if", true)
                               ]),
                               _createElementVNode("button", {
                                 type: "button",
                                 class: "btn btn-outline-danger btn-sm",
                                 onClick: $event => (deleteWebDavCredential(credential.id)),
                                 disabled: webDavLoading
-                              }, _toDisplayString(t('revoke') || 'Revoke'), 9 /* TEXT, PROPS */, _hoisted_136)
+                              }, _toDisplayString(t('revoke') || 'Revoke'), 9 /* TEXT, PROPS */, _hoisted_139)
                             ]))
                           }), 128 /* KEYED_FRAGMENT */))
                         ]))
                       : (!webDavLoading)
-                        ? (_openBlock(), _createElementBlock("div", _hoisted_137, _toDisplayString(t('webdav_empty') || 'No WebDAV app passwords.'), 1 /* TEXT */))
+                        ? (_openBlock(), _createElementBlock("div", _hoisted_140, _toDisplayString(t('webdav_empty') || 'No WebDAV app passwords.'), 1 /* TEXT */))
                         : _createCommentVNode("v-if", true)
                   ], 64 /* STABLE_FRAGMENT */))
+                : _createCommentVNode("v-if", true)
             ], 512 /* NEED_PATCH */), [
               [_vShow, activeTab === 'security']
             ]),
-            _withDirectives(_createElementVNode("div", _hoisted_138, [
-              _createElementVNode("h6", _hoisted_139, _toDisplayString(t('manage_mounts') || 'Manage Virtual Mounts'), 1 /* TEXT */),
-              _createElementVNode("p", _hoisted_140, _toDisplayString(t('mounts_desc') || 'Mount external directories as folders in your root view.'), 1 /* TEXT */),
+            _withDirectives(_createElementVNode("div", _hoisted_141, [
+              _createElementVNode("h6", _hoisted_142, _toDisplayString(t('manage_mounts') || 'Manage Virtual Mounts'), 1 /* TEXT */),
+              _createElementVNode("p", _hoisted_143, _toDisplayString(t('mounts_desc') || 'Mount external directories as folders in your root view.'), 1 /* TEXT */),
               (mountMessage.text)
                 ? (_openBlock(), _createElementBlock("div", {
                     key: 0,
@@ -1057,54 +1085,54 @@ return function render(_ctx, _cache) {
                   }, _toDisplayString(mountMessage.text), 3 /* TEXT, CLASS */))
                 : _createCommentVNode("v-if", true),
               mountsLoading
-                ? (_openBlock(), _createElementBlock("div", _hoisted_141, [
+                ? (_openBlock(), _createElementBlock("div", _hoisted_144, [
                     _createElementVNode("div", {
                       class: "spinner-border spinner-border-sm",
                       role: "status",
                       "aria-label": t('loading') || 'Loading'
-                    }, null, 8 /* PROPS */, _hoisted_142)
+                    }, null, 8 /* PROPS */, _hoisted_145)
                   ]))
-                : (_openBlock(), _createElementBlock("div", _hoisted_143, [
+                : (_openBlock(), _createElementBlock("div", _hoisted_146, [
                     (mounts.length === 0)
-                      ? (_openBlock(), _createElementBlock("div", _hoisted_144, _toDisplayString(t('no_mounts') || 'No mounts defined.'), 1 /* TEXT */))
-                      : (_openBlock(), _createElementBlock("div", _hoisted_145, [
+                      ? (_openBlock(), _createElementBlock("div", _hoisted_147, _toDisplayString(t('no_mounts') || 'No mounts defined.'), 1 /* TEXT */))
+                      : (_openBlock(), _createElementBlock("div", _hoisted_148, [
                           (_openBlock(true), _createElementBlock(_Fragment, null, _renderList(mounts, (mount) => {
                             return (_openBlock(), _createElementBlock("div", {
                               key: mount.id,
                               class: "list-group-item d-flex justify-content-between align-items-center"
                             }, [
-                              _createElementVNode("div", _hoisted_146, [
-                                _createElementVNode("div", _hoisted_147, [
+                              _createElementVNode("div", _hoisted_149, [
+                                _createElementVNode("div", _hoisted_150, [
                                   _createTextVNode(_toDisplayString(mount.name) + " ", 1 /* TEXT */),
-                                  _createElementVNode("span", _hoisted_148, _toDisplayString(mountTypeLabel(mount.type)), 1 /* TEXT */)
+                                  _createElementVNode("span", _hoisted_151, _toDisplayString(mountTypeLabel(mount.type)), 1 /* TEXT */)
                                 ]),
-                                _createElementVNode("div", _hoisted_149, _toDisplayString(mountSummary(mount)), 1 /* TEXT */)
+                                _createElementVNode("div", _hoisted_152, _toDisplayString(mountSummary(mount)), 1 /* TEXT */)
                               ]),
-                              _createElementVNode("div", _hoisted_150, [
+                              _createElementVNode("div", _hoisted_153, [
                                 _createElementVNode("button", {
                                   class: "btn btn-outline-secondary btn-sm",
                                   onClick: $event => (startEditMount(mount)),
                                   disabled: mountSaving || mountsLoading
                                 }, [...(_cache[7] || (_cache[7] = [
                                   _createElementVNode("i", { class: "ri-edit-line" }, null, -1 /* CACHED */)
-                                ]))], 8 /* PROPS */, _hoisted_151),
+                                ]))], 8 /* PROPS */, _hoisted_154),
                                 _createElementVNode("button", {
                                   class: "btn btn-outline-danger btn-sm",
                                   onClick: $event => (removeMount(mount.id)),
                                   disabled: mountRemovingId === mount.id
                                 }, [
                                   (mountRemovingId === mount.id)
-                                    ? (_openBlock(), _createElementBlock("span", _hoisted_153))
-                                    : (_openBlock(), _createElementBlock("i", _hoisted_154))
-                                ], 8 /* PROPS */, _hoisted_152)
+                                    ? (_openBlock(), _createElementBlock("span", _hoisted_156))
+                                    : (_openBlock(), _createElementBlock("i", _hoisted_157))
+                                ], 8 /* PROPS */, _hoisted_155)
                               ])
                             ]))
                           }), 128 /* KEYED_FRAGMENT */))
                         ])),
-                    _createElementVNode("div", _hoisted_155, [
-                      _createElementVNode("div", _hoisted_156, [
-                        _createElementVNode("div", _hoisted_157, [
-                          _createElementVNode("h6", _hoisted_158, _toDisplayString(mountMode === 'edit' ? (t('edit_mount') || 'Edit Mount') : (t('add_mount') || 'Add New Mount')), 1 /* TEXT */),
+                    _createElementVNode("div", _hoisted_158, [
+                      _createElementVNode("div", _hoisted_159, [
+                        _createElementVNode("div", _hoisted_160, [
+                          _createElementVNode("h6", _hoisted_161, _toDisplayString(mountMode === 'edit' ? (t('edit_mount') || 'Edit Mount') : (t('add_mount') || 'Add New Mount')), 1 /* TEXT */),
                           (mountMode === 'edit')
                             ? (_openBlock(), _createElementBlock("button", {
                                 key: 0,
@@ -1112,7 +1140,7 @@ return function render(_ctx, _cache) {
                                 class: "btn btn-link btn-sm text-muted",
                                 onClick: cancelEditMount,
                                 disabled: mountSaving
-                              }, _toDisplayString(t('cancel_edit') || 'Cancel edit'), 9 /* TEXT, PROPS */, _hoisted_159))
+                              }, _toDisplayString(t('cancel_edit') || 'Cancel edit'), 9 /* TEXT, PROPS */, _hoisted_162))
                             : _createCommentVNode("v-if", true)
                         ]),
                         (mountTestResult.text)
@@ -1123,76 +1151,76 @@ return function render(_ctx, _cache) {
                               "aria-live": "polite"
                             }, _toDisplayString(mountTestResult.text), 3 /* TEXT, CLASS */))
                           : _createCommentVNode("v-if", true),
-                        _createElementVNode("div", _hoisted_160, [
-                          _createElementVNode("div", _hoisted_161, [
-                            _createElementVNode("label", _hoisted_162, _toDisplayString(t('mount_name') || 'Name (Folder Name)'), 1 /* TEXT */),
+                        _createElementVNode("div", _hoisted_163, [
+                          _createElementVNode("div", _hoisted_164, [
+                            _createElementVNode("label", _hoisted_165, _toDisplayString(t('mount_name') || 'Name (Folder Name)'), 1 /* TEXT */),
                             _withDirectives(_createElementVNode("input", {
                               id: "mount-name",
                               type: "text",
                               class: _normalizeClass(["form-control form-control-sm", mountErrors.name ? 'is-invalid' : '']),
                               "onUpdate:modelValue": $event => ((mountForm.name) = $event),
                               placeholder: t('mount_name_placeholder') || 'e.g. Projects'
-                            }, null, 10 /* CLASS, PROPS */, _hoisted_163), [
+                            }, null, 10 /* CLASS, PROPS */, _hoisted_166), [
                               [_vModelText, mountForm.name]
                             ]),
                             (mountErrors.name)
-                              ? (_openBlock(), _createElementBlock("div", _hoisted_164, _toDisplayString(mountErrors.name), 1 /* TEXT */))
+                              ? (_openBlock(), _createElementBlock("div", _hoisted_167, _toDisplayString(mountErrors.name), 1 /* TEXT */))
                               : _createCommentVNode("v-if", true)
                           ]),
-                          _createElementVNode("div", _hoisted_165, [
-                            _createElementVNode("label", _hoisted_166, _toDisplayString(t('mount_type') || 'Type'), 1 /* TEXT */),
+                          _createElementVNode("div", _hoisted_168, [
+                            _createElementVNode("label", _hoisted_169, _toDisplayString(t('mount_type') || 'Type'), 1 /* TEXT */),
                             _withDirectives(_createElementVNode("select", {
                               id: "mount-type",
                               class: "form-select form-select-sm",
                               "onUpdate:modelValue": $event => ((mountForm.type) = $event),
                               disabled: mountSaving
                             }, [
-                              _createElementVNode("option", _hoisted_168, _toDisplayString(t('mount_type_local') || 'Local'), 1 /* TEXT */),
-                              _createElementVNode("option", _hoisted_169, _toDisplayString(t('mount_type_ftp') || 'FTP'), 1 /* TEXT */),
-                              _createElementVNode("option", _hoisted_170, _toDisplayString(t('mount_type_ftps') || 'FTPS'), 1 /* TEXT */),
-                              _createElementVNode("option", _hoisted_171, _toDisplayString(t('mount_type_sftp') || 'SFTP'), 1 /* TEXT */)
-                            ], 8 /* PROPS */, _hoisted_167), [
+                              _createElementVNode("option", _hoisted_171, _toDisplayString(t('mount_type_local') || 'Local'), 1 /* TEXT */),
+                              _createElementVNode("option", _hoisted_172, _toDisplayString(t('mount_type_ftp') || 'FTP'), 1 /* TEXT */),
+                              _createElementVNode("option", _hoisted_173, _toDisplayString(t('mount_type_ftps') || 'FTPS'), 1 /* TEXT */),
+                              _createElementVNode("option", _hoisted_174, _toDisplayString(t('mount_type_sftp') || 'SFTP'), 1 /* TEXT */)
+                            ], 8 /* PROPS */, _hoisted_170), [
                               [_vModelSelect, mountForm.type]
                             ])
                           ]),
                           (mountForm.type === 'local')
-                            ? (_openBlock(), _createElementBlock("div", _hoisted_172, [
-                                _createElementVNode("label", _hoisted_173, _toDisplayString(t('mount_path') || 'Path (Local Server Path)'), 1 /* TEXT */),
+                            ? (_openBlock(), _createElementBlock("div", _hoisted_175, [
+                                _createElementVNode("label", _hoisted_176, _toDisplayString(t('mount_path') || 'Path (Local Server Path)'), 1 /* TEXT */),
                                 _withDirectives(_createElementVNode("input", {
                                   id: "mount-path",
                                   type: "text",
                                   class: _normalizeClass(["form-control form-control-sm", mountErrors.path ? 'is-invalid' : '']),
                                   "onUpdate:modelValue": $event => ((mountForm.config.path) = $event),
                                   placeholder: t('mount_path_placeholder') || '/absolute/path/on/server'
-                                }, null, 10 /* CLASS, PROPS */, _hoisted_174), [
+                                }, null, 10 /* CLASS, PROPS */, _hoisted_177), [
                                   [_vModelText, mountForm.config.path]
                                 ]),
                                 (mountErrors.path)
-                                  ? (_openBlock(), _createElementBlock("div", _hoisted_175, _toDisplayString(mountErrors.path), 1 /* TEXT */))
+                                  ? (_openBlock(), _createElementBlock("div", _hoisted_178, _toDisplayString(mountErrors.path), 1 /* TEXT */))
                                   : _createCommentVNode("v-if", true)
                               ]))
                             : _createCommentVNode("v-if", true)
                         ]),
                         (mountForm.type !== 'local')
-                          ? (_openBlock(), _createElementBlock("div", _hoisted_176, [
-                              _createElementVNode("div", _hoisted_177, [
-                                _createElementVNode("div", _hoisted_178, [
-                                  _createElementVNode("label", _hoisted_179, _toDisplayString(t('mount_host') || 'Host'), 1 /* TEXT */),
+                          ? (_openBlock(), _createElementBlock("div", _hoisted_179, [
+                              _createElementVNode("div", _hoisted_180, [
+                                _createElementVNode("div", _hoisted_181, [
+                                  _createElementVNode("label", _hoisted_182, _toDisplayString(t('mount_host') || 'Host'), 1 /* TEXT */),
                                   _withDirectives(_createElementVNode("input", {
                                     id: "mount-host",
                                     type: "text",
                                     class: _normalizeClass(["form-control form-control-sm", mountErrors.host ? 'is-invalid' : '']),
                                     "onUpdate:modelValue": $event => ((mountForm.config.host) = $event),
                                     placeholder: t('mount_host_placeholder') || 'example.com'
-                                  }, null, 10 /* CLASS, PROPS */, _hoisted_180), [
+                                  }, null, 10 /* CLASS, PROPS */, _hoisted_183), [
                                     [_vModelText, mountForm.config.host]
                                   ]),
                                   (mountErrors.host)
-                                    ? (_openBlock(), _createElementBlock("div", _hoisted_181, _toDisplayString(mountErrors.host), 1 /* TEXT */))
+                                    ? (_openBlock(), _createElementBlock("div", _hoisted_184, _toDisplayString(mountErrors.host), 1 /* TEXT */))
                                     : _createCommentVNode("v-if", true)
                                 ]),
-                                _createElementVNode("div", _hoisted_182, [
-                                  _createElementVNode("label", _hoisted_183, _toDisplayString(t('mount_port') || 'Port'), 1 /* TEXT */),
+                                _createElementVNode("div", _hoisted_185, [
+                                  _createElementVNode("label", _hoisted_186, _toDisplayString(t('mount_port') || 'Port'), 1 /* TEXT */),
                                   _withDirectives(_createElementVNode("input", {
                                     id: "mount-port",
                                     type: "number",
@@ -1200,7 +1228,7 @@ return function render(_ctx, _cache) {
                                     "onUpdate:modelValue": $event => ((mountForm.config.port) = $event),
                                     min: "1",
                                     max: "65535"
-                                  }, null, 8 /* PROPS */, _hoisted_184), [
+                                  }, null, 8 /* PROPS */, _hoisted_187), [
                                     [
                                       _vModelText,
                                       mountForm.config.port,
@@ -1209,23 +1237,23 @@ return function render(_ctx, _cache) {
                                     ]
                                   ])
                                 ]),
-                                _createElementVNode("div", _hoisted_185, [
-                                  _createElementVNode("label", _hoisted_186, _toDisplayString(t('mount_root') || 'Root Path'), 1 /* TEXT */),
+                                _createElementVNode("div", _hoisted_188, [
+                                  _createElementVNode("label", _hoisted_189, _toDisplayString(t('mount_root') || 'Root Path'), 1 /* TEXT */),
                                   _withDirectives(_createElementVNode("input", {
                                     id: "mount-root",
                                     type: "text",
                                     class: "form-control form-control-sm",
                                     "onUpdate:modelValue": $event => ((mountForm.config.root) = $event),
                                     placeholder: t('mount_root_placeholder') || '/'
-                                  }, null, 8 /* PROPS */, _hoisted_187), [
+                                  }, null, 8 /* PROPS */, _hoisted_190), [
                                     [_vModelText, mountForm.config.root]
                                   ])
                                 ])
                               ]),
                               (mountForm.type === 'sftp')
-                                ? (_openBlock(), _createElementBlock("div", _hoisted_188, [
-                                    _createElementVNode("div", _hoisted_189, [
-                                      _createElementVNode("label", _hoisted_190, _toDisplayString(t('mount_host_key_fingerprint') || 'SFTP host-key fingerprint'), 1 /* TEXT */),
+                                ? (_openBlock(), _createElementBlock("div", _hoisted_191, [
+                                    _createElementVNode("div", _hoisted_192, [
+                                      _createElementVNode("label", _hoisted_193, _toDisplayString(t('mount_host_key_fingerprint') || 'SFTP host-key fingerprint'), 1 /* TEXT */),
                                       _withDirectives(_createElementVNode("input", {
                                         id: "mount-host-key-fingerprint",
                                         type: "text",
@@ -1234,17 +1262,17 @@ return function render(_ctx, _cache) {
                                         placeholder: "SHA256:...",
                                         autocomplete: "off",
                                         spellcheck: "false"
-                                      }, null, 8 /* PROPS */, _hoisted_191), [
+                                      }, null, 8 /* PROPS */, _hoisted_194), [
                                         [_vModelText, mountForm.config.host_key_fingerprint]
                                       ]),
-                                      _createElementVNode("div", _hoisted_192, _toDisplayString(t('mount_host_key_fingerprint_hint') || 'Required in strict remote security mode.'), 1 /* TEXT */)
+                                      _createElementVNode("div", _hoisted_195, _toDisplayString(t('mount_host_key_fingerprint_hint') || 'Required in strict remote security mode.'), 1 /* TEXT */)
                                     ])
                                   ]))
                                 : _createCommentVNode("v-if", true),
                               (mountForm.type === 'ftps')
-                                ? (_openBlock(), _createElementBlock("div", _hoisted_193, [
-                                    _createElementVNode("div", _hoisted_194, [
-                                      _createElementVNode("label", _hoisted_195, _toDisplayString(t('mount_tls_spki_pin') || 'FTPS certificate SHA-256 pin (optional)'), 1 /* TEXT */),
+                                ? (_openBlock(), _createElementBlock("div", _hoisted_196, [
+                                    _createElementVNode("div", _hoisted_197, [
+                                      _createElementVNode("label", _hoisted_198, _toDisplayString(t('mount_tls_spki_pin') || 'FTPS certificate SHA-256 pin (optional)'), 1 /* TEXT */),
                                       _withDirectives(_createElementVNode("input", {
                                         id: "mount-tls-spki-pin",
                                         type: "text",
@@ -1253,88 +1281,88 @@ return function render(_ctx, _cache) {
                                         placeholder: "AA:BB:...",
                                         autocomplete: "off",
                                         spellcheck: "false"
-                                      }, null, 8 /* PROPS */, _hoisted_196), [
+                                      }, null, 8 /* PROPS */, _hoisted_199), [
                                         [_vModelText, mountForm.config.tls_spki_pin]
                                       ]),
-                                      _createElementVNode("div", _hoisted_197, _toDisplayString(t('mount_tls_spki_pin_hint') || 'The system CA store is always checked in strict mode.'), 1 /* TEXT */)
+                                      _createElementVNode("div", _hoisted_200, _toDisplayString(t('mount_tls_spki_pin_hint') || 'The system CA store is always checked in strict mode.'), 1 /* TEXT */)
                                     ])
                                   ]))
                                 : _createCommentVNode("v-if", true),
                               (mountForm.type === 'sftp')
-                                ? (_openBlock(), _createElementBlock("div", _hoisted_198, [
-                                    _createElementVNode("div", _hoisted_199, [
-                                      _createElementVNode("label", _hoisted_200, _toDisplayString(t('mount_auth_method') || 'Authentication'), 1 /* TEXT */),
+                                ? (_openBlock(), _createElementBlock("div", _hoisted_201, [
+                                    _createElementVNode("div", _hoisted_202, [
+                                      _createElementVNode("label", _hoisted_203, _toDisplayString(t('mount_auth_method') || 'Authentication'), 1 /* TEXT */),
                                       _withDirectives(_createElementVNode("select", {
                                         id: "mount-auth-method",
                                         class: "form-select form-select-sm",
                                         "onUpdate:modelValue": $event => ((mountForm.config.auth_method) = $event)
                                       }, [
-                                        _createElementVNode("option", _hoisted_202, _toDisplayString(t('mount_auth_password') || 'Password'), 1 /* TEXT */),
-                                        _createElementVNode("option", _hoisted_203, _toDisplayString(t('mount_auth_private_key') || 'Public key'), 1 /* TEXT */)
-                                      ], 8 /* PROPS */, _hoisted_201), [
+                                        _createElementVNode("option", _hoisted_205, _toDisplayString(t('mount_auth_password') || 'Password'), 1 /* TEXT */),
+                                        _createElementVNode("option", _hoisted_206, _toDisplayString(t('mount_auth_private_key') || 'Public key'), 1 /* TEXT */)
+                                      ], 8 /* PROPS */, _hoisted_204), [
                                         [_vModelSelect, mountForm.config.auth_method]
                                       ])
                                     ])
                                   ]))
                                 : _createCommentVNode("v-if", true),
                               (mountForm.type === 'sftp' && mountForm.config.auth_method === 'private_key')
-                                ? (_openBlock(), _createElementBlock("div", _hoisted_204, [
-                                    _createElementVNode("div", _hoisted_205, [
-                                      _createElementVNode("label", _hoisted_206, _toDisplayString(t('mount_private_key') || 'Private key'), 1 /* TEXT */),
+                                ? (_openBlock(), _createElementBlock("div", _hoisted_207, [
+                                    _createElementVNode("div", _hoisted_208, [
+                                      _createElementVNode("label", _hoisted_209, _toDisplayString(t('mount_private_key') || 'Private key'), 1 /* TEXT */),
                                       _withDirectives(_createElementVNode("textarea", {
                                         id: "mount-private-key",
                                         class: "form-control form-control-sm font-monospace",
                                         rows: "4",
                                         "onUpdate:modelValue": $event => ((mountForm.config.private_key) = $event),
                                         placeholder: mountForm.hasPrivateKey ? (t('mount_private_key_keep') || 'Leave blank to keep current key') : '-----BEGIN OPENSSH PRIVATE KEY-----'
-                                      }, null, 8 /* PROPS */, _hoisted_207), [
+                                      }, null, 8 /* PROPS */, _hoisted_210), [
                                         [_vModelText, mountForm.config.private_key]
                                       ])
                                     ]),
-                                    _createElementVNode("div", _hoisted_208, [
-                                      _createElementVNode("label", _hoisted_209, _toDisplayString(t('mount_public_key') || 'Public key'), 1 /* TEXT */),
+                                    _createElementVNode("div", _hoisted_211, [
+                                      _createElementVNode("label", _hoisted_212, _toDisplayString(t('mount_public_key') || 'Public key'), 1 /* TEXT */),
                                       _withDirectives(_createElementVNode("textarea", {
                                         id: "mount-public-key",
                                         class: "form-control form-control-sm font-monospace",
                                         rows: "4",
                                         "onUpdate:modelValue": $event => ((mountForm.config.public_key) = $event),
                                         placeholder: mountForm.hasPublicKey ? (t('mount_public_key_keep') || 'Leave blank to keep current key') : 'ssh-ed25519 AAAA...'
-                                      }, null, 8 /* PROPS */, _hoisted_210), [
+                                      }, null, 8 /* PROPS */, _hoisted_213), [
                                         [_vModelText, mountForm.config.public_key]
                                       ])
                                     ]),
-                                    _createElementVNode("div", _hoisted_211, [
-                                      _createElementVNode("label", _hoisted_212, _toDisplayString(t('mount_private_key_passphrase') || 'Private-key passphrase'), 1 /* TEXT */),
+                                    _createElementVNode("div", _hoisted_214, [
+                                      _createElementVNode("label", _hoisted_215, _toDisplayString(t('mount_private_key_passphrase') || 'Private-key passphrase'), 1 /* TEXT */),
                                       _withDirectives(_createElementVNode("input", {
                                         id: "mount-private-key-passphrase",
                                         type: "password",
                                         class: "form-control form-control-sm",
                                         "onUpdate:modelValue": $event => ((mountForm.config.private_key_passphrase) = $event),
                                         autocomplete: "new-password"
-                                      }, null, 8 /* PROPS */, _hoisted_213), [
+                                      }, null, 8 /* PROPS */, _hoisted_216), [
                                         [_vModelText, mountForm.config.private_key_passphrase]
                                       ])
                                     ])
                                   ]))
                                 : _createCommentVNode("v-if", true),
-                              _createElementVNode("div", _hoisted_214, [
-                                _createElementVNode("div", _hoisted_215, [
-                                  _createElementVNode("label", _hoisted_216, _toDisplayString(t('mount_user') || 'Username'), 1 /* TEXT */),
+                              _createElementVNode("div", _hoisted_217, [
+                                _createElementVNode("div", _hoisted_218, [
+                                  _createElementVNode("label", _hoisted_219, _toDisplayString(t('mount_user') || 'Username'), 1 /* TEXT */),
                                   _withDirectives(_createElementVNode("input", {
                                     id: "mount-user",
                                     type: "text",
                                     class: _normalizeClass(["form-control form-control-sm", mountErrors.user ? 'is-invalid' : '']),
                                     "onUpdate:modelValue": $event => ((mountForm.config.user) = $event),
                                     placeholder: t('mount_user_placeholder') || 'user'
-                                  }, null, 10 /* CLASS, PROPS */, _hoisted_217), [
+                                  }, null, 10 /* CLASS, PROPS */, _hoisted_220), [
                                     [_vModelText, mountForm.config.user]
                                   ]),
                                   (mountErrors.user)
-                                    ? (_openBlock(), _createElementBlock("div", _hoisted_218, _toDisplayString(mountErrors.user), 1 /* TEXT */))
+                                    ? (_openBlock(), _createElementBlock("div", _hoisted_221, _toDisplayString(mountErrors.user), 1 /* TEXT */))
                                     : _createCommentVNode("v-if", true)
                                 ]),
-                                _createElementVNode("div", _hoisted_219, [
-                                  _createElementVNode("label", _hoisted_220, _toDisplayString(t('mount_pass') || 'Password'), 1 /* TEXT */),
+                                _createElementVNode("div", _hoisted_222, [
+                                  _createElementVNode("label", _hoisted_223, _toDisplayString(t('mount_pass') || 'Password'), 1 /* TEXT */),
                                   _withDirectives(_createElementVNode("input", {
                                     id: "mount-pass",
                                     type: "password",
@@ -1343,19 +1371,19 @@ return function render(_ctx, _cache) {
                                     placeholder: mountForm.hasStoredPass ? (t('mount_pass_keep') || 'Leave blank to keep current password') : (t('password_placeholder') || '••••••••'),
                                     autocomplete: "new-password",
                                     disabled: mountForm.type === 'sftp' && mountForm.config.auth_method === 'private_key'
-                                  }, null, 10 /* CLASS, PROPS */, _hoisted_221), [
+                                  }, null, 10 /* CLASS, PROPS */, _hoisted_224), [
                                     [_vModelText, mountForm.config.pass]
                                   ]),
                                   (mountErrors.pass)
-                                    ? (_openBlock(), _createElementBlock("div", _hoisted_222, _toDisplayString(mountErrors.pass), 1 /* TEXT */))
+                                    ? (_openBlock(), _createElementBlock("div", _hoisted_225, _toDisplayString(mountErrors.pass), 1 /* TEXT */))
                                     : (mountForm.hasStoredPass)
-                                      ? (_openBlock(), _createElementBlock("div", _hoisted_223, _toDisplayString(t('mount_pass_keep_hint') || 'Leave the password empty to keep the existing one.'), 1 /* TEXT */))
+                                      ? (_openBlock(), _createElementBlock("div", _hoisted_226, _toDisplayString(t('mount_pass_keep_hint') || 'Leave the password empty to keep the existing one.'), 1 /* TEXT */))
                                       : _createCommentVNode("v-if", true)
                                 ])
                               ])
                             ]))
                           : _createCommentVNode("v-if", true),
-                        _createElementVNode("div", _hoisted_224, [
+                        _createElementVNode("div", _hoisted_227, [
                           _createElementVNode("button", {
                             type: "button",
                             class: "btn btn-outline-secondary btn-sm",
@@ -1363,10 +1391,10 @@ return function render(_ctx, _cache) {
                             disabled: mountTesting || mountSaving || !canTestMount
                           }, [
                             mountTesting
-                              ? (_openBlock(), _createElementBlock("span", _hoisted_226))
+                              ? (_openBlock(), _createElementBlock("span", _hoisted_229))
                               : _createCommentVNode("v-if", true),
                             _createTextVNode(" " + _toDisplayString(t('test_connection') || 'Test connection'), 1 /* TEXT */)
-                          ], 8 /* PROPS */, _hoisted_225),
+                          ], 8 /* PROPS */, _hoisted_228),
                           _createElementVNode("button", {
                             type: "button",
                             class: "btn btn-primary btn-sm",
@@ -1374,10 +1402,10 @@ return function render(_ctx, _cache) {
                             disabled: mountSaving || !canSubmitMount
                           }, [
                             mountSaving
-                              ? (_openBlock(), _createElementBlock("span", _hoisted_228))
+                              ? (_openBlock(), _createElementBlock("span", _hoisted_231))
                               : _createCommentVNode("v-if", true),
                             _createTextVNode(" " + _toDisplayString(mountMode === 'edit' ? (t('mount_save') || 'Save Mount') : (t('mount_add') || 'Add Mount')), 1 /* TEXT */)
-                          ], 8 /* PROPS */, _hoisted_227)
+                          ], 8 /* PROPS */, _hoisted_230)
                         ])
                       ])
                     ])
@@ -1454,7 +1482,7 @@ return function render(_ctx, _cache) {
             if (nextTab === 'mounts') {
                 resetMountMessages();
                 await loadMounts();
-            } else if (nextTab === 'security' && !window.externalAuthentication) {
+            } else if (nextTab === 'security' && details.value.webdav_enabled !== false) {
                 await loadWebDavCredentials();
             }
         };

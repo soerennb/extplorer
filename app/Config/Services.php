@@ -19,6 +19,12 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
+    public static function routes(bool $getShared = true)
+    {
+        if ($getShared) return static::getSharedInstance('routes');
+        return new \App\Services\WebDavRouteCollection(static::get('locator'), new Modules(), config(Routing::class));
+    }
+
     /*
      * public static function example($getShared = true)
      * {

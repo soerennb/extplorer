@@ -16,6 +16,7 @@ final class ExternalIdentity
         public readonly string $displayName,
         public readonly array $groups = [],
         public readonly ?int $authenticatedAt = null,
+        public readonly ?ProviderSession $session = null,
     ) {
         if ($issuer === '' || strlen($issuer) > 2048 || $subject === '' || strlen($subject) > 255
             || strlen($displayName) > 255 || count($groups) > 256 || !array_is_list($groups)

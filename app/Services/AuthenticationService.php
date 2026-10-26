@@ -39,11 +39,14 @@ final class AuthenticationService
         return $this->startAccountSession($user, $remembered);
     }
 
-    public function startExternalSession(array $user, string $provider, string $fingerprint, int $ttl): bool
+    public function startExternalSession(array $user, string $provider, string $fingerprint, int $ttl,
+        ?\App\Services\ExternalAuth\ProviderSession $providerSession = null, ?int $cursor = null): bool
     {
-        if (($user['auth_source'] ?? '') !== 'external' || ($user['external_identity']['provider'] ?? null) !== $provider
-            || !$this->startAccountSession($user, false)) return false;
+        if (($user['auth_source'] ?? '') !== 'external' || ($user['external_identity']['provider'] ?? null) !== $provider) return false;
+        $registration = (new \App\Services\ExternalAuth\ExternalSessionRegistry())->register($user, $fingerprint, $ttl, $providerSession, $cursor);
+        if (!$this->startAccountSession($user, false)) return false;
         session()->set('external_auth', [
+            'registration' => $registration,
             'provider' => $provider, 'fingerprint' => $fingerprint,
             'identity' => $user['external_identity'], 'expires_at' => time() + $ttl,
         ]);
@@ -106,6 +109,7 @@ final class AuthenticationService
 
     public function logout(RequestInterface $request, ResponseInterface $response): void
     {
+        \App\Services\ExternalAuth\ExternalSessionRegistry::revokeCurrent();
         (new RememberMeService($this->userModel))->forget($request, $response);
         StepUpAuthenticationService::clearGrant();
         session()->remove([

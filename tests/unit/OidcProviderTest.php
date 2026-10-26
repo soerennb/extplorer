@@ -60,7 +60,7 @@ final class OidcProviderTest extends CIUnitTestCase
             $this->requests[] = [$method, $url, $options];
             $metadata = [
                 'issuer' => 'https://idp.test/realm', 'authorization_endpoint' => 'https://idp.test/realm/authorize',
-                'token_endpoint' => 'https://idp.test/realm/token', 'jwks_uri' => 'https://idp.test/realm/keys',
+                'end_session_endpoint' => 'https://idp.test/realm/logout', 'token_endpoint' => 'https://idp.test/realm/token', 'jwks_uri' => 'https://idp.test/realm/keys',
                 'response_types_supported' => ['code'], 'subject_types_supported' => ['public'],
                 'id_token_signing_alg_values_supported' => ['RS256'], 'code_challenge_methods_supported' => ['S256'],
             ];
@@ -140,6 +140,47 @@ final class OidcProviderTest extends CIUnitTestCase
         parse_str(parse_url($url, PHP_URL_QUERY), $parameters);
         $this->assertSame('0', $parameters['max_age']);
         $this->assertSame('login', $parameters['prompt']);
+    }
+
+    private function logoutToken(array $changes = [], array $header = []): string
+    {
+        $claims = array_replace(['iss' => 'https://idp.test/realm', 'aud' => 'extplorer',
+            'iat' => time(), 'exp' => time() + 120, 'jti' => 'logout-123', 'sid' => 'session-123',
+            'events' => ['http://schemas.openid.net/event/backchannel-logout' => new \stdClass()]], $changes);
+        $encoded = self::base64url(json_encode($header + ['alg' => 'RS256', 'kid' => 'fixture-key'])) . '.' . self::base64url(json_encode($claims));
+        openssl_sign($encoded, $signature, $this->privateKey, OPENSSL_ALGO_SHA256);
+        return $encoded . '.' . self::base64url($signature);
+    }
+
+    public function testBackchannelVerifiesSignedLogoutAndRejectsCrossTokenConfusion(): void
+    {
+        $this->configuration['backchannel_logout_enabled'] = true;
+        $provider = $this->provider();
+        $this->assertSame('session-123', $provider->verifyLogoutToken($this->logoutToken())['sid']);
+        foreach ([['iss' => 'https://attacker.test'], ['aud' => 'other'], ['exp' => 1],
+            ['iat' => time() - 301], ['iat' => time() + 31], ['jti' => ''], ['nonce' => 'not-allowed'],
+            ['events' => []], ['sid' => null], ['sid' => []]] as $changes) {
+            try { $provider->verifyLogoutToken($this->logoutToken($changes)); $this->fail('Invalid logout must fail.'); }
+            catch (\RuntimeException) { $this->assertTrue(true); }
+        }
+        foreach ([['alg' => 'HS256'], ['jku' => 'https://attacker.test/keys'], ['typ' => 'at+jwt']] as $header) {
+            try { $provider->verifyLogoutToken($this->logoutToken([], $header)); $this->fail('Unsafe header must fail.'); }
+            catch (\RuntimeException) { $this->assertTrue(true); }
+        }
+        $parts = explode('.', $this->logoutToken());
+        $parts[2][0] = $parts[2][0] === 'A' ? 'B' : 'A';
+        $this->expectException(\RuntimeException::class);
+        $provider->verifyLogoutToken(implode('.', $parts));
+    }
+
+    public function testProviderLogoutUsesPostParametersAndKeepsHintsOutOfTheUrl(): void
+    {
+        $this->configuration['rp_logout_enabled'] = true;
+        $request = $this->provider()->logoutRequest('https://files.test/login/external-logout/callback', 'state',
+            new \App\Services\ExternalAuth\ProviderSession('sid', 'sensitive-id-token'));
+        $this->assertSame('https://idp.test/realm/logout', $request->url);
+        $this->assertSame('sensitive-id-token', $request->parameters['id_token_hint']);
+        $this->assertSame('state', $request->parameters['state']);
     }
 
     public function testHttpTransportRejectsUnlistedOriginsAndPrivateDnsBeforeSendingAnything(): void

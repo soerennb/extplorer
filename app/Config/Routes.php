@@ -1,9 +1,9 @@
 <?php
 
-use CodeIgniter\Router\RouteCollection;
+use App\Services\WebDavRouteCollection;
 
 /**
- * @var RouteCollection $routes
+ * @var WebDavRouteCollection $routes
  */
 $routes->get('/', 'Home::index');
 $routes->get('admin', 'Home::admin');
@@ -14,12 +14,16 @@ $routes->get('login/external/(:segment)/callback', 'ExternalLogin::callback/$1')
 $routes->post('login/auth', 'Login::auth');
 $routes->post('login/test-remote', 'Login::testRemote');
 $routes->post('logout', 'Login::logout');
+$routes->post('logout/provider', 'ExternalLogout::begin');
+$routes->get('login/external-logout/callback', 'ExternalLogout::callback');
+$routes->post('auth/events/(:segment)', 'ExternalEvents::receive/$1');
+$routes->post('auth/oidc/(:segment)/backchannel-logout', 'ExternalEvents::backchannel/$1');
 
 $routes->get('install', 'Install::index');
 $routes->post('install/create', 'Install::createAdmin');
 
-$routes->add('dav', 'DavController::index');
-$routes->add('dav/(:any)', 'DavController::index/$1');
+$routes->webdav('dav', 'DavController::index');
+$routes->webdav('dav/(:any)', 'DavController::index/$1');
 
 // Public Shares
 $routes->get('s/(:segment)', 'ShareController::index/$1');

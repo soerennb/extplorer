@@ -15,7 +15,7 @@ final class ExternalSessionPolicy
             || ($external['identity'] ?? null) !== $user['external_identity']) return false;
         try {
             $configuration ??= new ExternalAuthConfiguration();
-            return is_string($external['provider'] ?? null)
+            return ExternalSessionRegistry::valid($user, $external) && is_string($external['provider'] ?? null)
                 && hash_equals($configuration->fingerprint($external['provider']), (string)($external['fingerprint'] ?? ''));
         } catch (\Throwable) {
             return false;

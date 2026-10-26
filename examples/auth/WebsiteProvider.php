@@ -14,7 +14,7 @@ use CodeIgniter\HTTP\IncomingRequest;
 use RuntimeException;
 
 /** Example bridge: the website signs a short-lived, transaction-bound identity assertion. */
-final class WebsiteProvider implements ExternalAuthProviderInterface
+final class WebsiteProvider implements ExternalAuthProviderInterface, \App\Services\ExternalAuth\ExternalLogoutProviderInterface
 {
     public function __construct(private array $configuration)
     {
@@ -37,6 +37,17 @@ final class WebsiteProvider implements ExternalAuthProviderInterface
         ]);
     }
 
+    public function logoutRequest(string $returnUrl, string $state, ?\App\Services\ExternalAuth\ProviderSession $session): \App\Services\ExternalAuth\LogoutRequest
+    {
+        if (empty($this->configuration['rp_logout_enabled'])) throw new RuntimeException('Website logout is disabled.');
+        $time = (string)time();
+        $key = SecretReader::file(OperatorFile::path($this->configuration['signing_key_file']));
+        return new \App\Services\ExternalAuth\LogoutRequest($this->configuration['logout_url'], [
+            'callback' => $returnUrl, 'state' => $state, 'time' => $time,
+            'signature' => hash_hmac('sha256', "logout\n" . $time . "\n" . $returnUrl . "\n" . $state, $key),
+        ]);
+    }
+
     public function complete(IncomingRequest $request, AuthenticationContext $context): ExternalIdentity
     {
         $ticket = $request->getGet('ticket');
@@ -55,6 +66,7 @@ final class WebsiteProvider implements ExternalAuthProviderInterface
             || !is_array($claims['groups'] ?? null) || !is_int($claims['auth_time'] ?? null)) {
             throw new RuntimeException('Website ticket claims are invalid.');
         }
-        return new ExternalIdentity($claims['iss'], $claims['sub'], $claims['name'], $claims['groups'], $claims['auth_time']);
+        return new ExternalIdentity($claims['iss'], $claims['sub'], $claims['name'], $claims['groups'], $claims['auth_time'],
+            new \App\Services\ExternalAuth\ProviderSession($claims['sid'] ?? null));
     }
 }

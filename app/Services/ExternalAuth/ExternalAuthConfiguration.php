@@ -74,6 +74,7 @@ final class ExternalAuthConfiguration
 
     public function assertReady(): void
     {
+        ExternalWebDavPolicy::forgetRemovedProviders($this->providers());
         $state = (new \App\Services\AuthorizationState())->snapshot();
         foreach ($this->providers() as $id => $_provider) {
             $provider = $this->provider($id);
@@ -82,6 +83,10 @@ final class ExternalAuthConfiguration
                 if (!isset($state['groups'][$group])) throw new RuntimeException('External authentication mapped group does not exist.');
             }
             $this->createProvider($id);
+            ExternalWebDavPolicy::observe($id, $this->fingerprint($id));
+            if (isset($provider['events_secret_file']) && strlen(\App\Services\SecretReader::file(OperatorFile::path($provider['events_secret_file']))) < 32) {
+                throw new RuntimeException('External event key must contain at least 32 bytes.');
+            }
         }
     }
 
@@ -102,6 +107,14 @@ final class ExternalAuthConfiguration
             }
         }
         $ttl = $provider['session_ttl_seconds'] ?? 3600;
+        foreach (['rp_logout_enabled', 'backchannel_logout_enabled', 'webdav_enabled'] as $flag) {
+            if (isset($provider[$flag]) && !is_bool($provider[$flag])) throw new RuntimeException('Invalid external provider capability.');
+        }
+        if (isset($provider['events_secret_file']) && (!is_string($provider['events_secret_file']) || $provider['events_secret_file'] === '')) {
+            throw new RuntimeException('Invalid external event secret file.');
+        }
+        $davTtl = $provider['webdav_ttl_seconds'] ?? 2592000;
+        if (!is_int($davTtl) || $davTtl < 60 || $davTtl > 2592000) throw new RuntimeException('External WebDAV lifetime must be 60 to 2592000 seconds.');
         $prefix = $provider['home_prefix'] ?? 'external';
         if (!is_int($ttl) || $ttl < 60 || $ttl > 86400 || !is_string($prefix)
             || preg_match('/\A[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*\z/', $prefix) !== 1

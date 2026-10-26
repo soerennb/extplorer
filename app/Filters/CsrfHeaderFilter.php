@@ -22,7 +22,8 @@ class CsrfHeaderFilter implements FilterInterface
 
         // Routing paths exclude the installation directory and index.php.
         $path = trim($request->getPath(), '/');
-        if (str_starts_with($path, 'api/') || str_starts_with($path, 's/')) {
+        if (str_starts_with($path, 'api/') || str_starts_with($path, 's/')
+            || \App\Services\ExternalAuth\ExternalEventRoutes::matches($request)) {
             $response->setHeader('X-CSRF-HASH', csrf_hash());
         }
 

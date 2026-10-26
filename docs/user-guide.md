@@ -40,7 +40,18 @@ You can mount your eXtplorer files as a network drive on your computer.
 
 *   **URL:** `https://your-site.com/dav`
 *   **Username:** Your eXtplorer username.
-*   **Password:** Create a revocable WebDAV app password under **Profile → Security**. Accounts without 2FA may also use their normal password; accounts with 2FA must use an app password.
+*   **Password:** Create a revocable WebDAV app password under **Profile → Security**. Local accounts without 2FA may also use their normal password; accounts with 2FA must use an app password.
+
+For website or company sign-in, WebDAV must first be enabled by the operator.
+Confirm your identity with the provider when creating an app password, then use
+the WebDAV username shown in your profile and the password displayed once.
+These passwords expire after at most 30 days; create a replacement before the
+displayed expiry. Browser sign-out leaves them active. Account suspension or
+permission changes revoke them permanently.
+
+The regular sign-out button ends your eXtplorer session. If your operator enables
+provider sign-out, the separate option also signs you out at your website or
+identity provider and may sign you out of other applications. It asks for confirmation.
 
 **Windows:**
 1.  Open File Explorer > Map Network Drive.

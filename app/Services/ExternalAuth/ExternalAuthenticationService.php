@@ -31,6 +31,7 @@ final class ExternalAuthenticationService
         $secret = bin2hex(random_bytes(32));
         $transaction = [
             'provider' => $provider, 'fingerprint' => $this->configuration->fingerprint($provider),
+            'lifecycle_cursor' => ExternalState::snapshot()['sequence'],
             'state' => $state, 'nonce' => bin2hex(random_bytes(32)), 'verifier' => bin2hex(random_bytes(32)),
             'started_at' => time(), 'expires_at' => time() + 300, 'return' => $returnTo,
             'reauthentication' => $reauthentication, 'username' => session('username'), 'auth_version' => session('auth_version'),
@@ -69,13 +70,14 @@ final class ExternalAuthenticationService
             throw new RuntimeException('An account is already signed in.');
         }
         $settings = $this->configuration->provider($provider);
-        $user = (new ExternalAccountService())->synchronize($provider, $settings, $identity);
+        $user = (new ExternalAccountService())->synchronize($provider, $settings, $identity, $transaction['lifecycle_cursor']);
         if ($transaction['reauthentication']) {
             // A rights change invalidates the old session instead of upgrading it in place.
             if ($user['auth_version'] !== (int)$transaction['auth_version']) throw new RuntimeException('Account authorization changed. Sign in again.');
+            (new ExternalSessionRegistry())->refreshContext($user, $identity->session, $transaction['lifecycle_cursor']);
             $this->store($state, array_replace($transaction, ['consumed' => true, 'complete' => true]));
         } else {
-            if (!(new AuthenticationService())->startExternalSession($user, $provider, $transaction['fingerprint'], $settings['session_ttl_seconds'])) {
+            if (!(new AuthenticationService())->startExternalSession($user, $provider, $transaction['fingerprint'], $settings['session_ttl_seconds'], $identity->session, $transaction['lifecycle_cursor'])) {
                 throw new RuntimeException('External account session could not be started.');
             }
         }

@@ -25,6 +25,51 @@ final class ExternalAuthRoutingTest extends CIUnitTestCase
     }
 
     #[DataProvider('deployments')]
+    public function testDavMethodsReachTheControllerInEveryInstallationLayout(string $base, string $index): void
+    {
+        $app = clone config('App');
+        $app->baseURL = $base;
+        $app->indexPage = $index;
+        $routes = Services::routes(false);
+        $routes->loadRoutes();
+        foreach (['PROPFIND', 'PROPPATCH', 'MKCOL', 'MOVE', 'COPY', 'LOCK', 'UNLOCK', 'GET', 'PUT', 'DELETE'] as $method) {
+            foreach (['dav/', 'dav/file.txt'] as $path) {
+                $request = new IncomingRequest($app, new SiteURI($app, $path), null, new UserAgent());
+                $request->setMethod($method);
+                $router = Services::router($routes, $request, false);
+                $router->handle($request->getPath());
+                $this->assertSame('\\App\\Controllers\\DavController', $router->controllerName());
+                $this->assertSame('index', $router->methodName());
+            }
+        }
+    }
+
+    #[DataProvider('deployments')]
+    public function testOnlyExactServerEventPostsBypassBrowserCsrf(string $base, string $index): void
+    {
+        $app = clone config('App');
+        $app->baseURL = $base;
+        $app->indexPage = $index;
+        foreach (['auth/events/company', 'auth/oidc/company/backchannel-logout'] as $path) {
+            $request = new IncomingRequest($app, new SiteURI($app, $path), '{}', new UserAgent());
+            $request->setMethod('POST');
+            $this->assertTrue(\App\Services\ExternalAuth\ExternalEventRoutes::matches($request));
+            $this->assertNull((new CsrfFilter())->before($request));
+            $response = Services::response();
+            $response->setStatusCode(400);
+            (new CsrfHeaderFilter())->after($request, $response);
+            $this->assertNotEmpty($response->getHeaderLine('X-CSRF-HASH'));
+            $request->setMethod('GET');
+            $this->assertFalse(\App\Services\ExternalAuth\ExternalEventRoutes::matches($request));
+        }
+        foreach (['logout/provider', 'auth/events/company/extra', 'api/auth/events/company'] as $path) {
+            $request = new IncomingRequest($app, new SiteURI($app, $path), '{}', new UserAgent());
+            $request->setMethod('POST');
+            $this->assertFalse(\App\Services\ExternalAuth\ExternalEventRoutes::matches($request));
+        }
+    }
+
+    #[DataProvider('deployments')]
     public function testLoginReturnUrlsNeverDuplicateTheInstallationOrIndexPrefix(string $base, string $index): void
     {
         $app = config('App');

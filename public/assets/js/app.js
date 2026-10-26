@@ -797,10 +797,16 @@ const app = createApp({
             }
         };
         const hideContextMenu = () => contextMenu.visible = false;
-        const logout = () => {
+        const logout = async (provider = false) => {
+            if (provider === true) {
+                const result = await Swal.fire({ icon: 'info', title: i18n.t('external_logout_title'),
+                    text: i18n.t('external_logout_notice'), showCancelButton: true,
+                    confirmButtonText: i18n.t('external_logout_continue'), cancelButtonText: i18n.t('cancel') });
+                if (!result.isConfirmed) return;
+            }
             const form = document.createElement('form');
             form.method = 'post';
-            form.action = Api.route('logout');
+            form.action = Api.route(provider === true ? 'logout/provider' : 'logout');
             const token = document.createElement('input');
             token.type = 'hidden';
             token.name = window.csrfTokenName;
@@ -885,7 +891,7 @@ const app = createApp({
             emptyStateIcon, emptyStateTitle, emptyStateDescription,
             supports, isAdmin, openAdmin, changePassword, theme, setTheme, toggleTheme, userAdmin, userProfile, openProfile, shareModal, uploadModal, fileHistoryModal, transferModal, openTransfer, openTransferWithFile, openShare, openHistory,
             transferCapability, transferCapabilityLoading, transferAvailable, transferSettingsUrl,
-            contextMenu, showContextMenu, hideContextMenu, logout, cmAction,
+            contextMenu, showContextMenu, hideContextMenu, logout, externalLogoutEnabled: !!window.externalLogoutEnabled, cmAction,
             previewState, nextPreview, prevPreview, showWebDav, copyWebDavUrl, webDavUrl,
             dragIndicatorMode, onDragStart, onDragEnd, onDragOver, onDragLeave, onDrop,
             setSort, isImage, isArchive, getThumbUrl,

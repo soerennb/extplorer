@@ -157,8 +157,12 @@ class DavController extends BaseController
 
         // 5. Start Server
         $server->start();
-        
-        // Return empty response because SabreDAV already outputted everything
+        // CI collects Sabre's output, then emits its own response. Preserve DAV
+        // status/headers rather than replacing 207/201/204 with the default 200.
+        $this->response->setStatusCode($server->httpResponse->getStatus());
+        foreach ($server->httpResponse->getHeaders() as $name => $values) {
+            $this->response->setHeader($name, $values);
+        }
         return $this->response;
     }
 

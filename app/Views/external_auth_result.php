@@ -9,7 +9,7 @@
 <body class="bg-body-tertiary">
     <main class="container py-5">
         <h1 class="h4"><?= esc(lang('ExternalAuth.title')) ?></h1>
-        <p role="status"><?= esc(lang(!empty($success) ? 'ExternalAuth.complete' : 'ExternalAuth.failed')) ?></p>
+        <p role="status"><?= esc(lang(!empty($logout_failed) ? 'ExternalAuth.logout_failed' : (!empty($success) ? 'ExternalAuth.complete' : 'ExternalAuth.failed'))) ?></p>
         <?php if (empty($success)): ?>
         <a class="btn btn-primary" href="<?= site_url('login') ?>?local=1"><?= esc(lang('ExternalAuth.local_login')) ?></a>
         <?php endif; ?>

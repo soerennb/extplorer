@@ -63,5 +63,10 @@
     "external_auth_popup_blocked": "Erlaube Pop-up-Fenster für diese Website und versuche es erneut.",
     "external_auth_failed": "Die Identität konnte nicht bestätigt werden. Bitte versuche es erneut.",
     "external_auth_block_account": "Kontozugriff sperren",
-    "external_auth_waiting": "Bestätige deine Identität im geöffneten Fenster. Hier kannst du abbrechen."
+    "external_auth_waiting": "Bestätige deine Identität im geöffneten Fenster. Hier kannst du abbrechen.",
+    "external_logout_title": "Beim Anmeldeanbieter abmelden",
+    "external_logout_notice": "Du wirst aus eXtplorer und beim Anmeldeanbieter abgemeldet. Das kann weitere Anwendungen betreffen. WebDAV-App-Passwörter und öffentliche Freigaben bleiben aktiv.",
+    "external_logout_continue": "Abmeldung fortsetzen",
+    "external_webdav_lifetime": "App-Passwörter laufen nach spätestens 30 Tagen ab und werden nicht automatisch verlängert. Eine Browser-Abmeldung widerruft sie nicht.",
+    "external_webdav_expires": "Gültig bis"
 }

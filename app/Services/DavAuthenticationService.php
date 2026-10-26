@@ -20,7 +20,7 @@ final class DavAuthenticationService
     public function authenticate(string $username, string $password): ?array
     {
         $user = $this->users->getUser($username);
-        if (!is_array($user) || !empty($user['disabled']) || ($user['auth_source'] ?? 'local') !== 'local') {
+        if (!is_array($user) || !\App\Services\ExternalAuth\ExternalState::accountAllowed($user)) {
             return null;
         }
 
@@ -31,6 +31,8 @@ final class DavAuthenticationService
         if (!empty($user['2fa_enabled'])) {
             return null;
         }
+
+        if (($user['auth_source'] ?? 'local') !== 'local') return null;
 
         return $this->users->verifyUser($username, $password);
     }

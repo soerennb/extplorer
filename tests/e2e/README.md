@@ -143,8 +143,10 @@ and refuses an unmigrated legacy path. No real email is sent.
 TLS-enabled Keycloak 26.8.1 container (pinned digest), a separate website
 fixture and native PHP installations. It checks OIDC and the shipped custom
 adapter, provisioning, real provider reauthentication, CSRF/CSP behavior and
-logout at root/subdirectory URLs with and without `index.php`. Configuration
+local and provider logout, a second browser session receiving backchannel logout,
+signed account suspension, and DAV PROPFIND/PUT/GET/DELETE over a real TLS proxy
+at root/subdirectory URLs with and without `index.php`. Configuration
 and writable state are isolated. Only its own browser contexts, servers and
-container are closed on completion or handled failure. Docker, OpenSSL, PHP
+container are closed on completion or handled failure. Docker on Linux with host networking, OpenSSL, PHP
 and the installed Playwright Chromium are required. The Quality workflow
 runs this independently of the existing local-login Docker smoke.

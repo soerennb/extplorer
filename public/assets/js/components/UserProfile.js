@@ -354,8 +354,12 @@ const UserProfile = {
                             </div>
                         </div>
 
+                        </template>
+                        <template v-if="details.webdav_enabled !== false">
                         <h6 class="border-bottom pb-2 mb-3 mt-4">{{ t('webdav_credentials') || 'WebDAV App Passwords' }}</h6>
+                        <p v-if="details.auth_source === 'external'" class="small text-muted">{{ t('external_webdav_lifetime') }}</p>
                         <p class="small text-muted">{{ t('webdav_credentials_desc') || 'Use a separate, revocable password for WebDAV clients. The secret is shown only once.' }}</p>
+                        <p v-if="details.webdav_username" class="small">{{ t('username') }}: <code>{{ details.webdav_username }}</code></p>
                         <div v-if="webDavMessage.text" class="alert" :class="webDavMessage.type === 'success' ? 'alert-success' : 'alert-danger'" role="alert">{{ webDavMessage.text }}</div>
                         <div v-if="webDavSecret" class="alert alert-warning" role="alert">
                             <strong class="d-block mb-2">{{ t('webdav_secret_once') || 'Copy this password now. It will not be shown again.' }}</strong>
@@ -371,7 +375,7 @@ const UserProfile = {
                         </div>
                         <div v-if="webDavCredentials.length" class="list-group list-group-flush border rounded">
                             <div v-for="credential in webDavCredentials" :key="credential.id" class="list-group-item d-flex justify-content-between align-items-center">
-                                <div><strong>{{ credential.label }}</strong><div class="small text-muted">{{ formatCredentialDate(credential.created_at) }}</div></div>
+                                <div><strong>{{ credential.label }}</strong><div class="small text-muted">{{ formatCredentialDate(credential.created_at) }}</div><div v-if="credential.expires_at" class="small text-muted">{{ t('external_webdav_expires') }}: {{ formatCredentialDate(credential.expires_at) }}</div></div>
                                 <button type="button" class="btn btn-outline-danger btn-sm" @click="deleteWebDavCredential(credential.id)" :disabled="webDavLoading">{{ t('revoke') || 'Revoke' }}</button>
                             </div>
                         </div>
@@ -651,7 +655,7 @@ const UserProfile = {
             if (nextTab === 'mounts') {
                 resetMountMessages();
                 await loadMounts();
-            } else if (nextTab === 'security' && !window.externalAuthentication) {
+            } else if (nextTab === 'security' && details.value.webdav_enabled !== false) {
                 await loadWebDavCredentials();
             }
         };

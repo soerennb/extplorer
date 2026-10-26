@@ -16,6 +16,8 @@ if ($static !== false && str_starts_with($static, $public . '/') && is_file($sta
     readfile($static);
     exit;
 }
+// The isolated auth fixture uses a real TLS proxy bound to loopback.
+if (getenv('NATIVE_TLS') === '1') $_SERVER['HTTPS'] = 'on';
 $_SERVER['SCRIPT_NAME'] = $prefix . 'index.php';
 $_SERVER['PHP_SELF'] = $_SERVER['SCRIPT_NAME'];
 $_SERVER['SCRIPT_FILENAME'] = $public . '/index.php';

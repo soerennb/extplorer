@@ -82,6 +82,7 @@
         window.appVersion = <?= json_encode(config('App')->version, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         window.appEnvironment = <?= json_encode(ENVIRONMENT, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         window.externalAuthentication = <?= json_encode(\App\Services\SessionAccount::isExternal()) ?>;
+        window.externalLogoutEnabled = <?= json_encode(\App\Services\ExternalAuth\ExternalLogoutService::available()) ?>;
         window.userRole = <?= json_encode(session('role') ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         window.username = <?= json_encode(session('username') ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         window.userPermissions = <?= json_encode(session('permissions') ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;

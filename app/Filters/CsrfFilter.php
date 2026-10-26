@@ -11,6 +11,7 @@ final class CsrfFilter extends CSRF
 {
     public function before(RequestInterface $request, $arguments = null)
     {
+        if (\App\Services\ExternalAuth\ExternalEventRoutes::matches($request)) return null;
         if (!$request instanceof IncomingRequest) return parent::before($request, $arguments);
         $type = strtolower(explode(';', $request->getHeaderLine('Content-Type'), 2)[0]);
         if (!in_array($type, ['application/octet-stream', 'multipart/form-data'], true)) return parent::before($request, $arguments);

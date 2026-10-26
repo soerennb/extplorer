@@ -8,7 +8,8 @@ class Home extends BaseController
     {
         $settingsService = new \App\Services\SettingsService();
         $data = [
-            'webdavEnabled' => $settingsService->get('webdav_enabled', true) && !\App\Services\SessionAccount::isExternal()
+            'webdavEnabled' => $settingsService->get('webdav_enabled', true)
+                && \App\Services\ExternalAuth\ExternalWebDavPolicy::forUser((new \App\Models\UserModel())->getUser((string)session('username')) ?? [])['enabled'],
         ];
         return view('app', $data);
     }

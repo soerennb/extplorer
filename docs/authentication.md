@@ -157,14 +157,105 @@ Public provider start/callback routes share a limit of 20 requests per minute
 per IP before provider/network work; step-up creation also keeps its existing
 account/IP limit. Rate-limit responses use HTTP 429 with `Retry-After`.
 
-V1 logout destroys the eXtplorer session only. The IdP/website may still have
-its own login session, so the next explicit SSO login can be immediate.
-There is no central or backchannel logout. External group changes and
-upstream account disabling are discovered on the next provider login;
-local account blocking is immediate. Public shares retain their own
-lifetime and use current local owner permissions; they are not bounded by
-the owner's browser-session expiry. WebDAV is unavailable for external
-accounts in this first version. Local account authentication is unchanged.
+Local logout ends the current eXtplorer session. An optional, separately confirmed
+provider logout also ends the upstream login and may affect other applications.
+Enable `rp_logout_enabled: true` per provider. OIDC uses its discovered
+`end_session_endpoint`; register the exact `login/external-logout/callback` URL
+as a post-logout redirect. The local session is destroyed before discovery or
+provider navigation, including on failure. The return transaction is single-use,
+browser-bound and expires after five minutes. Verified ID-token hints are
+stored encrypted only when this option is enabled, submitted by POST, and never
+placed in URLs. Access and refresh tokens are never persisted.
+
+Custom adapters can optionally implement `ExternalLogoutProviderInterface`
+without changing their login interface. `logoutRequest()` returns an HTTPS
+`LogoutRequest` with POST parameters; the core renders a CSP-restricted handoff.
+See `examples/auth/WebsiteProvider.php` and `website-logout.php`. The website
+must receive its login cookie on the cross-site POST (`SameSite=None; Secure`
+when the applications use different sites), validate the signed request, and
+clear its own login. Include a stable, opaque `sid` in the signed login assertion
+if session-specific server revocation is needed.
+
+### Upstream logout and lifecycle events
+
+Enable `backchannel_logout_enabled: true` for OIDC and register the exact
+`auth/oidc/<provider>/backchannel-logout` URL with the IdP. Send form-encoded
+`logout_token` JWTs signed with RS256. Issuer, client audience, signature, fresh
+`iat` (five minutes), `exp`, `jti`, logout event and absence of `nonce` are
+validated. Token lifetime is capped at one hour. Only configured HTTPS metadata
+and JWKS origins are used. A `sid` revokes that upstream session; `sub` without
+`sid` revokes all sessions for the identity. See the
+[OIDC backchannel specification](https://openid.net/specs/openid-connect-backchannel-1_0.html).
+Logout alone leaves accounts, shares and app-passwords active.
+
+For website providers and OIDC lifecycle bridges, configure a separate
+`events_secret_file` with at least 32 random bytes and POST JSON to the exact
+`auth/events/<provider>` URL. Use HTTPS. An example full account snapshot is:
+
+```json
+{
+  "iss": "https://www.example.com", "aud": "https://files.example.com/auth/events/website",
+  "provider": "website", "id": "unique-event-id", "iat": 1793000000,
+  "type": "account.updated", "revision": 42, "sub": "immutable-user-id",
+  "status": "suspended", "groups": []
+}
+```
+
+Set `X-Extplorer-Event-Time` to the decimal `iat` and
+`X-Extplorer-Event-Signature` to `v1=` plus hexadecimal HMAC-SHA256 of
+`timestamp + "." + raw JSON body`. The clock tolerance is five minutes.
+`examples/auth/send-event.php` demonstrates delivery. Use a durable outbox;
+retry account snapshots with the same event ID and revision, refreshing `iat`
+and signature. Retry session-revocation events only within their original
+five-minute timestamp window; do not re-date an old logout as a new logout.
+`revision` must increase per immutable identity and snapshots must include the
+complete group list. Older revisions and duplicate deliveries are harmless.
+The sender must securely source account status/groups; eXtplorer does not poll
+the provider. OIDC account suspension/group changes therefore require a bridge
+that translates the provider's administrative events into these signed snapshots.
+
+`account.updated` updates provider-managed roles/groups, revokes browser sessions,
+step-up grants and app-passwords, and blocks public shares while suspended or
+not admitted by the group map. Only a later explicit `active` snapshot clears
+external suspension; a local administrator's disabled flag remains effective.
+Shares retain their own expiry and resume under current rights after reactivation.
+Revoked app-passwords never resume. Identity tombstones survive account deletion;
+a login started before a newer lifecycle event cannot overwrite it.
+
+A `session.revoked` event uses the same envelope, with `sub` and/or `sid`, and
+omits revision/status/groups. It has the same session-only effect as OIDC logout.
+Only these two exact POST event routes bypass browser CSRF and login checks;
+they require their own cryptographic authentication, limit bodies to 64 KiB and
+allow 120 requests per minute per provider/IP. Other browser routes retain CSRF.
+
+Sessions and replay/transaction records live in shared `external_auth` state,
+independently of the PHP session handler. File installations must share the state
+volume; SQL installations must use the same state database. Keep encryption keys
+consistent across replicas. Schedule `php spark auth:cleanup` hourly to remove
+expired sessions, replay records and transactions. Permanent identity tombstones
+are retained. Existing external browser sessions from before this upgrade must
+sign in again.
+
+### WebDAV for external accounts
+
+External WebDAV is disabled by default. Set `webdav_enabled: true` per provider
+to allow fresh provider step-up to issue app-passwords in the profile's security
+tab. `webdav_ttl_seconds` defaults to 2592000 (30 days), may be shortened to at
+least 60 seconds, and cannot exceed 30 days. Credentials cannot be renewed;
+create a replacement with another step-up. The UI shows the actual local
+`ext_…` WebDAV username and each credential's expiry. Never use the website/IdP
+password in a DAV client. HTTPS remains required for DAV.
+
+An event source is recommended but is not required to enable WebDAV. Without
+one, upstream account changes are learned at the next provider login, and an
+already issued credential may remain valid until its bounded expiry or local
+revocation. Every DAV request checks current local rights, status, identity,
+authorization version, expiry and provider policy. Suspension, rights changes,
+provider configuration changes and provider removal permanently invalidate old
+credentials. Run `system:readiness` on every deployed configuration change,
+including removal, before serving traffic; it records the change even when no
+DAV request observes the intermediate configuration. Local and provider logout
+do not revoke app-passwords. Local-account DAV behavior is unchanged.
 
 ## Deployment and verification
 
@@ -183,7 +274,8 @@ replace PHP workers when changing deployed extension code.
 Run `composer test`, `composer static:phpstan`, `npm run test:frontend`,
 `composer i18n:build`, and `composer i18n:check`. The external-auth browser
 test uses an isolated Keycloak container plus an example website and covers
-the four native installation layouts:
+the four native installation layouts, including provider logout, signed suspension,
+CSRF headers, and DAV PROPFIND/PUT/GET/DELETE over a real TLS proxy:
 
 ```sh
 node tests/e2e/external-auth.cjs

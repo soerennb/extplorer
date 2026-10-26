@@ -23,7 +23,7 @@ final class AccountFilePolicy
         }
 
         $user = (new UserModel())->getUser($username);
-        if ($user === null) {
+        if ($user === null || !\App\Services\ExternalAuth\ExternalState::accountAllowed($user)) {
             throw new RuntimeException('Authenticated user no longer exists.');
         }
 

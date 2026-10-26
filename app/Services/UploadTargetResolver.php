@@ -75,7 +75,7 @@ class UploadTargetResolver
         $snapshot = (new UserModel())->authorizationSnapshot($owner);
         $user = $snapshot['user'] ?? null;
         $permissions = $snapshot['permissions'] ?? [];
-        if ($user === null || !empty($user['disabled'])
+        if ($user === null || !\App\Services\ExternalAuth\ExternalState::accountAllowed($user)
             || (!in_array('*', $permissions, true) && !in_array('upload', $permissions, true))) throw new RuntimeException('Upload account is no longer authorized.');
         return $user;
     }

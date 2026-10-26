@@ -822,5 +822,10 @@
     "external_auth_popup_blocked": "Povoľte kontextové okná pre túto stránku a skúste to znova.",
     "external_auth_failed": "Identitu sa nepodarilo potvrdiť. Skúste to znova.",
     "external_auth_block_account": "Zablokovať prístup k účtu",
-    "external_auth_waiting": "Potvrďte svoju identitu v otvorenom okne. Tu môžete overenie zrušiť."
+    "external_auth_waiting": "Potvrďte svoju identitu v otvorenom okne. Tu môžete overenie zrušiť.",
+    "external_logout_title": "Odhlásiť sa u poskytovateľa identity",
+    "external_logout_notice": "Odhlásite sa z eXtplorer aj od poskytovateľa identity. Môže to ovplyvniť ďalšie aplikácie. Heslá WebDAV a verejné zdieľania zostanú aktívne.",
+    "external_logout_continue": "Pokračovať v odhlásení",
+    "external_webdav_lifetime": "Heslá vypršia najneskôr po 30 dňoch bez automatického obnovenia. Odhlásenie v prehliadači ich nezruší.",
+    "external_webdav_expires": "Platí do"
 }

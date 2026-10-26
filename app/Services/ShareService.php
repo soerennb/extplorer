@@ -214,6 +214,7 @@ class ShareService
             throw new \RuntimeException('Share path is invalid.');
         }
         if (($share['source'] ?? '') === 'transfer') {
+            $this->assertActiveOwner((string)($share['created_by'] ?? ''), (string)($share['mode'] ?? 'read') === 'upload');
             $root = rtrim($this->storage->uploads, '/\\') . DIRECTORY_SEPARATOR . 'shares';
             return [$root, $this->resolveTransferDirectory($path)];
         }
@@ -244,7 +245,7 @@ class ShareService
     {
         $model = new UserModel();
         $user = $owner !== '' ? $model->getUser($owner) : null;
-        if (!is_array($user) || !empty($user['disabled'])) {
+        if (!is_array($user) || !\App\Services\ExternalAuth\ExternalState::accountAllowed($user)) {
             throw new \RuntimeException('Share owner is not active.');
         }
 

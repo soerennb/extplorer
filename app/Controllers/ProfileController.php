@@ -29,9 +29,17 @@ class ProfileController extends BaseController
         return $this->fail(['error' => 'Additional authentication is required.', 'action' => $action], 428, 'step_up_required');
     }
 
+    private function webDavSecurityDenied()
+    {
+        $user = (new UserModel())->getUser((string)SessionAccount::localUsername());
+        if (($user['auth_source'] ?? 'local') !== 'external') return null;
+        return \App\Services\ExternalAuth\ExternalWebDavPolicy::forUser($user)['enabled']
+            ? null : $this->fail(lang('ExternalAuth.webdav_disabled'), 403, 'external_webdav_disabled');
+    }
+
     public function webDavCredentials()
     {
-        if (($managed = $this->externalSecurityDenied()) !== null) return $managed;
+        if (($managed = $this->webDavSecurityDenied()) !== null) return $managed;
         $username = (string)SessionAccount::localUsername();
         if ($username === '') return $this->failForbidden('Not logged in');
         $this->response->setHeader('Cache-Control', 'no-store');
@@ -40,7 +48,7 @@ class ProfileController extends BaseController
 
     public function createWebDavCredential()
     {
-        if (($managed = $this->externalSecurityDenied()) !== null) return $managed;
+        if (($managed = $this->webDavSecurityDenied()) !== null) return $managed;
         if (($stepUp = $this->requireStepUp('webdav-credential.create')) !== true) return $stepUp;
         $username = (string)SessionAccount::localUsername();
         $json = $this->request->getJSON(true);
@@ -58,7 +66,7 @@ class ProfileController extends BaseController
 
     public function deleteWebDavCredential(?string $id = null)
     {
-        if (($managed = $this->externalSecurityDenied()) !== null) return $managed;
+        if (($managed = $this->webDavSecurityDenied()) !== null) return $managed;
         if (($stepUp = $this->requireStepUp('webdav-credential.delete')) !== true) return $stepUp;
         if (!is_string($id) || preg_match('/\A[a-f0-9]{32}\z/', $id) !== 1) return $this->failNotFound();
         $username = (string)SessionAccount::localUsername();
@@ -96,6 +104,9 @@ class ProfileController extends BaseController
             'role' => $user['role'],
             'auth_source' => $user['auth_source'] ?? 'local',
             'display_name' => $user['display_name'] ?? $user['username'],
+            'webdav_enabled' => (new \App\Services\SettingsService())->get('webdav_enabled', true)
+                && \App\Services\ExternalAuth\ExternalWebDavPolicy::forUser($user)['enabled'],
+            'webdav_username' => $user['username'],
             'home_dir' => $user['home_dir'],
             '2fa_enabled' => $user['2fa_enabled'] ?? false,
             'allowed_extensions' => $user['allowed_extensions'] ?? '',

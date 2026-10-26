@@ -18,6 +18,7 @@ class AuthFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
+        if (\App\Services\ExternalAuth\ExternalEventRoutes::matches($request)) return null;
         if (!session()->get('isLoggedIn')) {
             $remember = new RememberMeService();
             if ($remember->restore($request, Services::response())) {

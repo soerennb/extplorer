@@ -63,5 +63,10 @@
     "external_auth_popup_blocked": "Autorisez les fenêtres contextuelles pour ce site et réessayez.",
     "external_auth_failed": "La confirmation de l’identité a échoué. Veuillez réessayer.",
     "external_auth_block_account": "Bloquer l’accès au compte",
-    "external_auth_waiting": "Confirmez votre identité dans la fenêtre ouverte. Vous pouvez annuler ici."
+    "external_auth_waiting": "Confirmez votre identité dans la fenêtre ouverte. Vous pouvez annuler ici.",
+    "external_logout_title": "Se déconnecter du fournisseur d’identité",
+    "external_logout_notice": "Vous serez déconnecté d’eXtplorer et du fournisseur d’identité. D’autres applications peuvent être concernées. Les mots de passe WebDAV et les partages publics restent actifs.",
+    "external_logout_continue": "Continuer la déconnexion",
+    "external_webdav_lifetime": "Les mots de passe expirent au plus tard après 30 jours, sans renouvellement automatique. La déconnexion du navigateur ne les révoque pas.",
+    "external_webdav_expires": "Expire le"
 }

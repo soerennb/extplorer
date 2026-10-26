@@ -226,7 +226,7 @@ jobs:
           composer install --no-interaction --prefer-dist
           npm ci
           npx playwright install --with-deps chromium
-      - name: Verify OIDC and custom website login, provisioning and step-up
+      - name: Verify OIDC and website login, lifecycle events, provider logout and HTTPS WebDAV
         run: node tests/e2e/external-auth.cjs
 
   frontend:

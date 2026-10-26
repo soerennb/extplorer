@@ -28,7 +28,7 @@ class VfsFactory
         $userModel = new UserModel();
         $user = $userModel->getUser($username);
         
-        if (!$user) {
+        if (!$user || !\App\Services\ExternalAuth\ExternalState::accountAllowed($user)) {
             return new DeniedFileSystem('Authenticated user no longer exists.');
         }
 

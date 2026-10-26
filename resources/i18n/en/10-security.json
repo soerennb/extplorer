@@ -63,5 +63,10 @@
     "external_auth_popup_blocked": "Allow pop-up windows for this site and try again.",
     "external_auth_failed": "Identity confirmation could not be completed. Please try again.",
     "external_auth_block_account": "Block account access",
-    "external_auth_waiting": "Complete identity confirmation in the opened window. You can cancel here."
+    "external_auth_waiting": "Complete identity confirmation in the opened window. You can cancel here.",
+    "external_logout_title": "Sign out at identity provider",
+    "external_logout_notice": "This signs you out of eXtplorer and your identity provider. Other applications may also be signed out. WebDAV app passwords and public shares remain active.",
+    "external_logout_continue": "Continue sign-out",
+    "external_webdav_lifetime": "App passwords expire after at most 30 days and are not renewed automatically. Browser sign-out does not revoke them.",
+    "external_webdav_expires": "Expires"
 }

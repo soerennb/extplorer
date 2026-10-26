@@ -81,6 +81,7 @@
                                 <i class="ri-computer-line me-2"></i> {{ t('theme_auto') }}
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
+                            <li v-if="externalLogoutEnabled"><a class="dropdown-item" href="#" @click.prevent="logout(true)" data-testid="provider-logout"><i class="ri-logout-box-r-line me-2" aria-hidden="true"></i>{{ t('external_logout_title') }}</a></li>
                             <li><a class="dropdown-item text-danger" href="#" @click.prevent="logout" data-testid="logout"><i class="ri-logout-box-r-line me-2"></i>{{ t('logout') || 'Logout' }}</a></li>
                         </ul>
                     </div>
