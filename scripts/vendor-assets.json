@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-10-19",
+  "generatedAt": "2026-11-06",
   "packages": [
     {
       "name": "vue",
-      "version": "3.5.44",
-      "source": "https://registry.npmjs.org/vue/-/vue-3.5.44.tgz",
-      "integrity": "sha512-dvvmaOCG7lAMkJTPqPwWeGMsPS6DIsFsfZDUgBp9V6mHf9b3+/wyVwYR4Es+WV6uJC0FKRxp81Obcq0ZwUcGFQ==",
+      "version": "3.5.45",
+      "source": "https://registry.npmjs.org/vue/-/vue-3.5.45.tgz",
+      "integrity": "sha512-3cvsib8m9c0vB24+MDKsgcW4+Da4xaBl9Z/5Tbm2pmSIsRPxcil4cdXjXlVsmJ2g64XJo5h+IRd7rsdGT9pZaw==",
       "files": {
-        "public/assets/js/vue.runtime.global.prod.js": "d4ce95b94ad5808c55c26a1de57098bd7aa5fc07c31cc2ceb517b24a80633a13"
+        "public/assets/js/vue.runtime.global.prod.js": "3decf87d416625675c52bd38e928521ba192277a26c5172ab4545a4e98ffddc3"
       }
     },
     {
@@ -68,42 +68,42 @@
     },
     {
       "name": "ace-builds",
-      "version": "1.44.0",
-      "source": "https://registry.npmjs.org/ace-builds/-/ace-builds-1.44.0.tgz",
-      "integrity": "sha512-PFNMSYqFdEUkul2Ntud0HvA09AgY+F1ag0UYdpMH60wNI/qOA8cB8tlTgoALMEwIdUPJK2CjrIQ7OnbiSS/ugQ==",
+      "version": "1.45.2",
+      "source": "https://registry.npmjs.org/ace-builds/-/ace-builds-1.45.2.tgz",
+      "integrity": "sha512-a0IADaETGBnBW5CIkniUJn7F+NyTuHWKqlv1A8FXaMmFflJsMGnU3TzkiyslInqIZ3odfcVKOdXBGIKBefzFDA==",
       "files": {
-        "public/assets/vendor/ace/ace.js": "116962fc63b120f6f6973e7e82ec8faa02c3bf1ceb59a3effaafb57ea09bee88",
-        "public/assets/vendor/ace/ace.min.js": "116962fc63b120f6f6973e7e82ec8faa02c3bf1ceb59a3effaafb57ea09bee88",
+        "public/assets/vendor/ace/ace.js": "69007cb0eb642e9d3f85c12d74af2fd419dd877f47e0732993bca8efa22e780c",
+        "public/assets/vendor/ace/ace.min.js": "69007cb0eb642e9d3f85c12d74af2fd419dd877f47e0732993bca8efa22e780c",
         "public/assets/vendor/ace/mode-css.js": "5aa2be6dbf16aec775317d956e6e902a5ceb765b486d80d550eb821f678dbbb3",
         "public/assets/vendor/ace/mode-css.min.js": "5aa2be6dbf16aec775317d956e6e902a5ceb765b486d80d550eb821f678dbbb3",
-        "public/assets/vendor/ace/mode-html.js": "0f21cde86f32f3f479378de794797eb438701c3793db0c6618f4dd4c2671538a",
-        "public/assets/vendor/ace/mode-html.min.js": "0f21cde86f32f3f479378de794797eb438701c3793db0c6618f4dd4c2671538a",
-        "public/assets/vendor/ace/mode-javascript.js": "6036918585bb03161f4ac775230aaf451e4a192a3d3335d87d7f6d1166b6a730",
-        "public/assets/vendor/ace/mode-javascript.min.js": "6036918585bb03161f4ac775230aaf451e4a192a3d3335d87d7f6d1166b6a730",
+        "public/assets/vendor/ace/mode-html.js": "4aa2d6cb81283aefd3176f45082a19dcce19d591095e7c27e5877c2c9ec93bdd",
+        "public/assets/vendor/ace/mode-html.min.js": "4aa2d6cb81283aefd3176f45082a19dcce19d591095e7c27e5877c2c9ec93bdd",
+        "public/assets/vendor/ace/mode-javascript.js": "56113e9f608ebc34e7cca6a55d5dcf37395fbb51ea0bed980d01e8389a05a806",
+        "public/assets/vendor/ace/mode-javascript.min.js": "56113e9f608ebc34e7cca6a55d5dcf37395fbb51ea0bed980d01e8389a05a806",
         "public/assets/vendor/ace/mode-json.js": "816362476a7cb347e422e03c8cb5c81918cce5de11ac4da7df1aec5b38cc8a31",
         "public/assets/vendor/ace/mode-json.min.js": "816362476a7cb347e422e03c8cb5c81918cce5de11ac4da7df1aec5b38cc8a31",
-        "public/assets/vendor/ace/mode-markdown.js": "39627a8bd0a3d7273540ecec0bbea844b7588eb963d698f9ffd0b24450907b3e",
-        "public/assets/vendor/ace/mode-markdown.min.js": "39627a8bd0a3d7273540ecec0bbea844b7588eb963d698f9ffd0b24450907b3e",
-        "public/assets/vendor/ace/mode-php.js": "98c9c170c432d6dd428d74784caf89335b0bb5d6d8cea7dd6c12e90888be3f55",
-        "public/assets/vendor/ace/mode-php.min.js": "98c9c170c432d6dd428d74784caf89335b0bb5d6d8cea7dd6c12e90888be3f55",
+        "public/assets/vendor/ace/mode-markdown.js": "d57c21b4a5b857c63dd9d24b4f2a5b9126cbb2d567fa2edd7a5939e0be80c262",
+        "public/assets/vendor/ace/mode-markdown.min.js": "d57c21b4a5b857c63dd9d24b4f2a5b9126cbb2d567fa2edd7a5939e0be80c262",
+        "public/assets/vendor/ace/mode-php.js": "d9b67924881f8f8461bc2f050ec528d2aa0d997dd5fd3d7c267a07f5253253dd",
+        "public/assets/vendor/ace/mode-php.min.js": "d9b67924881f8f8461bc2f050ec528d2aa0d997dd5fd3d7c267a07f5253253dd",
         "public/assets/vendor/ace/mode-sql.js": "8bf2c079b89e25de21463aa83a8ae79c1a5cc81188f2673595c00344420a5faa",
         "public/assets/vendor/ace/mode-sql.min.js": "8bf2c079b89e25de21463aa83a8ae79c1a5cc81188f2673595c00344420a5faa",
-        "public/assets/vendor/ace/mode-xml.js": "fc3415cbcede2eaa8ee75b47225dc6de30ab119f647884c8d246a170b14d317f",
-        "public/assets/vendor/ace/mode-xml.min.js": "fc3415cbcede2eaa8ee75b47225dc6de30ab119f647884c8d246a170b14d317f",
+        "public/assets/vendor/ace/mode-xml.js": "43e7be0c82937e03ad98bd1dbe49cd23c1b865f546c23539020b2b50f508d319",
+        "public/assets/vendor/ace/mode-xml.min.js": "43e7be0c82937e03ad98bd1dbe49cd23c1b865f546c23539020b2b50f508d319",
         "public/assets/vendor/ace/theme-chrome.js": "4746f938ad581ec1c4003f5d8414aab440d548327a1689c241ea74c1713a4357",
         "public/assets/vendor/ace/theme-chrome.min.js": "4746f938ad581ec1c4003f5d8414aab440d548327a1689c241ea74c1713a4357",
         "public/assets/vendor/ace/theme-monokai.js": "d8a164b9d4eb6af1bd915bc733658b26f5b3afdd135fe0c673a4f6431a06d64f",
         "public/assets/vendor/ace/theme-monokai.min.js": "d8a164b9d4eb6af1bd915bc733658b26f5b3afdd135fe0c673a4f6431a06d64f",
-        "public/assets/vendor/ace/worker-css.js": "09268aee2f7da5833eeec8db0ebc0c59eb13cf37e2241dc8fede967973468403",
-        "public/assets/vendor/ace/worker-css.min.js": "09268aee2f7da5833eeec8db0ebc0c59eb13cf37e2241dc8fede967973468403",
-        "public/assets/vendor/ace/worker-html.js": "cda50dff75f72ee3bba99d253177d105ebe9e7c51475a2eaef0cada859299b97",
-        "public/assets/vendor/ace/worker-html.min.js": "cda50dff75f72ee3bba99d253177d105ebe9e7c51475a2eaef0cada859299b97",
-        "public/assets/vendor/ace/worker-javascript.js": "f50bcad13a425f0165c169c5e29ed019f6510bee9ba4780a130698f766277157",
-        "public/assets/vendor/ace/worker-javascript.min.js": "f50bcad13a425f0165c169c5e29ed019f6510bee9ba4780a130698f766277157",
-        "public/assets/vendor/ace/worker-json.js": "660e4591862c50691802f2b252564499f65dfe6495aa034cc144e92dac74bb64",
-        "public/assets/vendor/ace/worker-json.min.js": "660e4591862c50691802f2b252564499f65dfe6495aa034cc144e92dac74bb64",
-        "public/assets/vendor/ace/worker-php.js": "c5cade47a167a876caeed5d4727c056d3d8532a5b9ab00e7cc642c1f5be0e188",
-        "public/assets/vendor/ace/worker-php.min.js": "c5cade47a167a876caeed5d4727c056d3d8532a5b9ab00e7cc642c1f5be0e188"
+        "public/assets/vendor/ace/worker-css.js": "e6335323d149aa4c94d31788aaac21437f940fe64520aaa36d21d8f8cb797d8e",
+        "public/assets/vendor/ace/worker-css.min.js": "e6335323d149aa4c94d31788aaac21437f940fe64520aaa36d21d8f8cb797d8e",
+        "public/assets/vendor/ace/worker-html.js": "c9a11cc031f05d8ef88de947aa0d8493f4c2ce04776c9eff7cf48a45cd642760",
+        "public/assets/vendor/ace/worker-html.min.js": "c9a11cc031f05d8ef88de947aa0d8493f4c2ce04776c9eff7cf48a45cd642760",
+        "public/assets/vendor/ace/worker-javascript.js": "f0a76980172187e62f0ad02c0d812e8d8e6241fb325255985830718a855552c6",
+        "public/assets/vendor/ace/worker-javascript.min.js": "f0a76980172187e62f0ad02c0d812e8d8e6241fb325255985830718a855552c6",
+        "public/assets/vendor/ace/worker-json.js": "906bae18aa2d49f7fb6026a9775cf93bd966675e41d1c323e371065d3fdf3c39",
+        "public/assets/vendor/ace/worker-json.min.js": "906bae18aa2d49f7fb6026a9775cf93bd966675e41d1c323e371065d3fdf3c39",
+        "public/assets/vendor/ace/worker-php.js": "4edd3703e07e6ec3bdb4a8f68b82c61ae88d0b230dbfce3d4b4ea9980f292947",
+        "public/assets/vendor/ace/worker-php.min.js": "4edd3703e07e6ec3bdb4a8f68b82c61ae88d0b230dbfce3d4b4ea9980f292947"
       }
     }
   ]

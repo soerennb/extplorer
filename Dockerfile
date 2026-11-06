@@ -27,7 +27,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
-COPY --from=composer:2.10.3 /usr/bin/composer /usr/local/bin/composer
+COPY --from=composer:2.11.1 /usr/bin/composer /usr/local/bin/composer
 
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
