@@ -175,7 +175,7 @@ publication.
 The tag workflow builds the native ZIP and the native AMD64/ARM64 images in
 parallel, then requires both jobs to succeed before publication. The ZIP is
 checked for packaged translations, all four native routing layouts and an
-upgrade from the checksum-pinned published v3.1.0 ZIP. Each final image is
+upgrade from the checksum-pinned published v3.1.1 and v3.1.4 ZIPs. Each final image is
 smoke-tested and scanned by digest; the complete scan includes unfixed findings.
 Fixable HIGH/CRITICAL findings or CVE-2026-58055 block publication.
 

@@ -4,6 +4,8 @@ All notable changes to eXtplorer 3 are documented here.
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-11-07
+
 ### Added
 
 - Optional OIDC and custom website authentication with automatic local account provisioning, explicit group mappings, private Home directories, bounded browser sessions and provider reauthentication for sensitive changes. Local credentials and direct remote logins retain their separate authentication paths. See `docs/authentication.md` for configuration and lifecycle limits.
@@ -32,6 +34,11 @@ All notable changes to eXtplorer 3 are documented here.
 - Reject bidirectional, invisible and C1 control characters in new filenames, which could make a name display differently from its real type.
 - Validate field types when administrators update accounts. Stored extension lists no longer break sign-in, and the string `false` no longer disables an account.
 - Reject account passwords longer than 72 bytes, which bcrypt would silently truncate.
+
+### Changed
+
+- Update CodeIgniter 4.7.6, phpseclib 4.0.3, Symfony HTTP client 7.4.23, PHPStan 2.3.5, Vue 3.5.45, Playwright 1.65.0 and Ace 1.45.2. Update Node 24.22.2, Composer 2.11.1 and Nginx 1.31.8; include the reviewed security fixes.
+- Load editor and diff assets on demand and polish file-manager interactions.
 
 ### Upgrade
 
@@ -177,9 +184,11 @@ All notable changes to eXtplorer 3 are documented here.
 
 - Improved Docker runtime and secret handling checks during release quality validation.
 
-[Unreleased]: https://github.com/soerennb/extplorer/compare/v3.1.1...HEAD
+[Unreleased]: https://github.com/soerennb/extplorer/compare/v3.2.0...HEAD
 [3.1.1]: https://github.com/soerennb/extplorer/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/soerennb/extplorer/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/soerennb/extplorer/releases/tag/v3.0.0
 [3.0.0-beta.6]: https://github.com/soerennb/extplorer/releases/tag/v3.0.0-beta.6
 [3.0.0-beta.5]: https://github.com/soerennb/extplorer/releases/tag/v3.0.0-beta.5
+
+[3.2.0]: https://github.com/soerennb/extplorer/compare/v3.1.4...v3.2.0

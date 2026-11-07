@@ -178,3 +178,28 @@ test('resuming publication requires original successful archive and both image g
         assert.throws(() => verifySourceRun(run, failed, run.head_sha), /gate did not succeed/);
     }
 });
+
+test('first minor alias is created only after publication and can resume', (t) => {
+    const { options, releases, release } = fixture(t);
+    const registry = remote();
+    delete registry.tags['3.1'];
+    const publish = releases.publish;
+    releases.publish = () => { assert.equal(registry.tags['3.1'], undefined); publish(); };
+    const set = registry.set.bind(registry);
+    registry.set = (ref, sources) => { if (ref === '3.1') throw new Error('alias unavailable'); set(ref, sources); };
+    assert.throws(() => publishRelease(options, registry, releases), /alias unavailable/);
+    assert.equal(release.draft, false);
+    assert.equal(registry.tags.latest.digest, newDigest);
+    registry.set = set;
+    publishRelease(options, registry, releases);
+    assert.equal(registry.tags['3.1'].digest, newDigest);
+});
+test('failed publication preserves absence of first minor alias', (t) => {
+    const { options, releases } = fixture(t);
+    const registry = remote();
+    delete registry.tags['3.1'];
+    releases.publish = () => { throw new Error('publication failed'); };
+    assert.throws(() => publishRelease(options, registry, releases), /publication failed/);
+    assert.equal(registry.tags['3.1'], undefined);
+    assert.equal(registry.tags.latest.digest, oldDigest);
+});

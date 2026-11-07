@@ -6,7 +6,15 @@ const net = require('node:net');
 const crypto = require('node:crypto');
 const { execFileSync, spawn } = require('node:child_process');
 const { chromium, expect } = require('@playwright/test');
-const baseline = require('../release/baseline-3.1.1.json');
+const arguments_ = process.argv.slice(2);
+function option(name, fallback) {
+    const index = arguments_.indexOf(name);
+    if (index < 0) return fallback;
+    if (!arguments_[index + 1]) throw new Error(`Missing value for ${name}`);
+    return arguments_.splice(index, 2)[1];
+}
+const baseline = JSON.parse(fs.readFileSync(option('--baseline', 'tests/release/baseline-3.1.1.json')));
+const output = option('--output', 'build/release-upgrade-results.json');
 const fixture = path.resolve('tests/release/upgrade-state.php');
 const router = path.resolve('tests/e2e/native-router.php');
 const results = [];
@@ -152,7 +160,7 @@ async function dockerUpgrade(root, candidate, browser) {
     finally { compose(['down', '--volumes', '--remove-orphans']); }
 }
 async function main() {
-    const [oldArgument, newArgument, candidate] = process.argv.slice(2);
+    const [oldArgument, newArgument, candidate] = arguments_;
     if (!oldArgument || !newArgument) throw new Error('Usage: node tests/e2e/release-upgrade.cjs <published-3.1.1.zip> <candidate.zip> [candidate-image]');
     const oldZip = path.resolve(oldArgument);
     const newZip = path.resolve(newArgument);
@@ -163,7 +171,7 @@ async function main() {
         await nativeUpgrade(root, oldZip, newZip, browser);
         if (candidate) await dockerUpgrade(root, candidate, browser);
         fs.mkdirSync('build', { recursive: true });
-        fs.writeFileSync('build/release-upgrade-results.json', JSON.stringify({ baseline, candidate_zip_sha256: crypto.createHash('sha256').update(fs.readFileSync(newZip)).digest('hex'), candidate_image: candidate || null, results }, null, 2) + '\n');
+        fs.writeFileSync(output, JSON.stringify({ baseline, candidate_zip_sha256: crypto.createHash('sha256').update(fs.readFileSync(newZip)).digest('hex'), candidate_image: candidate || null, results }, null, 2) + '\n');
     } finally { await browser.close(); fs.rmSync(root, { recursive: true, force: true }); }
 }
 main().catch((error) => { console.error(error); process.exitCode = 1; });

@@ -183,6 +183,15 @@ jobs:
           gh release download v3.1.1 --repo "$GITHUB_REPOSITORY" --pattern eXtplorer-3.1.1-release.zip --dir baseline
           node tests/e2e/release-upgrade.cjs baseline/eXtplorer-3.1.1-release.zip "eXtplorer-${GITHUB_REF_NAME#v}-release.zip"
 
+      - name: Verify packaged external authentication and current stable upgrade
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          unzip -q "eXtplorer-${GITHUB_REF_NAME#v}-release.zip" -d packaged-auth
+          node tests/e2e/external-auth.cjs packaged-auth
+          gh release download v3.1.4 --repo "$GITHUB_REPOSITORY" --pattern eXtplorer-3.1.4-release.zip --dir baseline
+          node tests/e2e/release-upgrade.cjs baseline/eXtplorer-3.1.4-release.zip "eXtplorer-${GITHUB_REF_NAME#v}-release.zip" --baseline tests/release/baseline-3.1.4.json --output build/release-upgrade-3.1.4-results.json
+
       - name: Retain verified archive and routing evidence
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -191,7 +200,8 @@ jobs:
             eXtplorer-*-release.zip
             eXtplorer-*-release.zip.sha256
             build/native-routing-results.json
-            build/release-upgrade-results.json
+            build/release-upgrade*results.json
+            build/external-auth/
           if-no-files-found: error
           retention-days: 30
 

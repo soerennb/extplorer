@@ -71,17 +71,20 @@ function promoteAliases(tag, digest, remote, finish = () => {}, record = () => {
     assertManifest(remote.inspect(version), digest);
     // Prereleases never move stable aliases.
     const aliases = version.includes('-') ? [] : [version.split('.').slice(0, 2).join('.'), version.split('.')[0], 'latest'];
-    const previous = Object.fromEntries(aliases.map((alias) => [alias, remote.inspect(alias).digest]));
+    const previous = Object.fromEntries(aliases.map((alias) => {
+        try { return [alias, remote.inspect(alias)?.digest ?? null]; }
+        catch (error) { if (!isMissing(error)) throw error; return [alias, null]; }
+    }));
     record({ tag, digest, previous });
     try {
-        for (const alias of aliases) {
+        for (const alias of aliases.filter((alias) => previous[alias])) {
             remote.set(alias, [digest]);
             assertManifest(remote.inspect(alias), digest);
         }
         finish();
     } catch (failure) {
         const rollbackErrors = [];
-        for (const [alias, oldDigest] of Object.entries(previous)) {
+        for (const [alias, oldDigest] of Object.entries(previous).filter(([, value]) => value)) {
             try {
                 remote.set(alias, [oldDigest]);
                 assertManifest(remote.inspect(alias), oldDigest);
@@ -89,6 +92,11 @@ function promoteAliases(tag, digest, remote, finish = () => {}, record = () => {
         }
         if (rollbackErrors.length) throw new AggregateError([failure], `Publication failed; rollback incomplete: ${rollbackErrors.join('; ')}`);
         throw failure;
+    }
+    // New aliases are created only after publication, outside the rollback boundary.
+    for (const alias of aliases.filter((alias) => !previous[alias])) {
+        remote.set(alias, [digest]);
+        assertManifest(remote.inspect(alias), digest);
     }
 }
 
@@ -166,6 +174,9 @@ function publishRelease(options, remote, releases) {
         if (!release.draft) {
             // A retry after a lost API response may already have finished.
             for (const alias of version.includes('-') ? [] : [version.split('.').slice(0, 2).join('.'), version.split('.')[0], 'latest']) {
+                let current;
+                try { current = remote.inspect(alias); } catch (error) { if (!isMissing(error)) throw error; }
+                if (!current) remote.set(alias, [digest]);
                 assertManifest(remote.inspect(alias), digest);
             }
             return;
