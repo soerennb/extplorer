@@ -28,3 +28,19 @@ and both architecture images by digest before publication. Fixable HIGH/CRITICAL
 findings and CVE-2026-58055 block publication. Verification evidence and final
 published checksums/digests will be recorded after publication without moving
 the tag.
+
+## Published verification
+
+Published stable/latest on 2026-11-07 at 07:47:54 UTC.
+Release commit: `11a0488a77495bab360b840945ddbcec0e8eb560`.
+
+- [Quality](https://github.com/soerennb/extplorer/actions/runs/42351900556),
+  [Security](https://github.com/soerennb/extplorer/actions/runs/42351900277) and
+  [Secret scanning](https://github.com/soerennb/extplorer/actions/runs/42351900276) passed for the release SHA.
+- [Release](https://github.com/soerennb/extplorer/actions/runs/42352372061) passed: actual ZIP routing, packaged OIDC/website login and both native upgrade bases, plus both architecture image smoke suites and scans.
+- Local candidate: 544 PHP tests / 2,488 assertions (nine environment-dependent skips), PHPStan, 25 frontend tests, 22 publication tests, translations and vendor audits passed. Local ZIP/TAR.GZ translation checks passed. Native and Docker upgrade/restore from 3.1.1 and 3.1.4 and packaged external authentication passed. Local image scan found no vulnerabilities.
+- Published ZIP downloaded and SHA-256 verified: `3364352b902940fd2098fd5e2da8eb89eeb8282a6390acaf981a7903986b71c8`.
+- Verified multi-architecture manifest: `sha256:e363a306a2cae8604f4b04af68c8dbba4bab17d852fa4d59509eb8a0d9922afc`.
+- Registry inspection confirms `3.2.0`, `3.2`, `3` and `latest` share this digest and include Linux AMD64/ARM64. `3.1` retains the previous 3.1.4 digest.
+- Full release image scan severity counts (including unfixed findings): `{"amd64": {}, "arm64": {}}`.
+- Original CI evidence downloaded under `build/release-3.2.0/`; original workflow artifacts retained for 30 days. This evidence-only follow-up does not move the release tag.
