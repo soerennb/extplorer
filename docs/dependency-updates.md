@@ -53,7 +53,7 @@ the resulting lockfile. Do not use `npm audit fix --force`.
 
 ## Copied browser asset inventory
 
-Inventory checked on 2026-11-06. These files are shipped to browsers, but only
+Inventory checked on 2026-11-17. These files are shipped to browsers, but only
 Vue's active runtime is currently generated from an NPM-locked dependency.
 Composer and NPM audits alone do not cover all shipped browser libraries or
 dependencies embedded in their bundles.
@@ -62,7 +62,7 @@ dependencies embedded in their bundles.
 | --- | --- | --- |
 | Vue, active runtime | 3.5.45 | `public/assets/js/vue.runtime.global.prod.js`; `npm run build:js` copies it from the locked `vue` package and uses the locked compiler. |
 | Vue, legacy full builds | Removed | The unused 3.5.41 full builds are no longer shipped; only the locked 3.5.45 runtime used by the application remains. The audit advisory applied to the package's server-renderer dependency, which was not present in those browser files. |
-| Bootstrap | 5.3.8 | `bootstrap.bundle.min.js` and `bootstrap.min.css`; obtain matching JS/CSS from the [Bootstrap package](https://www.npmjs.com/package/bootstrap). |
+| Bootstrap | 5.3.9 | `bootstrap.bundle.min.js` and `bootstrap.min.css`; obtain matching JS/CSS from the [Bootstrap package](https://www.npmjs.com/package/bootstrap). |
 | SweetAlert2 | 11.26.25 | `sweetalert2.min.js` and `sweetalert2.all.min.js`; use matching files from the [publisher release](https://github.com/sweetalert2/sweetalert2/releases). |
 | SweetAlert2, copied stylesheet | 11.26.25 | `sweetalert2.min.css` is byte-for-byte identical to the CSS shipped by `sweetalert2@11.26.25`. |
 | Remix Icon | 4.9.1 | `remixicon.css` and `remixicon.woff2`; icon rules match the upstream package, with the font-face narrowed to the shipped WOFF2 font and local path. |

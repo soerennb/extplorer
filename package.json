@@ -14,7 +14,7 @@
     "test:release": "node --test tests/release/*.test.cjs"
   },
   "devDependencies": {
-    "@playwright/test": "1.65.0",
+    "@playwright/test": "1.65.1",
     "@vue/compiler-dom": "^3.5.45",
     "vue": "^3.5.45"
   }
