@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06",
+  "generatedAt": "2026-11-17",
   "packages": [
     {
       "name": "vue",
@@ -12,12 +12,12 @@
     },
     {
       "name": "bootstrap",
-      "version": "5.3.8",
-      "source": "https://registry.npmjs.org/bootstrap/-/bootstrap-5.3.8.tgz",
-      "integrity": "sha512-HP1SZDqaLDPwsNiqRqi5NcP0SSXciX2s9E+RyqJIIqGo+vJeN5AJVM98CXmW/Wux0nQ5L7jeWUdplCEf0Ee+tg==",
+      "version": "5.3.9",
+      "source": "https://registry.npmjs.org/bootstrap/-/bootstrap-5.3.9.tgz",
+      "integrity": "sha512-20cU0rcfw8WdxtVbmfU+xT2EjvVTw9Ror/h1Qvd7DXCujRg8OO9mdBCsmTHdJFf3BuadmBNJtgIuUXsBqSkk/w==",
       "files": {
-        "public/assets/js/bootstrap.bundle.min.js": "e4fd49181388c48ec5040bd3fe66f57c29c8e67fcd8502b3354b96ec7ab47cc7",
-        "public/assets/css/bootstrap.min.css": "d85327d99c7a3ee1f9b5d0500d1370acea3ad2db39c163c2f51f232baedbdede"
+        "public/assets/js/bootstrap.bundle.min.js": "4ad2ad30a7df1fa0a615c4cfeb1aeffbe92019a8dff0262c99464acbd56dca5c",
+        "public/assets/css/bootstrap.min.css": "9caac977a0af0c2229abd397eee3345899c4020da2a1a0b711c1cc543fe3719d"
       }
     },
     {
