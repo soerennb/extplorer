@@ -3,11 +3,11 @@
   "packages": [
     {
       "name": "vue",
-      "version": "3.5.45",
-      "source": "https://registry.npmjs.org/vue/-/vue-3.5.45.tgz",
-      "integrity": "sha512-3cvsib8m9c0vB24+MDKsgcW4+Da4xaBl9Z/5Tbm2pmSIsRPxcil4cdXjXlVsmJ2g64XJo5h+IRd7rsdGT9pZaw==",
+      "version": "3.5.46",
+      "source": "https://registry.npmjs.org/vue/-/vue-3.5.46.tgz",
+      "integrity": "sha512-0kW5CgfjMPBqmH158049SaE1muufp+K/ZyrwvSEwrwYky6QB7zL2y8kXfruneKb9O12eh0xAJL6CVSpzb9o0Kg==",
       "files": {
-        "public/assets/js/vue.runtime.global.prod.js": "3decf87d416625675c52bd38e928521ba192277a26c5172ab4545a4e98ffddc3"
+        "public/assets/js/vue.runtime.global.prod.js": "7fa5a979be40c495ff48665d5f43a3d7d961951b008fc2ff57821f2296287bf2"
       }
     },
     {
