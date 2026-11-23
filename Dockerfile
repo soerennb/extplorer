@@ -2,14 +2,15 @@ FROM php:8.5.12-fpm-alpine3.24 AS builder
 
 ARG APP_VERSION=dev
 
-# Keep fixed Brotli, curl and nghttp2 versions in both PHP stages.
-# CVE-2026-111497, CVE-2026-92392 and CVE-2026-58055.
+# Keep fixed Brotli, curl, libxml2 and nghttp2 versions in both PHP stages.
+# CVE-2026-111497, CVE-2026-92392, CVE-2026-86144 and CVE-2026-58055.
 RUN apk add --no-cache \
         ca-certificates \
         'brotli-libs>=1.2.1-r0' \
         'curl>=8.23.0-r0' \
         icu-libs \
         libpng \
+        'libxml2>=2.13.9-r3' \
         libzip \
         'nghttp2-libs>=1.70.0-r0' \
     && apk add --no-cache --virtual .build-deps \
@@ -59,6 +60,7 @@ RUN apk add --no-cache \
         'curl>=8.23.0-r0' \
         icu-libs \
         libpng \
+        'libxml2>=2.13.9-r3' \
         libzip \
         'nghttp2-libs>=1.70.0-r0' \
         sqlite-libs \
